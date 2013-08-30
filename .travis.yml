@@ -1,0 +1,13 @@
+language: node_js
+node_js:
+  - "0.6"
+  - "0.10"
+env:
+  - TEST_COMMAND="node ./test/test-build.js --time-limit 48m"
+git:
+  depth: 1
+branches:
+  only:
+    - master
+script:
+  $TEST_COMMAND
