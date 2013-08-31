@@ -1,14 +1,14 @@
-# Lo-Dash command-line interface v1.3.1
+# lodash-cli v1.3.1
 
-Custom builds make it easy to create lightweight versions of Lo-Dash containing only the features you need. To top it off, we handle all function dependency & alias mapping for you.
+The Lo-Dash command-line interface for creating custom builds and precompiling templates.
 
 ## Dive in
 
-There’s plenty of [documentation](http://lodash.com/custom-builds).
+Head on over to the [documentation](http://lodash.com/custom-builds) for build commands and usage examples.
 
 ## Support
 
-Tested in Node.js 0.6.8-0.10.15.
+lodash-cli has been tested in at leastcNode.js 0.6.8-0.10.15.
 
 ## Author
 

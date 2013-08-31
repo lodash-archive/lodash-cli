@@ -4,13 +4,11 @@
   "description": "The Lo-Dash command-line interface.",
   "homepage": "http://lodash.com/custom-builds",
   "license": "MIT",
-  "preferGlobal": true,
   "keywords": [
     "builds",
     "compile",
     "customize",
     "lodash",
-    "templates",
     "util"
   ],
   "author": {
@@ -56,8 +54,7 @@
     "uglify-js": "~2.4.0"
   },
   "engines": [
-    "node",
-    "rhino"
+    "node"
   ],
   "files": [
     "bin/lodash",
