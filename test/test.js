@@ -67,7 +67,8 @@
     'select': 'filter',
     'tail': 'rest',
     'take': 'first',
-    'unique': 'uniq'
+    'unique': 'uniq',
+    'unzip': 'zip'
   };
 
   /** Used to associate real names with their aliases */
@@ -86,164 +87,145 @@
     'rest': ['drop', 'tail'],
     'some': ['any'],
     'uniq': ['unique'],
+    'zip': ['unzip'],
     'zipObject': ['object']
   };
 
-  /** List of all methods */
-  var allMethods = _.functions(_).filter(function(methodName) {
-    return !/^_/.test(methodName);
-  });
-
-  /** List of all Lo-Dash methods */
-  var lodashMethods = _.without(allMethods, 'findWhere');
-
-  /** List of "Arrays" category methods */
-  var arraysMethods = [
-    'compact',
-    'difference',
-    'drop',
-    'findIndex',
-    'first',
-    'flatten',
-    'head',
-    'indexOf',
-    'initial',
-    'intersection',
-    'last',
-    'lastIndexOf',
-    'object',
-    'range',
-    'rest',
-    'sortedIndex',
-    'tail',
-    'take',
-    'union',
-    'uniq',
-    'unique',
-    'unzip',
-    'without',
-    'zip',
-    'zipObject'
-  ];
-
-  /** List of "Chaining" category methods */
-  var chainingMethods = [
-    'chain',
-    'tap',
-    'value'
-  ];
-
-  /** List of "Collections" category methods */
-  var collectionsMethods = [
-    'all',
-    'any',
-    'at',
-    'collect',
-    'contains',
-    'countBy',
-    'detect',
-    'each',
-    'every',
-    'filter',
-    'find',
-    'findWhere',
-    'foldl',
-    'foldr',
-    'forEach',
-    'groupBy',
-    'include',
-    'inject',
-    'invoke',
-    'map',
-    'max',
-    'min',
-    'pluck',
-    'reduce',
-    'reduceRight',
-    'reject',
-    'select',
-    'shuffle',
-    'size',
-    'some',
-    'sortBy',
-    'toArray',
-    'where'
-  ];
-
-  /** List of "Functions" category methods */
-  var functionsMethods = [
-    'after',
-    'bind',
-    'bindAll',
-    'bindKey',
-    'createCallback',
-    'compose',
-    'debounce',
-    'defer',
-    'delay',
-    'memoize',
-    'once',
-    'partial',
-    'partialRight',
-    'throttle',
-    'wrap'
-  ];
-
-  /** List of "Objects" category methods */
-  var objectsMethods = [
-    'assign',
-    'clone',
-    'cloneDeep',
-    'defaults',
-    'extend',
-    'findKey',
-    'forIn',
-    'forOwn',
-    'functions',
-    'has',
-    'invert',
-    'isArguments',
-    'isArray',
-    'isBoolean',
-    'isDate',
-    'isElement',
-    'isEmpty',
-    'isEqual',
-    'isFinite',
-    'isFunction',
-    'isNaN',
-    'isNull',
-    'isNumber',
-    'isObject',
-    'isPlainObject',
-    'isRegExp',
-    'isString',
-    'isUndefined',
-    'keys',
-    'methods',
-    'merge',
-    'omit',
-    'pairs',
-    'pick',
-    'transform',
-    'values'
-  ];
-
-  /** List of "Utilities" category methods */
-  var utilityMethods = [
-    'escape',
-    'identity',
-    'mixin',
-    'noConflict',
-    'parseInt',
-    'random',
-    'result',
-    'runInContext',
-    'template',
-    'times',
-    'unescape',
-    'uniqueId'
-  ];
+  /** Used to track the category of identifiers */
+  var categoryMap = {
+    'Arrays': [
+      'compact',
+      'difference',
+      'findIndex',
+      'findLastIndex',
+      'first',
+      'flatten',
+      'indexOf',
+      'initial',
+      'intersection',
+      'last',
+      'lastIndexOf',
+      'pull',
+      'range',
+      'remove',
+      'rest',
+      'sortedIndex',
+      'union',
+      'uniq',
+      'without',
+      'zip',
+      'zipObject'
+    ],
+    'Chaining': [
+      'chain',
+      'lodash',
+      'tap',
+      'wrapperChain',
+      'wrapperToString',
+      'wrapperValueOf'
+    ],
+    'Collections': [
+      'at',
+      'contains',
+      'countBy',
+      'every',
+      'filter',
+      'find',
+      'findLast',
+      'findWhere',
+      'forEach',
+      'forEachRight',
+      'groupBy',
+      'indexBy',
+      'invoke',
+      'map',
+      'max',
+      'min',
+      'pluck',
+      'reduce',
+      'reduceRight',
+      'reject',
+      'sample',
+      'shuffle',
+      'size',
+      'some',
+      'sortBy',
+      'toArray',
+      'where'
+    ],
+    'Functions': [
+      'after',
+      'bind',
+      'bindAll',
+      'bindKey',
+      'createCallback',
+      'compose',
+      'curry',
+      'debounce',
+      'defer',
+      'delay',
+      'memoize',
+      'once',
+      'partial',
+      'partialRight',
+      'throttle',
+      'wrap'
+    ],
+    'Objects': [
+      'assign',
+      'clone',
+      'cloneDeep',
+      'defaults',
+      'findKey',
+      'findLastKey',
+      'forIn',
+      'forInRight',
+      'forOwn',
+      'forOwnRight',
+      'functions',
+      'has',
+      'invert',
+      'isArguments',
+      'isArray',
+      'isBoolean',
+      'isDate',
+      'isElement',
+      'isEmpty',
+      'isEqual',
+      'isFinite',
+      'isFunction',
+      'isNaN',
+      'isNull',
+      'isNumber',
+      'isObject',
+      'isPlainObject',
+      'isRegExp',
+      'isString',
+      'isUndefined',
+      'keys',
+      'merge',
+      'omit',
+      'pairs',
+      'pick',
+      'transform',
+      'values'
+    ],
+    'Utilities': [
+      'escape',
+      'identity',
+      'mixin',
+      'noConflict',
+      'parseInt',
+      'random',
+      'result',
+      'runInContext',
+      'template',
+      'templateSettings',
+      'times',
+      'unescape',
+      'uniqueId'
+    ]
+  };
 
   /** List of Backbone's Lo-Dash dependencies */
   var backboneDependencies = [
@@ -277,6 +259,7 @@
     'keys',
     'last',
     'lastIndexOf',
+    'lodash',
     'map',
     'max',
     'min',
@@ -302,27 +285,45 @@
     'without'
   ];
 
-  /** List of Lo-Dash only methods */
-  var lodashOnlyMethods = [
+  /** List of Lo-Dash only functions */
+  var lodashOnlyFuncs = [
     'at',
     'bindKey',
     'cloneDeep',
     'createCallback',
+    'curry',
     'findIndex',
     'findKey',
+    'findLast',
+    'findLastIndex',
+    'findLastKey',
+    'forEachRight',
     'forIn',
+    'forInRight',
     'forOwn',
+    'forOwnRight',
+    'indexBy',
     'isPlainObject',
     'merge',
     'parseInt',
     'partialRight',
+    'pull',
+    'remove',
     'runInContext',
-    'transform',
-    'unzip'
+    'sample',
+    'transform'
   ];
 
-  /** List of Underscore methods */
-  var underscoreMethods = _.without.apply(_, [allMethods].concat(lodashOnlyMethods));
+  /** List of all functions */
+  var allFuncs = _.functions(_).filter(function(funcName) {
+    return !/^_/.test(funcName);
+  });
+
+  /** List of all Lo-Dash functions */
+  var lodashFuncs = allFuncs.slice();
+
+  /** List of Underscore functions */
+  var underscoreFuncs = _.difference(allFuncs, lodashOnlyFuncs);
 
   /*--------------------------------------------------------------------------*/
 
@@ -330,8 +331,8 @@
    * Capitalizes a given string.
    *
    * @private
-   * @param {String} string The string to capitalize.
-   * @returns {String} Returns the capitalized string.
+   * @param {string} string The string to capitalize.
+   * @returns {string} Returns the capitalized string.
    */
   function capitalize(string) {
     return string[0].toUpperCase() + string.slice(1);
@@ -346,20 +347,21 @@
   function createContext() {
     return vm.createContext({
       'clearTimeout': clearTimeout,
+      'console': console,
       'setTimeout': setTimeout
     });
   }
 
   /**
-   * Expands a list of method names to include real and alias names.
+   * Expands a list of function names to include real and alias names.
    *
    * @private
-   * @param {Array} methodNames The array of method names to expand.
-   * @returns {Array} Returns a new array of expanded method names.
+   * @param {Array} funcNames The array of function names to expand.
+   * @returns {Array} Returns a new array of expanded function names.
    */
-  function expandMethodNames(methodNames) {
-    return methodNames.reduce(function(result, methodName) {
-      var realName = getRealName(methodName);
+  function expandFuncNames(funcNames) {
+    return funcNames.reduce(function(result, funcName) {
+      var realName = getRealName(funcName);
       push.apply(result, [realName].concat(getAliases(realName)));
       return result;
     }, []);
@@ -369,7 +371,7 @@
    * Gets the aliases associated with a given function name.
    *
    * @private
-   * @param {String} funcName The name of the function to get aliases for.
+   * @param {string} funcName The name of the function to get aliases for.
    * @returns {Array} Returns an array of aliases.
    */
   function getAliases(funcName) {
@@ -377,48 +379,23 @@
   }
 
   /**
-   * Gets the names of methods belonging to the given `category`.
-   *
-   * @private
-   * @param {String} category The category to filter by.
-   * @returns {Array} Returns a new array of method names belonging to the given category.
-   */
-  function getMethodsByCategory(category) {
-    switch (category) {
-      case 'Arrays':
-        return arraysMethods.slice();
-      case 'Chaining':
-        return chainingMethods.slice();
-      case 'Collections':
-        return collectionsMethods.slice();
-      case 'Functions':
-        return functionsMethods.slice();
-      case 'Objects':
-        return objectsMethods.slice();
-      case 'Utilities':
-        return utilityMethods.slice();
-    }
-    return [];
-  }
-
-  /**
    * Gets the real name, not alias, of a given function name.
    *
    * @private
-   * @param {String} funcName The name of the function to resolve.
-   * @returns {String} Returns the real name.
+   * @param {string} funcName The name of the function to resolve.
+   * @returns {string} Returns the real name.
    */
   function getRealName(funcName) {
     return aliasToRealMap[funcName] || funcName;
   }
 
   /**
-   * Tests if a given method on the `lodash` object can be called successfully.
+   * Tests if a given method can be called successfully.
    *
    * @private
    * @param {Object} lodash The built Lo-Dash object.
-   * @param {String} methodName The name of the Lo-Dash method to test.
-   * @param {String} message The unit test message.
+   * @param {string} funcName The name of the method to test.
+   * @param {string} message The unit test message.
    */
   function testMethod(lodash, methodName, message) {
     var pass = true,
@@ -430,7 +407,7 @@
         func = lodash[methodName];
 
     try {
-      if (_.contains(arraysMethods, methodName)) {
+      if (_.contains(categoryMap.Arrays, methodName)) {
         if (/(?:indexOf|sortedIndex|without)$/i.test(methodName)) {
           func(array, string);
         } else if (/^(?:difference|intersection|union|uniq|zip)/.test(methodName)) {
@@ -441,10 +418,10 @@
           func(array);
         }
       }
-      else if (_.contains(chainingMethods, methodName)) {
+      else if (_.contains(categoryMap.Chaining, methodName)) {
         lodash(array)[methodName](noop);
       }
-      else if (_.contains(collectionsMethods, methodName)) {
+      else if (_.contains(categoryMap.Collections, methodName)) {
         if (/^(?:count|group|sort)By$/.test(methodName)) {
           func(array, noop);
           func(array, string);
@@ -472,7 +449,7 @@
           func(object, noop, object);
         }
       }
-      else if (_.contains(functionsMethods, methodName)) {
+      else if (_.contains(categoryMap.Functions, methodName)) {
         if (methodName == 'after') {
           func(1, noop);
         } else if (methodName == 'bindAll') {
@@ -489,14 +466,14 @@
           func(noop);
         }
       }
-      else if (_.contains(objectsMethods, methodName)) {
+      else if (_.contains(categoryMap.Objects, methodName)) {
         if (methodName == 'clone') {
           func(object);
           func(object, true);
         }
         else if (/^(?:defaults|extend|merge)$/.test(methodName)) {
           func({}, object);
-        } else if (/^(?:forIn|forOwn)$/.test(methodName)) {
+        } else if (/^for(?:In|Own)(?:Right)?$/.test(methodName)) {
           func(object, noop);
         } else if (/^(?:omit|pick)$/.test(methodName)) {
           func(object, 'b');
@@ -506,7 +483,7 @@
           func(object);
         }
       }
-      else if (_.contains(utilityMethods, methodName)) {
+      else if (_.contains(categoryMap.Utilities, methodName)) {
         if (methodName == 'mixin') {
           func({});
         } else if (methodName == 'result') {
@@ -532,18 +509,73 @@
 
   /*--------------------------------------------------------------------------*/
 
+  QUnit.module('build command checks');
+
+  (function() {
+    var reHelp = /lodash --help/,
+        write = process.stdout.write;
+
+    var commands = [
+      'node.EXE build -s modern',
+      '-s strict underscore'
+    ];
+
+    commands.forEach(function(command) {
+      asyncTest('`lodash ' + command +'` is valid', function() {
+        var start = _.after(2, _.once(function() {
+          ok(true, 'should be valid');
+          QUnit.start();
+        }));
+
+        build(command.split(' '), start);
+      });
+    });
+
+    commands = [
+      'csp backbone',
+      'mobile underscore',
+      'modern template=./*.jst'
+    ];
+
+    commands.forEach(function(command) {
+      asyncTest('`lodash ' + command +'` is not valid', function() {
+        process.stdout.write = _.once(function(string) {
+          ok(reHelp.test(string));
+          process.stdout.write = write;
+          QUnit.start();
+        });
+
+        build(command.split(' '), function() {});
+      });
+    });
+  }());
+
+  /*--------------------------------------------------------------------------*/
+
   QUnit.module('minified AMD snippet');
 
   (function() {
-    var start = _.after(2, _.once(QUnit.start));
+    asyncTest('r.js build optimizer check', function() {
+      var start = _.after(2, _.once(QUnit.start));
 
-    asyncTest('`lodash`', function() {
       build(['-s', 'exclude='], function(data) {
-        // used by r.js build optimizer
-        var defineHasRegExp = /typeof\s+define\s*==(=)?\s*['"]function['"]\s*&&\s*typeof\s+define\.amd\s*==(=)?\s*['"]object['"]\s*&&\s*define\.amd/g,
-            basename = path.basename(data.outputPath, '.js');
+        // uses the same regexp from the r.js build optimizer
+        var basename = path.basename(data.outputPath, '.js'),
+            defineHasRegExp = /typeof\s+define\s*==(=)?\s*['"]function['"]\s*&&\s*typeof\s+define\.amd\s*==(=)?\s*['"]object['"]\s*&&\s*define\.amd/g;
 
-        ok(!!defineHasRegExp.exec(data.source), basename);
+        ok(defineHasRegExp.test(data.source), basename);
+        start();
+      });
+    });
+
+    asyncTest('Dojo builder check', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'exclude='], function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            reSpaceDefine = /\sdefine\(/;
+
+        ok(reSpaceDefine.test(data.source), basename);
         start();
       });
     });
@@ -604,7 +636,7 @@
     commands.forEach(function(command) {
       var expectedId = /underscore/.test(command) ? 'underscore' : 'lodash';
 
-      asyncTest('`lodash template=*.jst exports=amd' + (command ? ' ' + command : '') + '`', function() {
+      asyncTest('`lodash exports=amd' + (command ? ' ' + command + '`' : '` using the default `moduleId`'), function() {
         var start = _.after(2, _.once(QUnit.start));
 
         build(['-s', 'template=' + path.join(templatePath, '*.jst'), 'exports=amd'].concat(command || []), function(data) {
@@ -620,10 +652,11 @@
           context.define.amd = {};
           vm.runInContext(data.source, context);
 
+          var templates = _.templates;
           equal(moduleId, expectedId, basename);
-          ok('a' in _.templates && 'b' in _.templates, basename);
+          ok('a' in templates && 'b' in templates && 'c' in templates, basename);
 
-          var actual = _.templates.a({ 'people': ['moe', 'larry'] });
+          var actual = templates.a({ 'people': ['moe', 'larry'] });
           equal(actual.replace(/[\r\n]+/g, ''), '<ul><li>moe</li><li>larry</li></ul>', basename);
 
           delete _.templates;
@@ -653,6 +686,72 @@
 
           equal(moduleId, expectedId, basename);
           equal(_.templates.d(object.d), 'Hallå Mustache!', basename);
+          delete _.templates;
+          start();
+        });
+      });
+    });
+
+    var defaultTemplates = { 'c': function() { return ''; } };
+
+    var exportsCommands = [
+      'exports=amd',
+      'exports=commonjs',
+      'exports=global',
+      'exports=node',
+      'exports=none'
+    ];
+
+    exportsCommands.forEach(function(command, index) {
+      asyncTest('`lodash ' + command +'`', function() {
+        var start = _.after(2, _.once(QUnit.start));
+
+        build(['-s',  'template=' + path.join(templatePath, '*.jst'), command], function(data) {
+          var templates,
+              basename = path.basename(data.outputPath, '.js'),
+              context = createContext(),
+              source = data.source;
+
+          switch(index) {
+            case 0:
+              context.define = function(requires, factory) { factory(_); };
+              context.define.amd = {};
+              vm.runInContext(source, context);
+
+              templates = _.templates || defaultTemplates;
+              break;
+
+            case 1:
+              context.exports = {};
+              context.require = function() { return _; };
+              vm.runInContext(source, context);
+
+              templates = context.exports.templates || defaultTemplates;
+              break;
+
+            case 2:
+              context._ = _;
+              vm.runInContext(source, context);
+
+              templates = context._.templates || defaultTemplates;
+              break;
+
+            case 3:
+              context.exports = {};
+              context.require = function() { return _; };
+              context.module = { 'exports': context.exports };
+              vm.runInContext(source, context);
+
+              templates = context.module.exports || defaultTemplates;
+              break;
+
+            case 4:
+              vm.runInContext(source, context);
+              strictEqual(context._, undefined, basename);
+          }
+          if (templates) {
+            equal(templates.c({ 'name': 'Moe' }), 'Hello Moe!', basename);
+          }
           delete _.templates;
           start();
         });
@@ -815,12 +914,11 @@
         asyncTest('`lodash ' + mapCommand + (outputCommand ? ' ' + outputCommand : '') + '`', function() {
           var callback = _.once(function(data) {
             var basename = path.basename(data.outputPath, '.js'),
-                comment = (/(\s*\/\/.*\s*|\s*\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\s*)$/.exec(data.source) || [])[0],
                 sources = /foo.js/.test(outputCommand) ? ['foo.js'] : ['lodash' + (outputCommand.length ? '' : '.custom') + '.js'],
                 sourceMap = JSON.parse(data.sourceMap),
                 sourceMapURL = (/\w+(?=\.map$)/.exec(mapCommand) || [basename])[0];
 
-            ok(RegExp('/\\*\\n//@ sourceMappingURL=' + sourceMapURL + '.map\\n\\*/').test(comment), basename);
+            ok(RegExp('\\n//# sourceMappingURL=' + sourceMapURL + '.map$').test(data.source), basename);
             equal(sourceMap.file, basename + '.js', basename);
             deepEqual(sourceMap.sources, sources, basename);
 
@@ -929,9 +1027,6 @@
         function Foo() {}
         Foo.prototype = { 'a': 1 };
 
-        actual = lodash.defaults({ 'a': null }, { 'a': 1 });
-        strictEqual(actual.a, 1, '_.defaults should overwrite `null` values: ' + basename);
-
         deepEqual(lodash.defaults({}, new Foo), Foo.prototype, '_.defaults should assign inherited `source` properties: ' + basename);
         deepEqual(lodash.extend({}, new Foo), Foo.prototype, '_.extend should assign inherited `source` properties: ' + basename);
 
@@ -987,6 +1082,10 @@
         equal(lodash.max('abc'), -Infinity, '_.max should return `-Infinity` for strings: ' + basename);
         equal(lodash.min('abc'), Infinity, '_.min should return `Infinity` for strings: ' + basename);
 
+        object = {};
+        lodash.mixin(object, { 'a': function(a) { return a[0]; } });
+        equal('a' in object, false, '_.mixin should not accept a destination object: ' + basename);
+
         // avoid issues comparing objects with `deepEqual`
         object = { 'a': 1, 'b': 2, 'c': 3 };
         actual = lodash.omit(object, function(value) { return value == 3; });
@@ -995,9 +1094,8 @@
         actual = lodash.pick(object, function(value) { return value != 3; });
         deepEqual(_.keys(actual), [], '_.pick should not accept a `callback`: ' + basename);
 
-        strictEqual(lodash.result(), null, '_.result should return `null` for falsey `object` arguments: ' + basename);
+        deepEqual(lodash.range(1, 4, 0), [1, 2, 3], '_.range should not support a `step` of `0`');
         strictEqual(lodash.some([false, true, false]), true, '_.some: ' + basename);
-        deepEqual(lodash.times(null, function() {}), [null], '_.times should not coerce `n` to a number: ' + basename);
         equal(lodash.template('${a}', object), '${a}', '_.template should ignore ES6 delimiters: ' + basename);
         equal('support' in lodash, false, '_.support should not exist: ' + basename);
         equal('imports' in lodash.templateSettings, false, '_.templateSettings should not have an "imports" property: ' + basename);
@@ -1008,11 +1106,36 @@
 
         collection = [{ 'a': 1 }, { 'a': 1 }];
         deepEqual(lodash.where(collection, { 'a': 1 }, true), collection[0], '_.where supports a `first` argument: ' + basename);
-        deepEqual(lodash.where(collection, {}, true), null, '_.where should return `null` when passed `first` and falsey `properties`: ' + basename);
+        deepEqual(lodash.where(collection, {}, true), undefined, '_.where should return `undefined` when passed `first` and falsey `properties`: ' + basename);
 
         deepEqual(lodash.findWhere(collection, { 'a': 1 }), collection[0], '_.findWhere: ' + basename);
-        strictEqual(lodash.findWhere(collection, {}), null, '_.findWhere should return `null` for falsey `properties`: ' + basename);
+        strictEqual(lodash.findWhere(collection, {}), undefined, '_.findWhere should return `undefined` for falsey `properties`: ' + basename);
 
+        var expected = [[['moe', 30, true]], [['larry', 40, false]]];
+        actual = lodash.zip(lodash.zip(['moe', 'larry'], [30, 40], [true, false]));
+        deepEqual(actual, expected, '_.zip is unable to correctly consume it\'s output: ' + basename);
+
+        start();
+      });
+    });
+
+    asyncTest('should not have AMD support', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'underscore'], function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            context = createContext(),
+            pass = true;
+
+        context.define = function(fn) {
+          pass = false;
+          context._ = fn();
+        };
+
+        context.define.amd = {};
+        vm.runInContext(data.source, context);
+
+        ok(pass, basename);
         start();
       });
     });
@@ -1027,8 +1150,8 @@
         vm.runInContext(data.source, context);
         var lodash = context._;
 
-        _.each(lodashOnlyMethods.concat('assign'), function(methodName) {
-          equal(lodash[methodName], undefined, '_.' + methodName + ' should not exist: ' + basename);
+        _.each(lodashOnlyFuncs.concat('assign'), function(funcName) {
+          equal(lodash[funcName], undefined, '_.' + funcName + ' should not exist: ' + basename);
         });
 
         start();
@@ -1067,8 +1190,8 @@
           vm.runInContext(data.source, context, true);
           var lodash = context._;
 
-          _.each(index ? ['clone','cloneDeep'] : ['clone'], function(methodName) {
-            var clone = (methodName == 'clone')
+          _.each(index ? ['clone','cloneDeep'] : ['clone'], function(funcName) {
+            var clone = (funcName == 'clone')
               ? lodash.clone(array, true)
               : lodash.cloneDeep(array);
 
@@ -1104,8 +1227,9 @@
           vm.runInContext(data.source, context);
           var lodash = context._;
 
-          ok(lodash.chain(1) instanceof lodash, '_.chain: ' + basename);
-          ok(lodash(1).chain() instanceof lodash, '_#chain: ' + basename);
+          var array = ['abc'];
+          ok(lodash.chain(array).first().first() instanceof lodash, '_.chain: ' + basename);
+          ok(lodash(array).chain().first().first() instanceof lodash, '_#chain: ' + basename);
 
           var wrapped = lodash(1);
           strictEqual(wrapped.identity(), 1, '_(...) wrapped values are not chainable by default: ' + basename);
@@ -1143,8 +1267,7 @@
 
         build(['-s', command + '=runInContext'], function(data) {
           var basename = path.basename(data.outputPath, '.js'),
-              context = createContext(),
-              source = data.source;
+              context = createContext();
 
           vm.runInContext(data.source, context);
 
@@ -1161,39 +1284,17 @@
         });
       });
 
-      asyncTest('`lodash ' + command + '=mixin`', function() {
-        var start = _.after(2, _.once(QUnit.start));
-
-        build(['-s', command + '=mixin'], function(data) {
-          var basename = path.basename(data.outputPath, '.js'),
-              context = createContext(),
-              source = data.source;
-
-          vm.runInContext(data.source, context);
-          var lodash = context._;
-
-          var actual = lodash([1, 2, 3])
-            .map(function(num) { return num * num; })
-            .value();
-
-          deepEqual(actual, [1, 4, 9], basename);
-          equal('mixin' in lodash, false, basename);
-          start();
-        });
-      });
-
       asyncTest('`lodash ' + command + '=value`', function() {
         var start = _.after(2, _.once(QUnit.start));
 
         build(['-s', command + '=value'], function(data) {
           var basename = path.basename(data.outputPath, '.js'),
-              context = createContext(),
-              source = data.source;
+              context = createContext();
 
           vm.runInContext(data.source, context);
           var lodash = context._;
 
-          strictEqual(lodash([1]), undefined, basename);
+          equal(lodash([1]) instanceof lodash, false, basename);
           deepEqual(_.keys(lodash.prototype), [], basename);
           start();
         });
@@ -1226,18 +1327,21 @@
 
           switch(index) {
             case 0:
-              context.define = function(fn) {
+              context.define = function(factory) {
                 pass = true;
-                context._ = fn();
+                context._ = factory();
               };
               context.define.amd = {};
               vm.runInContext(source, context);
+
               ok(pass, basename);
+              ok(_.isFunction(context._), basename);
               break;
 
             case 1:
               context.exports = {};
               vm.runInContext(source, context);
+
               ok(_.isFunction(context.exports._), basename);
               strictEqual(context._, undefined, basename);
               break;
@@ -1251,6 +1355,7 @@
               context.exports = {};
               context.module = { 'exports': context.exports };
               vm.runInContext(source, context);
+
               ok(_.isFunction(context.module.exports), basename);
               strictEqual(context._, undefined, basename);
               break;
@@ -1271,8 +1376,8 @@
 
   (function() {
     var commands = [
-      'iife=this["lodash"]=(function(window){%output%;return _}(this))',
-      'iife=define(function(window){return function(){%output%;return _}}(this));'
+      'iife=this["lodash"]=(function(){%output%;return _}())',
+      'iife=define(function(){return (function(){%output%;return _}())});'
     ];
 
     commands.forEach(function(command) {
@@ -1319,20 +1424,15 @@
         build(['-s', command], function(data) {
           var basename = path.basename(data.outputPath, '.js'),
               context = createContext(),
-              noop = function() {},
-              source = data.source;
+              noop = function() {};
 
           vm.runInContext(data.source, context);
           var lodash = context._;
 
           lodash.mixin({ 'x': noop });
           equal(lodash.x, noop, basename);
+          equal(typeof lodash.prototype.x, 'function', basename);
 
-          if (index) {
-            equal(typeof lodash.prototype.x, 'function', basename);
-          } else {
-            equal('x' in lodash.prototype, false, basename);
-          }
           start();
         });
       });
@@ -1351,16 +1451,11 @@
 
     commands.forEach(function(command) {
       asyncTest('`lodash modern include=each ' + command +'`', function() {
-        var start = _.after(2, _.once(QUnit.start));
+        var start = _.once(QUnit.start);
 
         build(['-s', 'modern', 'include=each', command], function(data) {
-          var basename = path.basename(data.outputPath, '.js'),
-              context = createContext();
-
-          vm.runInContext(data.source, context);
-          var lodash = context._;
-
-          deepEqual(_.functions(lodash), ['each', 'forEach'], basename);
+          var basename = path.basename(data.outputPath, '.js');
+          strictEqual(/function createCallback\b/.test(data.source), false, basename);
           start();
         });
       });
@@ -1414,6 +1509,8 @@
   QUnit.module('stdout option');
 
   (function() {
+    var write = process.stdout.write;
+
     var commands = [
       '-c',
       '-c -d',
@@ -1423,19 +1520,18 @@
     commands.forEach(function(command, index) {
       asyncTest('`lodash ' + command +'`', function() {
         var written,
-            start = _.once(QUnit.start),
-            write = process.stdout.write;
+            start = _.once(QUnit.start);
 
         process.stdout.write = function(string) {
           written = string;
         };
 
         build(['exports=', 'include='].concat(command.split(' ')), function(data) {
-          process.stdout.write = write;
-
           strictEqual('outputPath' in data, false);
           equal(written, data.source);
           equal(arguments.length, 1);
+
+          process.stdout.write = write;
           start();
         });
       });
@@ -1447,23 +1543,31 @@
   QUnit.module('underscore builds with lodash methods');
 
   (function() {
-    var methodNames = [
+    var funcNames = [
       'assign',
       'bindKey',
       'clone',
       'contains',
-      'debouce',
       'defaults',
       'defer',
       'difference',
       'every',
       'filter',
       'find',
+      'findIndex',
+      'findKey',
+      'findLast',
+      'findLastIndex',
+      'findLastKey',
       'findWhere',
       'first',
       'flatten',
       'forEach',
+      'forEachRight',
+      'forIn',
+      'forInRight',
       'forOwn',
+      'forOwnRight',
       'intersection',
       'initial',
       'isEmpty',
@@ -1498,50 +1602,85 @@
       'zip'
     ];
 
+    var tested = {};
+
     function strip(value) {
       return String(value)
         .replace(/^ *\/\/.*/gm, '')
-        .replace(/\b(?:basicEach|context|forEach|forOwn|window)\b/g, '')
+        .replace(/\b(?:basicEach|context|forEach|forOwn)\b/g, '')
         .replace(/\blodash\.(createCallback\()\b/g, '$1')
         .replace(/[\s;]/g, '');
     }
 
-    methodNames.forEach(function(methodName) {
-      var command = 'underscore plus=' + methodName;
+    funcNames.forEach(function(funcName) {
+      _.times(2, function(index) {
+        var command = 'underscore plus=' + funcName,
+            expected = !(funcName == 'defer' && global.setImmediate);
 
-      if (methodName == 'createCallback') {
-        command += ',where';
-      }
-      if (methodName == 'zip') {
-        command += ',unzip';
-      }
-      if (methodName != 'chain' && _.contains(chainingMethods.concat('mixin'), methodName)) {
-        command += ',chain';
-      }
-      if (_.contains(['isEqual', 'isPlainObject'], methodName)) {
-        command += ',forIn';
-      }
-      if (_.contains(['contains', 'every', 'find', 'some', 'transform'], methodName)) {
-        command += ',forOwn';
-      }
-      asyncTest('`lodash ' + command +'`', function() {
-        var start = _.after(2, _.once(QUnit.start));
-
-        build(['-s'].concat(command.split(' ')), function(data) {
-          var array = [{ 'value': 1 }],
-              basename = path.basename(data.outputPath, '.js'),
-              context = createContext();
-
-          vm.runInContext(data.source, context, true);
-          var lodash = context._;
-
-          if (methodName == 'chain' || methodName == 'findWhere' || (methodName == 'defer' && global.setImmediate)) {
-            notEqual(strip(lodash[methodName]), strip(_[methodName]), basename);
-          } else if (!/\.min$/.test(basename)) {
-            equal(strip(lodash[methodName]), strip(_[methodName]), basename);
+        if (funcName == 'createCallback') {
+          expected = !!index;
+          if (index) {
+            command += ',where';
           }
-          testMethod(lodash, methodName, basename);
-          start();
+        }
+        if (funcName != 'chain' && _.contains(categoryMap.Chaining.concat('mixin'), funcName)) {
+          expected = funcName == 'tap' || !!index;
+          if (index) {
+            command += ',chain';
+          }
+        }
+        if (_.contains(['contains', 'every', 'find', 'findKey', 'findWhere', 'some', 'transform'], funcName)) {
+          expected = !!index;
+          if (index) {
+            command += ',forOwn';
+          }
+        }
+        if (funcName == 'findLast') {
+          expected = !!index;
+          if (index) {
+            command += ',forEachRight';
+          }
+        }
+        if (funcName == 'findLastKey') {
+          expected = !!index;
+          if (index) {
+            command += ',forOwnRight';
+          }
+        }
+        if (tested[command]) {
+          return;
+        }
+        tested[command] = true;
+
+        asyncTest('`lodash ' + command +'`', function() {
+          var start = _.after(2, _.once(QUnit.start));
+
+          build(['-s'].concat(command.split(' ')), function(data) {
+            var basename = path.basename(data.outputPath, '.js'),
+                context = createContext();
+
+            vm.runInContext(data.source, context, true);
+
+            var lodash = context._,
+                func = lodash[funcName],
+                array = [1, 2, 3],
+                object = { 'a': 1, 'b': 2, 'c': 3 },
+                result = [];
+
+            if (/^for(?:Each|In|Own)(?:Right)?$/.test(funcName)) {
+              func(/^forEach/.test(funcName) ? array : object, function(value) {
+                result.push(value);
+                return false;
+              });
+
+              equal(result.length, 1, basename);
+            }
+            if (!/\.min$/.test(basename)) {
+              equal(strip(func) === strip(_[funcName]), expected, basename);
+            }
+            testMethod(lodash, funcName, basename);
+            start();
+          });
         });
       });
     });
@@ -1570,47 +1709,32 @@
       'include=each,filter,map',
       'include=once plus=bind,Chaining',
       'category=collections,functions',
-      'backbone legacy category=utilities minus=first,last',
+      'backbone category=utilities minus=first,last',
       'legacy include=defer',
-      'legacy underscore',
-      'modern strict include=isArguments,isArray,isFunction,isPlainObject,key',
-      'underscore include=debounce,throttle plus=after minus=throttle',
-      'underscore mobile strict category=functions exports=amd,global plus=pick,uniq',
+      'mobile strict category=functions exports=amd,global plus=pick,uniq',
+      'modern strict include=isArguments,isArray,isFunction,isPlainObject,keys',
+      'underscore include=debounce,throttle plus=after minus=throttle'
     ]
     .concat(
-      allMethods.map(function(methodName) {
-        return 'include=' + methodName;
+      allFuncs.map(function(funcName) {
+        return 'include=' + funcName;
       })
     );
 
-    commands.forEach(function(origCommand) {
-      _.times(4, function(index) {
-        var command = origCommand;
+    var reNonCombinable = /\b(?:backbone|csp|legacy|mobile|modern|underscore)\b/;
 
-        if (index == 1) {
-          if (/\b(?:legacy|mobile)\b/.test(command)) {
-            return;
-          }
-          command = 'mobile ' + command;
-        }
-        else if (index == 2) {
-          if (/\b(?:legacy|modern)\b/.test(command)) {
-            return;
-          }
-          command = 'modern ' + command;
-        }
-        else if (index == 3) {
-          if (/\b(?:category|legacy|underscore)\b/.test(command)) {
-            return;
-          }
-          command = 'underscore ' + command;
+    commands.forEach(function(origCommand) {
+      _.each(['', 'mobile', 'modern', 'underscore'], function(otherCommand) {
+        var command = (otherCommand + ' ' + origCommand).trim();
+        if ((otherCommand && reNonCombinable.test(origCommand)) ||
+            (otherCommand == 'underscore' && /\bcategory\b/.test(origCommand))) {
+          return;
         }
         asyncTest('`lodash ' + command +'`', function() {
           var start = _.after(2, _.once(QUnit.start));
 
           build(['--silent'].concat(command.split(' ')), function(data) {
-            var methodNames,
-                basename = path.basename(data.outputPath, '.js'),
+            var basename = path.basename(data.outputPath, '.js'),
                 context = createContext(),
                 isBackbone = /\bbackbone\b/.test(command),
                 isUnderscore = isBackbone || /\bunderscore\b/.test(command),
@@ -1622,70 +1746,76 @@
             } catch(e) {
               console.log(e);
             }
-            // add method names explicitly
+            // add function names explicitly
             if (/\binclude=/.test(command)) {
-              methodNames = command.match(/\binclude=(\S*)/)[1].split(/, */);
-            }
-            // add method names required by Backbone and Underscore builds
-            if (/\bbackbone\b/.test(command) && !methodNames) {
-              methodNames = backboneDependencies.slice();
-            }
-            if (isUnderscore) {
-              if (methodNames) {
-                exposeAssign = _.contains(methodNames, 'assign');
-                exposeZipObject = _.contains(methodNames, 'zipObject');
-              } else {
-                methodNames = underscoreMethods.slice();
-              }
+              var funcNames = command.match(/\binclude=(\S*)/)[1].split(/, */);
             }
             if (/\bcategory=/.test(command)) {
-              methodNames = (methodNames || []).concat(command.match(/\bcategory=(\S*)/)[1].split(/, */).map(function(category) {
+              var categories = command.match(/\bcategory=(\S*)/)[1].split(/, */);
+              funcNames = (funcNames || []).concat(categories.map(function(category) {
                 return capitalize(category.toLowerCase());
               }));
             }
-            if (!methodNames) {
-              methodNames = lodashMethods.slice();
+            // add function names required by Backbone and Underscore builds
+            if (/\bbackbone\b/.test(command) && !funcNames) {
+              funcNames = backboneDependencies.slice();
+            }
+            if (isUnderscore) {
+              if (funcNames) {
+                exposeAssign = _.contains(funcNames, 'assign');
+                exposeZipObject = _.contains(funcNames, 'zipObject');
+              } else {
+                funcNames = underscoreFuncs.slice();
+              }
+            }
+            if (!funcNames) {
+              funcNames = lodashFuncs.slice();
             }
             if (/\bplus=/.test(command)) {
-              methodNames = methodNames.concat(command.match(/\bplus=(\S*)/)[1].split(/, */));
+              var otherNames = command.match(/\bplus=(\S*)/)[1].split(/, */);
+              funcNames = funcNames.concat(expandFuncNames(otherNames));
             }
             if (/\bminus=/.test(command)) {
-              methodNames = _.without.apply(_, [methodNames].concat(expandMethodNames(command.match(/\bminus=(\S*)/)[1].split(/, */))));
+              otherNames = command.match(/\bminus=(\S*)/)[1].split(/, */);
+              funcNames = _.difference(funcNames, expandFuncNames(otherNames));
             }
             if (/\bexclude=/.test(command)) {
-              methodNames = _.without.apply(_, [methodNames].concat(expandMethodNames(command.match(/\bexclude=(\S*)/)[1].split(/, */))));
+              otherNames = command.match(/\bexclude=(\S*)/)[1].split(/, */);
+              funcNames = _.difference(funcNames, expandFuncNames(otherNames));
             }
 
-            // expand categories to real method names
-            methodNames.slice().forEach(function(category) {
-              var result = getMethodsByCategory(category);
-
-              // limit category methods to those available for specific builds
-              result = result.filter(function(methodName) {
-                return _.contains(
-                  isBackbone ? backboneDependencies :
-                  isUnderscore ? underscoreMethods :
-                  lodashMethods, methodName
-                );
+            // expand categories to function names
+            funcNames.slice().forEach(function(category) {
+              var otherNames = _.filter(categoryMap[category], function(key) {
+                var type = typeof _[key];
+                return type == 'function' || type == 'undefined';
               });
-              if (result.length) {
-                methodNames = _.without(methodNames, category);
-                push.apply(methodNames, result);
+
+              // limit function names to those available for specific builds
+              otherNames = _.intersection(otherNames,
+                isBackbone ? backboneDependencies :
+                isUnderscore ? underscoreFuncs :
+                lodashFuncs
+              );
+
+              if (otherNames.length) {
+                _.pull(funcNames, category);
+                push.apply(funcNames, otherNames);
               }
             });
 
-            // expand aliases and remove nonexistent and duplicate method names
-            methodNames = _.uniq(_.intersection(allMethods, expandMethodNames(methodNames)));
+            // expand aliases and remove nonexistent and duplicate function names
+            funcNames = _.uniq(_.intersection(expandFuncNames(funcNames), allFuncs));
 
             if (!exposeAssign) {
-              methodNames = _.without(methodNames, 'assign');
+              _.pull(funcNames, 'assign');
             }
             if (!exposeZipObject) {
-              methodNames = _.without(methodNames, 'zipObject');
+              _.pull(funcNames, 'zipObject');
             }
             var lodash = context._ || {};
-            methodNames.forEach(function(methodName) {
-              testMethod(lodash, methodName, basename);
+            funcNames.forEach(function(funcName) {
+              testMethod(lodash, funcName, basename);
             });
 
             start();
