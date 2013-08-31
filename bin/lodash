@@ -270,6 +270,7 @@
   var propDependencyMap = {
     'at': ['support'],
     'baseClone': ['support'],
+    'baseCreateCallback': ['support'],
     'baseIsEqual': ['support'],
     'bind': ['support'],
     'createBound': ['support'],
@@ -886,10 +887,6 @@
     state.plusFuncs = state.minusFuncs = empty;
     state.isAMD = state.isCommonJS = state.isGlobal = state.isNode = false;
 
-    // provide a destination if one isn't given
-    if (!outputPath) {
-      outputPath = '.' + path.sep + 'modularize';
-    }
     // create modules for each identifier
     identifiers.forEach(function(identifier) {
       var modulePath = getPath(identifier),
@@ -2682,6 +2679,14 @@
         return match ? match[1] : result;
       }, 'lodash');
 
+      // used as the output path for the build
+      var outputPath = options.reduce(function(result, value, index) {
+        if (/^(?:-o|--output)$/.test(value)) {
+          result = options[index + 1];
+        }
+        return result;
+      }, isModularize ?  '.' + path.sep + 'modularize' :'');
+
       // used to match external template files to precompile
       var templatePattern = options.reduce(function(result, value) {
         var match = value.match(/^template=(.+)$/);
@@ -3035,6 +3040,7 @@
 
           _.forOwn(propDepMap, function(deps, funcName) {
             if (funcName != 'createBound' &&
+                funcName != 'baseCreateCallback' &&
                 !(isMobile && funcName == 'keys') &&
                 !(isUnderscore && isLodash(funcName))) {
               _.pull(deps, 'support');
@@ -4471,20 +4477,14 @@
     debugSource = cleanupSource(source);
     source = debugSource;
 
-    // resolve `outputPath` and create directories if needed
-    if (!outputPath) {
-      outputPath = options.reduce(function(result, value, index) {
-        if (/^(?:-o|--output)$/.test(value)) {
-          result = options[index + 1];
-          var dirname = path.dirname(result);
-          fs.mkdirpSync(dirname);
-          result = path.join(fs.realpathSync(dirname), path.basename(result));
-        }
-        return result;
-      }, '');
-    } else {
-      fs.mkdirpSync(path.dirname(outputPath));
-    }
+    // expand `outputPath` and create directories if needed
+    outputPath = (function() {
+      if (outputPath) {
+        var dirname = path.dirname(outputPath);
+        fs.mkdirpSync(dirname);
+        return path.join(fs.realpathSync(dirname), path.basename(outputPath));
+      }
+    }());
 
     // flag to track if `outputPath` has been used by `callback`
     var outputUsed = false;
