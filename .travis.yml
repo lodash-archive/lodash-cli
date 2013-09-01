@@ -2,8 +2,6 @@ language: node_js
 node_js:
   - "0.6"
   - "0.10"
-env:
-  - TEST_COMMAND="node ./test/test.js --time-limit 48m"
 git:
   depth: 1
 branches:
@@ -13,4 +11,4 @@ script:
   - "npm install ."
   - "rm -rf ./node_modules/lodash"
   - "git clone --depth=1 --branch=master git://github.com/lodash/lodash.git ./node_modules/lodash/"
-  - $TEST_COMMAND
+  - "node ./test/test.js --time-limit 48m"
