@@ -57,6 +57,7 @@
     "node"
   ],
   "files": [
+    "LICENSE.txt",
     "bin/lodash",
     "lib/minify.js",
     "lib/pre-compile.js",
