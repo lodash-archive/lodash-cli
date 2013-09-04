@@ -4185,11 +4185,13 @@
           source = source.replace(matchFunction(source, 'template'), function(match) {
             if (isUnderscore) {
               // assign `_` via `template.imports`
-              return match.replace(/(_ *= *)lodash\b/, '$1templateSettings.imports._');
+              return match
+                .replace(/(_ *= *)lodash\b/, '$1templateSettings.imports._')
+                .replace(/= *_\.templateSettings(?=[,;])/, '$& || templateSettings');
             }
             return match
               // assign `settings` via `template.imports`
-              .replace(/= *templateSettings(?=[,;])/, '$&.imports._.templateSettings')
+              .replace(/= *templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings')
               // remove debug sourceURL use in `_.template`
               .replace(/(?:\s*\/\/.*\n)* *var sourceURL[^;]+;|\+ *sourceURL/g, '');
           });

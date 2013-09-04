@@ -8,7 +8,7 @@ Head on over to the [documentation](http://lodash.com/custom-builds) for build c
 
 ## Support
 
-lodash-cli has been tested in at leastcNode.js 0.6.8-0.10.15.
+lodash-cli has been tested in at least Node.js 0.6.8-0.10.15.
 
 ## Author
 
