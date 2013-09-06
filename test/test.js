@@ -893,6 +893,40 @@
 
   /*--------------------------------------------------------------------------*/
 
+  QUnit.module('modularize modifier');
+
+  (function() {
+    var outputPath = path.join(__dirname, 'a');
+
+    var funcNames = [
+      'mixin',
+      'template'
+    ];
+
+    funcNames.forEach(function(funcName) {
+      asyncTest('`lodash modularize modern include=' + funcName + ' exports=node`', function() {
+        var start = _.once(function() {
+          fs.rmrfSync(outputPath);
+          process.chdir(cwd);
+          QUnit.start();
+        });
+
+        process.chdir(__dirname);
+
+        build(['modularize', 'modern', 'include=' + funcName, 'exports=node', '-o', outputPath], function(data) {
+          var basename = path.basename(data.outputPath, '.js'),
+              lodash = {};
+
+          lodash[funcName] = require(path.join(outputPath, 'utilities', funcName));
+          testMethod(lodash, funcName, basename);
+          start();
+        });
+      });
+    });
+  }());
+
+  /*--------------------------------------------------------------------------*/
+
   QUnit.module('source-map modifier');
 
   (function() {
@@ -1467,7 +1501,8 @@
   QUnit.module('output option');
 
   (function() {
-    var nestedPath = path.join(__dirname, 'a', 'b');
+    var outputPath = path.join(__dirname, 'a'),
+        nestedPath = path.join(outputPath, 'b');
 
     var commands = [
       '-o a.js',
@@ -1486,8 +1521,7 @@
 
         var start = _.after(2, _.once(function() {
           if (dirs) {
-            fs.rmdirSync(nestedPath);
-            fs.rmdirSync(path.dirname(nestedPath));
+            fs.rmrfSync(outputPath);
           }
           process.chdir(cwd);
           QUnit.start();

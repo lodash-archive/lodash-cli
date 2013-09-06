@@ -824,8 +824,9 @@
    *
    * @private
    * @param {Object} state The build state object.
+   * @param {Function} [callback] The function called when all module builds are completed.
    */
-  function buildModule(state) {
+  function buildModule(state, callback) {
     var buildFuncs = state.buildFuncs,
         funcDepMap = state.funcDepMap,
         includeProps = state.includeProps,
@@ -1073,6 +1074,8 @@
         state.outputPath = path.join(outputPath, category.toLowerCase() + '.js');
         build(state);
       });
+
+      callback({ 'outputPath': fs.realpathSync(outputPath) });
     }
   }
 
@@ -1124,14 +1127,14 @@
         .replace(/\*/g, '.*?') + '$'
     );
 
-    fs.readdirSync(directory).forEach(function(filename) {
-      if (!pattern.test(filename)) {
+    fs.readdirSync(directory).forEach(function(identifier) {
+      if (!pattern.test(identifier)) {
         return;
       }
-      var filePath = path.join(directory, filename),
+      var filePath = path.join(directory, identifier),
           text = fs.readFileSync(filePath, 'utf8'),
           precompiled = cleanupCompiled(getFunctionSource(_.template(text, null, settings), 2)),
-          prop = filename.replace(/\..*$/, '');
+          prop = identifier.replace(/\..*$/, '');
 
       source.push("  templates['" + prop.replace(/['\n\r\t]/g, '\\$&') + "'] = " + precompiled + ';', '');
     });
@@ -2507,13 +2510,13 @@
   /*--------------------------------------------------------------------------*/
 
   /**
-   * Creates a debug and/or minified build, executing the `callback` for each.
-   * The `callback` is invoked with one argument; (data).
+   * Creates a debug and/or minified build, executing the callback for each.
+   * The callback is invoked with one argument; (data).
    *
    * Note: For a list of commands see `displayHelp()` or run `lodash --help`.
    *
    * @param {Array|Object} [options=[]] An array of build commands or the state object.
-   * @param {Function} [callback=defaultBuildCallback] The function called or per build.
+   * @param {Function} [callback=defaultBuildCallback] The function called per build.
    */
   function build(options, callback) {
     options || (options = []);
@@ -4264,7 +4267,7 @@
           'propDepMap': propDepMap,
           'source': source,
           'varDepMap': varDepMap
-        });
+        }, callback);
         return;
       }
     }
