@@ -584,7 +584,6 @@
     'forInRight',
     'forOwn',
     'forOwnRight',
-    'indexBy',
     'isPlainObject',
     'merge',
     'parseInt',
@@ -592,7 +591,6 @@
     'pull',
     'remove',
     'runInContext',
-    'sample',
     'transform',
     'wrapperToString'
   ];
@@ -3946,9 +3944,7 @@
           // replace `htmlEscapes` entries with hex entities
           if (!isLodash('escape')) {
             source = source.replace(matchVar(source, 'htmlEscapes'), function(match) {
-              return match
-                .replace('#39', '#x27')
-                .replace(/(\n *)}/, ",$1  '/': '&#x2F;'$1}");
+              return match.replace('#39', '#x27');
             });
           }
           // remove support for a `step` of `0` in `_.range`

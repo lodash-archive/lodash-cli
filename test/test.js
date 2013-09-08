@@ -302,7 +302,6 @@
     'forInRight',
     'forOwn',
     'forOwnRight',
-    'indexBy',
     'isPlainObject',
     'merge',
     'parseInt',
@@ -310,7 +309,6 @@
     'pull',
     'remove',
     'runInContext',
-    'sample',
     'transform'
   ];
 
