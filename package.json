@@ -27,6 +27,8 @@
     "lib/minify.js",
     "lib/pre-compile.js",
     "lib/post-compile.js",
-    "lib/util.js"
+    "lib/util.js",
+    "template/license.jst",
+    "template/package.jst"
   ]
 }

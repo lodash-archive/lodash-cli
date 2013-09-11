@@ -889,8 +889,10 @@
     }
     // create modules for each identifier
     identifiers.forEach(function(identifier) {
-      var moduleName = (isNpm ? 'lodash.' + (_.contains(internals, identifier) ? '_' : '') : '') + identifier,
-          modulePath = isNpm ? moduleName : getPath(identifier),
+      var isInternal = _.contains(internals, identifier),
+          prefix = isInternal ? '_' : '',
+          moduleName = (isNpm ? 'lodash.' + prefix : '') + identifier,
+          modulePath = isNpm ?  prefix + identifier : getPath(identifier),
           iife = [];
 
       var deps = getDependencies(identifier, funcDepMap, true)
@@ -943,39 +945,29 @@
         defaultBuildCallback(data);
 
         if (isNpm) {
-          var packagePath = path.join(outputPath, modulePath, 'package.json');
+          var type = _.contains(includeProps, identifier)
+            ? 'object'
+            : (_.contains(includeVars, identifier) ? 'variable' : 'function');
 
-          var packageJSON = {
+          var moduleDesc = 'The ' +
+            (isInternal ? 'internal ' : '') +
+            'Lo-Dash ' + type + ' `' + (isInternal ? '' : '_.') +
+            identifier + '` as a Node.js module.';
+
+          var templatePath = fs.realpathSync(path.join(__dirname, '..', 'template')),
+              licenseText = fs.readFileSync(path.join(templatePath, 'license.jst'), 'utf-8');
+
+          var packageText = _.template(fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf-8'), {
             'name': moduleName,
-            'version': version,
-            'description': 'A collection of Lo-Dash methods as Node.js modules.',
-              'homepage': 'http://lodash.com/custom-builds',
-              'license': 'MIT',
-              'keywords': [
-                'lodash',
-                'modules',
-                'util'
-              ],
-              'author': 'John-David Dalton <john.david.dalton@gmail.com> (http://allyoucanleet.com/)',
-              'contributors': [
-                'John-David Dalton <john.david.dalton@gmail.com> (http://allyoucanleet.com/)',
-                'Blaine Bublitz <blaine@iceddev.com> (http://iceddev.com/)',
-                'Kit Cambridge <github@kitcambridge.be> (http://kitcambridge.be/)',
-                'Mathias Bynens <mathias@qiwi.be> (http://mathiasbynens.be/)',
-              ],
-              'bugs': 'https://github.com/lodash/lodash-cli/issues',
-              'repository': {
-                'type': 'git',
-                'url': 'https://github.com/lodash/lodash-node.git',
-              }
-          };
-
-          if (depPaths) {
-            packageJSON.dependencies = _.transform(depPaths, function(result, depPath) {
+            'version': lodash.VERSION,
+            'description': moduleDesc,
+            'dependencies': _.transform(depPaths, function(result, depPath) {
               result[depPath] = version;
-            }, {});
-          }
-          fs.writeFileSync(packagePath, JSON.stringify(packageJSON, null, 2) + '\n', 'utf-8');
+            }, {})
+          });
+
+          fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE.txt'), licenseText, 'utf-8');
+          fs.writeFileSync(path.join(outputPath, modulePath, 'package.json'), packageText, 'utf-8');
         }
       });
     });
