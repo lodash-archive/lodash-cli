@@ -29,6 +29,7 @@
     "lib/post-compile.js",
     "lib/util.js",
     "template/license.jst",
-    "template/package.jst"
+    "template/package.jst",
+    "template/readme.jst"
   ]
 }
