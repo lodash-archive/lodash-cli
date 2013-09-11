@@ -833,38 +833,33 @@
         includeProps = state.includeProps,
         includeVars = state.includeVars,
         isAMD = state.isAMD,
-        isBackbone = state.isBackbone,
-        isCommonJS = state.isCommonJS,
-        isCSP = state.isCSP,
-        isGlobal = state.isGlobal,
-        isLegacy = state.isLegacy,
-        isMapped = state.isMapped,
-        isMobile = state.isMobile,
-        isModern = state.isModern,
         isNode = state.isNode,
         isNpm = state.isNpm,
-        isStdOut = state.isStdOut,
-        isStrict = state.isStrict,
-        isUnderscore = state.isUnderscore,
+        lodash = state.lodash,
         outputPath = state.outputPath,
         propDepMap = state.propDepMap,
         varDepMap = state.varDepMap;
 
     var empty = [],
         identifiers = _.pull(buildFuncs.concat(includeProps, includeVars), 'lodash'),
-        sep = '/';
-
-    var categories = _.uniq(_.compact(identifiers.map(function(identifier) {
-      return getCategory(identifier, funcDepMap);
-    }))).sort();
+        version = lodash.VERSION;
 
     var topLevel = {
       'lodash': true,
       'support': true
     };
 
+    var categories = _.uniq(_.compact(identifiers.map(function(identifier) {
+      return getCategory(identifier, funcDepMap);
+    }))).sort();
+
+    var internals = _.reject(identifiers, function(identifier) {
+      return topLevel[identifier] || getCategory(identifier, funcDepMap);
+    });
+
     var getDepPath = function(dep, fromPath) {
-      var toPath = getPath(dep),
+      var sep = '/',
+          toPath = getPath(dep),
           relative = path.relative(fromPath || '', toPath).replace(RegExp(path.sepEscaped, 'g'), sep);
 
       if (relative.charAt(0) != '.') {
@@ -882,16 +877,20 @@
     var getPath = function(identifier) {
       return topLevel[identifier]
         ? ''
-        : (getCategory(identifier, funcDepMap) || 'internals').toLowerCase() + sep;
+        : (getCategory(identifier, funcDepMap) || 'internals').toLowerCase();
     };
 
     // prepare state
     state.plusFuncs = state.minusFuncs = empty;
     state.isAMD = state.isCommonJS = state.isGlobal = state.isNode = false;
 
+    if (isNpm) {
+      identifiers = _.difference(identifiers, categoryMap.Chaining);
+    }
     // create modules for each identifier
     identifiers.forEach(function(identifier) {
-      var modulePath = getPath(identifier),
+      var moduleName = (isNpm ? 'lodash.' + (_.contains(internals, identifier) ? '_' : '') : '') + identifier,
+          modulePath = isNpm ? moduleName : getPath(identifier),
           iife = [];
 
       var deps = getDependencies(identifier, funcDepMap, true)
@@ -899,7 +898,9 @@
         .concat(varDepMap[identifier] || arrayRef)
         .sort();
 
-      var depPaths = getDepPaths(deps, modulePath);
+      var depPaths = isNpm
+        ? deps.map(function(dep) { return 'lodash.' + (_.contains(internals, dep) ? '_' : '') + dep; })
+        : getDepPaths(deps, modulePath);
 
       if (isAMD) {
         iife.push(
@@ -910,12 +911,9 @@
         );
       }
       else if (isNode) {
-        if (isNpm) {
-          depPaths = deps.map(function(dep) { return 'lodash.' + dep; });
-        }
         iife.push(
-          _.reduce(depPaths, function(result, path, index) {
-            return result + (result ? ',\n      ' : '  var ') + deps[index] + " = require('" + path + "')";
+          _.reduce(depPaths, function(result, depPath, index) {
+            return result + (result ? ',\n      ' : '  var ') + deps[index] + " = require('" + depPath + "')";
           }, '') + ';',
           '%output%',
           'module.exports = ' + identifier + ';'
@@ -924,7 +922,7 @@
 
       state.buildFuncs = state.includeFuncs = state.includeProps = state.includeVars = empty;
       state.iife = iife.join('\n');
-      state.outputPath = path.join(outputPath, modulePath + identifier + '.js');
+      state.outputPath = path.join(outputPath, modulePath, (isNpm ? 'index' : identifier) + '.js');
 
       var include = [identifier];
       if (_.contains(includeProps, identifier)) {
@@ -943,111 +941,137 @@
         }
         data.source = source;
         defaultBuildCallback(data);
+
+        if (isNpm) {
+          var packagePath = path.join(outputPath, modulePath, 'package.json');
+
+          var packageJSON = {
+            'name': moduleName,
+            'version': version,
+            'description': 'A collection of Lo-Dash methods as Node.js modules.',
+              'homepage': 'http://lodash.com/custom-builds',
+              'license': 'MIT',
+              'keywords': [
+                'lodash',
+                'modules',
+                'util'
+              ],
+              'author': 'John-David Dalton <john.david.dalton@gmail.com> (http://allyoucanleet.com/)',
+              'contributors': [
+                'John-David Dalton <john.david.dalton@gmail.com> (http://allyoucanleet.com/)',
+                'Blaine Bublitz <blaine@iceddev.com> (http://iceddev.com/)',
+                'Kit Cambridge <github@kitcambridge.be> (http://kitcambridge.be/)',
+                'Mathias Bynens <mathias@qiwi.be> (http://mathiasbynens.be/)',
+              ],
+              'bugs': 'https://github.com/lodash/lodash-cli/issues',
+              'repository': {
+                'type': 'git',
+                'url': 'https://github.com/lodash/lodash-node.git',
+              }
+          };
+
+          if (depPaths) {
+            packageJSON.dependencies = _.transform(depPaths, function(result, depPath) {
+              result[depPath] = version;
+            }, {});
+          }
+          fs.writeFileSync(packagePath, JSON.stringify(packageJSON, null, 2) + '\n', 'utf-8');
+        }
       });
     });
 
-    // create lodash module
-    (function() {
-      var categoryDeps =  _.invoke(categories, 'toLowerCase'),
-          identifier = 'lodash',
-          modulePath = getPath(identifier);
+    if (!isNpm) {
+      // create lodash module
+      (function() {
+        var categoryDeps =  _.invoke(categories, 'toLowerCase'),
+            identifier = 'lodash',
+            modulePath = getPath(identifier);
 
-      var deps = getDependencies(identifier, funcDepMap, true)
-        .concat(propDepMap[identifier] || arrayRef)
-        .concat(varDepMap[identifier] || arrayRef)
-        .sort();
-
-      var categoryDepPaths = categoryDeps.map(function(dep) { return './' + dep; }),
-          depArgs = categoryDeps.concat(deps).join(', '),
-          depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath)),
-          iife = [];
-
-      if (isAMD) {
-        iife.push(
-          'define([' + (depPaths.length ? "'" + depPaths.join("', '") + "'" : '') + '], function(' + depArgs + ') {',
-          '%output%',
-          '  return lodash;',
-          '});'
-        );
-      }
-      else if (isNode) {
-        if (isNpm) {
-          deps = _.union(deps, _.transform(categories, function(result, category) {
-            push.apply(result, _.intersection(categoryMap[category], identifiers));
-          }))
+        var deps = getDependencies(identifier, funcDepMap, true)
+          .concat(propDepMap[identifier] || arrayRef)
+          .concat(varDepMap[identifier] || arrayRef)
           .sort();
 
-          depPaths = deps.map(function(dep) { return 'lodash.' + dep; });
-        } else {
+        var categoryDepPaths = categoryDeps.map(function(dep) { return './' + dep; }),
+            depArgs = categoryDeps.concat(deps).join(', '),
+            depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath)),
+            iife = [];
+
+        if (isAMD) {
+          iife.push(
+            'define([' + (depPaths.length ? "'" + depPaths.join("', '") + "'" : '') + '], function(' + depArgs + ') {',
+            '%output%',
+            '  return lodash;',
+            '});'
+          );
+        }
+        else if (isNode) {
           deps = categoryDeps.concat(deps);
+
+          iife.push(
+            _.reduce(depPaths, function(result, path, index) {
+                return result + (result ? ',\n      ' : '  var ') + deps[index] + " = require('" + path + "')";
+              }, '') + ';',
+            '%output%',
+            'module.exports = ' + identifier + ';'
+          );
         }
 
-        iife.push(
-          _.reduce(depPaths, function(result, path, index) {
-              return result + (result ? ',\n      ' : '  var ') + deps[index] + " = require('" + path + "')";
-            }, '') + ';',
-          '%output%',
-          'module.exports = ' + identifier + ';'
-        );
-      }
+        state.iife = iife.join('\n');
+        state.buildFuncs = state.includeFuncs = [identifier];
+        state.includeProps = state.includeVars = empty;
+        state.outputPath = path.join(outputPath, identifier + '.js');
 
-      state.iife = iife.join('\n');
-      state.buildFuncs = state.includeFuncs = [identifier];
-      state.includeProps = state.includeVars = empty;
-      state.outputPath = path.join(outputPath, identifier + '.js');
+        build(state, function(data) {
+          var source = data.source;
 
-      build(state, function(data) {
-        var source = data.source;
-
-        // add category namespaces to each lodash function assignment
-        if (!isNpm) {
+          // add category namespaces to each lodash function assignment
           source = source.replace(/(lodash(?:\.prototype)?\.\w+\s*=\s*)(\w+)/g, function(match, prelude, identifier) {
             return prelude + getCategory(identifier, funcDepMap).toLowerCase() + '.' + identifier;
           });
-        }
-        if (_.contains(identifiers, 'mixin')) {
-          source = source.replace(/^ *lodashWrapper\.prototype\s*=[^;]+;\n/m, function(match) {
-            return match + [
-              '',
-              '  // wrap `_.mixin` so it works when provided only one argument',
-              '  mixin = (function(fn) {',
-              '    return function(object, source) {',
-              '      if (!source) {',
-              '        source = object;',
-              '        object = lodash;',
-              '      }',
-              '      return fn(object, source);',
-              '    };',
-              '  }(mixin));',
-              ''
-            ].join('\n');
+
+          if (_.contains(identifiers, 'mixin')) {
+            source = source.replace(/^ *lodashWrapper\.prototype\s*=[^;]+;\n/m, function(match) {
+              return match + [
+                '',
+                '  // wrap `_.mixin` so it works when provided only one argument',
+                '  mixin = (function(fn) {',
+                '    return function(object, source) {',
+                '      if (!source) {',
+                '        source = object;',
+                '        object = lodash;',
+                '      }',
+                '      return fn(object, source);',
+                '    };',
+                '  }(mixin));',
+                ''
+              ].join('\n');
+            });
+          }
+
+          source = source.replace(/^ *(return +|module\.exports\s*=\s*)lodash;$/m, function(match) {
+            var prelude = '';
+            if (_.contains(identifiers, 'support')) {
+              prelude += '  lodash.support = support;\n';
+            }
+            if (_.contains(identifiers, 'templateSettings')) {
+              prelude += '  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;\n';
+            }
+            return prelude + match;
           });
-        }
 
-        source = source.replace(/^ *(return +|module\.exports\s*=\s*)lodash;$/m, function(match) {
-          var prelude = '';
-          if (_.contains(identifiers, 'support')) {
-            prelude += '  lodash.support = support;\n';
+          if (isNode) {
+            source = source.replace(/^  /gm, '');
           }
-          if (_.contains(identifiers, 'templateSettings')) {
-            prelude += '  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;\n';
-          }
-          return prelude + match;
+          data.source = source;
+          defaultBuildCallback(data);
         });
+      }());
 
-        if (isNode) {
-          source = source.replace(/^  /gm, '');
-        }
-        data.source = source;
-        defaultBuildCallback(data);
-      });
-    }());
+      // clear state
+      state.buildFuncs = state.includeFuncs = state.includeProps = state.includeVars = empty;
 
-    // clear state
-    state.buildFuncs = state.includeFuncs = state.includeProps = state.includeVars = empty;
-
-    // create category modules
-    if (!isNpm) {
+      // create category modules
       categories.forEach(function(category) {
         var deps = _.intersection(categoryMap[category], identifiers).sort(),
             depPaths = getDepPaths(deps),
@@ -1067,7 +1091,7 @@
           iife.push(
             '%output%',
             'module.exports = {',
-            depPaths.map(function(path, index) { return "  '" + deps[index] + "': require('" + path + "')"; }).join(',\n'),
+            depPaths.map(function(depPath, index) { return "  '" + deps[index] + "': require('" + depPath + "')"; }).join(',\n'),
             '};'
           );
         }
@@ -1075,17 +1099,15 @@
         state.outputPath = path.join(outputPath, category.toLowerCase() + '.js');
         build(state);
       });
-
-      if (callback) {
-        callback({ 'outputPath': fs.realpathSync(outputPath) });
-      }
+    }
+    if (callback) {
+      callback({ 'outputPath': fs.realpathSync(outputPath) });
     }
   }
 
   /**
-   * Compiles template files based on the provided build state using the single
-   * source, extending `_.templates` with precompiled templates named after
-   * each template file's basename.
+   * Compiles template files based on the provided build state extending
+   * `_.templates` with precompiled templates named after each file's basename.
    *
    * @private
    * @param {Object} state The build state object.
@@ -4265,6 +4287,7 @@
           'isStdOut': isStdOut,
           'isStrict': isStrict,
           'isUnderscore': isUnderscore,
+          'lodash': lodash,
           'minusFuncs': minusFuncs,
           'options': options,
           'outputPath': outputPath,
