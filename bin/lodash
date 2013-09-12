@@ -2871,7 +2871,7 @@
         },
         'exports': {
           'entries': exportsOptions,
-          'validEntries': allExports
+          'validEntries': isModularize ? ['amd', 'node', 'npm'] : allExports
         },
         'include': {
           'entries': includeFuncs,
