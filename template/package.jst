@@ -15,6 +15,6 @@
   "bugs": "https://github.com/lodash/lodash-cli/issues",
   "repository": { "type": "git", "url": "https://github.com/lodash/lodash-cli.git" }<%
   if (!_.isEmpty(dependencies)) {
-    print(',\n  "dependencies": ' + JSON.stringify(dependencies));
+    print(',\n  "dependencies": ' + JSON.stringify(dependencies, null, 4).replace(/}$/, '  $&'));
   }%>
 }

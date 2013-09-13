@@ -896,8 +896,8 @@
     identifiers.forEach(function(identifier) {
       var isInternal = _.contains(internals, identifier),
           prefix = isInternal ? '_' : '',
-          moduleName = (isNpm ? 'lodash.' + prefix : '') + identifier,
-          modulePath = isNpm ?  prefix + identifier : getPath(identifier),
+          moduleName = isNpm ? 'lodash.' + prefix + identifier.toLowerCase() : identifier,
+          modulePath = isNpm ?  prefix + identifier.toLowerCase() : getPath(identifier),
           iife = [];
 
       var deps = getDependencies(identifier, funcDepMap, true)
@@ -906,7 +906,7 @@
         .sort();
 
       var depPaths = isNpm
-        ? deps.map(function(dep) { return 'lodash.' + (_.contains(internals, dep) ? '_' : '') + dep; })
+        ? deps.map(function(dep) { return 'lodash.' + (_.contains(internals, dep) ? '_' : '') + dep.toLowerCase(); })
         : getDepPaths(deps, modulePath);
 
       if (isAMD) {

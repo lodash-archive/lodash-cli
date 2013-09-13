@@ -1,4 +1,4 @@
-# lodash-cli v1.3.1
+# lodash-cli v2.0.0
 
 The Lo-Dash command-line interface for creating custom builds and precompiling templates.
 
@@ -8,7 +8,7 @@ Head on over to the [documentation](http://lodash.com/custom-builds) for build c
 
 ## Support
 
-lodash-cli has been tested in at least Node.js 0.6.8-0.10.15.
+lodash-cli has been tested in at least Node.js 0.6.8-0.10.18.
 
 ## Author
 
