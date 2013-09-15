@@ -1558,7 +1558,7 @@
           written = string;
         };
 
-        build(['exports=', 'include='].concat(command.split(' ')), function(data) {
+        build(['exports=none', 'include=none'].concat(command.split(' ')), function(data) {
           strictEqual('outputPath' in data, false);
           equal(written, data.source);
           equal(arguments.length, 1);

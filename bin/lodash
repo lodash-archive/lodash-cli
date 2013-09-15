@@ -1707,33 +1707,48 @@
   }
 
   /**
-   * Converts a comma separated options string into an array.
+   * Converts a comma separated option value into an array.
    *
    * @private
-   * @param {string} value The option to convert.
+   * @param {string} name The name of the option to inspect.
+   * @param {string} string The options string.
    * @returns {Array} Returns the new converted array.
    */
-  function optionToArray(value) {
-    return _.compact(_.isArray(value)
-      ? value
-      : value.match(/\w+=(.*)$/)[1].split(/, */)
+  function optionToArray(name, string) {
+    return _.compact(_.isArray(string)
+      ? string
+      : _.invoke((optionToValue(name, string) || '').split(/, */), 'trim')
     );
   }
 
   /**
-   * Converts a comma separated options string into an array of function names.
+   * Converts a comma separated option value into an array of function names.
    *
    * @private
-   * @param {string} value The option to convert.
+   * @param {string} name The name of the option to inspect.
+   * @param {string} string The options string.
    * @param {Object} [depMap] The dependency map used to resolve real names.
    * @returns {Array} Returns the new converted array.
    */
-  function optionToMethodsArray(value, depMap) {
+  function optionToFuncsArray(name, string, depMap) {
     depMap || (depMap = funcDependencyMap);
-    return optionToArray(value).map(function(identifier) {
+    return optionToArray(name, string).map(function(identifier) {
       // convert aliases to real function names
       return getRealName(identifier, depMap);
     });
+  }
+
+  /**
+   *  Extracts the option value from an option string.
+   *
+   * @private
+   * @param {string} name The name of the option to inspect.
+   * @param {string} string The options string.
+   * @returns {String|undefined} Returns the option value, else `undefined`.
+   */
+  function optionToValue(name, string) {
+    var result = (result = string.match(RegExp('^' + name + '=([\\s\\S]+)$'))) && result[1].trim();
+    return result || undefined;
   }
 
   /**
@@ -2639,8 +2654,8 @@
 
       // used to specify a custom IIFE to wrap Lo-Dash
       var iife = options.reduce(function(result, value) {
-        var match = value.match(/^iife=([\s\S]*)$/);
-        return match ? match[1] : result;
+        value = optionToValue('iife', value);
+        return value == null ? result : value;
       }, null);
 
       // flag to specify a Backbone build
@@ -2692,7 +2707,8 @@
       // used to specify the ways to export the `lodash` function
       var exportsOptions = (function() {
         var result = options.reduce(function(result, value) {
-          return /^exports=.*$/.test(value) ? optionToArray(value).sort() : result;
+          value = optionToArray('exports', value).sort();
+          return _.size(value) ? value : result;
         }, isModularize
           ? ['amd']
           : (isUnderscore ? ['commonjs', 'global', 'node'] : _.without(allExports, 'npm'))
@@ -2702,8 +2718,7 @@
 
       // used to specify the AMD module ID of Lo-Dash used by precompiled templates
       var moduleId = options.reduce(function(result, value) {
-        var match = value.match(/^moduleId=(.*)$/);
-        return match ? match[1] : result;
+        return optionToValue('moduleId', value) || result;
       }, 'lodash');
 
       // used as the output path for the build
@@ -2716,17 +2731,14 @@
 
       // used to match external template files to precompile
       var templatePattern = options.reduce(function(result, value) {
-        var match = value.match(/^template=(.+)$/);
-        return match
-          ? match[1]
-          : result;
+        return optionToValue('template', value) || result;
       }, '');
 
       // used as the template settings for precompiled templates
       var templateSettings = options.reduce(function(result, value) {
-        var match = value.match(/^settings=(.+)$/);
-        return match
-          ? _.assign(result, Function('return {' + match[1].replace(/^\{|}$/g, '') + '}')())
+        value = optionToValue('settings', value);
+        return value
+          ? _.assign(result, Function('return {' + value.replace(/^\{|}$/g, '') + '}')())
           : result;
       }, _.assign(_.clone(_.templateSettings), {
         'moduleId': moduleId
@@ -2754,9 +2766,9 @@
 
       // categories of functions to include in the build
       var categoryOptions = options.reduce(function(accumulator, value) {
-        if (/^category=.+$/.test(value)) {
-          var array = optionToArray(value);
-          accumulator = _.union(array.map(function(category) {
+        value = optionToArray('category', value);
+        if (_.size(value)) {
+          accumulator = _.union(value.map(function(category) {
             return capitalize(category.toLowerCase());
           }));
         }
@@ -2765,8 +2777,9 @@
 
       // functions to include in the build
       var includeFuncs = options.reduce(function(accumulator, value) {
-        return /^include=.*$/.test(value)
-          ? _.union(accumulator, optionToMethodsArray(value, funcDepMap))
+        value = optionToFuncsArray('include', value, funcDepMap);
+        return _.size(value)
+          ? _.union(accumulator, value)
           : accumulator;
       }, categoryOptions.slice());
 
@@ -2778,15 +2791,17 @@
 
       // functions to remove from the build
       var minusFuncs = options.reduce(function(accumulator, value) {
-        return /^(?:exclude|minus)=.*$/.test(value)
-          ? _.union(accumulator, optionToMethodsArray(value, funcDepMap))
+        value = optionToFuncsArray('(?:exclude|minus)', value, funcDepMap);
+        return _.size(value)
+          ? _.union(accumulator, value)
           : accumulator;
       }, []);
 
       // functions to add to the build
       var plusFuncs = options.reduce(function(accumulator, value) {
-        return /^plus=.*$/.test(value)
-          ? _.union(accumulator, optionToMethodsArray(value, funcDepMap))
+        value = optionToFuncsArray('plus', value, funcDepMap);
+        return _.size(value)
+          ? _.union(accumulator, value)
           : accumulator;
       }, []);
 
