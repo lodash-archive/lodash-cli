@@ -266,8 +266,8 @@
     'findWhere': ['where']
   };
 
-  /** Used to track Lo-Dash property dependencies of identifiers */
-  var propDependencyMap = {
+  /** Used to track Lo-Dash object dependencies of identifiers */
+  var objDependencyMap = {
     'at': ['support'],
     'baseClone': ['support'],
     'baseCreateCallback': ['support'],
@@ -633,8 +633,8 @@
   ];
 
   /** List of all property dependencies */
-  var propDependencies = _.uniq(_.transform(propDependencyMap, function(result, propNames) {
-    push.apply(result, propNames);
+  var objDependencies = _.uniq(_.transform(objDependencyMap, function(result, objNames) {
+    push.apply(result, objNames);
   }, []));
 
   /** List of all variable dependencies */
@@ -643,7 +643,7 @@
   }, []));
 
   /** List of all functions */
-  var allFuncs = _.difference(_.keys(funcDependencyMap), propDependencies, varDependencies).filter(function(key) {
+  var allFuncs = _.difference(_.keys(funcDependencyMap), objDependencies, varDependencies).filter(function(key) {
     var type = typeof _[key];
     return type == 'function' || type == 'undefined';
   });
@@ -830,7 +830,7 @@
   function buildModule(state, callback) {
     var buildFuncs = state.buildFuncs,
         funcDepMap = state.funcDepMap,
-        includeProps = state.includeProps,
+        includeObjs = state.includeObjs,
         includeVars = state.includeVars,
         isAMD = state.isAMD,
         isNode = state.isNode,
@@ -846,7 +846,7 @@
         readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
 
     var empty = [],
-        identifiers = _.pull(buildFuncs.concat(includeProps, includeVars), 'lodash'),
+        identifiers = _.pull(buildFuncs.concat(includeObjs, includeVars), 'lodash'),
         version = lodash.VERSION;
 
     var topLevel = {
@@ -927,13 +927,13 @@
         );
       }
 
-      state.buildFuncs = state.includeFuncs = state.includeProps = state.includeVars = empty;
+      state.buildFuncs = state.includeFuncs = state.includeObjs = state.includeVars = empty;
       state.iife = iife.join('\n');
       state.outputPath = path.join(outputPath, modulePath, (isNpm ? 'index' : identifier) + '.js');
 
       var include = [identifier];
-      if (_.contains(includeProps, identifier)) {
-        state.includeProps = include;
+      if (_.contains(includeObjs, identifier)) {
+        state.includeObjs = include;
       }
       else if (_.contains(includeVars, identifier)) {
         state.includeVars = include;
@@ -950,7 +950,7 @@
         defaultBuildCallback(data);
 
         if (isNpm) {
-          var type = _.contains(includeProps, identifier)
+          var type = _.contains(includeObjs, identifier)
             ? 'object'
             : (_.contains(includeVars, identifier) ? 'variable' : 'function');
 
@@ -1014,7 +1014,7 @@
 
         state.iife = iife.join('\n');
         state.buildFuncs = state.includeFuncs = [identifier];
-        state.includeProps = state.includeVars = empty;
+        state.includeObjs = state.includeVars = empty;
         state.outputPath = path.join(outputPath, identifier + '.js');
 
         build(state, function(data) {
@@ -1064,7 +1064,7 @@
       }());
 
       // clear state
-      state.buildFuncs = state.includeFuncs = state.includeProps = state.includeVars = empty;
+      state.buildFuncs = state.includeFuncs = state.includeObjs = state.includeVars = empty;
 
       // create category modules
       categories.forEach(function(category) {
@@ -2598,7 +2598,7 @@
           funcDepMap = state.funcDepMap,
           iife = state.iife,
           includeFuncs = state.includeFuncs,
-          includeProps = state.includeProps,
+          includeObjs = state.includeObjs,
           includeVars = state.includeVars,
           isAMD = state.isAMD,
           isBackbone = state.isBackbone,
@@ -2646,7 +2646,7 @@
 
       // clone dependencies to modify
       var funcDepMap = _.cloneDeep(funcDependencyMap),
-          propDepMap = _.cloneDeep(propDependencyMap),
+          propDepMap = _.cloneDeep(objDependencyMap),
           varDepMap = _.cloneDeep(varDependencyMap);
 
       // the path to the source file
@@ -2784,7 +2784,7 @@
       }, categoryOptions.slice());
 
       // properties to include in the build
-      var includeProps = _.intersection(includeFuncs, propDependencies);
+      var includeObjs = _.intersection(includeFuncs, objDependencies);
 
       // variables to include in the build
       var includeVars = _.intersection(includeFuncs, varDependencies);
@@ -2826,7 +2826,7 @@
       });
 
       // remove categories from function names
-      includeFuncs = _.difference(includeFuncs, allCategories, includeProps, includeVars);
+      includeFuncs = _.difference(includeFuncs, allCategories, includeObjs, includeVars);
       minusFuncs = _.difference(minusFuncs, allCategories);
       plusFuncs = _.difference(plusFuncs, allCategories);
 
@@ -3156,7 +3156,7 @@
           result = includeFuncs;
         }
         // add default function names
-        if (!includeProps.length && !includeVars.length) {
+        if (!includeObjs.length && !includeVars.length) {
           if (isBackbone && !result) {
             result = backboneDependencies;
           }
@@ -3211,7 +3211,7 @@
           }, result));
         }
 
-        includeProps = expand(includeProps, propDepMap);
+        includeObjs = expand(includeObjs, propDepMap);
         includeVars = expand(includeVars, varDepMap);
       }());
 
@@ -4279,7 +4279,7 @@
           'filePath': filePath,
           'funcDepMap': funcDepMap,
           'includeFuncs': includeFuncs,
-          'includeProps': includeProps,
+          'includeObjs': includeObjs,
           'includeVars': includeVars,
           'isAMD': isAMD,
           'isBackbone': isBackbone,
@@ -4409,8 +4409,8 @@
       });
 
       // remove unneeded property dependencies
-      _.each(propDependencies, function(propName) {
-        if (!_.contains(includeProps, propName)) {
+      _.each(objDependencies, function(propName) {
+        if (!_.contains(includeObjs, propName)) {
           source = removeProp(source, propName);
         }
       });
@@ -4450,7 +4450,7 @@
         var isShallow = isExcluded('runInContext'),
             useMap = {},
             snippet = removeStrings(removeComments(source)),
-            varNames = _.difference(getVars(snippet, isShallow), includeProps);
+            varNames = _.difference(getVars(snippet, isShallow), includeObjs);
 
         while (varNames.length) {
           varNames = _.sortBy(varNames, function(varName) {
