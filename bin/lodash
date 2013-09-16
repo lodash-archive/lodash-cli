@@ -657,7 +657,7 @@
   /*--------------------------------------------------------------------------*/
 
   /**
-   * Adds build `commands` to the copyright/license header of the `source`.
+   * Adds build `commands` to the copyright/license header of `source`.
    *
    * @private
    * @param {string} source The source to process.
@@ -665,7 +665,7 @@
    * @returns {string} Returns the modified source.
    */
   function addCommandsToHeader(source, commands) {
-    return source.replace(/(\/\**\n)( \*)( *@license[\s*]+)( *Lo-Dash [\w.-]+)(.*)/, function() {
+    return source.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *Lo-Dash [\w.-]+)(.*)/, function() {
       // remove `node path/to/build.js` from `commands`
       if (reNode.test(commands[0])) {
         commands.splice(0, 2);
@@ -691,14 +691,15 @@
       return (
         parts[0] +
         parts[1] +
-        parts[2] + parts[3] + ' (Custom Build)' + parts[4] + '\n' +
+        (parts[2] || '') +
+        parts[3] + ' (Custom Build)' + parts[4] + '\n' +
         parts[1] + ' Build: `lodash ' + commands.join(' ') + '`'
       );
     });
   }
 
   /**
-   * Adds support for Underscore style chaining to the `source`.
+   * Adds support for Underscore style chaining to `source`.
    *
    * @private
    * @param {string} source The source to process.
@@ -835,7 +836,6 @@
         isAMD = state.isAMD,
         isNode = state.isNode,
         isNpm = state.isNpm,
-        lodash = state.lodash,
         outputPath = state.outputPath,
         propDepMap = state.propDepMap,
         varDepMap = state.varDepMap;
@@ -847,7 +847,7 @@
 
     var empty = [],
         identifiers = _.pull(buildFuncs.concat(includeObjs, includeVars), 'lodash'),
-        version = lodash.VERSION;
+        version = state.lodash.VERSION;
 
     var topLevel = {
       'lodash': true,
@@ -861,6 +861,17 @@
     var internals = _.reject(identifiers, function(identifier) {
       return topLevel[identifier] || getCategory(identifier, funcDepMap);
     });
+
+    var buildCallback = function(data) {
+      var source = data.source;
+      source = addCommandsToHeader(source, state.options);
+
+      // remove @license from copyright header so module builders may strip them
+      source = source.replace(/^ \* @license\n/m, '');
+
+      data.source = source;
+      defaultBuildCallback(data);
+    };
 
     var getDepPath = function(dep, fromPath) {
       var sep = '/',
@@ -942,10 +953,10 @@
       build(state, function(data) {
         var source = data.source;
         if (isNode) {
-          source = source.replace(/^  /gm, '');
+          source = trimIndent(source);
         }
         data.source = source;
-        defaultBuildCallback(data);
+        buildCallback(data);
 
         if (isNpm) {
           var type = _.contains(includeObjs, identifier)
@@ -1055,12 +1066,11 @@
             return prelude + match;
           });
 
-          // trim leading indent
           if (isNode) {
-            source = source.replace(/^  /gm, '');
+            source = trimIndent(source);
           }
           data.source = source;
-          defaultBuildCallback(data);
+          buildCallback(data);
         });
       }());
 
@@ -1091,7 +1101,7 @@
         state.iife = iife.join('\n');
         state.buildFuncs = state.includeFuncs = state.includeObjs = state.includeVars = empty;
         state.outputPath = path.join(outputPath, category.toLowerCase() + '.js');
-        build(state);
+        build(state, buildCallback);
       });
     }
     if (callback) {
@@ -1324,7 +1334,7 @@
   }
 
   /**
-   * Gets the category of the given `identifier`.
+   * Gets the category of the given identifier.
    *
    * @private
    * @param {string} identifier The identifier to query.
@@ -1521,7 +1531,7 @@
   }
 
   /**
-   * Gets the names of identifiers in `source` that belong to the given `category`.
+   * Gets the names of identifiers in `source` that belong to the given category.
    *
    * @private
    * @param {string} category The category to filter by.
@@ -1594,7 +1604,7 @@
   }
 
   /**
-   * Determines if a variable, of the given `varName`, is used in `source`.
+   * Determines if a variable, of the given variable name, is used in `source`.
    *
    * @private
    * @param {string} source The source to process.
@@ -1647,7 +1657,7 @@
   }
 
   /**
-   * Searches `source` for a Lo-Dash property, of the given `propName`, and
+   * Searches `source` for a Lo-Dash property, of the given property name, and
    * returns the matched snippet.
    *
    * @private
@@ -2052,7 +2062,7 @@
   }
 
   /**
-   * Removes a Lo-Dash property, of the given `propName`, from `source`.
+   * Removes a Lo-Dash property, of the given property name, from `source`.
    *
    * @private
    * @param {string} source The source to process.
@@ -2090,9 +2100,8 @@
 
     // remove function scaffolding, leaving most of its content
     source = source.replace(matchFunction(source, 'runInContext', true), function(match) {
-      return match
-        .replace(/^ {4}/gm, '  ')
-        .replace(/^[\s\S]+?function runInContext[\s\S]+?context *= *context.+| *return lodash[\s\S]+$/g, '');
+      match = replaceIndent(match, 2, 1);
+      return match.replace(/^[\s\S]+?function runInContext[\s\S]+?context *= *context.+| *return lodash[\s\S]+$/g, '');
     });
 
     // cleanup adjusted source
@@ -2389,7 +2398,7 @@
   }
 
   /**
-   * Removes a variable, of the given `varName`, from `source`.
+   * Removes a variable, of the given variable name, from `source`.
    *
    * @private
    * @param {string} source The source to process.
@@ -2439,6 +2448,24 @@
   }
 
   /**
+   * Repeats a the given string `n` number of times.
+   *
+   * @private
+   * @param {string} string The string to repeat.
+   * @param {string} [n=0] The number of times to repeat the string.
+   * @returns {string} Returns the repeated string.
+   */
+  function repeat(string, n) {
+    n || (n = 0);
+
+    // uses the exponentiation by squaring algorithm
+    if (n < 1) return '';
+    if (n % 2) return repeat(string, n - 1) + string;
+    var half = repeat(string, n / 2);
+    return half + half;
+  }
+
+  /**
    * Replaces the `funcName` function body in `source` with `funcValue`.
    *
    * @private
@@ -2458,6 +2485,19 @@
     });
 
     return source;
+  }
+
+  /**
+   * Replaces the indent at level `from` of the given source with the level `to`.
+   *
+   * @private
+   * @param {string} source The source to process.
+   * @param {number} from The indent level to be replaced.
+   * @param {number} to The indent level to replace with.
+   * @returns {string} Returns the modified source.
+   */
+  function replaceIndent(source, from, to) {
+    return source.replace(RegExp('^(?:  ){' + (from || 1) + '}', 'gm'), repeat('  ', to));
   }
 
   /**
@@ -2531,6 +2571,18 @@
     });
 
     return source;
+  }
+
+  /**
+   * Trims the indent of the specified level from `source`.
+   *
+   * @private
+   * @param {string} source The source to process.
+   * @param {number} level The level of indent to trim.
+   * @returns {string} Returns the modified source.
+   */
+  function trimIndent(source, level) {
+    return replaceIndent(source, level || 1);
   }
 
   /*--------------------------------------------------------------------------*/
@@ -3526,7 +3578,7 @@
                 '',
                 '/**',
                 ' * Examines each element in a `collection`, returning the first that',
-                ' * has the given `properties`. When checking `properties`, this method',
+                ' * has the given properties. When checking `properties`, this method',
                 ' * performs a deep comparison between values to determine if they are',
                 ' * equivalent to each other.',
                 ' *',
