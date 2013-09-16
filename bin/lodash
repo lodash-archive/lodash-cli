@@ -886,8 +886,8 @@
     };
 
     // prepare state
+    state.isAMD = state.isNode = state.isNpm = false;
     state.plusFuncs = state.minusFuncs = empty;
-    state.isAMD = state.isCommonJS = state.isGlobal = state.isNode = false;
 
     if (isNpm) {
       identifiers = _.difference(identifiers, categoryMap.Chaining);
@@ -896,13 +896,13 @@
     identifiers.forEach(function(identifier) {
       var isInternal = _.contains(internals, identifier),
           prefix = isInternal ? '_' : '',
-          moduleName = isNpm ? 'lodash.' + prefix + identifier.toLowerCase() : identifier,
           modulePath = isNpm ?  prefix + identifier.toLowerCase() : getPath(identifier),
+          moduleName = isNpm ? 'lodash.' + modulePath : identifier,
           iife = [];
 
       var deps = getDependencies(identifier, funcDepMap, true)
-        .concat(propDepMap[identifier] || arrayRef)
-        .concat(varDepMap[identifier] || arrayRef)
+        .concat(propDepMap[identifier] || empty)
+        .concat(varDepMap[identifier] || empty)
         .sort();
 
       var depPaths = isNpm
@@ -934,11 +934,9 @@
       var include = [identifier];
       if (_.contains(includeObjs, identifier)) {
         state.includeObjs = include;
-      }
-      else if (_.contains(includeVars, identifier)) {
+      } else if (_.contains(includeVars, identifier)) {
         state.includeVars = include;
-      }
-      else {
+      } else {
         state.buildFuncs = state.includeFuncs = include;
       }
       build(state, function(data) {
@@ -978,17 +976,17 @@
     if (!isNpm) {
       // create lodash module
       (function() {
-        var categoryDeps =  _.invoke(categories, 'toLowerCase'),
+        var categoryDeps = _.invoke(categories, 'toLowerCase'),
+            categoryDepPaths = categoryDeps.map(function(dep) { return './' + dep; }),
             identifier = 'lodash',
             modulePath = getPath(identifier);
 
         var deps = getDependencies(identifier, funcDepMap, true)
-          .concat(propDepMap[identifier] || arrayRef)
-          .concat(varDepMap[identifier] || arrayRef)
+          .concat(propDepMap[identifier] || empty)
+          .concat(varDepMap[identifier] || empty)
           .sort();
 
-        var categoryDepPaths = categoryDeps.map(function(dep) { return './' + dep; }),
-            depArgs = categoryDeps.concat(deps).join(', '),
+        var depArgs = categoryDeps.concat(deps).join(', '),
             depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath)),
             iife = [];
 
@@ -1025,6 +1023,7 @@
             return prelude + getCategory(identifier, funcDepMap).toLowerCase() + '.' + identifier;
           });
 
+          // wrap `_.mixin`
           if (_.contains(identifiers, 'mixin')) {
             source = source.replace(/^ *lodashWrapper\.prototype\s*=[^;]+;\n/m, function(match) {
               return match + [
@@ -1044,6 +1043,7 @@
             });
           }
 
+          // add `_.support` and `_.templateSettings`
           source = source.replace(/^ *(return +|module\.exports\s*=\s*)lodash;$/m, function(match) {
             var prelude = '';
             if (_.contains(identifiers, 'support')) {
@@ -1055,6 +1055,7 @@
             return prelude + match;
           });
 
+          // trim leading indent
           if (isNode) {
             source = source.replace(/^  /gm, '');
           }
@@ -1062,9 +1063,6 @@
           defaultBuildCallback(data);
         });
       }());
-
-      // clear state
-      state.buildFuncs = state.includeFuncs = state.includeObjs = state.includeVars = empty;
 
       // create category modules
       categories.forEach(function(category) {
@@ -1091,6 +1089,7 @@
           );
         }
         state.iife = iife.join('\n');
+        state.buildFuncs = state.includeFuncs = state.includeObjs = state.includeVars = empty;
         state.outputPath = path.join(outputPath, category.toLowerCase() + '.js');
         build(state);
       });
@@ -1418,7 +1417,7 @@
       ? funcName
       : (hasOwnProperty.call(depMap, funcName) && depMap[funcName]);
 
-    if (!deps || !deps.length) {
+    if (!_.size(deps)) {
       return [];
     }
     if (isShallow) {
@@ -2708,7 +2707,7 @@
       var exportsOptions = (function() {
         var result = options.reduce(function(result, value) {
           value = optionToArray('exports', value).sort();
-          return _.size(value) ? value : result;
+          return value.length ? value : result;
         }, isModularize
           ? ['amd']
           : (isUnderscore ? ['commonjs', 'global', 'node'] : _.without(allExports, 'npm'))
@@ -2767,7 +2766,7 @@
       // categories of functions to include in the build
       var categoryOptions = options.reduce(function(accumulator, value) {
         value = optionToArray('category', value);
-        if (_.size(value)) {
+        if (value.length) {
           accumulator = _.union(value.map(function(category) {
             return capitalize(category.toLowerCase());
           }));
@@ -2778,7 +2777,7 @@
       // functions to include in the build
       var includeFuncs = options.reduce(function(accumulator, value) {
         value = optionToFuncsArray('include', value, funcDepMap);
-        return _.size(value)
+        return value.length
           ? _.union(accumulator, value)
           : accumulator;
       }, categoryOptions.slice());
@@ -2792,7 +2791,7 @@
       // functions to remove from the build
       var minusFuncs = options.reduce(function(accumulator, value) {
         value = optionToFuncsArray('(?:exclude|minus)', value, funcDepMap);
-        return _.size(value)
+        return value.length
           ? _.union(accumulator, value)
           : accumulator;
       }, []);
@@ -2800,7 +2799,7 @@
       // functions to add to the build
       var plusFuncs = options.reduce(function(accumulator, value) {
         value = optionToFuncsArray('plus', value, funcDepMap);
-        return _.size(value)
+        return value.length
           ? _.union(accumulator, value)
           : accumulator;
       }, []);
