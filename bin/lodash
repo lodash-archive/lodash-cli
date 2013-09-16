@@ -2111,19 +2111,6 @@
   }
 
   /**
-   * Removes the `setBindData` fork from `source`.
-   *
-   * @private
-   * @param {string} source The source to process.
-   * @returns {string} Returns the modified source.
-   */
-  function removeSetBindDataFork(source) {
-    return source = source.replace(matchFunction(source, 'setBindData'), function(match) {
-      return match.replace(getSetBindDataFork(source), '');
-    });
-  }
-
-  /**
    * Removes the `support.spliceObjects` fix from the `Array` function mixins
    * snippet of `source`.
    *
@@ -3281,7 +3268,6 @@
           else {
             source = removeIsFunctionFork(source);
             source = removeCreateObjectFork(source);
-            source = removeSetBindDataFork(source);
 
             // replace `+new Date` with `Date.now` use in `_.debounce
             source = source.replace(matchFunction(source, 'debounce'), function(match) {
