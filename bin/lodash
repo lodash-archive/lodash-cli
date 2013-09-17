@@ -3152,8 +3152,6 @@
             });
           }
           if (!isMobile) {
-            _.pull(funcDepMap.setBindData, 'noop');
-
             _.each(['baseClone', 'lodash', 'transform', 'wrapperValueOf'], function(funcName) {
               _.pull(funcDepMap[funcName], 'baseEach').push('forEach');
             });
