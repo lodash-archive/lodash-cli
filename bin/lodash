@@ -906,9 +906,8 @@
     // create modules for each identifier
     identifiers.forEach(function(identifier) {
       var isInternal = _.contains(internals, identifier),
-          prefix = isInternal ? '_' : '',
-          modulePath = isNpm ?  prefix + identifier.toLowerCase() : getPath(identifier),
-          moduleName = isNpm ? 'lodash.' + modulePath : identifier,
+          moduleName = isNpm ? 'lodash.' + (isInternal ? '_' : '') + identifier.toLowerCase() : identifier,
+          modulePath = isNpm ? moduleName : getPath(identifier),
           iife = [];
 
       var deps = getDependencies(identifier, funcDepMap, true)
@@ -970,7 +969,7 @@
 
           var templateData = {
             'name': moduleName,
-            'version': lodash.VERSION,
+            'version': version,
             'description': moduleDesc,
             'dependencies': _.transform(depPaths, function(result, depPath) {
               result[depPath] = version;
