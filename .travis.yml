@@ -7,8 +7,7 @@ git:
 branches:
   only:
     - master
+before_install:
+  - "git clone --depth=1 --branch=master git://github.com/lodash/lodash.git ./node_modules/lodash"
 script:
-  - "npm install ."
-  - "rm -rf ./node_modules/lodash"
-  - "git clone --depth=1 --branch=master git://github.com/lodash/lodash.git ./node_modules/lodash/"
   - "node ./test/test.js --time-limit 48m"
