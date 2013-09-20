@@ -3855,6 +3855,24 @@
               '}'
             ].join('\n'));
           }
+          // replace `_.random`
+          if (!isLodash('random')) {
+             source = replaceFunction(source, 'random', [
+              'function random(min, max) {',
+              '  if (min == null && max == null) {',
+              '    max = 1;',
+              '  }',
+              '  min = +min || 0;',
+              '  if (max == null) {',
+              '    max = min;',
+              '    min = 0;',
+              '  } else {',
+              '    max = +max || 0;',
+              '  }',
+              '  return min + floor(nativeRandom() * (max - min + 1));',
+              '}'
+            ].join('\n'));
+          }
           // replace `_.sortBy`
           if (!isLodash('sortBy')) {
             source = replaceFunction(source, 'sortBy', [

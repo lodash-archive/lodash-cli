@@ -1126,6 +1126,9 @@
         actual = lodash.pick(object, function(value) { return value != 3; });
         deepEqual(_.keys(actual), [], '_.pick should not accept a `callback`: ' + basename);
 
+        actual = lodash.random(2, 4, true);
+        ok(!(actual % 1) && actual >= 2 && actual <= 4, '_.random should not support a `floating` argument: ' + basename);
+
         deepEqual(lodash.range(1, 4, 0), [1, 2, 3], '_.range should not support a `step` of `0`');
         strictEqual(lodash.some([false, true, false]), true, '_.some: ' + basename);
         equal(lodash.template('${a}', object), '${a}', '_.template should ignore ES6 delimiters: ' + basename);
