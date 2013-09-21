@@ -721,6 +721,7 @@
 
             case 1:
               context.exports = {};
+              context.module = {};
               context.require = function() { return _; };
               vm.runInContext(source, context);
 
@@ -736,8 +737,8 @@
 
             case 3:
               context.exports = {};
-              context.require = function() { return _; };
               context.module = { 'exports': context.exports };
+              context.require = function() { return _; };
               vm.runInContext(source, context);
 
               templates = context.module.exports || defaultTemplates;
@@ -1375,6 +1376,7 @@
 
             case 1:
               context.exports = {};
+              context.module = {};
               vm.runInContext(source, context);
 
               ok(_.isFunction(context.exports._), basename);

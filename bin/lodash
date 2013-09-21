@@ -325,7 +325,7 @@
     'reUnescapedHtml': ['htmlEscapes'],
     'root': ['objectTypes'],
     'setBindData': ['reNative'],
-    'support': ['reNative', 'root'],
+    'support': ['reNative'],
     'template': ['reInterpolate'],
     'templateSettings': ['reInterpolate'],
     'unescape': ['reEscapedHtml'],
@@ -1150,11 +1150,13 @@
       "    'object': true",
       '  };',
       '',
-      "  var freeExports = objectTypes[typeof exports] && typeof require == 'function' && exports;",
+      '  var freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;',
       '',
-      "  var freeModule = objectTypes[typeof module] && module && module.exports == freeExports && module;",
+      '  var freeModule = objectTypes[typeof module] && module && !module.nodeType && module',
       '',
-      "  var freeGlobal = objectTypes[typeof global] && global;",
+      '  var moduleExports = freeModule && freeModule.exports === freeExports && freeExports;',
+      '',
+      '  var freeGlobal = objectTypes[typeof global] && global;',
       '  if (freeGlobal && (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal)) {',
       '    root = freeGlobal;',
       '  }',
@@ -1189,9 +1191,9 @@
       '      _ = lodash;',
       '      lodash.templates = lodash.extend(lodash.templates || {}, templates);',
       '    });',
-      "  } else if (freeExports && !freeExports.nodeType) {",
+      '  } else if (freeExports && freeModule) {',
       "    _ = require('" + moduleId + "');",
-      "    if (freeModule) {",
+      '    if (moduleExports) {',
       '      (freeModule.exports = templates).templates = templates;',
       '    } else {',
       '      freeExports.templates = templates;',
@@ -1383,7 +1385,7 @@
    * @returns {string} Returns the fork.
    */
   function getDeferFork(source) {
-    var result = source.match(/(?:\s*\/\/.*)*\n( *)if *\(isV8 *&& *freeModule[\s\S]+?\n\1}/);
+    var result = source.match(/(?:\s*\/\/.*)*\n( *)if *\(isV8 *&& *moduleExports[\s\S]+?\n\1}/);
     return result ? result[0] : '';
   }
 
@@ -4323,7 +4325,7 @@
       }
       if (!isNode || isModularize) {
         source = removeVar(source, 'freeGlobal');
-        source = source.replace(/(?: *\/\/.*\n)*( *)if *\(freeModule[\s\S]+?else *\{([\s\S]+?\n)\1}\n+/, '$1$2');
+        source = source.replace(/(?: *\/\/.*\n)*( *)if *\(moduleExports[\s\S]+?else *\{([\s\S]+?\n)\1}\n+/, '$1$2');
       }
       if (!isCommonJS || isModularize) {
         source = source.replace(/(?: *\/\/.*\n)*(?:( *)(})? *else *\{)?\s*freeExports\.\w+ *=[\s\S]+?(?:\n\1})?\n+/, '$1$2\n');
@@ -4331,7 +4333,7 @@
       if (!isGlobal || isModularize) {
         source = source.replace(/(?: *\/\/.*\n)*(?:( *)(})? *else(?: *if *\(_\))? *\{)?(?:\s*\/\/.*)*\s*(?:root\._|_\.templates) *=[\s\S]+?(?:\n\1})?\n+/g, '$1$2\n');
       }
-      // remove `if (freeExports) {...}` if it's empty
+      // remove `if (freeExports && freeModule) {...}` if it's empty
       if (isAMD && isGlobal && !isModularize) {
         source = source.replace(/(?: *\/\/.*\n)* *(?:else )?if *\(freeExports.*?\) *\{\s*}\n+/, '');
       } else {
@@ -4560,12 +4562,6 @@
           source = source.replace(/\blodash\.support *= */, '');
         }
       }
-    }
-    if (_.size(source.match(/\bfreeModule\b/g)) < 2) {
-      source = removeVar(source, 'freeModule');
-    }
-    if (_.size(source.match(/\bfreeExports\b/g)) < 2) {
-      source = removeVar(source, 'freeExports');
     }
 
     /*------------------------------------------------------------------------*/
