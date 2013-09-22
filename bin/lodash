@@ -1028,7 +1028,7 @@
         state.iife = iife.join('\n');
         state.buildFuncs = state.includeFuncs = [identifier];
         state.includeObjs = state.includeVars = empty;
-        state.outputPath = path.join(outputPath, identifier + '.js');
+        state.outputPath = path.join(outputPath, modulePath, 'index.js');
 
         build(state, function(data) {
           var source = data.source;
