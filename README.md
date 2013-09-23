@@ -1,10 +1,20 @@
-# lodash-cli v2.0.0
+# lodash-cli v2.1.0
 
-The [Lo-Dash](http://lodash.com/) command-line interface for creating custom builds and precompiling templates.
+The [Lo-Dash](http://lodash.com/) command-line interface for creating custom builds & precompiling templates.
 
 ## Dive in
 
-Head on over to the [Lo-Dash custom builds documentation](http://lodash.com/custom-builds) for build commands and usage examples.
+Head on over to the [Lo-Dash custom builds documentation](http://lodash.com/custom-builds) for build commands & usage examples.<br>
+The full changelog for this release is available on our [wiki](https://github.com/lodash/lodash-cli/wiki/Changelog).
+
+## Installation
+
+Using [`npm`](http://npmjs.org/):
+
+```bash
+{sudo} npm i -g lodash-cli
+lodash -h
+```
 
 ## Support
 
