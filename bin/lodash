@@ -209,7 +209,7 @@
     'sortedIndex': ['createCallback', 'identity'],
     'tap': [],
     'template': ['defaults', 'escape', 'escapeStringChar', 'keys', 'values'],
-    'throttle': ['debounce', 'getObject', 'isFunction', 'isObject', 'releaseObject'],
+    'throttle': ['debounce', 'isFunction', 'isObject'],
     'times': ['baseCreateCallback'],
     'toArray': ['isString', 'slice', 'values'],
     'transform': ['baseCreateCallback', 'baseEach', 'createObject', 'forOwn', 'isArray'],
@@ -243,7 +243,7 @@
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
     'createBound': ['createObject', 'isFunction', 'isObject', 'setBindData'],
     'createCache': ['cachePush', 'getObject', 'releaseObject'],
-    'createIterator': ['baseCreateCallback', 'getObject', 'isArguments', 'isArray', 'isString', 'iteratorTemplate', 'releaseObject'],
+    'createIterator': ['baseCreateCallback', 'isArguments', 'isArray', 'isString', 'iteratorTemplate'],
     'createObject': [ 'isObject', 'noop'],
     'escapeHtmlChar': [],
     'escapeStringChar': [],
@@ -256,7 +256,7 @@
     'noop': [],
     'releaseArray': [],
     'releaseObject': [],
-    'setBindData': ['getObject', 'noop', 'releaseObject'],
+    'setBindData': ['noop'],
     'shimIsPlainObject': ['forIn', 'isArguments', 'isFunction', 'isNode'],
     'shimKeys': ['createIterator'],
     'slice': [],
@@ -1916,7 +1916,7 @@
         .replace(/,(?=\s*\))/, '');
     });
 
-    return removeFromGetObject(source, identifier);
+    return source;
   }
 
   /**
@@ -3061,7 +3061,7 @@
             funcDepMap.toArray.push('isArray', 'map');
           }
           if (!isLodash('findWhere') && !isLodash('where')) {
-            _.pull(funcDepMap.createCallback, 'baseIsEqual');
+            _.pull(funcDepMap.createCallback, 'baseIsEqual', 'isObject');
             funcDepMap.where.push('find', 'isEmpty');
           }
           // unexpose "exit early" feature from functions
@@ -4195,12 +4195,6 @@
         });
 
         if (isModern || isUnderscore) {
-          iteratorOptions.forEach(function(prop) {
-            if (prop != 'array') {
-              source = removeFromGetObject(source, prop);
-            }
-          });
-
           // inline all functions defined with `createIterator`
           _.functions(lodash).forEach(function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
@@ -4433,11 +4427,6 @@
         if (isExcluded('lodashWrapper')) {
           source = removeChaining(source);
         }
-        if (isExcluded('throttle')) {
-          _.each(['leading', 'maxWait', 'trailing'], function(prop) {
-            source = removeFromGetObject(source, prop);
-          });
-        }
         if (!/\.(?:enumErrorProps|nonEnumShadows) *=/.test(source)) {
           source = removeFromCreateIterator(source, 'errorClass');
           source = removeFromCreateIterator(source, 'errorProto');
@@ -4449,18 +4438,13 @@
               .replace(/,(?=\s*])/, '');
           });
         }
-        _.each([removeFromGetObject, removeFromReleaseObject], function(func) {
-          if (isExcluded('setBindData')) {
-            source = func(source, 'configurable');
-            source = func(source, 'enumerable');
-            source = func(source, 'writable');
-          }
-          if (isExcluded('sortBy')) {
+        if (isExcluded('sortBy')) {
+          _.each([removeFromGetObject, removeFromReleaseObject], function(func) {
             source = func(source, 'criteria');
             source = func(source, 'index');
             source = func(source, 'value');
-          }
-        });
+          });
+        }
       }
 
       // remove functions from the build
