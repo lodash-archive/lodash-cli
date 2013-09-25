@@ -3299,10 +3299,27 @@
             });
           });
 
+          // replace `now()` with `+new Date` in `_.debounce`
+          source = source.replace(matchFunction(source, 'debounce'), function(match) {
+            return match.replace(/\bnow\(\)/g, '+new Date');
+          });
+
           // remove native `Array.isArray` branch in `_.isArray`
           source = source.replace(matchFunction(source, 'isArray'), function(match) {
             return match.replace(/\bnativeIsArray\s*\|\|\s*/, '');
           });
+
+          // replace `_.isPlainObject` with `shimIsPlainObject`
+          source = source.replace(
+            matchFunction(source, 'isPlainObject').replace(/^ *var isPlainObject *= */m, ''),
+            matchFunction(source, 'shimIsPlainObject').replace(/^ *function shimIsPlainObject/m, 'function').replace(/\s*$/, ';\n')
+          );
+
+          // replace `_.keys` with `shimKeys`
+          source = source.replace(
+            matchFunction(source, 'keys').replace(/^ *var keys.*= */m, ''),
+            matchFunction(source, 'shimKeys').replace(/^ *var shimKeys *= */m, '')
+          );
 
           // replace `createObject` and `_.isArguments` with their forks
           _.forOwn({
@@ -3323,18 +3340,6 @@
 
             source = removeFork(source);
           });
-
-          // replace `_.isPlainObject` with `shimIsPlainObject`
-          source = source.replace(
-            matchFunction(source, 'isPlainObject').replace(/^ *var isPlainObject *= */m, ''),
-            matchFunction(source, 'shimIsPlainObject').replace(/^ *function shimIsPlainObject/m, 'function').replace(/\s*$/, ';\n')
-          );
-
-          // replace `_.keys` with `shimKeys`
-          source = source.replace(
-            matchFunction(source, 'keys').replace(/^ *var keys.*= */m, ''),
-            matchFunction(source, 'shimKeys').replace(/^ *var shimKeys *= */m, '')
-          );
         }
         if (isModern) {
           source = removeIsArgumentsFork(source);
@@ -3347,11 +3352,6 @@
           else {
             source = removeIsFunctionFork(source);
             source = removeCreateObjectFork(source);
-
-            // replace `+new Date` with `Date.now` use in `_.debounce
-            source = source.replace(matchFunction(source, 'debounce'), function(match) {
-              return match.replace(/\+?new Date\b/g, 'now()');
-            });
 
             // remove `shimIsPlainObject` from `_.isPlainObject`
             source = source.replace(matchFunction(source, 'isPlainObject'), function(match) {
