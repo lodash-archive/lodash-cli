@@ -3216,6 +3216,10 @@
             }
           });
         }
+        if (_.contains(minusFuncs, 'where')) {
+          _.pull(funcDepMap.createCallback, 'baseIsEqual', 'isObject', 'keys');
+          funcDepMap.createCallback.push('identity');
+        }
         // add function names explicitly
         if (includeFuncs.length) {
           result = includeFuncs;
@@ -4106,6 +4110,22 @@
                 return match.replace(/=.+?callback *&& *isString[^:]+:\s*/g, '= ');
               });
             }
+          });
+        }
+        // alias `baseCreateCallback` as `createCallback`
+        if (_.contains(minusFuncs, 'pluck') && _.contains(minusFuncs, 'where')) {
+          source = replaceFunction(source, 'createCallback', 'var createCallback = baseCreateCallback;');
+        }
+        // remove "_.pluck" style callback support from `_.createCallback`
+        else if (_.contains(minusFuncs, 'pluck')) {
+          source = source.replace(matchFunction(source, 'createCallback'), function(match) {
+            return match.replace(/^( *)if *\(type\b[\s\S]+?\n\1}\n/m, '');
+          });
+        }
+        // remove "_.where" style callback support from `_.createCallback`
+        else if (_.contains(minusFuncs, 'where')) {
+          source = source.replace(matchFunction(source, 'createCallback'), function(match) {
+            return match.replace(/^( *)var props\b[\s\S]+?\n\1return[\s\S]+?\n\1}/m, '$1return identity');
           });
         }
         // add Underscore's chaining functions
