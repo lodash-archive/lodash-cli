@@ -2232,7 +2232,7 @@
     // remove `support.enumErrorProps` from `iteratorTemplate`
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
       return match
-        .replace(/(?: *\/\/.*\n)* *["'] *(?:<% *)?if *\(support\.enumErrorProps *(?:&&|\))(.+?}["']|[\s\S]+?<% *} *(?:%>|["'])).+/g, '')
+        .replace(/^(?: *\/\/.*\n)* *["'] *(?:<% *)?if *\(support\.enumErrorProps *(?:&&|\))(.+?}["']|[\s\S]+?<% *} *(?:%>|["'])).+/gm, '')
         .replace(/support\.enumErrorProps\s*\|\|\s*/g, '');
     });
 
@@ -2259,7 +2259,7 @@
     // remove `support.enumPrototypes` from `iteratorTemplate`
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
       return match
-        .replace(/(?: *\/\/.*\n)* *["'] *(?:<% *)?if *\(support\.enumPrototypes *(?:&&|\))(.+?}["']|[\s\S]+?<% *} *(?:%>|["'])).+/g, '')
+        .replace(/^(?: *\/\/.*\n)* *["'] *(?:<% *)?if *\(support\.enumPrototypes *(?:&&|\))(.+?}["']|[\s\S]+?<% *} *(?:%>|["'])).+/gm, '')
         .replace(/support\.enumPrototypes\s*\|\|\s*/g, '');
     });
 
@@ -2311,7 +2311,7 @@
     // remove `nonEnumArgs` from `iteratorTemplate`
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
       return match
-        .replace(/(?: *\/\/.*\n)*( *["'] *)<% *} *else *if *\(support\.nonEnumArgs[\s\S]+?(\1<% *} *%>.+)/, '$2')
+        .replace(/^(?: *\/\/.*\n)*( *["'] *)<% *} *else *if *\(support\.nonEnumArgs[\s\S]+?(\1<% *} *%>.+)/m, '$2')
         .replace(/\s*\|\|\s*support\.nonEnumArgs/, '');
     });
 
@@ -2332,7 +2332,7 @@
 
     // remove `support.nonEnumShadows` from `iteratorTemplate`
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
-      return match.replace(/(?: *\/\/.*\n)* *["']( *)<% *if *\(support\.nonEnumShadows[\s\S]+?["']\1<% *} *%>.+/, '');
+      return match.replace(/^(?: *\/\/.*\n)* *["']( *)<% *if *\(support\.nonEnumShadows[\s\S]+?["']\1<% *} *%>.+/m, '');
     });
 
     return source;
@@ -2398,7 +2398,7 @@
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
       return match
         .replace(/'if *\(<%= *array *%>[^']*/, '$&\\n')
-        .replace(/(?: *\/\/.*\n)* *["']( *)<% *if *\(support\.unindexedChars[\s\S]+?["']\1<% *} *%>.+/, '');
+        .replace(/^(?: *\/\/.*\n)* *["']( *)<% *if *\(support\.unindexedChars[\s\S]+?["']\1<% *} *%>.+/m, '');
     });
 
     return source;
@@ -4119,13 +4119,13 @@
         // remove "_.pluck" style callback support from `_.createCallback`
         else if (_.contains(minusFuncs, 'pluck')) {
           source = source.replace(matchFunction(source, 'createCallback'), function(match) {
-            return match.replace(/^( *)if *\(type\b[\s\S]+?\n\1}\n/m, '');
+            return match.replace(/^(?: *\/\/.*\n)*( *)if *\(type\b[\s\S]+?\n\1}\n/m, '');
           });
         }
         // remove "_.where" style callback support from `_.createCallback`
         else if (_.contains(minusFuncs, 'where')) {
           source = source.replace(matchFunction(source, 'createCallback'), function(match) {
-            return match.replace(/^( *)var props\b[\s\S]+?\n\1return[\s\S]+?\n\1}/m, '$1return identity');
+            return match.replace(/^(?: *\/\/.*\n)*( *)var props\b[\s\S]+?\n\1return[\s\S]+?\n\1}/m, '$1return identity');
           });
         }
         // add Underscore's chaining functions
@@ -4313,7 +4313,7 @@
 
           // remove `lodash` branch in `_.mixin`
           source = source.replace(matchFunction(source, 'mixin'), function(match) {
-            return match.replace(/(?: *\/\/.*\n)*( *)if *\(!source[\s\S]+?\n\1}/, '');
+            return match.replace(/^(?: *\/\/.*\n)*( *)if *\(!source[\s\S]+?\n\1}/m, '');
           });
 
           // replace `lodash` use in `_.templateSettings.imports`
@@ -4347,23 +4347,23 @@
 
       // customize Lo-Dash's export bootstrap
       if (!isAMD || isModularize) {
-        source = source.replace(/(?: *\/\/.*\n)*( *)if *\(typeof +define[\s\S]+?else /, '$1');
+        source = source.replace(/^(?: *\/\/.*\n)*( *)if *\(typeof +define[\s\S]+?else /m, '$1');
       }
       if (!isNode || isModularize) {
         source = removeVar(source, 'freeGlobal');
-        source = source.replace(/(?: *\/\/.*\n)*( *)if *\(moduleExports[\s\S]+?else *\{([\s\S]+?\n)\1}\n+/, '$1$2');
+        source = source.replace(/^(?: *\/\/.*\n)*( *)if *\(moduleExports[\s\S]+?else *\{([\s\S]+?\n)\1}\n+/m, '$1$2');
       }
       if (!isCommonJS || isModularize) {
-        source = source.replace(/(?: *\/\/.*\n)*(?:( *)(})? *else *\{)?\s*freeExports\.\w+ *=[\s\S]+?(?:\n\1})?\n+/, '$1$2\n');
+        source = source.replace(/^(?: *\/\/.*\n)*(?:( *)(})? *else *\{)?\s*freeExports\.\w+ *=[\s\S]+?(?:\n\1})?\n+/m, '$1$2\n');
       }
       if (!isGlobal || isModularize) {
-        source = source.replace(/(?: *\/\/.*\n)*(?:( *)(})? *else(?: *if *\(_\))? *\{)?(?:\s*\/\/.*)*\s*(?:root\._|_\.templates) *=[\s\S]+?(?:\n\1})?\n+/g, '$1$2\n');
+        source = source.replace(/^(?: *\/\/.*\n)*(?:( *)(})? *else(?: *if *\(_\))? *\{)?(?:\s*\/\/.*)*\s*(?:root\._|_\.templates) *=[\s\S]+?(?:\n\1})?\n+/gm, '$1$2\n');
       }
       // remove `if (freeExports && freeModule) {...}` if it's empty
       if (isAMD && isGlobal && !isModularize) {
-        source = source.replace(/(?: *\/\/.*\n)* *(?:else )?if *\(freeExports.*?\) *\{\s*}\n+/, '');
+        source = source.replace(/^(?: *\/\/.*\n)* *(?:else )?if *\(freeExports.*?\) *\{\s*}\n+/m, '');
       } else {
-        source = source.replace(/(?: *\/\/.*\n)* *(?:else )?if *\(freeExports.*?\) *\{\s*}(?:\s*else *\{([\s\S]+?) *})?\n+/, '$1\n');
+        source = source.replace(/^(?: *\/\/.*\n)* *(?:else )?if *\(freeExports.*?\) *\{\s*}(?:\s*else *\{([\s\S]+?) *})?\n+/m, '$1\n');
       }
 
       /*----------------------------------------------------------------------*/
