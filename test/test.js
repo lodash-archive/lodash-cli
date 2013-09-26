@@ -1336,6 +1336,69 @@
         });
       });
     });
+
+    asyncTest('`lodash minus=pluck`', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'minus=pluck'], function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            context = createContext();
+
+        vm.runInContext(data.source, context);
+
+        var lodash = context._,
+            object = { 'x': 1 };
+
+        var callback = lodash.createCallback('x');
+        strictEqual(callback(object), false, basename);
+
+        callback = lodash.createCallback(object);
+        strictEqual(callback(object), true, basename);
+        start();
+      });
+    });
+
+    asyncTest('`lodash minus=where`', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'minus=where'], function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            context = createContext();
+
+        vm.runInContext(data.source, context);
+
+        var lodash = context._,
+            object = { 'x': 1 };
+
+        var callback = lodash.createCallback('x');
+        strictEqual(callback(object), 1, basename);
+
+        callback = lodash.createCallback(object);
+        strictEqual(callback(object), object, basename);
+        start();
+      });
+    });
+
+    asyncTest('`lodash minus=pluck,where`', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'minus=pluck,where'], function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            context = createContext();
+
+        vm.runInContext(data.source, context);
+
+        var lodash = context._,
+            object = { 'x': 1 };
+
+        var callback = lodash.createCallback('x');
+        strictEqual(callback(object), object, basename);
+
+        callback = lodash.createCallback(object);
+        strictEqual(callback(object), object, basename);
+        start();
+      });
+    });
   }());
 
   /*--------------------------------------------------------------------------*/
