@@ -325,7 +325,7 @@
     'reUnescapedHtml': ['htmlEscapes'],
     'root': ['objectTypes'],
     'setBindData': ['reNative'],
-    'support': ['reNative'],
+    'support': ['reNative', 'root'],
     'template': ['reInterpolate'],
     'templateSettings': ['reInterpolate'],
     'unescape': ['reEscapedHtml'],
@@ -837,8 +837,8 @@
         isCommonJS = state.isCommonJS,
         isNode = state.isNode,
         isNpm = state.isNpm,
+        objDepMap = state.objDepMap,
         outputPath = state.outputPath,
-        propDepMap = state.propDepMap,
         varDepMap = state.varDepMap;
 
     var templatePath = fs.realpathSync(path.join(__dirname, '..', 'template')),
@@ -912,7 +912,7 @@
           iife = [];
 
       var deps = getDependencies(identifier, funcDepMap, true)
-        .concat(propDepMap[identifier] || empty)
+        .concat(objDepMap[identifier] || empty)
         .concat(varDepMap[identifier] || empty)
         .sort();
 
@@ -1006,7 +1006,7 @@
             modulePath = getPath(identifier);
 
         var deps = getDependencies(identifier, funcDepMap, true)
-          .concat(propDepMap[identifier] || empty)
+          .concat(objDepMap[identifier] || empty)
           .concat(varDepMap[identifier] || empty)
           .sort();
 
@@ -2396,9 +2396,11 @@
       return match.replace(/^ *if *\(support\.unindexedChars[^}]+}\n/m, '');
     });
 
-    // remove `support.unindexedChars` from `_.sample`
-    source = source.replace(matchFunction(source, 'sample'), function(match) {
-      return match.replace(/\s*else if *\(support\.unindexedChars[^}]+}/, '');
+    // remove `support.unindexedChars` from `_.forEachRight` and `_.sample`
+    _.each(['forEachRight', 'sample'], function(funcName) {
+      source = source.replace(matchFunction(source, funcName), function(match) {
+        return match.replace(/\s*else if *\(support\.unindexedChars[^}]+}/, '');
+      });
     });
 
     // remove `support.unindexedChars` from `_.toArray`
@@ -2697,10 +2699,10 @@
           isStrict = state.isStrict,
           isUnderscore = state.isUnderscore,
           minusFuncs = state.minusFuncs,
+          objDepMap = state.objDepMap,
           options = state.options,
           outputPath = state.outputPath,
           plusFuncs = state.plusFuncs,
-          propDepMap = state.propDepMap,
           source = state.source,
           varDepMap = state.varDepMap;
     }
@@ -2725,7 +2727,7 @@
 
       // clone dependencies to modify
       var funcDepMap = _.cloneDeep(funcDependencyMap),
-          propDepMap = _.cloneDeep(objDependencyMap),
+          objDepMap = _.cloneDeep(objDependencyMap),
           varDepMap = _.cloneDeep(varDependencyMap);
 
       // the path to the source file
@@ -2860,10 +2862,10 @@
       }, categoryOptions.slice());
 
       // properties to include in the build
-      var includeObjs = _.intersection(includeFuncs, objDependencies);
+      var includeObjs = _.intersection(includeFuncs, objDepMap);
 
       // variables to include in the build
-      var includeVars = _.intersection(includeFuncs, varDependencies);
+      var includeVars = _.intersection(includeFuncs, varDepMap);
 
       // functions to remove from the build
       var minusFuncs = options.reduce(function(accumulator, value) {
@@ -2999,7 +3001,7 @@
 
         // update dependencies
         if (isLegacy) {
-          _.pull(propDepMap.createBound, 'support');
+          _.pull(objDepMap.createBound, 'support');
 
           funcDepMap.isPlainObject = funcDepMap.shimIsPlainObject.slice();
           funcDepMap.keys = funcDepMap.shimKeys.slice();
@@ -3032,6 +3034,7 @@
           });
         }
         if (isLegacy || isMobile || isUnderscore) {
+          _.pull(objDepMap.baseCreateCallback, 'support');
           _.each(['baseCreateCallback', 'createBound'], function(funcName) {
             _.pull(funcDepMap[funcName], 'setBindData');
           });
@@ -3157,7 +3160,7 @@
             }
           });
 
-          _.forOwn(propDepMap, function(deps, funcName) {
+          _.forOwn(objDepMap, function(deps, funcName) {
             if (funcName != 'createBound' &&
                 funcName != 'baseCreateCallback' &&
                 !(isMobile && funcName == 'keys') &&
@@ -3290,7 +3293,7 @@
           }, result));
         }
 
-        includeObjs = expand(includeObjs, propDepMap);
+        includeObjs = expand(includeObjs, objDepMap);
         includeVars = expand(includeVars, varDepMap);
       }());
 
@@ -4407,10 +4410,10 @@
           'isUnderscore': isUnderscore,
           'lodash': lodash,
           'minusFuncs': minusFuncs,
+          'objDepMap': objDepMap,
           'options': options,
           'outputPath': outputPath,
           'plusFuncs': plusFuncs,
-          'propDepMap': propDepMap,
           'source': source,
           'varDepMap': varDepMap
         }, callback);
