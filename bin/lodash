@@ -1112,7 +1112,7 @@
           if (isCommonJS) {
             push.apply(iife, depPaths.map(function(depPath, index) {
               var depName = deps[index];
-              return 'exports.' + depName + " = require('" + depPath + "')." + depName;
+              return 'exports.' + depName + " = require('" + depPath + "')." + depName + ';';
             }));
           } else {
             iife.push(
@@ -1875,6 +1875,7 @@
    * @returns {string} Returns the modified source.
    */
   function removeEsOptimization(source) {
+    source = removeSupportProp(source, 'funcDecomp');
     source = removeSupportProp(source, 'funcNames');
 
     // remove `__bindData__` logic and `setBindData` function calls from `createBound`
@@ -2689,8 +2690,8 @@
           isMapped = state.isMapped,
           isMobile = state.isMobile,
           isModern = state.isModern,
+          isModularize = true,
           isNode = state.isNode,
-          isNoDep = true,
           isStdOut = state.isStdOut,
           isSilent = true,
           isStrict = state.isStrict,
@@ -2762,9 +2763,6 @@
 
       // flag to specify a modularize build
       var isModularize = _.contains(options, 'modularize');
-
-      // flag to specify a no-dependency build
-      var isNoDep = _.contains(options, '-n') || _.contains(options, '--no-dep');
 
       // flag to specify writing output to standard output
       var isStdOut = _.contains(options, '-c') || _.contains(options, '--stdout');
@@ -2918,6 +2916,7 @@
         }
         var result = _.contains([
           'backbone',
+          'compat',
           'csp',
           'legacy',
           'mobile',
@@ -2929,7 +2928,6 @@
           '-d', '--debug',
           '-h', '--help',
           '-m', '--minify',
-          '-n', '--no-dep',
           '-o', '--output',
           '-p', '--source-map',
           '-s', '--silent',
@@ -2948,7 +2946,7 @@
         warnings.push('Invalid argument' + (invalidArgs.length > 1 ? 's' : '') + ' passed: ' + invalidArgs.join(', '));
       }
       // report invalid command combinations
-      invalidArgs = _.intersection(options, ['backbone', 'csp', 'legacy', 'mobile', 'modern', 'underscore']);
+      invalidArgs = _.intersection(options, ['backbone', 'compat', 'csp', 'legacy', 'mobile', 'modern', 'underscore']);
 
       if (isTemplate) {
         invalidArgs.push('template');
@@ -3011,13 +3009,14 @@
           });
         }
         if (isModularize) {
-          _.forOwn(varDepMap, function(deps, funcName) {
-            _.pull(deps, 'root');
-          });
-
+          if (!isCommonJS) {
+            _.forOwn(varDepMap, function(deps, funcName) {
+              _.pull(deps, 'root');
+            });
+            delete varDepMap.root;
+          }
           funcDepMap.lodash.push('support', 'baseEach', 'forOwn', 'mixin');
           _.pull(funcDepMap.mixin, 'lodash');
-          delete varDepMap.root;
         }
         else {
           funcDepMap.chain.push('wrapperChain');
@@ -4350,6 +4349,9 @@
           if (isAMD || isNode) {
             source = source.replace(/\bcontext(?=\.)/g, isAMD ? 'window' : 'global');
           }
+          if (!isAMD) {
+            source = removeVar(source, 'undefined');
+          }
           source = removeRunInContext(source);
         }
       }
@@ -4361,7 +4363,6 @@
         source = source.replace(/^(?: *\/\/.*\n)*( *)if *\(typeof +define[\s\S]+?else /m, '$1');
       }
       if (!isNode || isModularize) {
-        source = removeVar(source, 'freeGlobal');
         source = source.replace(/^(?: *\/\/.*\n)*( *)if *\(moduleExports[\s\S]+?else *\{([\s\S]+?\n)\1}\n+/m, '$1$2');
       }
       if (!isCommonJS || isModularize) {
@@ -4421,18 +4422,18 @@
 
     // modify/remove references to removed functions/variables
     if (!isTemplate) {
-      if (isExcluded(isNoDep ? 'lodash' : 'lodashWrapper')) {
+      if (isExcluded(isModularize ? 'lodash' : 'lodashWrapper')) {
         // remove `lodashWrapper.prototype` assignment
         source = source.replace(/(?:\s*\/\/.*)*\n *lodashWrapper\.prototype *=.+/, '');
       }
-      if (isExcluded(isNoDep ? 'lodash' : 'mixin')) {
+      if (isExcluded(isModularize ? 'lodash' : 'mixin')) {
         // remove `_.mixin` call
         source = source.replace(/(?:\s*\/\/.*)*\s*mixin\(lodash\).+/, '');
       }
-      if (isExcluded(isNoDep ? 'lodash' : 'wrapperValueOf')) {
+      if (isExcluded(isModularize ? 'lodash' : 'wrapperValueOf')) {
         source = removeChaining(source);
       }
-      if (!isNoDep) {
+      if (!isModularize) {
         if (isExcluded('bind')) {
           source = removeSupportProp(source, 'fastBind');
         }
@@ -4482,9 +4483,9 @@
       allFuncs.forEach(function(funcName) {
         if (!_.contains(buildFuncs, funcName) &&
             !(funcName == 'findWhere' && !isUnderscore) &&
-            !(funcName == 'lodash' && !isNoDep)) {
+            !(funcName == 'lodash' && !isModularize)) {
           source = removeFunction(source, funcName);
-          if (!isNoDep) {
+          if (!isModularize) {
             source = removeFromCreateIterator(source, funcName);
             source = source.replace(RegExp('^(?: *//.*\\s*)* *lodash(?:\\.prototype)?\\.\\w+ *= *' + funcName + ';\\n', 'gm'), '');
           }
@@ -4567,12 +4568,9 @@
             }
           }
         }
-        if (!useMap.root) {
-          source = removeVar(source, 'freeGlobal');
-        }
       }());
 
-      if (isNoDep) {
+      if (isModularize) {
         if (isExcluded('lodash')) {
           source = removeAssignments(source);
         }
@@ -4588,6 +4586,9 @@
         if (!isLodash('support')) {
           source = source.replace(/\blodash\.support *= */, '');
         }
+      }
+      if ((!isNode && !isModularize) || !matchVar(source, 'root')) {
+        source = removeVar(source, 'freeGlobal');
       }
     }
 
@@ -4628,7 +4629,7 @@
     var outputUsed = false;
 
     // flag to specify creating a custom build
-    var isCustom = !isNoDep && (
+    var isCustom = !isModularize && (
       isLegacy || isMapped || isModern || isStrict || isUnderscore || outputPath ||
       /(?:category|exclude|exports|iife|include|minus|plus)=.*$/.test(options) ||
       !_.isEqual(exportsOptions, ['amd', 'commonjs', 'global', 'node'])

@@ -1541,29 +1541,6 @@
 
   /*--------------------------------------------------------------------------*/
 
-  QUnit.module('no-dep option');
-
-  (function() {
-    var commands = [
-      '-n',
-      '--no-dep'
-    ];
-
-    commands.forEach(function(command) {
-      asyncTest('`lodash modern include=each ' + command +'`', function() {
-        var start = _.once(QUnit.start);
-
-        build(['-s', 'modern', 'include=each', command], function(data) {
-          var basename = path.basename(data.outputPath, '.js');
-          strictEqual(/function createCallback\b/.test(data.source), false, basename);
-          start();
-        });
-      });
-    });
-  }());
-
-  /*--------------------------------------------------------------------------*/
-
   QUnit.module('output option');
 
   (function() {
