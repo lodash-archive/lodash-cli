@@ -24,6 +24,9 @@
   /** Used to prefix relative paths from the current directory */
   var relativePrefix = '.' + path.sep;
 
+  /** Used to match the copyright header in builds */
+  var reHeader = /^\/\**[\s\S]+?\*\/\n/;
+
   /** The unit testing framework */
   var QUnit = (
     global.addEventListener = Function.prototype,
@@ -807,6 +810,30 @@
 
   /*--------------------------------------------------------------------------*/
 
+  QUnit.module('compat modifier');
+
+  (function() {
+    asyncTest('`lodash compat`', function() {
+      var sources = [];
+
+      var check = _.after(2, _.once(function() {
+        equal(sources[0], sources[1]);
+        QUnit.start();
+      }));
+
+      var callback = function(data) {
+        // remove copyright header before adding to `sources`
+        sources.push(data.source.replace(reHeader, ''));
+        check();
+      };
+
+      build(['-s', '-d'], callback);
+      build(['-s', '-d', 'compat'], callback);
+    });
+  }());
+
+  /*--------------------------------------------------------------------------*/
+
   QUnit.module('csp modifier');
 
   (function() {
@@ -815,8 +842,8 @@
 
       var check = _.after(2, _.once(function() {
         ok(_.every(sources, function(source) {
-          // remove `Function` in `_.template` before testing for additional use
-          return !/\bFunction\(/.test(source.replace(/= *\w+\(\w+, *['"]return.+?apply[^)]+\)/, ''));
+          // remove `Function` use in `_.template` before checking the entire source
+          return !/\bFunction\(/.test(source.replace(/= *\w+\(\w+, *['"]return.+?apply.+?\)/, ''));
         }));
 
         equal(sources[0], sources[1]);
@@ -824,8 +851,7 @@
       }));
 
       var callback = function(data) {
-        // remove copyright header and append to `sources`
-        sources.push(data.source.replace(/^\/\**[\s\S]+?\*\/\n/, ''));
+        sources.push(data.source.replace(reHeader, ''));
         check();
       };
 
