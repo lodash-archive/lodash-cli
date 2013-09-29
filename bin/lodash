@@ -963,7 +963,7 @@
         if (isNpm) {
           var keywords = isInternal
             ? []
-            : ['functional', 'lodash', 'lodash-modularized', 'performance', 'server', 'util'];
+            : ['functional', 'lodash', 'lodash-modularized', 'server', 'util'];
 
           var type = _.contains(includeObjs, identifier)
             ? 'object'
