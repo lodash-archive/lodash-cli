@@ -587,11 +587,11 @@
   QUnit.module('template builds');
 
   (function() {
-    var templatePath = path.join(__dirname, 'template');
+    var templatePath = path.join(__dirname, 'fixture', 'template');
 
     var commands = [
-      'template=' + path.join('template', '*.jst'),
-      'template=' + relativePrefix + path.join('template', '*.jst'),
+      'template=' + path.join('fixture', 'template', '*.jst'),
+      'template=' + relativePrefix + path.join('fixture', 'template', '*.jst'),
       'template=' + path.join(templatePath, '*.jst')
     ];
 
