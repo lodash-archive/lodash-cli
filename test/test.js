@@ -510,6 +510,8 @@
 
   /*--------------------------------------------------------------------------*/
 
+  console.log('test.js invoked with arguments: ' + JSON.stringify(process.argv));
+
   QUnit.module('build command checks');
 
   (function() {
