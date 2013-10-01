@@ -5,13 +5,13 @@ node_js:
   - "0.10"
 env:
   global:
-    - BIN="node" BUILD=false EXPORTS="commonjs" BASE_PATH="./$EXPORTS" OPTION="" OUTPUT_PATH=false TARGET_PATH=false TEST=false
+    - BIN="node" BUILD=false EXPORTS="commonjs" OPTION="" OUTPUT_PATH=false TARGET_PATH=false TEST=false
   matrix:
     - BUILD="compat"
     - BUILD="legacy"
     - BUILD="mobile"
     - BUILD="modern"
-    - BUILD="modern" EXPORTS="npm" BASE_PATH="." OUTPUT_PATH="./npm/node_modules" TARGET_PATH="./npm/index.js"
+    - BUILD="modern" EXPORTS="npm" OUTPUT_PATH="./npm/node_modules" TARGET_PATH="../../../npm/index.js"
 matrix:
   include:
     - node_js: "0.10"
@@ -45,8 +45,8 @@ before_script:
 before_install:
   - "git clone --depth=1 --branch=master git://github.com/lodash/lodash.git ./node_modules/lodash"
 script:
-  - "[ $OUTPUT_PATH == false ] && OUTPUT_PATH=\"$BASE_PATH/$BUILD\" || true"
-  - "[ $TARGET_PATH == false ] && TARGET_PATH=\"../../.$BASE_PATH/$BUILD/index.js\" || true"
+  - "[ $OUTPUT_PATH == false ] && OUTPUT_PATH=\"./$EXPORTS/$BUILD\" || true"
+  - "[ $TARGET_PATH == false ] && TARGET_PATH=\"../../../$EXPORTS/$BUILD/index.js\" || true"
   - "[ $BUILD != false ] && node ./bin/lodash modularize $BUILD exports=$EXPORTS -o $OUTPUT_PATH || true"
   - "[ $EXPORTS == 'npm' ] && cd ./npm && cp ../test/npm/index.js ./index.js && cd ../ || true"
   - "[ \"$TEST\" == false ] && $BIN $OPTION ./node_modules/lodash/test/test.js $TARGET_PATH || true"
