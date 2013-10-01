@@ -1,13 +1,53 @@
 language: node_js
 node_js:
   - "0.6"
+  - "0.8"
   - "0.10"
+env:
+  global:
+    - BIN="node" BUILD=false EXPORTS="commonjs" BASE_PATH="./$EXPORTS" OPTION="" OUTPUT_PATH=false TARGET_PATH=false TEST=false
+  matrix:
+    - BUILD="compat"
+    - BUILD="legacy"
+    - BUILD="mobile"
+    - BUILD="modern"
+    - BUILD="modern" EXPORTS="npm" BASE_PATH="." OUTPUT_PATH="./npm/node_modules" TARGET_PATH="./npm/index.js"
+matrix:
+  include:
+    - node_js: "0.10"
+      env: BIN="narwhal" BUILD="compat"
+    - node_js: "0.10"
+      env: BIN="narwhal" BUILD="legacy"
+    - node_js: "0.10"
+      env: BIN="rhino"   BUILD="compat" OPTION="-require"
+    - node_js: "0.10"
+      env: BIN="rhino"   BUILD="legacy" OPTION="-require"
+    - node_js: "0.10"
+      env: BIN="ringo"   BUILD="compat"
+    - node_js: "0.10"
+      env: BIN="ringo"   BUILD="legacy"
+    - node_js: "0.6"
+      env: TEST="node ./test/test.js --time-limit 48m"
+    - node_js: "0.10"
+      env: TEST="node ./test/test.js --time-limit 48m"
 git:
   depth: 1
 branches:
   only:
     - master
+before_script:
+  - "[ $BIN == 'narwhal' ] && wget https://github.com/280north/narwhal/archive/v0.3.2.zip && sudo unzip v0.3.2 -d /opt/ && rm v0.3.2.zip || true"
+  - "[ $BIN == 'narwhal' ] && sudo ln -s /opt/narwhal-0.3.2/bin/narwhal /usr/local/bin/narwhal && sudo chmod +x /usr/local/bin/narwhal || true"
+  - "[ $BIN == 'rhino' ] && sudo mkdir /opt/rhino-1.7R5 && sudo wget -O /opt/rhino-1.7R5/js.jar https://oss.sonatype.org/content/repositories/snapshots/org/mozilla/rhino/1.7R5-SNAPSHOT/rhino-1.7R5-20120629.144839-4.jar || true"
+  - "[ $BIN == 'rhino' ] && echo -e '#!/bin/sh\\njava -jar /opt/rhino-1.7R5/js.jar $@' | sudo tee /usr/local/bin/rhino && sudo chmod +x /usr/local/bin/rhino || true"
+  - "[ $BIN == 'ringo' ] && wget http://ringojs.org/downloads/ringojs-0.9.zip && sudo unzip ringojs-0.9 -d /opt && rm ringojs-0.9.zip || true"
+  - "[ $BIN == 'ringo' ] && sudo ln -s /opt/ringojs-0.9/bin/ringo /usr/local/bin/ringo && sudo chmod +x /usr/local/bin/ringo || true"
 before_install:
   - "git clone --depth=1 --branch=master git://github.com/lodash/lodash.git ./node_modules/lodash"
 script:
-  - "node ./test/test.js --time-limit 48m"
+  - "[ $OUTPUT_PATH == false ] && OUTPUT_PATH=\"$BASE_PATH/$BUILD\" || true"
+  - "[ $TARGET_PATH == false ] && TARGET_PATH=\"../../.$BASE_PATH/$BUILD/index.js\" || true"
+  - "[ $BUILD != false ] && node ./bin/lodash modularize $BUILD exports=$EXPORTS -o $OUTPUT_PATH || true"
+  - "[ $EXPORTS == 'npm' ] && cd ./npm && cp ../test/npm/index.js ./index.js && cd ../ || true"
+  - "[ \"$TEST\" == false ] && $BIN $OPTION ./node_modules/lodash/test/test.js $TARGET_PATH || true"
+  - "[ \"$TEST\" != false ] && $TEST || true"
