@@ -477,6 +477,7 @@
     'contains',
     'countBy',
     'defaults',
+    'difference',
     'escape',
     'every',
     'extend',
