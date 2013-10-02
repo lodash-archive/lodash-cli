@@ -4602,13 +4602,13 @@
     if (isIIFE) {
       source = (function() {
         var token = '%output%',
-            header = source.match(/^\/\**[\s\S]+?\*\/\n/),
+            header = isTemplate ? '' : (source.match(/^\/\**[\s\S]+?\*\/\n/) || ''),
             index = iife.indexOf(token);
 
         return header + (index < 0
           ? iife
           : iife.slice(0, index) +
-            source.replace(/^[\s\S]+?\(function[^{]+\{\n+|\s*}\.call\(this\)\)[;\s]*$/g, '\n') +
+            source.replace(/^[\s\S]+?\(function[^{]+\{\n+|\s*}(?:\.call)?\(this\)\)[;\s]*$/g, '\n') +
             iife.slice(index + token.length)
         );
       }());
