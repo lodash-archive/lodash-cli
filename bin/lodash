@@ -1152,13 +1152,15 @@
     var directory = fs.realpathSync(path.dirname(pattern));
 
     var source = [
-      ';(function(root) {',
+      ';(function() {',
       '  var undefined;',
       '',
       '  var objectTypes = {',
       "    'function': true,",
       "    'object': true",
       '  };',
+      '',
+      '  var root = (objectTypes[typeof window] && window) || this;',
       '',
       '  var freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;',
       '',
@@ -1211,7 +1213,7 @@
       '  } else if (_) {',
       '    _.templates = _.extend(_.templates || {}, templates);',
       '  }',
-      '}(this));'
+      '}.call(this));'
     );
 
     return source.join('\n');
@@ -1266,8 +1268,10 @@
       .replace(/ *$/gm, '')
       // consolidate multiple newlines
       .replace(/\n{3,}/g, '\n\n')
+      // remove leading empty lines
+      .replace(/^ *\n+/, '')
       // add trailing newline
-      .trim() + '\n'
+      .trimRight() + '\n';
   }
 
   /**
@@ -4599,7 +4603,7 @@
     if (isIIFE) {
       source = (function() {
         var token = '%output%',
-            header = source.match(/^\/\**[\s\S]+?\*\/\n/),
+            header = source.match(/^\/\**[\s\S]+?\*\/\n/) || '',
             index = iife.indexOf(token);
 
         return header + (index < 0

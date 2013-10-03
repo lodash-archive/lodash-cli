@@ -695,8 +695,6 @@
       });
     });
 
-    var defaultTemplates = { 'c': function() { return ''; } };
-
     var exportsCommands = [
       'exports=amd',
       'exports=commonjs',
@@ -713,6 +711,7 @@
           var templates,
               basename = path.basename(data.outputPath, '.js'),
               context = createContext(),
+              defaultTemplates = { 'c': function() { return ''; } },
               source = data.source;
 
           switch(index) {
@@ -759,6 +758,28 @@
           delete _.templates;
           start();
         });
+      });
+    });
+
+    asyncTest('`lodash iife=%output%`', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'template=' + path.join(templatePath, '*.jst'), 'iife=%output%'], function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            context = createContext(),
+            defaultTemplates = { 'c': function() { return ''; } },
+            source = data.source;
+
+        ok(!/^null/.test(source));
+
+        context._ = _;
+        vm.runInContext(source, context);
+
+        var templates = context._.templates || defaultTemplates;
+        equal(templates.c({ 'name': 'Moe' }), 'Hello Moe!', basename);
+
+        delete _.templates;
+        start();
       });
     });
   }());
