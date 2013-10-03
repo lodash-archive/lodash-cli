@@ -3367,7 +3367,6 @@
           }
           else {
             source = removeIsFunctionFork(source);
-            source = removeCreateObjectFork(source);
 
             // remove `shimIsPlainObject` from `_.isPlainObject`
             source = source.replace(matchFunction(source, 'isPlainObject'), function(match) {
