@@ -4548,6 +4548,14 @@
         });
       });
 
+      if (isModularize) {
+        // remove unneeded variable dependencies
+        _.each(varDependencies, function(varName) {
+          if (!_.contains(includeVars, varName)) {
+            source = removeVar(source, varName);
+          }
+        });
+      }
       // remove unused variables
       (function() {
         var isShallow = isExcluded('runInContext'),
@@ -4579,12 +4587,6 @@
         if (isExcluded('lodash')) {
           source = removeAssignments(source);
         }
-        // remove unneeded variable dependencies
-        _.each(varDependencies, function(varName) {
-          if (!_.contains(includeVars, varName)) {
-            source = removeVar(source, varName);
-          }
-        });
       }
       else if (isUnderscore) {
         // unexpose `lodash.support`
