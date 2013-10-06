@@ -3939,7 +3939,7 @@
               '  var _ = lodash,',
               '      settings = _.templateSettings;',
               '',
-              "  text || (text = '');",
+              "  text = String(text || '');",
               '  options = iteratorTemplate ? defaults({}, options, settings) : settings;',
               '',
               '  var index = 0,',
