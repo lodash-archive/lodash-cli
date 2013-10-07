@@ -7,6 +7,7 @@
 
   /** Load other modules */
   var _ = require('lodash/lodash.js'),
+      glob = require('glob'),
       minify = require('../lib/minify.js'),
       util = require('../lib/util.js');
 
@@ -1149,8 +1150,6 @@
 
     pattern || (pattern = path.join(cwd, '*.jst'));
 
-    var directory = fs.realpathSync(path.dirname(pattern));
-
     var source = [
       ';(function() {',
       '  var undefined;',
@@ -1173,28 +1172,48 @@
       '    root = freeGlobal;',
       '  }',
       '',
-      '  var templates = {},',
-      '      _ = root._;',
+      '  var _ = root._;',
       ''
     ];
 
-    // convert to a regexp
-    pattern = RegExp(
-      path.basename(pattern)
-        .replace(/[.+?^=!:${}()|[\]\/\\]/g, '\\$&')
-        .replace(/\*/g, '.*?') + '$'
-    );
-
-    fs.readdirSync(directory).forEach(function(identifier) {
-      if (!pattern.test(identifier)) {
-        return;
+    glob(pattern, { 'sync': true }, function(exception, filePaths) {
+      if (exception) {
+        throw exception;
       }
-      var filePath = path.join(directory, identifier),
-          text = fs.readFileSync(filePath, 'utf8'),
-          precompiled = cleanupCompiled(getFunctionSource(_.template(text, null, settings), 2)),
-          prop = identifier.replace(/\..*$/, '');
+      var basePath = path.dirname(pattern).replace(RegExp(path.sepEscaped + '\\*\\*.*$'),  ''),
+          insertAt = source.length,
+          templates = {};
 
-      source.push("  templates['" + prop.replace(/['\n\r\t]/g, '\\$&') + "'] = " + precompiled + ';', '');
+      filePaths.forEach(function(filePath) {
+        var text = fs.readFileSync(filePath, 'utf8'),
+            precompiled = cleanupCompiled(getFunctionSource(_.template(text, null, settings), 2));
+
+        var index = -1,
+            object = templates,
+            props = filePath.slice(basePath.length + 1).replace(/\..*$/, '').split(path.sep),
+            length = props.length - 1;
+
+        while (++index < length) {
+          var prop = props[index];
+          if (!object[prop]) {
+            object[prop] = {};
+          }
+          object = object[prop];
+        }
+        // add template assignment to `source`
+        source.push('  templates' + props.map(function(prop) {
+          return "['" + prop.replace(/['\n\r\t]/g, '\\$&') + "']";
+        }).join('') + ' = ' + precompiled + ';', '');
+      });
+
+      // add the initial `_.templates` object to `source`
+      source.splice(insertAt, 0, '  var templates = ' +
+        JSON.stringify(templates, null, 4)
+          .replace(/^ *}$/m, '  $&')
+          .replace(/'/g, "\\'")
+          .replace(/([^\\])"/g, "$1'") +
+        ';', ''
+      );
     });
 
     source.push(
