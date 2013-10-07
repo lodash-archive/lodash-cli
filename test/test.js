@@ -612,7 +612,7 @@
 
           var object = {
             'a': { 'people': ['moe', 'larry', 'curly'] },
-            'b': { 'epithet': 'stooge' },
+            'b': { 'name': 'larry' },
             'c': { 'name': 'ES6' }
           };
 
@@ -622,8 +622,9 @@
           var actual = _.templates.a(object.a);
           equal(actual.replace(/[\r\n]+/g, ''), '<ul><li>moe</li><li>larry</li><li>curly</li></ul>', basename);
 
-          equal(_.templates.b(object.b), 'Hello stooge.', basename);
-          equal(_.templates.c(object.c), 'Hello ES6!', basename);
+          equal(_.templates.b(object.b), 'hello larry!', basename);
+          equal(_.templates.c(object.c), 'hello ES6', basename);
+          ok(!('d' in _.templates), basename);
 
           delete _.templates;
           start();
@@ -676,7 +677,7 @@
               context = createContext();
 
           var object = {
-            'd': { 'name': 'Mustache' }
+            'd': { 'name': 'mustache' }
           };
 
           context.define = function(requires, factory) {
@@ -688,7 +689,8 @@
           vm.runInContext(data.source, context);
 
           equal(moduleId, expectedId, basename);
-          equal(_.templates.d(object.d), 'Hallå Mustache!', basename);
+          equal(_.templates.d(object.d), 'hallå mustache!', basename);
+
           delete _.templates;
           start();
         });
@@ -753,7 +755,7 @@
               strictEqual(context._, undefined, basename);
           }
           if (templates) {
-            equal(templates.c({ 'name': 'Moe' }), 'Hello Moe!', basename);
+            equal(templates.c({ 'name': 'moe' }), 'hello moe', basename);
           }
           delete _.templates;
           start();
@@ -776,7 +778,27 @@
         vm.runInContext(source, context);
 
         var templates = context._.templates || defaultTemplates;
-        equal(templates.c({ 'name': 'Moe' }), 'Hello Moe!', basename);
+        equal(templates.c({ 'name': 'moe' }), 'hello moe', basename);
+
+        delete _.templates;
+        start();
+      });
+    });
+
+    asyncTest('`recursive paths', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'template=' + path.join(templatePath, '**', '*.jst')], function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            context = createContext();
+
+        context._ = _;
+        vm.runInContext(data.source, context);
+
+        equal(_.templates.b({ 'name': 'moe' }), 'hello moe!', basename);
+        equal(_.templates.c({ 'name': 'larry' }), 'hello larry', basename);
+        equal(_.templates.c.c({ 'name': 'curly' }), 'hello curly!', basename);
+        equal(_.templates.c['\'"']({ 'name': 'quotes' }), 'hello quotes', basename);
 
         delete _.templates;
         start();
