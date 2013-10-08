@@ -697,6 +697,39 @@
       });
     });
 
+    commands = [
+      'template=' + path.join(templatePath, '**', '*.jst'),
+      'template=' + path.join('**', '*.jst')
+    ];
+
+    commands.forEach(function(command, index) {
+      asyncTest('`recursive path `' + command + '`', function() {
+        var start = _.after(2, _.once(function() {
+          process.chdir(cwd);
+          QUnit.start();
+        }));
+
+        if (index) {
+          process.chdir(templatePath);
+        }
+        build(['-s', command], function(data) {
+          var basename = path.basename(data.outputPath, '.js'),
+              context = createContext();
+
+          context._ = _;
+          vm.runInContext(data.source, context);
+
+          equal(_.templates.b({ 'name': 'moe' }), 'hello moe!', basename);
+          equal(_.templates.c({ 'name': 'larry' }), 'hello larry', basename);
+          equal(_.templates.c.c({ 'name': 'curly' }), 'hello curly!', basename);
+          equal(_.templates.c['\'"']({ 'name': 'quotes' }), 'hello quotes', basename);
+
+          delete _.templates;
+          start();
+        });
+      });
+    });
+
     var exportsCommands = [
       'exports=amd',
       'exports=commonjs',
@@ -779,26 +812,6 @@
 
         var templates = context._.templates || defaultTemplates;
         equal(templates.c({ 'name': 'moe' }), 'hello moe', basename);
-
-        delete _.templates;
-        start();
-      });
-    });
-
-    asyncTest('`recursive paths', function() {
-      var start = _.after(2, _.once(QUnit.start));
-
-      build(['-s', 'template=' + path.join(templatePath, '**', '*.jst')], function(data) {
-        var basename = path.basename(data.outputPath, '.js'),
-            context = createContext();
-
-        context._ = _;
-        vm.runInContext(data.source, context);
-
-        equal(_.templates.b({ 'name': 'moe' }), 'hello moe!', basename);
-        equal(_.templates.c({ 'name': 'larry' }), 'hello larry', basename);
-        equal(_.templates.c.c({ 'name': 'curly' }), 'hello curly!', basename);
-        equal(_.templates.c['\'"']({ 'name': 'quotes' }), 'hello quotes', basename);
 
         delete _.templates;
         start();

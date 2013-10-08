@@ -1180,7 +1180,7 @@
       if (exception) {
         throw exception;
       }
-      var basePath = path.dirname(pattern).replace(RegExp(path.sepEscaped + '\\*\\*.*$'),  ''),
+      var basePath = (path.dirname(pattern) + path.sep).replace(RegExp('(^|' + path.sepEscaped + ')\\*\\*.*$'),  '$1'),
           insertAt = source.length,
           templates = {};
 
@@ -1190,7 +1190,7 @@
 
         var index = -1,
             object = templates,
-            props = filePath.slice(basePath.length + 1).replace(/\..*$/, '').split(path.sep),
+            props = filePath.slice(basePath.length).replace(/\..*$/, '').split(path.sep),
             length = props.length - 1;
 
         while (++index < length) {
