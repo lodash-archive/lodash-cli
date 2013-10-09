@@ -119,7 +119,6 @@ lodash.memoize = require('lodash.memoize');
 lodash.merge = require('lodash.merge');
 lodash.min = require('lodash.min');
 lodash.mixin = require('lodash.mixin');
-lodash.noConflict = require('lodash.noconflict');
 lodash.omit = require('lodash.omit');
 lodash.once = require('lodash.once');
 lodash.pairs = require('lodash.pairs');

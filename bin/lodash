@@ -902,7 +902,8 @@
     state.plusFuncs = state.minusFuncs = empty;
 
     if (isNpm) {
-      identifiers = _.difference(identifiers, categoryMap.Chaining);
+      // exclude `_.noConflict` and "Chaining" methods
+      identifiers = _.difference(identifiers, categoryMap.Chaining.concat('noConflict'));
     }
     // create modules for each identifier
     identifiers.forEach(function(identifier) {
