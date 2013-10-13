@@ -1837,7 +1837,10 @@
               equal(result.length, 1, basename);
             }
             if (!/\.min$/.test(basename)) {
-              equal(strip(func) === strip(_[funcName]), expected, basename);
+              var srcFnValue = strip(func),
+                  bldFnValue = strip(_[funcName]);
+
+              equal(srcFnValue === bldFnValue, expected, srcFnValue + '\n' + bldFnValue);
             }
             testMethod(lodash, funcName, basename);
             start();
