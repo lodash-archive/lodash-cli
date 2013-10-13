@@ -59,6 +59,7 @@
     'detect': 'find',
     'drop': 'rest',
     'each': 'forEach',
+    'eachRight': 'forEachRight',
     'extend': 'assign',
     'foldl': 'reduce',
     'foldr': 'reduceRight',
@@ -71,7 +72,8 @@
     'tail': 'rest',
     'take': 'first',
     'unique': 'uniq',
-    'unzip': 'zip'
+    'unzip': 'zip',
+    'value': 'wrapperValueOf'
   };
 
   /** Used to associate real names with their aliases */
@@ -83,6 +85,7 @@
     'find': ['detect'],
     'first': ['head', 'take'],
     'forEach': ['each'],
+    'forEachRight': ['eachRight'],
     'functions': ['methods'],
     'map': ['collect'],
     'reduce': ['foldl', 'inject'],
@@ -90,6 +93,7 @@
     'rest': ['drop', 'tail'],
     'some': ['any'],
     'uniq': ['unique'],
+    'wrapperValueOf': ['value'],
     'zip': ['unzip'],
     'zipObject': ['object']
   };
@@ -239,6 +243,7 @@
     'contains',
     'countBy',
     'defaults',
+    'difference',
     'escape',
     'every',
     'extend',
@@ -285,7 +290,9 @@
     'uniqueId',
     'value',
     'values',
-    'without'
+    'without',
+    'wrapperChain',
+    'wrapperValueOf'
   ];
 
   /** List of Lo-Dash only functions */
@@ -312,7 +319,8 @@
     'pull',
     'remove',
     'runInContext',
-    'transform'
+    'transform',
+    'wrapperToString'
   ];
 
   /** List of all functions */
@@ -324,7 +332,10 @@
   var lodashFuncs = allFuncs.slice();
 
   /** List of Underscore functions */
-  var underscoreFuncs = _.difference(allFuncs, lodashOnlyFuncs);
+  var underscoreFuncs = _.filter(_.difference(allFuncs, lodashOnlyFuncs), function(funcName, index, array) {
+    var realName = aliasToRealMap[funcName];
+    return !realName || _.contains(array, realName);
+  });
 
   /*--------------------------------------------------------------------------*/
 
@@ -1840,7 +1851,7 @@
               var srcFnValue = strip(func),
                   bldFnValue = strip(_[funcName]);
 
-              equal(srcFnValue === bldFnValue, expected, srcFnValue + '\n' + bldFnValue);
+              equal(srcFnValue === bldFnValue, expected, '\n' + srcFnValue + '\n' + bldFnValue);
             }
             testMethod(lodash, funcName, basename);
             start();
