@@ -49,5 +49,5 @@ script:
   - "[ $TARGET_PATH == false ] && TARGET_PATH=\"../../../$EXPORTS/$BUILD/index.js\" || true"
   - "[ $BUILD != false ] && node ./bin/lodash modularize $BUILD exports=$EXPORTS -o $OUTPUT_PATH || true"
   - "[ $EXPORTS == 'npm' ] && cd ./npm && cp ../test/npm/index.js ./index.js && cd ../ || true"
-  - "[ \"$TEST\" == false ] && $BIN $OPTION ./node_modules/lodash/test/test.js $TARGET_PATH || true"
-  - "[ \"$TEST\" != false ] && $TEST || true"
+  - "[ \"$TEST\" != false ] && true || $BIN $OPTION ./node_modules/lodash/test/test.js $TARGET_PATH"
+  - "[ \"$TEST\" == false ] && true || $TEST"
