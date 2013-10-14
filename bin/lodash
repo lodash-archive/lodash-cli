@@ -7,7 +7,6 @@
 
   /** Load other modules */
   var _ = require('lodash/lodash.js'),
-      glob = require('glob'),
       minify = require('../lib/minify.js'),
       util = require('../lib/util.js');
 
@@ -1146,7 +1145,8 @@
    * @returns {string} Returns the compiled source.
    */
   function buildTemplate(state) {
-    var pattern = state.templatePattern,
+    var glob = require('glob'),
+        pattern = state.templatePattern,
         settings = state.templateSettings,
         moduleId = settings.moduleId;
 
