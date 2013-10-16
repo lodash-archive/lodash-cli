@@ -537,6 +537,7 @@
   var allExports = [
     'amd',
     'commonjs',
+    'es6',
     'global',
     'node',
     'npm'
@@ -835,6 +836,7 @@
         includeVars = state.includeVars,
         isAMD = state.isAMD,
         isCommonJS = state.isCommonJS,
+        isEs6 = state.isEs6,
         isNode = state.isNode,
         isNpm = state.isNpm,
         objDepMap = state.objDepMap,
@@ -928,7 +930,19 @@
           '  return ' + identifier + ';',
           '});'
         );
-      } else {
+      }
+      else if (isEs6) {
+        iife.push(
+          _.reduce(depPaths, function(result, depPath, index) {
+            var depName = deps[index];
+            return result + (result ? ';\n' : '') +
+              '  import ' + depName + " from '" + depPath + "'";
+          }, '') + ';',
+          '%output%',
+          'export default = ' + identifier + ';'
+        );
+      }
+      else {
         iife.push(
           _.reduce(depPaths, function(result, depPath, index) {
             var depName = deps[index];
@@ -1004,6 +1018,7 @@
         var categoryDeps = _.invoke(categories, 'toLowerCase'),
             categoryDepPaths = categoryDeps.map(function(dep) { return './' + dep; }),
             identifier = 'lodash',
+            basename = identifier,
             modulePath = getPath(identifier);
 
         var deps = getDependencies(identifier, funcDepMap, true)
@@ -1016,31 +1031,49 @@
             iife = [];
 
         if (isAMD) {
+          basename = 'main';
+
           iife.push(
             'define([' + (depPaths.length ? "'" + depPaths.join("', '") + "'" : '') + '], function(' + depArgs + ') {',
             '%output%',
             '  return lodash;',
             '});'
           );
-        } else {
+        }
+        else {
           deps = categoryDeps.concat(deps);
 
-          iife.push(
-            _.reduce(depPaths, function(result, depPath, index) {
-              var depName = deps[index];
-              return result + (result ? ',\n      ' : '  var ') +
-                depName + " = require('" + depPath + "')" +
-                (isCommonJS && !_.contains(categoryDepPaths, depPath) ? '.' + depName : '');
-            }, '') + ';',
-            '%output%',
-            (isCommonJS ? 'exports._' : 'module.exports') + ' = ' + identifier + ';'
-          );
+          if (isEs6) {
+            iife.push(
+              _.reduce(depPaths, function(result, depPath, index) {
+                var depName = deps[index];
+                return result + (result ? ';\n' : '') +
+                  '  import ' + depName + " from '" + depPath + "'";
+              }, '') + ';',
+              '%output%',
+              'export default = ' + identifier + ';'
+            );
+          }
+          else {
+            basename = 'index';
+
+            iife.push(
+              _.reduce(depPaths, function(result, depPath, index) {
+                var depName = deps[index];
+                return result + (result ? ',\n      ' : '  var ') +
+                  depName + " = require('" + depPath + "')" +
+                  (isCommonJS && !_.contains(categoryDepPaths, depPath) ? '.' + depName : '');
+              }, '') + ';',
+              '%output%',
+              (isCommonJS ? 'exports._' : 'module.exports') + ' = ' + identifier + ';'
+            );
+          }
         }
 
         state.iife = iife.join('\n');
         state.buildFuncs = state.includeFuncs = [identifier];
         state.includeObjs = state.includeVars = empty;
-        state.outputPath = path.join(outputPath, modulePath, (isAMD ? 'main' : 'index') + '.js');
+        state.outputPath = path.join(outputPath, modulePath, basename + '.js');
 
         build(state, function(data) {
           var source = data.source;
@@ -1107,15 +1140,23 @@
             '  };',
             '});'
           );
-        } else {
+        }
+        else {
           iife.push('%output%');
 
-          if (isCommonJS) {
+          if (isEs6) {
+            push.apply(iife, depPaths.map(function(depPath, index) {
+              var depName = deps[index];
+              return 'export ' + depName + " from '" + depPath + "';";
+            }));
+          }
+          else if (isCommonJS) {
             push.apply(iife, depPaths.map(function(depPath, index) {
               var depName = deps[index];
               return 'exports.' + depName + " = require('" + depPath + "')." + depName + ';';
             }));
-          } else {
+          }
+          else {
             iife.push(
               'module.exports = {',
               depPaths.map(function(depPath, index) {
@@ -2813,7 +2854,7 @@
           return value.length ? value : result;
         }, isModularize
           ? ['amd']
-          : (isUnderscore ? ['commonjs', 'global', 'node'] : _.without(allExports, 'npm'))
+          : (isUnderscore ? ['commonjs', 'global', 'node'] : _.without(allExports, 'es6', 'npm'))
         );
         return isModularize ? _.first(result, 1) : result;
       }());
@@ -2849,6 +2890,7 @@
       // flags to specify export options
       var isAMD = _.contains(exportsOptions, 'amd'),
           isCommonJS = _.contains(exportsOptions, 'commonjs'),
+          isEs6 = _.contains(exportsOptions, 'es6'),
           isGlobal = _.contains(exportsOptions, 'global'),
           isNpm =  _.contains(exportsOptions, 'npm'),
           isNode = isNpm || _.contains(exportsOptions, 'node');
@@ -2988,7 +3030,7 @@
         },
         'exports': {
           'entries': exportsOptions,
-          'validEntries': isModularize ? ['amd', 'commonjs', 'node', 'npm'] : allExports
+          'validEntries': isModularize ? ['amd', 'commonjs', 'es6', 'node', 'npm'] : _.without(allExports, 'es6', 'npm')
         },
         'include': {
           'entries': includeFuncs,
@@ -4420,6 +4462,7 @@
           'isCommonJS': isCommonJS,
           'isCSP': isCSP,
           'isDebug': true,
+          'isEs6': isEs6,
           'isGlobal': isGlobal,
           'isIIFE': true,
           'isLegacy': isLegacy,
