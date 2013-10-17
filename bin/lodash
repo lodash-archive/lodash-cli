@@ -1026,7 +1026,8 @@
           .concat(varDepMap[identifier] || empty)
           .sort();
 
-        var depArgs = categoryDeps.concat(deps).join(', '),
+        var depNames = categoryDeps.concat(deps),
+            depArgs = depNames.join(', '),
             depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath)),
             iife = [];
 
@@ -1041,12 +1042,10 @@
           );
         }
         else {
-          deps = categoryDeps.concat(deps);
-
           if (isEs6) {
             iife.push(
               _.reduce(depPaths, function(result, depPath, index) {
-                var depName = deps[index];
+                var depName = depNames[index];
                 return result + (result ? ';\n' : '') +
                   '  import ' + depName + " from '" + depPath + "'";
               }, '') + ';',
@@ -1059,7 +1058,7 @@
 
             iife.push(
               _.reduce(depPaths, function(result, depPath, index) {
-                var depName = deps[index];
+                var depName = depNames[index];
                 return result + (result ? ',\n      ' : '  var ') +
                   depName + " = require('" + depPath + "')" +
                   (isCommonJS && !_.contains(categoryDepPaths, depPath) ? '.' + depName : '');
@@ -1080,28 +1079,28 @@
 
           // add category namespaces to each lodash function assignment
           source = source.replace(/(lodash(?:\.prototype)?\.\w+\s*=\s*)(\w+)/g, function(match, prelude, identifier) {
-            return prelude + getCategory(identifier, funcDepMap).toLowerCase() + '.' + identifier;
+            return _.contains(deps, identifier)
+              ? match
+              : prelude + getCategory(identifier, funcDepMap).toLowerCase() + '.' + identifier;
           });
 
           // wrap `_.mixin`
-          if (_.contains(identifiers, 'mixin')) {
-            source = source.replace(/^ *lodashWrapper\.prototype\s*=[^;]+;\n/m, function(match) {
-              return match + [
-                '',
-                '  // wrap `_.mixin` so it works when provided only one argument',
-                '  mixin = (function(fn) {',
-                '    return function(object, source) {',
-                '      if (!source) {',
-                '        source = object;',
-                '        object = lodash;',
-                '      }',
-                '      return fn(object, source);',
-                '    };',
-                '  }(mixin));',
-                ''
-              ].join('\n');
-            });
-          }
+          source = source.replace(/^ *lodashWrapper\.prototype\s*=[^;]+;\n/m, function(match) {
+            return match + [
+              '',
+              '  // wrap `_.mixin` so it works when provided only one argument',
+              '  mixin = (function(fn) {',
+              '    return function(object, source) {',
+              '      if (!source) {',
+              '        source = object;',
+              '        object = lodash;',
+              '      }',
+              '      return fn(object, source);',
+              '    };',
+              '  }(mixin));',
+              ''
+            ].join('\n');
+          });
 
           // add `_.support` and `_.templateSettings`
           source = source.replace(/^ *(return +|.*?exports.*?=\s*)lodash;$/m, function(match) {
