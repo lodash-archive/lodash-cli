@@ -547,12 +547,14 @@
 
     commands = [
       'csp backbone',
+      'exports=es6',
+      'exports=npm',
       'mobile underscore',
       'modern template=./*.jst'
     ];
 
     commands.forEach(function(command) {
-      asyncTest('`lodash ' + command +'` is not valid', function() {
+      asyncTest('`lodash ' + command +'` is invalid', function() {
         process.stdout.write = _.once(function(string) {
           ok(reHelp.test(string));
           process.stdout.write = write;
