@@ -3289,6 +3289,10 @@
                 _.pull(deps, 'isArguments');
               }
             });
+
+            if (!isUnderscore || (isUnderscore && isLodash('isRegExp'))) {
+              _.pull(varDapMap.isRegExp, 'objectTypes');
+            }
           }
         }
         if (isModularize) {
@@ -3513,7 +3517,7 @@
             if (!isUnderscore || (isUnderscore && isLodash('isRegExp'))) {
               source = replaceFunction(source, 'isRegExp', [
                 'function isRegExp(value) {',
-                "  return value ? (typeof value == 'object' && toString.call(value) == regexpClass) : false;",
+                "  return value && typeof value == 'object' && toString.call(value) == regexpClass) || false;",
                 '}'
               ].join('\n'));
             }
