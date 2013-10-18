@@ -1370,6 +1370,7 @@
       'Commands:',
       '',
       '  backbone     Build with only functions required by Backbone',
+      '  compat       Build with support for old & new environments (default)',
       '  legacy       Build tailored for older environments without ES5 support',
       '  mobile       Build without function compilation & bug fixes for old browsers',
       '  modern       Build tailored for newer environments with ES5 support',
