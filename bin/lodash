@@ -220,7 +220,7 @@
     'values': ['keys'],
     'where': ['filter'],
     'without': ['difference'],
-    'wrap': ['isFunction'],
+    'wrap': ['createBound'],
     'wrapperChain': [],
     'wrapperToString': [],
     'wrapperValueOf': [],
