@@ -3075,13 +3075,15 @@
           funcDepMap.isPlainObject = funcDepMap.shimIsPlainObject.slice();
           funcDepMap.keys = funcDepMap.shimKeys.slice();
 
-          _.forOwn(varDepMap, function(deps) {
-            _.pull(deps, 'reNative');
+          _.forOwn(varDepMap, function(deps, funcName) {
+            if (funcName != 'baseIsEqual') {
+              _.pull(deps, 'reNative');
+            }
           });
         }
         if (isModularize) {
           if (!isCommonJS) {
-            _.forOwn(varDepMap, function(deps, funcName) {
+            _.forOwn(varDepMap, function(deps) {
               _.pull(deps, 'root');
             });
             delete varDepMap.root;
