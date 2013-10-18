@@ -291,7 +291,7 @@
   var varDependencyMap = {
     'assign': ['defaultsIteratorOptions'],
     'baseEach': ['eachIteratorOptions'],
-    'baseIsEqual': ['objectTypes'],
+    'baseIsEqual': ['objectTypes', 'reNative'],
     'baseUniq': ['largeArraySize'],
     'bind': ['reNative'],
     'cacheIndexOf': ['keyPrefix'],
@@ -3291,7 +3291,7 @@
             });
 
             if (!isUnderscore || (isUnderscore && isLodash('isRegExp'))) {
-              _.pull(varDapMap.isRegExp, 'objectTypes');
+              _.pull(varDepMap.isRegExp, 'objectTypes');
             }
           }
         }
