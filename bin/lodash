@@ -121,6 +121,7 @@
     'compose': ['isFunction'],
     'contains': ['baseEach', 'getIndexOf', 'isArray', 'isString'],
     'countBy': ['createAggregator'],
+    'create': [ 'isObject', 'noop'],
     'createCallback': ['baseCreateCallback', 'baseIsEqual', 'isObject', 'keys'],
     'curry': ['createBound'],
     'debounce': ['isFunction', 'isObject'],
@@ -212,7 +213,7 @@
     'throttle': ['debounce', 'isFunction', 'isObject'],
     'times': ['baseCreateCallback'],
     'toArray': ['isString', 'slice', 'values'],
-    'transform': ['baseCreateCallback', 'baseEach', 'createObject', 'forOwn', 'isArray'],
+    'transform': ['baseCreateCallback', 'baseEach', 'create', 'forOwn', 'isArray'],
     'unescape': ['keys', 'unescapeHtmlChar'],
     'union': ['baseFlatten', 'baseUniq'],
     'uniq': ['baseUniq', 'createCallback'],
@@ -242,10 +243,9 @@
     'charAtCallback': [],
     'compareAscending': [],
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
-    'createBound': ['createObject', 'isFunction', 'isObject', 'setBindData'],
+    'createBound': ['create', 'isFunction', 'isObject', 'setBindData'],
     'createCache': ['cachePush', 'getObject', 'releaseObject'],
     'createIterator': ['baseCreateCallback', 'isArguments', 'isArray', 'isString', 'iteratorTemplate'],
-    'createObject': [ 'isObject', 'noop'],
     'escapeHtmlChar': [],
     'escapeStringChar': [],
     'getArray': [],
@@ -291,14 +291,14 @@
   var varDependencyMap = {
     'assign': ['defaultsIteratorOptions'],
     'baseEach': ['eachIteratorOptions'],
-    'baseIsEqual': ['objectTypes', 'reNative'],
+    'baseIsEqual': ['objectTypes'],
     'baseUniq': ['largeArraySize'],
     'bind': ['reNative'],
     'cacheIndexOf': ['keyPrefix'],
     'cachePush': ['keyPrefix'],
+    'create': ['reNative'],
     'createIterator': ['indicatorObject', 'objectTypes'],
     'createBound': ['reNative'],
-    'createObject': ['reNative'],
     'debounce': ['reNative'],
     'defaults': ['defaultsIteratorOptions'],
     'defer': ['objectTypes', 'reNative', 'root'],
@@ -417,6 +417,7 @@
       'assign',
       'clone',
       'cloneDeep',
+      'create',
       'defaults',
       'findKey',
       'findLastKey',
@@ -576,6 +577,7 @@
     'at',
     'bindKey',
     'cloneDeep',
+    'create',
     'createCallback',
     'curry',
     'findIndex',
@@ -608,6 +610,7 @@
     'baseIndexOf',
     'baseIsEqual',
     'baseMerge',
+    'baseRandom',
     'baseUniq',
     'cacheIndexOf',
     'cachePush',
@@ -1457,13 +1460,13 @@
   }
 
   /**
-   * Gets the `createObject` fork from `source`.
+   * Gets the `_.create` fork from `source`.
    *
    * @private
    * @param {string} source The source to inspect.
    * @returns {string} Returns the fork.
    */
-  function getCreateObjectFork(source) {
+  function getCreateFork(source) {
     var result = source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!nativeCreate)[\s\S]+?\n *};\n\1}/);
     return result ? result[0] : '';
   }
@@ -1914,14 +1917,14 @@
   }
 
   /**
-   * Removes the `createObject` fork from `source`.
+   * Removes the `_.create` fork from `source`.
    *
    * @private
    * @param {string} source The source to process.
    * @returns {string} Returns the modified source.
    */
-  function removeCreateObjectFork(source) {
-    return source.replace(getCreateObjectFork(source), '');
+  function removeCreateFork(source) {
+    return source.replace(getCreateFork(source), '');
   }
 
   /**
@@ -3076,9 +3079,7 @@
           funcDepMap.keys = funcDepMap.shimKeys.slice();
 
           _.forOwn(varDepMap, function(deps, funcName) {
-            if (funcName != 'baseIsEqual') {
-              _.pull(deps, 'reNative');
-            }
+            _.pull(deps, 'reNative');
           });
         }
         if (isModularize) {
@@ -3413,9 +3414,9 @@
             matchFunction(source, 'shimKeys').replace(/^ *var shimKeys *= */m, '')
           );
 
-          // replace `createObject` and `_.isArguments` with their forks
+          // replace `_.create` and `_.isArguments` with their forks
           _.forOwn({
-            'createObject': [getCreateObjectFork, removeCreateObjectFork],
+            'create': [getCreateFork, removeCreateFork],
             'isArguments': [getIsArgumentsFork, removeIsArgumentsFork]
           },
           function(funcs, funcName) {
@@ -4572,7 +4573,7 @@
 
       // remove forks of removed functions
       _.forOwn({
-        'createObject': removeCreateObjectFork,
+        'create': removeCreateFork,
         'defer': removeDeferFork,
         'isArguments': removeIsArgumentsFork,
         'isArray': removeIsArrayFork,
