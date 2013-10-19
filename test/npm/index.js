@@ -59,6 +59,7 @@ lodash.compact = require('lodash.compact');
 lodash.compose = require('lodash.compose');
 lodash.contains = require('lodash.contains');
 lodash.countBy = require('lodash.countby');
+lodash.create = require('lodash.create');
 lodash.createCallback = require('lodash.createcallback');
 lodash.curry = require('lodash.curry');
 lodash.debounce = require('lodash.debounce');

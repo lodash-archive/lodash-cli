@@ -4379,7 +4379,7 @@
 
             // unexpose methods
             source = source.replace(getMethodAssignments(source), function(match) {
-              return _.reduce(['assign', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'unzip', 'zipObject'], function(result, funcName) {
+              return _.reduce(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'unzip', 'zipObject'], function(result, funcName) {
                 return isLodash(funcName)
                   ? result
                   : result.replace(RegExp('^(?: *//.*\\s*)* *lodash\\.' + funcName + ' *=[\\s\\S]+?;\\n', 'm'), '');
