@@ -121,7 +121,7 @@
     'compose': ['isFunction'],
     'contains': ['baseEach', 'getIndexOf', 'isArray', 'isString'],
     'countBy': ['createAggregator'],
-    'create': ['assign', 'isObject', 'noop'],
+    'create': ['assign', 'baseCreate'],
     'createCallback': ['baseCreateCallback', 'baseIsEqual', 'isObject', 'keys'],
     'curry': ['createBound'],
     'debounce': ['isFunction', 'isObject'],
@@ -213,7 +213,7 @@
     'throttle': ['debounce', 'isFunction', 'isObject'],
     'times': ['baseCreateCallback'],
     'toArray': ['isString', 'slice', 'values'],
-    'transform': ['baseCreateCallback', 'baseEach', 'create', 'forOwn', 'isArray'],
+    'transform': ['baseCreate', 'baseCreateCallback', 'baseEach', 'forOwn', 'isArray'],
     'unescape': ['keys', 'unescapeHtmlChar'],
     'union': ['baseFlatten', 'baseUniq'],
     'uniq': ['baseUniq', 'createCallback'],
@@ -230,6 +230,7 @@
 
     // private functions
     'baseClone': ['assign', 'baseEach', 'forOwn', 'getArray', 'isArray', 'isObject', 'isNode', 'releaseArray', 'slice'],
+    'baseCreate': ['isObject', 'noop'],
     'baseCreateCallback': ['bind', 'identity', 'setBindData'],
     'baseEach': ['createIterator'],
     'baseFlatten': ['isArguments', 'isArray'],
@@ -243,7 +244,7 @@
     'charAtCallback': [],
     'compareAscending': [],
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
-    'createBound': ['create', 'isFunction', 'isObject', 'setBindData'],
+    'createBound': ['baseCreate', 'isFunction', 'isObject', 'setBindData'],
     'createCache': ['cachePush', 'getObject', 'releaseObject'],
     'createIterator': ['baseCreateCallback', 'isArguments', 'isArray', 'isString', 'iteratorTemplate'],
     'escapeHtmlChar': [],
@@ -290,13 +291,13 @@
   /** Used to track variable dependencies of identifiers */
   var varDependencyMap = {
     'assign': ['defaultsIteratorOptions'],
+    'baseCreate': ['reNative'],
     'baseEach': ['eachIteratorOptions'],
     'baseIsEqual': ['objectTypes'],
     'baseUniq': ['largeArraySize'],
     'bind': ['reNative'],
     'cacheIndexOf': ['keyPrefix'],
     'cachePush': ['keyPrefix'],
-    'create': ['reNative'],
     'createIterator': ['indicatorObject', 'objectTypes'],
     'createBound': ['reNative'],
     'debounce': ['reNative'],
@@ -604,6 +605,7 @@
   /** List of private functions */
   var privateFuncs = [
     'baseClone',
+    'baseCreate',
     'baseCreateCallback',
     'baseEach',
     'baseFlatten',
@@ -1461,13 +1463,13 @@
   }
 
   /**
-   * Gets the `_.create` fork from `source`.
+   * Gets the `baseCreate` fork from `source`.
    *
    * @private
    * @param {string} source The source to inspect.
    * @returns {string} Returns the fork.
    */
-  function getCreateFork(source) {
+  function getBaseCreateFork(source) {
     var result = source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!nativeCreate)[\s\S]+?\n *};\n\1}/);
     return result ? result[0] : '';
   }
@@ -1918,14 +1920,14 @@
   }
 
   /**
-   * Removes the `_.create` fork from `source`.
+   * Removes the `baseCreate` fork from `source`.
    *
    * @private
    * @param {string} source The source to process.
    * @returns {string} Returns the modified source.
    */
-  function removeCreateFork(source) {
-    return source.replace(getCreateFork(source), '');
+  function removeBaseCreateFork(source) {
+    return source.replace(getBaseCreateFork(source), '');
   }
 
   /**
@@ -3415,9 +3417,9 @@
             matchFunction(source, 'shimKeys').replace(/^ *var shimKeys *= */m, '')
           );
 
-          // replace `_.create` and `_.isArguments` with their forks
+          // replace `baseCreate` and `_.isArguments` with their forks
           _.forOwn({
-            'create': [getCreateFork, removeCreateFork],
+            'baseCreate': [getBaseCreateFork, removeBaseCreateFork],
             'isArguments': [getIsArgumentsFork, removeIsArgumentsFork]
           },
           function(funcs, funcName) {
@@ -4574,7 +4576,7 @@
 
       // remove forks of removed functions
       _.forOwn({
-        'create': removeCreateFork,
+        'baseCreate': removeBaseCreateFork,
         'defer': removeDeferFork,
         'isArguments': removeIsArgumentsFork,
         'isArray': removeIsArrayFork,
