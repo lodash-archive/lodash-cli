@@ -121,7 +121,7 @@
     'compose': ['isFunction'],
     'contains': ['baseEach', 'getIndexOf', 'isArray', 'isString'],
     'countBy': ['createAggregator'],
-    'create': [ 'isObject', 'noop'],
+    'create': ['assign', 'isObject', 'noop'],
     'createCallback': ['baseCreateCallback', 'baseIsEqual', 'isObject', 'keys'],
     'curry': ['createBound'],
     'debounce': ['isFunction', 'isObject'],
