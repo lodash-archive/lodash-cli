@@ -111,9 +111,9 @@
     'after': ['isFunction'],
     'assign': ['createIterator'],
     'at': ['baseFlatten', 'isString'],
-    'bind': ['createBound'],
+    'bind': ['createBound', 'slice'],
     'bindAll': ['baseFlatten', 'createBound', 'functions'],
-    'bindKey': ['createBound'],
+    'bindKey': ['createBound', 'slice'],
     'chain': ['lodashWrapper'],
     'clone': ['baseClone', 'baseCreateCallback'],
     'cloneDeep': ['baseClone', 'baseCreateCallback'],
@@ -126,8 +126,8 @@
     'curry': ['createBound'],
     'debounce': ['isFunction', 'isObject'],
     'defaults': ['createIterator'],
-    'defer': ['isFunction'],
-    'delay': ['isFunction'],
+    'defer': ['isFunction', 'slice'],
+    'delay': ['isFunction', 'slice'],
     'difference': ['baseFlatten', 'cacheIndexOf', 'createCache', 'getIndexOf', 'releaseObject'],
     'escape': ['escapeHtmlChar', 'keys'],
     'every': ['baseEach', 'createCallback', 'isArray'],
@@ -155,7 +155,7 @@
     'initial': ['createCallback', 'slice'],
     'intersection': ['cacheIndexOf', 'createCache', 'getArray', 'getIndexOf', 'releaseArray', 'releaseObject'],
     'invert': ['keys'],
-    'invoke': ['forEach'],
+    'invoke': ['forEach', 'slice'],
     'isArguments': [],
     'isArray': [],
     'isBoolean': [],
@@ -180,7 +180,7 @@
     'map': ['baseEach', 'createCallback', 'isArray'],
     'max': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
     'memoize': ['isFunction'],
-    'merge': ['baseCreateCallback', 'baseMerge', 'getArray', 'isObject', 'releaseArray'],
+    'merge': ['baseCreateCallback', 'baseMerge', 'getArray', 'isObject', 'releaseArray', 'slice'],
     'min': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
     'mixin': ['forEach', 'functions', 'isFunction', 'lodash'],
     'noConflict': [],
@@ -188,8 +188,8 @@
     'once': ['isFunction'],
     'pairs': ['keys'],
     'parseInt': ['isString'],
-    'partial': ['createBound'],
-    'partialRight': ['createBound'],
+    'partial': ['createBound', 'slice'],
+    'partialRight': ['createBound', 'slice'],
     'pick': ['baseFlatten', 'createCallback', 'forIn', 'isObject'],
     'pluck': ['map'],
     'pull': [],
@@ -220,7 +220,7 @@
     'uniqueId': [],
     'values': ['keys'],
     'where': ['filter'],
-    'without': ['difference'],
+    'without': ['difference', 'slice'],
     'wrap': ['createBound'],
     'wrapperChain': [],
     'wrapperToString': [],
@@ -244,7 +244,7 @@
     'charAtCallback': [],
     'compareAscending': [],
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
-    'createBound': ['baseCreate', 'isFunction', 'isObject', 'setBindData'],
+    'createBound': ['baseCreate', 'isFunction', 'isObject', 'setBindData', 'slice'],
     'createCache': ['cachePush', 'getObject', 'releaseObject'],
     'createIterator': ['baseCreateCallback', 'isArguments', 'isArray', 'isString', 'iteratorTemplate'],
     'escapeHtmlChar': [],
@@ -3205,9 +3205,6 @@
               if (_.contains(deps, 'charAtCallback')) {
                 _.pull(deps, 'charAtCallback', 'isArray', 'isString');
               }
-              if (_.contains(deps, 'slice')) {
-                _.pull(deps, 'slice');
-              }
             }
           });
 
@@ -4182,17 +4179,6 @@
               return match.replace(/hasOwnProperty\.call\((\w+), *'__wrapped__'\)/g, '$1 instanceof lodash')
             });
           }
-          // replace `slice` with `nativeSlice.call`
-          _.each(['clone', 'first', 'initial', 'last', 'rest', 'toArray'], function(funcName) {
-            if (funcName == 'clone'
-                  ? (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep'))
-                  : !isLodash(funcName)
-                ) {
-              source = source.replace(matchFunction(source, funcName), function(match) {
-                return match.replace(/([^\w.])slice\(/g, '$1nativeSlice.call(');
-              });
-            }
-          });
 
           // remove conditional `charCodeCallback` use from `_.max` and `_.min`
           _.each(['max', 'min'], function(funcName) {
