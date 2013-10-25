@@ -126,7 +126,7 @@
     'curry': ['createBound'],
     'debounce': ['isFunction', 'isObject'],
     'defaults': ['createIterator'],
-    'defer': ['isFunction', 'slice'],
+    'defer': ['isFunction', 'nativeBind', 'slice'],
     'delay': ['isFunction', 'slice'],
     'difference': ['baseFlatten', 'cacheIndexOf', 'createCache', 'getIndexOf', 'releaseObject'],
     'escape': ['escapeHtmlChar', 'keys'],
@@ -244,7 +244,7 @@
     'charAtCallback': [],
     'compareAscending': [],
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
-    'createBound': ['baseCreate', 'isFunction', 'isObject', 'setBindData', 'slice'],
+    'createBound': ['baseCreate', 'isFunction', 'isObject', 'nativeBind', 'setBindData', 'slice'],
     'createCache': ['cachePush', 'getObject', 'releaseObject'],
     'createIterator': ['baseCreateCallback', 'isArguments', 'isArray', 'isString', 'iteratorTemplate'],
     'escapeHtmlChar': [],
@@ -255,6 +255,7 @@
     'isNode': [],
     'iteratorTemplate': [],
     'lodashWrapper': [],
+    'nativeBind': [],
     'noop': [],
     'releaseArray': [],
     'releaseObject': [],
@@ -302,7 +303,7 @@
     'createBound': ['reNative'],
     'debounce': ['reNative'],
     'defaults': ['defaultsIteratorOptions'],
-    'defer': ['objectTypes', 'reNative', 'root'],
+    'defer': ['isV8', 'objectTypes', 'reNative', 'root'],
     'difference': ['largeArraySize'],
     'escape': ['reUnescapedHtml'],
     'escapeHtmlChar': ['htmlEscapes'],
@@ -318,6 +319,7 @@
     'isObject': ['objectTypes'],
     'isPlainObject': ['reNative'],
     'isRegExp': ['objectTypes'],
+    'isV8': ['nativeBind', 'reNative'],
     'keys': ['reNative'],
     'memoize': ['keyPrefix'],
     'parseInt': ['root'],
@@ -327,7 +329,7 @@
     'reUnescapedHtml': ['htmlEscapes'],
     'root': ['objectTypes'],
     'setBindData': ['reNative'],
-    'support': ['reNative', 'root'],
+    'support': ['isV8', 'nativeBind', 'reNative', 'root'],
     'template': ['reInterpolate'],
     'templateSettings': ['reInterpolate'],
     'unescape': ['reEscapedHtml'],
@@ -630,6 +632,7 @@
     'isNode',
     'iteratorTemplate',
     'lodashWrapper',
+    'nativeBind',
     'noop',
     'releaseArray',
     'releaseObject',
@@ -3129,6 +3132,10 @@
           }
           if (!isLodash('contains')) {
             _.pull(funcDepMap.contains, 'isArray', 'isString');
+          }
+          if (!isLodash('defer')) {
+            _.pull(funcDepMap.defer, 'nativeBind');
+            _.pull(varDepMap.defer, 'objectTypes', 'reNative');
           }
           if (!isLodash('flatten')) {
             _.pull(funcDepMap.flatten, 'map');
