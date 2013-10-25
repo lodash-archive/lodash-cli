@@ -3119,7 +3119,7 @@
         }
         if (isUnderscore) {
           if (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep')) {
-            _.pull(funcDepMap.clone, 'baseClone').push('assign', 'isArray', 'isObject');
+            _.pull(funcDepMap.clone, 'baseClone').push('assign', 'isArray', 'isObject', 'slice');
           }
           if (!isLodash('baseIsEqual') && !isLodash('isEqual')) {
             _.pull(funcDepMap.baseIsEqual, 'isArguments');
@@ -3146,7 +3146,7 @@
             _.pull(funcDepMap.template, 'keys', 'values');
           }
           if (!isLodash('toArray')) {
-            funcDepMap.toArray.push('isArray', 'map');
+            _.pull(funcDepMap.toArray, 'isString').push('isArray', 'map');
           }
           if (!isLodash('findWhere') && !isLodash('where')) {
             _.pull(funcDepMap.createCallback, 'baseIsEqual', 'isObject');
