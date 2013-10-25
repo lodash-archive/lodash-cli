@@ -3080,12 +3080,15 @@
         // update dependencies
         if (isLegacy) {
           _.pull(objDepMap.createBound, 'support');
-
           funcDepMap.isPlainObject = funcDepMap.shimIsPlainObject.slice();
           funcDepMap.keys = funcDepMap.shimKeys.slice();
 
+          _.each(['createBound', 'defer'], function(funcName) {
+            _.pull(funcDepMap[funcName], 'nativeBind');
+          });
+
           _.forOwn(varDepMap, function(deps, funcName) {
-            _.pull(deps, 'reNative');
+            _.pull(deps, 'isV8', 'nativeBind', 'reNative');
           });
         }
         if (isModularize) {
@@ -3113,9 +3116,15 @@
         }
         if (isLegacy || isMobile || isUnderscore) {
           _.pull(objDepMap.baseCreateCallback, 'support');
+
           _.each(['baseCreateCallback', 'createBound'], function(funcName) {
             _.pull(funcDepMap[funcName], 'setBindData');
           });
+
+          if (!isLodash('defer')) {
+            _.pull(funcDepMap.defer, 'nativeBind');
+            _.pull(varDepMap.defer, 'objectTypes', 'reNative');
+          }
         }
         if (!isModularize && _.contains(plusFuncs, 'chain') == !isUnderscore) {
           _.pull(funcDepMap.mixin, 'isFunction');
@@ -3132,10 +3141,6 @@
           }
           if (!isLodash('contains')) {
             _.pull(funcDepMap.contains, 'isArray', 'isString');
-          }
-          if (!isLodash('defer')) {
-            _.pull(funcDepMap.defer, 'nativeBind');
-            _.pull(varDepMap.defer, 'objectTypes', 'reNative');
           }
           if (!isLodash('flatten')) {
             _.pull(funcDepMap.flatten, 'map');
