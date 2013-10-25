@@ -319,7 +319,7 @@
     'isObject': ['objectTypes'],
     'isPlainObject': ['reNative'],
     'isRegExp': ['objectTypes'],
-    'isV8': ['nativeBind', 'reNative'],
+    'isV8': ['nativeBind', 'reNative', 'root'],
     'keys': ['reNative'],
     'memoize': ['keyPrefix'],
     'parseInt': ['root'],
