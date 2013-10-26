@@ -1241,14 +1241,21 @@
 
         collection = [{ 'a': 1 }, { 'a': 1 }];
         deepEqual(lodash.where(collection, { 'a': 1 }, true), collection[0], '_.where supports a `first` argument: ' + basename);
-        deepEqual(lodash.where(collection, {}, true), undefined, '_.where should return `undefined` when passed `first` and falsey `properties`: ' + basename);
+        deepEqual(lodash.where(collection, {}, true), undefined, '_.where should return `undefined` when no match is found`: ' + basename);
 
         deepEqual(lodash.findWhere(collection, { 'a': 1 }), collection[0], '_.findWhere: ' + basename);
-        strictEqual(lodash.findWhere(collection, {}), undefined, '_.findWhere should return `undefined` for falsey `properties`: ' + basename);
+        strictEqual(lodash.findWhere(collection, {}), undefined, '_.findWhere should return `undefined` if no match is found: ' + basename);
 
         var expected = [[['moe', 30, true]], [['larry', 40, false]]];
         actual = lodash.zip(lodash.zip(['moe', 'larry'], [30, 40], [true, false]));
         deepEqual(actual, expected, '_.zip is unable to correctly consume it\'s output: ' + basename);
+
+        _.each(['difference', 'intersection', 'unique'], function(methodName) {
+          try {
+            var actual = lodash[methodName]();
+          } catch(e) { }
+          deepEqual(actual, [], '_.' + methodName + ' should return an empty array when no `array` argument is provided: ' + basename);
+        });
 
         start();
       });
