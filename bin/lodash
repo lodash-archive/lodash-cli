@@ -4626,7 +4626,9 @@
       if (isModularize) {
         // remove unneeded variable dependencies
         _.each(varDependencies, function(varName) {
-          if (!_.contains(includeVars, varName)) {
+          if (!_.contains(includeFuncs, varName) &&
+              !_.contains(includeObjs, varName) &&
+              !_.contains(includeVars, varName)) {
             source = removeVar(source, varName);
           }
         });
@@ -4636,11 +4638,11 @@
         var isShallow = isExcluded('runInContext'),
             useMap = {},
             snippet = removeStrings(removeComments(source)),
-            varNames = _.difference(getVars(snippet, isShallow), includeObjs);
+            varNames = _.difference(getVars(snippet, isShallow), includeFuncs, includeObjs, includeVars);
 
         while (varNames.length) {
           varNames = _.sortBy(varNames, function(varName) {
-            var result = _.contains(includeVars, varName) || isVarUsed(snippet, varName, isShallow);
+            var result = isVarUsed(snippet, varName, isShallow);
             useMap[varName] = result;
             return result;
           });
