@@ -2940,10 +2940,10 @@
       }, categoryOptions.slice());
 
       // properties to include in the build
-      var includeObjs = _.intersection(includeFuncs, objDepMap);
+      var includeObjs = _.intersection(includeFuncs, objDependencies);
 
       // variables to include in the build
-      var includeVars = _.intersection(includeFuncs, varDepMap);
+      var includeVars = _.intersection(includeFuncs, varDependencies);
 
       // functions to remove from the build
       var minusFuncs = options.reduce(function(accumulator, value) {
