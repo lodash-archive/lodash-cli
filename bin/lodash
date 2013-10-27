@@ -104,8 +104,10 @@
     'defaultsIteratorOptions': ['keys'],
     'eachIteratorOptions': ['keys'],
     'htmlUnescapes': ['invert'],
+    'isV8': ['nativeBind'],
     'reEscapedHtml': ['keys'],
     'reUnescapedHtml': ['keys'],
+    'support': ['nativeBind'],
 
     // public functions
     'after': ['isFunction'],
@@ -319,7 +321,7 @@
     'isObject': ['objectTypes'],
     'isPlainObject': ['reNative'],
     'isRegExp': ['objectTypes'],
-    'isV8': ['nativeBind', 'reNative', 'root'],
+    'isV8': ['reNative', 'root'],
     'keys': ['reNative'],
     'memoize': ['keyPrefix'],
     'parseInt': ['root'],
@@ -329,7 +331,7 @@
     'reUnescapedHtml': ['htmlEscapes'],
     'root': ['objectTypes'],
     'setBindData': ['reNative'],
-    'support': ['isV8', 'nativeBind', 'reNative', 'root'],
+    'support': ['isV8', 'reNative', 'root'],
     'template': ['reInterpolate'],
     'templateSettings': ['reInterpolate'],
     'unescape': ['reEscapedHtml'],
@@ -988,9 +990,9 @@
             ? []
             : ['functional', 'lodash', 'lodash-modularized', 'server', 'util'];
 
-          var type = _.contains(includeObjs, identifier)
+          var type = _.contains(objDependencies, identifier)
             ? 'object'
-            : (_.contains(includeVars, identifier) ? 'variable' : 'function');
+            : (_.contains(varDependencies, identifier) ? 'variable' : 'function');
 
           var moduleDesc = 'The ' +
             (isInternal ? 'internal ' : '') +
@@ -3356,33 +3358,46 @@
         return getDependencies(result, funcDepMap);
       }());
 
-      // add properties, variables, and their function dependencies to include in the build
+      // expand properties, variables, and their function dependencies to include in the build
       (function() {
-        function expand(result, depMap, funcNames, stack) {
+        function expand(includes, allDeps, depMap, funcNames, stack) {
           stack || (stack = []);
-          return _.uniq(_.reduce(funcNames || depMap, function(result, identifiers, funcName) {
-            // juggle arguments
-            if (funcNames) {
-              funcName = identifiers;
-              identifiers = depMap[funcName] || [];
+          _.each(funcNames || buildFuncs, function(funcName) {
+            if (_.contains(stack, funcName)) {
+              return;
             }
-            if (!_.contains(stack, funcName) && (funcNames || _.contains(buildFuncs, funcName))) {
-              var deps = _.uniq(_.transform(identifiers, function(deps, identifier) {
-                push.apply(deps, getDependencies(identifier, funcDepMap));
-              }));
+            stack.push(funcName);
+            _.each([varDepMap, objDepMap], function(otherDepMap) {
+              var deps = _.filter(otherDepMap[funcName], function(depName) {
+                return _.contains(allDeps, depName);
+              });
 
-              stack.push(funcName);
-              push.apply(result, identifiers);
+              if (deps.length) {
+                var otherDeps = [];
 
-              buildFuncs = _.union(buildFuncs, deps);
-              result = expand(result, depMap, deps, stack);
-            }
-            return result;
-          }, result));
+                var otherNames = _.reduce(deps, function(result, depName) {
+                  push.apply(otherDeps, depMap[depName] || []);
+                  return _.union(result, getDependencies(funcDepMap[depName], funcDepMap));
+                }, []);
+
+                push.apply(includes, deps);
+
+                expand(otherDeps, allDeps, depMap, null, stack);
+                push.apply(includes, otherDeps);
+
+                push.apply(buildFuncs, otherNames);
+                expand(includes, allDeps, depMap, otherNames, stack);
+              }
+            });
+          });
         }
 
-        includeObjs = expand(includeObjs, objDepMap);
-        includeVars = expand(includeVars, varDepMap);
+        expand(includeObjs, objDependencies, objDepMap);
+        expand(includeVars, varDependencies, varDepMap);
+
+        buildFuncs = _.unique(buildFuncs);
+        includeObjs = _.union(includeObjs, _.intersection(objDependencies, includeVars));
+        includeVars = _.union(includeVars, _.intersection(varDependencies, includeObjs));
       }());
 
       /*----------------------------------------------------------------------*/
