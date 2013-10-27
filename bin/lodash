@@ -3368,23 +3368,22 @@
             }
             stack.push(funcName);
             _.each([varDepMap, objDepMap], function(otherDepMap) {
-              var deps = _.filter(otherDepMap[funcName], function(depName) {
-                return _.contains(allDeps, depName);
-              });
+              var otherDeps = otherDepMap[funcName];
+              if (otherDeps) {
+                var validDeps = _.transform(otherDeps, function(result, depName) {
+                  var deps = depMap[depName];
+                  push.apply(result, deps || []);
+                });
 
-              if (deps.length) {
-                var otherDeps = [];
+                push.apply(validDeps, _.filter(otherDeps, function(depName) {
+                  return _.contains(allDeps, depName);
+                }));
 
-                var otherNames = _.reduce(deps, function(result, depName) {
-                  push.apply(otherDeps, depMap[depName] || []);
-                  return _.union(result, getDependencies(funcDepMap[depName], funcDepMap));
-                }, []);
+                var otherNames = _.transform(validDeps, function(result, depName) {
+                  push.apply(result, getDependencies(funcDepMap[depName], funcDepMap));
+                });
 
-                push.apply(includes, deps);
-
-                expand(otherDeps, allDeps, depMap, null, stack);
-                push.apply(includes, otherDeps);
-
+                push.apply(includes, validDeps);
                 push.apply(buildFuncs, otherNames);
                 expand(includes, allDeps, depMap, otherNames, stack);
               }
