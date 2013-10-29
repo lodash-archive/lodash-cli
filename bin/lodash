@@ -104,10 +104,9 @@
     'defaultsIteratorOptions': ['keys'],
     'eachIteratorOptions': ['keys'],
     'htmlUnescapes': ['invert'],
-    'isV8': ['nativeBind'],
     'reEscapedHtml': ['keys'],
     'reUnescapedHtml': ['keys'],
-    'support': ['nativeBind'],
+    'support': [],
 
     // public functions
     'after': ['isFunction'],
@@ -128,7 +127,7 @@
     'curry': ['createBound'],
     'debounce': ['isFunction', 'isObject'],
     'defaults': ['createIterator'],
-    'defer': ['isFunction', 'nativeBind', 'slice'],
+    'defer': ['isFunction', 'slice'],
     'delay': ['isFunction', 'slice'],
     'difference': ['baseFlatten', 'cacheIndexOf', 'createCache', 'getIndexOf', 'releaseObject'],
     'escape': ['escapeHtmlChar', 'keys'],
@@ -231,6 +230,7 @@
     'zipObject': [],
 
     // private functions
+    'baseBind': ['baseCreate', 'isObject'],
     'baseClone': ['assign', 'baseEach', 'forOwn', 'getArray', 'isArray', 'isObject', 'isNode', 'releaseArray', 'slice'],
     'baseCreate': ['isObject', 'noop'],
     'baseCreateCallback': ['bind', 'identity', 'setBindData'],
@@ -246,7 +246,7 @@
     'charAtCallback': [],
     'compareAscending': [],
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
-    'createBound': ['baseCreate', 'isFunction', 'isObject', 'nativeBind', 'setBindData', 'slice'],
+    'createBound': ['baseBind', 'baseCreate', 'isFunction', 'isObject', 'setBindData', 'slice'],
     'createCache': ['cachePush', 'getObject', 'releaseObject'],
     'createIterator': ['baseCreateCallback', 'isArguments', 'isArray', 'isString', 'iteratorTemplate'],
     'escapeHtmlChar': [],
@@ -257,7 +257,6 @@
     'isNode': [],
     'iteratorTemplate': [],
     'lodashWrapper': [],
-    'nativeBind': [],
     'noop': [],
     'releaseArray': [],
     'releaseObject': [],
@@ -305,7 +304,7 @@
     'createBound': ['reNative'],
     'debounce': ['reNative'],
     'defaults': ['defaultsIteratorOptions'],
-    'defer': ['isV8', 'objectTypes', 'reNative', 'root'],
+    'defer': ['objectTypes', 'reNative', 'root'],
     'difference': ['largeArraySize'],
     'escape': ['reUnescapedHtml'],
     'escapeHtmlChar': ['htmlEscapes'],
@@ -321,7 +320,6 @@
     'isObject': ['objectTypes'],
     'isPlainObject': ['reNative'],
     'isRegExp': ['objectTypes'],
-    'isV8': ['reNative', 'root'],
     'keys': ['reNative'],
     'memoize': ['keyPrefix'],
     'parseInt': ['root'],
@@ -331,7 +329,7 @@
     'reUnescapedHtml': ['htmlEscapes'],
     'root': ['objectTypes'],
     'setBindData': ['reNative'],
-    'support': ['isV8', 'reNative', 'root'],
+    'support': ['reNative', 'root'],
     'template': ['reInterpolate'],
     'templateSettings': ['reInterpolate'],
     'unescape': ['reEscapedHtml'],
@@ -608,6 +606,7 @@
 
   /** List of private functions */
   var privateFuncs = [
+    'baseBind',
     'baseClone',
     'baseCreate',
     'baseCreateCallback',
@@ -634,7 +633,6 @@
     'isNode',
     'iteratorTemplate',
     'lodashWrapper',
-    'nativeBind',
     'noop',
     'releaseArray',
     'releaseObject',
@@ -1487,7 +1485,7 @@
    * @returns {string} Returns the fork.
    */
   function getDeferFork(source) {
-    var result = source.match(/(?:\s*\/\/.*)*\n( *)if *\(isV8 *&& *moduleExports[\s\S]+?\n\1}/);
+    var result = source.match(/(?:\s*\/\/.*)*\n( *)if *\(setImmediate[\s\S]+?\n\1}/);
     return result ? result[0] : '';
   }
 
@@ -2233,7 +2231,6 @@
 
     // remove local timer variables
     source = removeVar(source, 'clearTimeout');
-    source = removeVar(source, 'setImmediate');
     source = removeVar(source, 'setTimeout');
 
     return source;
@@ -3081,16 +3078,13 @@
 
         // update dependencies
         if (isLegacy) {
-          _.pull(objDepMap.createBound, 'support');
           funcDepMap.isPlainObject = funcDepMap.shimIsPlainObject.slice();
           funcDepMap.keys = funcDepMap.shimKeys.slice();
 
-          _.each(['createBound', 'defer'], function(funcName) {
-            _.pull(funcDepMap[funcName], 'nativeBind');
-          });
+          _.pull(objDepMap.createBound, 'support');
 
           _.forOwn(varDepMap, function(deps, funcName) {
-            _.pull(deps, 'isV8', 'nativeBind', 'reNative');
+            _.pull(deps, 'reNative');
           });
         }
         if (isModularize) {
@@ -3123,9 +3117,9 @@
             _.pull(funcDepMap[funcName], 'setBindData');
           });
 
-          if (!isLodash('defer')) {
-            _.pull(funcDepMap.defer, 'nativeBind');
-            _.pull(varDepMap.defer, 'objectTypes', 'reNative');
+          if (!isUnderscore || !isLodash('defer')) {
+            _.pull(funcDepMap.defer, 'nativeCreate');
+            _.pull(varDepMap.defer, 'reNative');
           }
         }
         if (!isModularize && _.contains(plusFuncs, 'chain') == !isUnderscore) {
@@ -3408,15 +3402,6 @@
         if (isLegacy) {
           source = removeSupportProp(source, 'fastBind');
           source = replaceSupportProp(source, 'argsClass', 'false');
-
-          // remove native `Function#bind` branch in `createBound`
-          source = source.replace(matchFunction(source, 'createBound'), function(match) {
-            return match.replace(/(?:\s*\/\/.*)*\n( *)if *\([^{]+?nativeBind[\s\S]+?\n\1else *\{([\s\S]+?)\n\1}/, function(match, indent, snippet) {
-              return snippet
-                .replace(/^  /gm, '')
-                .replace(/^( *)bound(?= *=)/m, '$1var bound');
-            });
-          });
 
           // replace `now()` with `+new Date` in `_.debounce`
           source = source.replace(matchFunction(source, 'debounce'), function(match) {
