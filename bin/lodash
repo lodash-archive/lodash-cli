@@ -112,9 +112,9 @@
     'after': ['isFunction'],
     'assign': ['createIterator'],
     'at': ['baseFlatten', 'isString'],
-    'bind': ['createBound', 'slice'],
-    'bindAll': ['baseFlatten', 'createBound', 'functions'],
-    'bindKey': ['createBound', 'slice'],
+    'bind': ['createWrapper', 'slice'],
+    'bindAll': ['baseFlatten', 'createWrapper', 'functions'],
+    'bindKey': ['createWrapper', 'slice'],
     'chain': ['lodashWrapper'],
     'clone': ['baseClone', 'baseCreateCallback'],
     'cloneDeep': ['baseClone', 'baseCreateCallback'],
@@ -124,7 +124,7 @@
     'countBy': ['createAggregator'],
     'create': ['assign', 'baseCreate'],
     'createCallback': ['baseCreateCallback', 'baseIsEqual', 'isObject', 'keys'],
-    'curry': ['createBound'],
+    'curry': ['createWrapper'],
     'debounce': ['isFunction', 'isObject'],
     'defaults': ['createIterator'],
     'defer': ['isFunction', 'slice'],
@@ -189,8 +189,8 @@
     'once': ['isFunction'],
     'pairs': ['keys'],
     'parseInt': ['isString'],
-    'partial': ['createBound', 'slice'],
-    'partialRight': ['createBound', 'slice'],
+    'partial': ['createWrapper', 'slice'],
+    'partialRight': ['createWrapper', 'slice'],
     'pick': ['baseFlatten', 'createCallback', 'forIn', 'isObject'],
     'pluck': ['map'],
     'pull': [],
@@ -222,7 +222,7 @@
     'values': ['keys'],
     'where': ['filter'],
     'without': ['difference', 'slice'],
-    'wrap': ['createBound'],
+    'wrap': ['createWrapper'],
     'wrapperChain': [],
     'wrapperToString': [],
     'wrapperValueOf': [],
@@ -230,10 +230,11 @@
     'zipObject': [],
 
     // private functions
-    'baseBind': ['baseCreate', 'isObject'],
+    'baseBind': ['baseCreate', 'isObject', 'setBindData'],
     'baseClone': ['assign', 'baseEach', 'forOwn', 'getArray', 'isArray', 'isObject', 'isNode', 'releaseArray', 'slice'],
     'baseCreate': ['isObject', 'noop'],
     'baseCreateCallback': ['bind', 'identity', 'setBindData'],
+    'baseCreateWrapper': ['baseCreate', 'isObject', 'slice', 'setBindData'],
     'baseEach': ['createIterator'],
     'baseFlatten': ['isArguments', 'isArray'],
     'baseIndexOf': [],
@@ -246,7 +247,7 @@
     'charAtCallback': [],
     'compareAscending': [],
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
-    'createBound': ['baseBind', 'baseCreate', 'isFunction', 'isObject', 'setBindData', 'slice'],
+    'createWrapper': ['baseBind', 'baseCreateWrapper', 'isFunction'],
     'createCache': ['cachePush', 'getObject', 'releaseObject'],
     'createIterator': ['baseCreateCallback', 'isArguments', 'isArray', 'isString', 'iteratorTemplate'],
     'escapeHtmlChar': [],
@@ -277,7 +278,6 @@
     'baseCreateCallback': ['support'],
     'baseIsEqual': ['support'],
     'bind': ['support'],
-    'createBound': ['support'],
     'forEachRight': ['support'],
     'isArguments': ['support'],
     'isEmpty': ['support'],
@@ -287,7 +287,8 @@
     'sample': ['support'],
     'shimIsPlainObject': ['support'],
     'template': ['templateSettings'],
-    'toArray': ['support']
+    'toArray': ['support'],
+    'wrapperValueOf': ['support']
   };
 
   /** Used to track variable dependencies of identifiers */
@@ -301,7 +302,6 @@
     'cacheIndexOf': ['keyPrefix'],
     'cachePush': ['keyPrefix'],
     'createIterator': ['indicatorObject', 'objectTypes'],
-    'createBound': ['reNative'],
     'debounce': ['reNative'],
     'defaults': ['defaultsIteratorOptions'],
     'defer': ['objectTypes', 'reNative', 'root'],
@@ -610,6 +610,7 @@
     'baseClone',
     'baseCreate',
     'baseCreateCallback',
+    'baseCreateWrapper',
     'baseEach',
     'baseFlatten',
     'baseIndexOf',
@@ -622,7 +623,7 @@
     'charAtCallback',
     'compareAscending',
     'createAggregator',
-    'createBound',
+    'createWrapper',
     'createCache',
     'createIterator',
     'escapeHtmlChar',
@@ -1955,18 +1956,14 @@
     source = removeSupportProp(source, 'funcDecomp');
     source = removeSupportProp(source, 'funcNames');
 
-    // remove `__bindData__` logic and `setBindData` function calls from `createBound`
-    source = source.replace(matchFunction(source, 'createBound'), function(match) {
-      return match
-        .replace(/(?:\s*\/\/.*)*\n( *)var bindData *=[\s\S]+?\n\1}/, '')
-        .replace(/(?:\s*\/\/.*)*\n.+?setBindData.+/, '');
-    });
-
-    // remove `__bindData__` logic and `setBindData` function calls from `baseCreateCallback`
-    source = source.replace(matchFunction(source, 'baseCreateCallback'), function(match) {
-      return match
-        .replace(/(?:\s*\/\/.*)*\n( *)var bindData *=[\s\S]+?\n\1}/, '')
-        .replace(/(?:\s*\/\/.*)*\n( *)if *\(bindData[\s\S]+?\n\1}/, '');
+    // remove `__bindData__` logic and `setBindData` function calls
+    _.each(['baseBind', 'baseCreateCallback', 'baseCreateWrapper', 'createWrapper'], function(funcName) {
+      source = source.replace(matchFunction(source, funcName), function(match) {
+        return match
+          .replace(/(?:\s*\/\/.*)*\n( *)var bindData *=[\s\S]+?\n\1}/, '')
+          .replace(/(?:\s*\/\/.*)*\n( *)if *\(bindData[\s\S]+?\n\1}/, '')
+          .replace(/(?:\s*\/\/.*)*\n.+?setBindData.+/, '')
+      });
     });
 
     return source;
@@ -3081,8 +3078,6 @@
           funcDepMap.isPlainObject = funcDepMap.shimIsPlainObject.slice();
           funcDepMap.keys = funcDepMap.shimKeys.slice();
 
-          _.pull(objDepMap.createBound, 'support');
-
           _.forOwn(varDepMap, function(deps, funcName) {
             _.pull(deps, 'reNative');
           });
@@ -3094,7 +3089,8 @@
             });
             delete varDepMap.root;
           }
-          funcDepMap.lodash.push('support', 'baseEach', 'forOwn', 'mixin');
+          objsDepMap.lodash = ['support'];
+          funcDepMap.lodash.push('baseEach', 'forOwn', 'mixin');
           _.pull(funcDepMap.mixin, 'lodash');
         }
         else {
@@ -3113,14 +3109,12 @@
         if (isLegacy || isMobile || isUnderscore) {
           _.pull(objDepMap.baseCreateCallback, 'support');
 
-          _.each(['baseCreateCallback', 'createBound'], function(funcName) {
+          _.each(['baseBind', 'baseCreateCallback', 'baseCreateWrapper'], function(funcName) {
             _.pull(funcDepMap[funcName], 'setBindData');
           });
-
-          if (!isUnderscore || !isLodash('defer')) {
-            _.pull(funcDepMap.defer, 'nativeCreate');
-            _.pull(varDepMap.defer, 'reNative');
-          }
+        }
+        if (isLegacy || isMobile || !isNode || (isUnderscore && !isLodash('defer'))) {
+          _.pull(varDepMap.defer, 'objectTypes', 'reNative');
         }
         if (!isModularize && _.contains(plusFuncs, 'chain') == !isUnderscore) {
           _.pull(funcDepMap.mixin, 'isFunction');
@@ -3241,8 +3235,8 @@
           });
 
           _.forOwn(objDepMap, function(deps, funcName) {
-            if (funcName != 'createBound' &&
-                funcName != 'baseCreateCallback' &&
+            if (funcName != 'baseCreateCallback' &&
+                funcName != 'wrapperValueOf' &&
                 !(isMobile && funcName == 'keys') &&
                 !(isUnderscore && isLodash(funcName))) {
               _.pull(deps, 'support');
@@ -3388,7 +3382,7 @@
         expand(includeObjs, objDependencies, objDepMap);
         expand(includeVars, varDependencies, varDepMap);
 
-        buildFuncs = _.unique(buildFuncs);
+        buildFuncs = _.uniq(buildFuncs);
         includeObjs = _.union(includeObjs, _.intersection(objDependencies, includeVars));
         includeVars = _.union(includeVars, _.intersection(varDependencies, includeObjs));
       }());
@@ -3464,12 +3458,12 @@
         }
         if (isLegacy || isMobile || isUnderscore) {
           source = removeEsOptimization(source);
-          if (isMobile || (!isLodash('assign') && !isLodash('defaults') && !isLodash('forIn') && !isLodash('forOwn'))) {
+          if (isLegacy || isMobile || (!isLodash('assign') && !isLodash('defaults') && !isLodash('forIn') && !isLodash('forOwn'))) {
             source = removeKeysOptimization(source);
           }
-          if (!isLodash('defer')) {
-            source = removeDeferFork(source);
-          }
+        }
+        if (isLegacy || isMobile || !isNode || (isUnderscore && !isLodash('defer'))) {
+          source = removeDeferFork(source);
         }
         if (isModern || isUnderscore) {
           source = removeSupportArgsClass(source);
@@ -4670,7 +4664,7 @@
           source = source.replace(/\blodash\.support *= */, '');
         }
       }
-      if ((!isNode && !isModularize) || !matchVar(source, 'root')) {
+      if (!isNode || !matchVar(source, 'root')) {
         source = removeVar(source, 'freeGlobal');
       }
     }
