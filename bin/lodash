@@ -185,6 +185,7 @@
     'min': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
     'mixin': ['forEach', 'functions', 'isFunction', 'lodash'],
     'noConflict': [],
+    'noop': [],
     'omit': ['baseFlatten', 'createCallback', 'forIn', 'getIndexOf'],
     'once': ['isFunction'],
     'pairs': ['keys'],
@@ -258,7 +259,6 @@
     'isNode': [],
     'iteratorTemplate': [],
     'lodashWrapper': [],
-    'noop': [],
     'releaseArray': [],
     'releaseObject': [],
     'setBindData': ['noop'],
@@ -461,6 +461,7 @@
       'identity',
       'mixin',
       'noConflict',
+      'noop',
       'parseInt',
       'random',
       'result',
@@ -595,6 +596,7 @@
     'forOwnRight',
     'isPlainObject',
     'merge',
+    'noop',
     'parseInt',
     'partialRight',
     'pull',
@@ -634,7 +636,6 @@
     'isNode',
     'iteratorTemplate',
     'lodashWrapper',
-    'noop',
     'releaseArray',
     'releaseObject',
     'setBindData',
@@ -1474,7 +1475,7 @@
    * @returns {string} Returns the fork.
    */
   function getBaseCreateFork(source) {
-    var result = source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!nativeCreate)[\s\S]+?\n *};\n\1}/);
+    var result = source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!nativeCreate)[\s\S]+?\n *}\(\)\);\n\1}/);
     return result ? result[0] : '';
   }
 
@@ -3428,12 +3429,12 @@
             var getFork = funcs[0],
                 removeFork =  funcs[1];
 
-            source = source.replace(matchFunction(source, funcName).replace(RegExp('[\\s\\S]+?function ' + funcName), ''), function() {
+            source = source.replace(matchFunction(source, funcName).replace(RegExp('[\\s\\S]+?(function ' + funcName + ')'), '$1'), function() {
               var snippet = getFork(source),
-                  body = snippet.match(RegExp(funcName + ' *= *function([\\s\\S]+?\\n *});'))[1],
+                  chunk = snippet.match(RegExp('^( *)(' + funcName + ' *= [\\s\\S]+?\\n\\1}.*)', 'm'))[2],
                   indent = getIndent(snippet);
 
-              return body.replace(RegExp('^' + indent, 'gm'), indent.slice(0, -2)) + '\n';
+              return 'var ' + chunk.replace(RegExp('^' + indent, 'gm'), indent.slice(0, -2)) + '\n';
             });
 
             source = removeFork(source);

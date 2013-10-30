@@ -223,6 +223,7 @@
       'identity',
       'mixin',
       'noConflict',
+      'noop',
       'parseInt',
       'random',
       'result',
