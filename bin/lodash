@@ -3089,7 +3089,7 @@
             });
             delete varDepMap.root;
           }
-          objsDepMap.lodash = ['support'];
+          objDepMap.lodash = ['support'];
           funcDepMap.lodash.push('baseEach', 'forOwn', 'mixin');
           _.pull(funcDepMap.mixin, 'lodash');
         }
