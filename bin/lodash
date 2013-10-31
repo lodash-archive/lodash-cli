@@ -294,7 +294,7 @@
   /** Used to track variable dependencies of identifiers */
   var varDependencyMap = {
     'assign': ['defaultsIteratorOptions'],
-    'baseCreate': ['reNative'],
+    'baseCreate': ['reNative', 'root'],
     'baseEach': ['eachIteratorOptions'],
     'baseIsEqual': ['objectTypes'],
     'baseUniq': ['largeArraySize'],
@@ -1115,10 +1115,10 @@
           // add `_.support` and `_.templateSettings`
           source = source.replace(/^ *(return +|.*?exports.*?=\s*)lodash;$/m, function(match) {
             var prelude = '';
-            if (_.contains(identifiers, 'support')) {
+            if (_.contains(deps, 'support')) {
               prelude += '  lodash.support = support;\n';
             }
-            if (_.contains(identifiers, 'templateSettings')) {
+            if (_.contains(deps, 'templateSettings')) {
               prelude += '  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;\n';
             }
             return prelude + match;
@@ -3090,7 +3090,7 @@
             });
             delete varDepMap.root;
           }
-          objDepMap.lodash = ['support'];
+          objDepMap.lodash = ['support', 'templateSettings'];
           funcDepMap.lodash.push('baseEach', 'forOwn', 'mixin');
           _.pull(funcDepMap.mixin, 'lodash');
         }
@@ -3236,10 +3236,9 @@
           });
 
           _.forOwn(objDepMap, function(deps, funcName) {
-            if (funcName != 'baseCreateCallback' &&
-                funcName != 'wrapperValueOf' &&
-                !(isMobile && funcName == 'keys') &&
-                !(isUnderscore && isLodash(funcName))) {
+            if (!(isMobile && funcName == 'keys') &&
+                !(isUnderscore && isLodash(funcName)) &&
+                !_.contains(['baseCreateCallback', 'lodash', 'wrapperValueOf'], funcName)) {
               _.pull(deps, 'support');
             }
           });
