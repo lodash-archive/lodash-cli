@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 ;(function(undefined) {
   'use strict';
 
