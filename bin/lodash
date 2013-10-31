@@ -3114,7 +3114,7 @@
             _.pull(funcDepMap[funcName], 'setBindData');
           });
         }
-        if (isLegacy || isMobile || !isNode || (isUnderscore && !isLodash('defer'))) {
+        if (isLegacy || isMobile || !(isCommonJS || isNode) || (isUnderscore && !isLodash('defer'))) {
           _.pull(varDepMap.defer, 'objectTypes', 'reNative');
         }
         if (!isModularize && _.contains(plusFuncs, 'chain') == !isUnderscore) {
@@ -3431,10 +3431,10 @@
 
             source = source.replace(matchFunction(source, funcName).replace(RegExp('[\\s\\S]+?(function ' + funcName + ')'), '$1'), function() {
               var snippet = getFork(source),
-                  chunk = snippet.match(RegExp('^( *)(' + funcName + ' *= [\\s\\S]+?\\n\\1}.*)', 'm'))[2],
                   indent = getIndent(snippet);
 
-              return 'var ' + chunk.replace(RegExp('^' + indent, 'gm'), indent.slice(0, -2)) + '\n';
+              snippet = snippet.match(RegExp('^( *)(' + funcName + ' *= [\\s\\S]+?\\n\\1}.*)', 'm'))[2];
+              return 'var ' + snippet.replace(RegExp('^' + indent, 'gm'), indent.slice(0, -2)) + '\n';
             });
 
             source = removeFork(source);
@@ -3463,7 +3463,7 @@
             source = removeKeysOptimization(source);
           }
         }
-        if (isLegacy || isMobile || !isNode || (isUnderscore && !isLodash('defer'))) {
+        if (isLegacy || isMobile || !(isCommonJS || isNode) || (isUnderscore && !isLodash('defer'))) {
           source = removeDeferFork(source);
         }
         if (isModern || isUnderscore) {
@@ -4665,7 +4665,7 @@
           source = source.replace(/\blodash\.support *= */, '');
         }
       }
-      if (!isNode || !matchVar(source, 'root')) {
+      if (!matchVar(source, 'root') && !matchVar(source, 'setImmediate')) {
         source = removeVar(source, 'freeGlobal');
       }
     }
