@@ -17,10 +17,10 @@
   "bugs": "https://github.com/lodash/lodash-cli/issues",
   "repository": { "type": "git", "url": "https://github.com/lodash/lodash-cli.git" },
   "dependencies": {
-    "closure-compiler": "~0.2.2",
+    "closure-compiler": "~0.2.3",
     "glob": "~3.2.6",
     "lodash": "2.2.1",
-    "uglify-js": "~2.4.0"
+    "uglify-js": "~2.4.1"
   },
   "files": [
     "LICENSE.txt",
