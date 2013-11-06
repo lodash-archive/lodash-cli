@@ -4192,7 +4192,7 @@
           _.each(['max', 'min'], function(funcName) {
             if (!isLodash(funcName)) {
               source = source.replace(matchFunction(source, funcName), function(match) {
-                return match.replace(/=.+?callback *&& *isString[^:]+:\s*/g, '= ');
+                return match.replace(/=.+?isString[^:]+:\s*/g, '= ');
               });
             }
           });
