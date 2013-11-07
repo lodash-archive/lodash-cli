@@ -186,7 +186,7 @@
     'mixin': ['forEach', 'functions', 'isFunction', 'lodash'],
     'noConflict': [],
     'noop': [],
-    'omit': ['baseFlatten', 'createCallback', 'forIn', 'getIndexOf'],
+    'omit': ['baseFlatten', 'createCallback', 'difference', 'forIn'],
     'once': ['isFunction'],
     'pairs': ['keys'],
     'parseInt': ['isString'],
@@ -1246,11 +1246,11 @@
             length = props.length - 1;
 
         while (++index < length) {
-          var prop = props[index];
-          if (!object[prop]) {
-            object[prop] = {};
+          var key = props[index];
+          if (!object[key]) {
+            object[key] = {};
           }
-          object = object[prop];
+          object = object[key];
         }
         // add template assignment to `source`
         source.push('  templates' + props.map(function(prop) {
@@ -2074,7 +2074,7 @@
     source = removeFunction(source, 'getIndexOf');
 
     // replace all `getIndexOf` calls with `baseIndexOf`
-    _.each(['baseUniq', 'contains', 'difference', 'intersection', 'omit'], function(funcName) {
+    _.each(['baseUniq', 'contains', 'difference', 'intersection'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
         return match.replace(/\bgetIndexOf\(\)/g, 'baseIndexOf');
       });
@@ -3937,15 +3937,20 @@
           if (!isLodash('omit')) {
             source = replaceFunction(source, 'omit', [
               'function omit(object) {',
-              '  var indexOf = getIndexOf(),',
-              '      props = baseFlatten(arguments, true, false, 1),',
+              '  var props = [];',
+              '  forIn(object, function(value, key) {',
+              '    props.push(key);',
+              '  });',
+              '  props = difference(props, baseFlatten(arguments, true, false, 1));',
+              '',
+              '  var index = -1,',
+              '      length = props.length,',
               '      result = {};',
               '',
-              '  forIn(object, function(value, key) {',
-              '    if (indexOf(props, key) < 0) {',
-              '      result[key] = value;',
-              '    }',
-              '  });',
+              '  while (++index < length) {',
+              '    var key = props[index];',
+              '    result[key] = object[key];',
+              '  }',
               '  return result;',
               '}'
             ].join('\n'));
@@ -3960,9 +3965,9 @@
               '      result = {};',
               '',
               '  while (++index < length) {',
-              '    var prop = props[index];',
-              '    if (prop in object) {',
-              '      result[prop] = object[prop];',
+              '    var key = props[index];',
+              '    if (key in object) {',
+              '      result[key] = object[key];',
               '    }',
               '  }',
               '  return result;',
@@ -4604,7 +4609,7 @@
               .replace(/\bctor *=.+\s+/, '')
               .replace(/^ *ctor\.prototype.+\s+.+\n/m, '')
               .replace(/(?:,\n)? *props *=[^;=]+/, '')
-              .replace(/^ *for *\((?=prop)/, '$&var ')
+              .replace(/^ *for *\((?=key)/, '$&var ')
           }
           if (!/\.nonEnumArgs *=(?! *(?:false|true))/.test(body)) {
             modified = modified.replace(/^ *for *\(.+? arguments.+\n/m, '');
