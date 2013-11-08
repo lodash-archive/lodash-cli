@@ -129,7 +129,7 @@
     'defaults': ['createIterator'],
     'defer': ['isFunction', 'slice'],
     'delay': ['isFunction', 'slice'],
-    'difference': ['baseFlatten', 'cacheIndexOf', 'createCache', 'getIndexOf', 'releaseObject'],
+    'difference': ['baseDifference', 'baseFlatten'],
     'escape': ['escapeHtmlChar', 'keys'],
     'every': ['baseEach', 'createCallback', 'isArray'],
     'filter': ['baseEach', 'createCallback', 'isArray'],
@@ -186,7 +186,7 @@
     'mixin': ['forEach', 'functions', 'isFunction', 'lodash'],
     'noConflict': [],
     'noop': [],
-    'omit': ['baseFlatten', 'createCallback', 'difference', 'forIn'],
+    'omit': ['baseDifference', 'baseFlatten', 'createCallback', 'forIn'],
     'once': ['isFunction'],
     'pairs': ['keys'],
     'parseInt': ['isString'],
@@ -222,7 +222,7 @@
     'uniqueId': [],
     'values': ['keys'],
     'where': ['filter'],
-    'without': ['difference', 'slice'],
+    'without': ['baseDifference', 'slice'],
     'wrap': ['createWrapper'],
     'wrapperChain': [],
     'wrapperToString': [],
@@ -236,6 +236,7 @@
     'baseCreate': ['isObject', 'noop'],
     'baseCreateCallback': ['bind', 'identity', 'setBindData'],
     'baseCreateWrapper': ['baseCreate', 'isObject', 'slice', 'setBindData'],
+    'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf', 'releaseObject'],
     'baseEach': ['createIterator'],
     'baseFlatten': ['isArguments', 'isArray'],
     'baseIndexOf': [],
@@ -295,6 +296,7 @@
   var varDependencyMap = {
     'assign': ['defaultsIteratorOptions'],
     'baseCreate': ['reNative', 'root'],
+    'baseDifference': ['largeArraySize'],
     'baseEach': ['eachIteratorOptions'],
     'baseIsEqual': ['objectTypes'],
     'baseUniq': ['largeArraySize'],
@@ -305,7 +307,6 @@
     'debounce': ['reNative'],
     'defaults': ['defaultsIteratorOptions'],
     'defer': ['objectTypes', 'reNative', 'root'],
-    'difference': ['largeArraySize'],
     'escape': ['reUnescapedHtml'],
     'escapeHtmlChar': ['htmlEscapes'],
     'forIn': ['eachIteratorOptions', 'forOwnIteratorOptions'],
@@ -613,6 +614,7 @@
     'baseCreate',
     'baseCreateCallback',
     'baseCreateWrapper',
+    'baseDifference',
     'baseEach',
     'baseFlatten',
     'baseIndexOf',
@@ -2074,14 +2076,14 @@
     source = removeFunction(source, 'getIndexOf');
 
     // replace all `getIndexOf` calls with `baseIndexOf`
-    _.each(['baseUniq', 'contains', 'difference', 'intersection'], function(funcName) {
+    _.each(['baseDifference', 'baseUniq', 'contains', 'intersection'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
         return match.replace(/\bgetIndexOf\(\)/g, 'baseIndexOf');
       });
     });
 
     // simplify `isLarge` assignments
-    _.each(['baseUniq', 'difference'], function(funcName) {
+    _.each(['baseDifference', 'baseUniq'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
         return match.replace(/\b(largeArraySize).+?baseIndexOf\b/g, '$1');
       });
@@ -3182,22 +3184,20 @@
             (varDepMap.findLastKey || (varDepMap.findLastKey = [])).push('indicatorObject');
           }
 
-          _.each(['baseUniq', 'difference', 'intersection'], function(funcName) {
-            if (funcName == 'baseUniq'
-                  ? (!isLodash('baseUniq') && !isLodash('uniq'))
-                  : !isLodash(funcName)
-                ) {
-              _.pull(funcDepMap[funcName], 'cacheIndexOf', 'createCache').push('getIndexOf');
+          _.each(['baseDifference', 'baseUniq', 'intersection'], function(funcName) {
+            if (isLodash(funcName) ||
+                (funcName == 'baseDifference' && isLodash('difference')) ||
+                (funcName == 'baseUniq' && isLodash('uniq'))) {
+              return;
             }
+            _.pull(funcDepMap[funcName], 'cacheIndexOf', 'createCache').push('getIndexOf');
           });
 
           _.each(['isEqual', 'omit', 'pick'], function(funcName) {
-            if (funcName == 'isEqual'
-                  ? (!isLodash('baseIsEqual') && !isLodash('isEqual'))
-                  : !isLodash(funcName)
-                ) {
-              _.pull(funcDepMap[funcName], 'baseCreateCallback', 'createCallback');
+            if (isLodash(funcName) || (funcName == 'isEqual' && isLodash('baseIsEqual'))) {
+              return;
             }
+            _.pull(funcDepMap[funcName], 'baseCreateCallback', 'createCallback');
           });
 
           _.forOwn(funcDepMap, function(deps, funcName) {
@@ -3675,18 +3675,17 @@
             ].join('\n'));
           }
           // replace `_.difference`
-          if (!isLodash('difference')) {
-            source = replaceFunction(source, 'difference', [
-              'function difference(array) {',
+          if (!isLodash('baseDifference') && !isLodash('difference')) {
+            source = replaceFunction(source, 'baseDifference', [
+              'function baseDifference(array, values) {',
               '  var index = -1,',
               '      indexOf = getIndexOf(),',
               '      length = array ? array.length : 0,',
-              '      flattened = baseFlatten(arguments, true, true, 1),',
               '      result = [];',
               '',
               '  while (++index < length) {',
               '    var value = array[index];',
-              '    if (indexOf(flattened, value) < 0) {',
+              '    if (indexOf(values, value) < 0) {',
               '      result.push(value);',
               '    }',
               '  }',
