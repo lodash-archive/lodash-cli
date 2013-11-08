@@ -997,6 +997,7 @@
     var outputPath = path.join(__dirname, 'a');
 
     var funcNames = [
+      'lodash',
       'mixin',
       'template'
     ];
@@ -1012,11 +1013,18 @@
         process.chdir(__dirname);
 
         build(['modularize', 'modern', 'include=' + funcName, 'exports=node', '-o', outputPath], function(data) {
-          var basename = path.basename(data.outputPath, '.js'),
-              lodash = {};
+          var basename = path.basename(data.outputPath, '.js');
 
-          lodash[funcName] = require(path.join(outputPath, 'utilities', funcName));
-          testMethod(lodash, funcName, basename);
+          if (funcName == 'lodash') {
+            func = require(path.join(outputPath));
+            ok(func(1) instanceof func);
+          }
+          else {
+            var lodash = {};
+            lodash[funcName] = require(path.join(outputPath, 'utilities', funcName));
+            equal(fs.existsSync(path.join(outputPath, 'index.js')), false);
+            testMethod(lodash, funcName, basename);
+          }
           start();
         });
       });
