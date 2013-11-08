@@ -1091,6 +1091,11 @@
       build(state, function(data) {
         var source = data.source;
 
+        // remove unneeded method and alias assignments
+        _.each(_.difference(allFuncs, buildFuncs), function(funcName) {
+          source = source.replace(RegExp('^(?: *//.*\\s*)* *lodash(?:\\.prototype)?\\.\\w+ *= *' + funcName + ';\\n', 'gm'), '');
+        });
+
         // add category namespaces to each lodash function assignment
         source = source.replace(/(lodash(?:\.prototype)?\.\w+\s*=\s*)(\w+)/g, function(match, prelude, identifier) {
           return _.contains(deps, identifier)
@@ -1131,7 +1136,7 @@
         if (!isAMD) {
           source = trimIndent(source);
         }
-        data.source = source;
+        data.source = cleanupSource(source);
         buildCallback(data);
       });
     }());
@@ -4570,6 +4575,8 @@
           source = removeFunction(source, funcName);
           if (!isModularize) {
             source = removeFromCreateIterator(source, funcName);
+
+            // remove method and alias assignments
             source = source.replace(RegExp('^(?: *//.*\\s*)* *lodash(?:\\.prototype)?\\.\\w+ *= *' + funcName + ';\\n', 'gm'), '');
           }
         }
