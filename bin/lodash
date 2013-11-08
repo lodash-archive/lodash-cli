@@ -1024,117 +1024,120 @@
       });
     });
 
-    if (!isNpm && _.contains(identifiers, 'lodash')) {
-      // create lodash module
-      (function() {
-        var categoryDeps = _.invoke(categories, 'toLowerCase'),
-            categoryDepPaths = categoryDeps.map(function(dep) { return './' + dep; }),
-            identifier = 'lodash',
-            basename = identifier,
-            modulePath = getPath(identifier);
+    // create lodash module
+    (function() {
+      if (isNpm || !_.contains(buildFuncs, 'lodash')) {
+        return;
+      }
+      var categoryDeps = _.invoke(categories, 'toLowerCase'),
+          categoryDepPaths = categoryDeps.map(function(dep) { return './' + dep; }),
+          identifier = 'lodash',
+          basename = identifier,
+          modulePath = getPath(identifier);
 
-        var deps = getDependencies(identifier, funcDepMap, true)
-          .concat(objDepMap[identifier] || empty)
-          .concat(varDepMap[identifier] || empty)
-          .sort();
+      var deps = getDependencies(identifier, funcDepMap, true)
+        .concat(objDepMap[identifier] || empty)
+        .concat(varDepMap[identifier] || empty)
+        .sort();
 
-        var depNames = categoryDeps.concat(deps),
-            depArgs = depNames.join(', '),
-            depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath)),
-            iife = [];
+      var depNames = categoryDeps.concat(deps),
+          depArgs = depNames.join(', '),
+          depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath)),
+          iife = [];
 
-        if (isAMD) {
-          basename = 'main';
+      if (isAMD) {
+        basename = 'main';
 
+        iife.push(
+          'define([' + (depPaths.length ? "'" + depPaths.join("', '") + "'" : '') + '], function(' + depArgs + ') {',
+          '%output%',
+          '  return lodash;',
+          '});'
+        );
+      }
+      else {
+        if (isEs6) {
           iife.push(
-            'define([' + (depPaths.length ? "'" + depPaths.join("', '") + "'" : '') + '], function(' + depArgs + ') {',
+            _.reduce(depPaths, function(result, depPath, index) {
+              var depName = depNames[index];
+              return result + (result ? ';\n' : '') +
+                '  import ' + depName + " from '" + depPath + "'";
+            }, '') + ';',
             '%output%',
-            '  return lodash;',
-            '});'
+            'export default = ' + identifier + ';'
           );
         }
         else {
-          if (isEs6) {
-            iife.push(
-              _.reduce(depPaths, function(result, depPath, index) {
-                var depName = depNames[index];
-                return result + (result ? ';\n' : '') +
-                  '  import ' + depName + " from '" + depPath + "'";
-              }, '') + ';',
-              '%output%',
-              'export default = ' + identifier + ';'
-            );
-          }
-          else {
-            basename = 'index';
+          basename = 'index';
 
-            iife.push(
-              _.reduce(depPaths, function(result, depPath, index) {
-                var depName = depNames[index];
-                return result + (result ? ',\n      ' : '  var ') +
-                  depName + " = require('" + depPath + "')" +
-                  (isCommonJS && !_.contains(categoryDepPaths, depPath) ? '.' + depName : '');
-              }, '') + ';',
-              '%output%',
-              (isCommonJS ? 'exports._' : 'module.exports') + ' = ' + identifier + ';'
-            );
-          }
+          iife.push(
+            _.reduce(depPaths, function(result, depPath, index) {
+              var depName = depNames[index];
+              return result + (result ? ',\n      ' : '  var ') +
+                depName + " = require('" + depPath + "')" +
+                (isCommonJS && !_.contains(categoryDepPaths, depPath) ? '.' + depName : '');
+            }, '') + ';',
+            '%output%',
+            (isCommonJS ? 'exports._' : 'module.exports') + ' = ' + identifier + ';'
+          );
         }
+      }
 
-        state.iife = iife.join('\n');
-        state.buildFuncs = state.includeFuncs = [identifier];
-        state.includeObjs = state.includeVars = empty;
-        state.outputPath = path.join(outputPath, modulePath, basename + '.js');
+      state.iife = iife.join('\n');
+      state.buildFuncs = state.includeFuncs = [identifier];
+      state.includeObjs = state.includeVars = empty;
+      state.outputPath = path.join(outputPath, modulePath, basename + '.js');
 
-        build(state, function(data) {
-          var source = data.source;
+      build(state, function(data) {
+        var source = data.source;
 
-          // add category namespaces to each lodash function assignment
-          source = source.replace(/(lodash(?:\.prototype)?\.\w+\s*=\s*)(\w+)/g, function(match, prelude, identifier) {
-            return _.contains(deps, identifier)
-              ? match
-              : prelude + getCategory(identifier, funcDepMap).toLowerCase() + '.' + identifier;
-          });
-
-          // wrap `_.mixin`
-          source = source.replace(/^ *lodashWrapper\.prototype\s*=[^;]+;\n/m, function(match) {
-            return match + [
-              '',
-              '  // wrap `_.mixin` so it works when provided only one argument',
-              '  mixin = (function(fn) {',
-              '    return function(object, source) {',
-              '      if (!source) {',
-              '        source = object;',
-              '        object = lodash;',
-              '      }',
-              '      return fn(object, source);',
-              '    };',
-              '  }(mixin));',
-              ''
-            ].join('\n');
-          });
-
-          // add `_.support` and `_.templateSettings`
-          source = source.replace(/^ *(return +|.*?exports.*?=\s*)lodash;$/m, function(match) {
-            var prelude = '';
-            if (_.contains(deps, 'support')) {
-              prelude += '  lodash.support = support;\n';
-            }
-            if (_.contains(deps, 'templateSettings')) {
-              prelude += '  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;\n';
-            }
-            return prelude + match;
-          });
-
-          if (!isAMD) {
-            source = trimIndent(source);
-          }
-          data.source = source;
-          buildCallback(data);
+        // add category namespaces to each lodash function assignment
+        source = source.replace(/(lodash(?:\.prototype)?\.\w+\s*=\s*)(\w+)/g, function(match, prelude, identifier) {
+          return _.contains(deps, identifier)
+            ? match
+            : prelude + getCategory(identifier, funcDepMap).toLowerCase() + '.' + identifier;
         });
-      }());
 
-      // create category modules
+        // wrap `_.mixin`
+        source = source.replace(/^ *lodashWrapper\.prototype\s*=[^;]+;\n/m, function(match) {
+          return match + [
+            '',
+            '  // wrap `_.mixin` so it works when provided only one argument',
+            '  mixin = (function(fn) {',
+            '    return function(object, source) {',
+            '      if (!source) {',
+            '        source = object;',
+            '        object = lodash;',
+            '      }',
+            '      return fn(object, source);',
+            '    };',
+            '  }(mixin));',
+            ''
+          ].join('\n');
+        });
+
+        // add `_.support` and `_.templateSettings`
+        source = source.replace(/^ *(return +|.*?exports.*?=\s*)lodash;$/m, function(match) {
+          var prelude = '';
+          if (_.contains(deps, 'support')) {
+            prelude += '  lodash.support = support;\n';
+          }
+          if (_.contains(deps, 'templateSettings')) {
+            prelude += '  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;\n';
+          }
+          return prelude + match;
+        });
+
+        if (!isAMD) {
+          source = trimIndent(source);
+        }
+        data.source = source;
+        buildCallback(data);
+      });
+    }());
+
+    // create category modules
+    if (!isNpm) {
       categories.forEach(function(category) {
         var deps = _.intersection(categoryMap[category], identifiers).sort(),
             depPaths = getDepPaths(deps),
