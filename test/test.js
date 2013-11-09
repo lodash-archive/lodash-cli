@@ -1016,7 +1016,7 @@
           var basename = path.basename(data.outputPath, '.js');
 
           if (funcName == 'lodash') {
-            func = require(path.join(outputPath));
+            var func = require(path.join(outputPath));
             ok(func(1) instanceof func);
           }
           else {
