@@ -605,7 +605,8 @@
   QUnit.module('template builds');
 
   (function() {
-    var templatePath = path.join(__dirname, 'fixture', 'template');
+    var templatePath = path.join(__dirname, 'fixture', 'template'),
+        quotesTemplatePath = path.join(templatePath, 'c', '\'".jst');
 
     var commands = [
       'template=' + path.join('fixture', 'template', '*.jst'),
@@ -721,7 +722,7 @@
     commands.forEach(function(command, index) {
       asyncTest('`recursive path `' + command + '`', function() {
         var start = _.after(2, _.once(function() {
-          fs.unlinkSync(oddNamePath);
+          fs.unlinkSync(quotesTemplatePath);
           process.chdir(cwd);
           QUnit.start();
         }));
@@ -731,8 +732,7 @@
         }
 
         // manually create template `'".jst` to avoid issues in Windows
-        var oddNamePath = path.join(templatePath, 'c', '\'".jst');
-        fs.writeFileSynce(oddNamePath, 'hello <%= name %>!', 'utf8');
+        fs.writeFileSync(quotesTemplatePath, 'hello <%= name %>', 'utf8');
 
         build(['-s', command], function(data) {
           var basename = path.basename(data.outputPath, '.js'),
