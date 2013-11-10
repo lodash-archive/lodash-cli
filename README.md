@@ -20,6 +20,8 @@ lodash -h
 
 lodash-cli has been tested in at least Node.js 0.6.8-0.10.21.
 
+**Note:** Node.js 0.10.8-0.10.11 [have](https://github.com/joyent/node/issues/5622) [bugs](https://github.com/joyent/node/issues/5688) preventing minified builds.
+
 ## Author
 
 | [![twitter/jdalton](http://gravatar.com/avatar/299a3d891ff1920b69c364d061007043?s=70)](https://twitter.com/jdalton "Follow @jdalton on Twitter") |
