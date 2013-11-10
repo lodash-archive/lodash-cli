@@ -1251,8 +1251,11 @@
             precompiled = cleanupCompiled(getFunctionSource(_.template(text, null, settings), 2));
 
         var index = -1,
-            object = templates,
-            props = filePath.slice(basePath.length).replace(/\..*$/, '').split(path.sep),
+            object = templates;
+
+        // glob uses *nix path separators even on Windows
+        // https://github.com/isaacs/node-glob#windows
+        var props = filePath.slice(basePath.length).replace(/\..*$/, '').split('/'),
             length = props.length - 1;
 
         while (++index < length) {
