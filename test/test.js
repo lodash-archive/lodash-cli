@@ -721,6 +721,7 @@
     commands.forEach(function(command, index) {
       asyncTest('`recursive path `' + command + '`', function() {
         var start = _.after(2, _.once(function() {
+          fs.unlinkSync(oddNamePath);
           process.chdir(cwd);
           QUnit.start();
         }));
@@ -728,6 +729,11 @@
         if (index) {
           process.chdir(templatePath);
         }
+
+        // manually create template `'".jst` to avoid issues in Windows
+        var oddNamePath = path.join(templatePath, 'c', '\'".jst');
+        fs.writeFileSynce(oddNamePath, 'hello <%= name %>!', 'utf8');
+
         build(['-s', command], function(data) {
           var basename = path.basename(data.outputPath, '.js'),
               context = createContext();
