@@ -20,6 +20,9 @@
   /** The current working directory */
   var cwd = process.cwd();
 
+  /** Used to indicate if running in Windows */
+  var isWindows = process.platform == 'win32';
+
   /** Used to prefix relative paths from the current directory */
   var relativePrefix = '.' + path.sep;
 
@@ -722,7 +725,9 @@
     commands.forEach(function(command, index) {
       asyncTest('`recursive path `' + command + '`', function() {
         var start = _.after(2, _.once(function() {
-          fs.unlinkSync(quotesTemplatePath);
+          if (!isWindows) {
+            fs.unlinkSync(quotesTemplatePath);
+          }
           process.chdir(cwd);
           QUnit.start();
         }));
@@ -730,10 +735,10 @@
         if (index) {
           process.chdir(templatePath);
         }
-
-        // manually create template `'".jst` to avoid issues in Windows
-        fs.writeFileSync(quotesTemplatePath, 'hello <%= name %>', 'utf8');
-
+        if (!isWindows) {
+          // manually create template `'".jst` to avoid issues in Windows
+          fs.writeFileSync(quotesTemplatePath, 'hello <%= name %>', 'utf8');
+        }
         build(['-s', command], function(data) {
           var basename = path.basename(data.outputPath, '.js'),
               context = createContext();
@@ -744,8 +749,10 @@
           equal(_.templates.b({ 'name': 'moe' }), 'hello moe!', basename);
           equal(_.templates.c({ 'name': 'larry' }), 'hello larry', basename);
           equal(_.templates.c.c({ 'name': 'curly' }), 'hello curly!', basename);
-          equal(_.templates.c['\'"']({ 'name': 'quotes' }), 'hello quotes', basename);
 
+          if (!isWindows) {
+            equal(_.templates.c['\'"']({ 'name': 'quotes' }), 'hello quotes', basename);
+          }
           delete _.templates;
           start();
         });
