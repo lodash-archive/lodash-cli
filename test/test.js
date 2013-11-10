@@ -316,6 +316,7 @@
     'forOwnRight',
     'isPlainObject',
     'merge',
+    'noop',
     'parseInt',
     'partialRight',
     'pull',
