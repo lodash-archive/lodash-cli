@@ -419,7 +419,6 @@
     var pass = true,
         array = [['a', 1], ['b', 2], ['c', 3]],
         object = { 'a': 1, 'b': 2, 'c': 3 },
-        noop = function() {},
         string = 'abc',
         template = '<%= a %>',
         func = lodash[methodName];
@@ -437,13 +436,13 @@
         }
       }
       else if (_.contains(categoryMap.Chaining, methodName)) {
-        lodash(array)[methodName](noop);
+        lodash(array)[methodName](_.noop);
       }
       else if (_.contains(categoryMap.Collections, methodName)) {
         if (/^(?:count|group|sort)By$/.test(methodName)) {
-          func(array, noop);
+          func(array, _.noop);
           func(array, string);
-          func(object, noop);
+          func(object, _.noop);
           func(object, string);
         }
         else if (/^(?:size|toArray)$/.test(methodName)) {
@@ -463,25 +462,25 @@
           func(object, object);
         }
         else {
-          func(array, noop, object);
-          func(object, noop, object);
+          func(array, _.noop, object);
+          func(object, _.noop, object);
         }
       }
       else if (_.contains(categoryMap.Functions, methodName)) {
         if (methodName == 'after') {
-          func(1, noop);
+          func(1, _.noop);
         } else if (methodName == 'bindAll') {
-          func({ 'noop': noop });
+          func({ 'noop': _.noop });
         } else if (methodName == 'bindKey') {
           func(lodash, 'identity', array, string);
         } else if (/^(?:bind|partial(?:Right)?)$/.test(methodName)) {
-          func(noop, object, array, string);
+          func(_.noop, object, array, string);
         } else if (/^(?:compose|memoize|wrap)$/.test(methodName)) {
-          func(noop, noop);
+          func(_.noop, _.noop);
         } else if (/^(?:debounce|throttle)$/.test(methodName)) {
-          func(noop, 100);
+          func(_.noop, 100);
         } else {
-          func(noop);
+          func(_.noop);
         }
       }
       else if (_.contains(categoryMap.Objects, methodName)) {
@@ -492,7 +491,7 @@
         else if (/^(?:defaults|extend|merge)$/.test(methodName)) {
           func({}, object);
         } else if (/^for(?:In|Own)(?:Right)?$/.test(methodName)) {
-          func(object, noop);
+          func(object, _.noop);
         } else if (/^(?:omit|pick)$/.test(methodName)) {
           func(object, 'b');
         } else if (methodName == 'has') {
@@ -512,7 +511,7 @@
           func(template, object);
           func(template, null, { 'imports': object })(object);
         } else if (methodName == 'times') {
-          func(2, noop, object);
+          func(2, _.noop, object);
         } else {
           func(string, object);
         }
@@ -1291,9 +1290,9 @@
             context = createContext(),
             pass = true;
 
-        context.define = function(fn) {
+        context.define = function(factory) {
           pass = false;
-          context._ = fn();
+          context._ = factory();
         };
 
         context.define.amd = {};
@@ -1651,15 +1650,52 @@
 
         build(['-s', command], function(data) {
           var basename = path.basename(data.outputPath, '.js'),
-              context = createContext(),
-              noop = function() {};
+              context = createContext();
 
           vm.runInContext(data.source, context);
           var lodash = context._;
 
-          lodash.mixin({ 'x': noop });
-          equal(lodash.x, noop, basename);
+          lodash.mixin({ 'x': _.noop });
+          equal(lodash.x, _.noop, basename);
           equal(typeof lodash.prototype.x, 'function', basename);
+
+          start();
+        });
+      });
+    });
+  }());
+
+  /*--------------------------------------------------------------------------*/
+
+ QUnit.module('moduleId command');
+
+  (function() {
+    var commands = [
+      'moduleId=underscore',
+      'moduleId=lodash exports=amd'
+    ];
+
+    commands.forEach(function(command, index) {
+      var expectedId = /underscore/.test(command) ? 'underscore' : 'lodash';
+
+      asyncTest('`lodash ' + command +'`', function() {
+        var start = _.after(2, _.once(QUnit.start));
+
+        build(['-s'].concat(command.split(' ')), function(data) {
+          var moduleId,
+              basename = path.basename(data.outputPath, '.js'),
+              context = createContext();
+
+          context.define = function(id, factory) {
+            moduleId = id;
+            context._ = factory();
+          };
+
+          context.define.amd = {};
+          vm.runInContext(data.source, context);
+
+          equal(moduleId, expectedId, basename);
+          ok(_.isFunction(context._), basename);
 
           start();
         });

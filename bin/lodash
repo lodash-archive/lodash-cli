@@ -1206,9 +1206,9 @@
    */
   function buildTemplate(state) {
     var glob = require('glob'),
+        moduleId = state.moduleId || 'lodash',
         pattern = state.templatePattern,
-        settings = state.templateSettings,
-        moduleId = settings.moduleId;
+        settings = state.templateSettings;
 
     pattern || (pattern = path.join(cwd, '*.jst'));
 
@@ -1423,7 +1423,7 @@
       '  settings=..  Template settings used when precompiling templates',
       '               (e.g. `lodash settings="{interpolate:/{{([\\s\\S]+?)}}/g}"`)',
       '',
-      '  moduleId=..  The AMD module ID for precompiled templates',
+      '  moduleId=..  The AMD module ID for Lo-Dash',
       '',
       '  All commands except `backbone`, `legacy`, `mobile`, `modern`, & `underscore`',
       '  may be combined.',
@@ -2884,7 +2884,7 @@
       // used to specify the AMD module ID of Lo-Dash used by precompiled templates
       var moduleId = options.reduce(function(result, value) {
         return optionToValue('moduleId', value) || result;
-      }, 'lodash');
+      }, null);
 
       // used as the output path for the build
       var outputPath = options.reduce(function(result, value, index) {
@@ -2905,9 +2905,7 @@
         return value
           ? _.assign(result, Function('return {' + value.replace(/^\{|}$/g, '') + '}')())
           : result;
-      }, _.assign(_.clone(_.templateSettings), {
-        'moduleId': moduleId
-      }));
+      }, _.clone(_.templateSettings));
 
       // flags to specify export options
       var isAMD = _.contains(exportsOptions, 'amd'),
@@ -4258,6 +4256,7 @@
 
       if (isTemplate) {
         source = buildTemplate({
+          'moduleId': moduleId,
           'templatePattern': templatePattern,
           'templateSettings': templateSettings
         });
@@ -4448,6 +4447,10 @@
 
       /*----------------------------------------------------------------------*/
 
+      // set the AMD module id
+      if (isAMD && moduleId != null && !isModularize && !isTemplate) {
+        source = source.replace(/^(?: *\/\/.*\n)*( *)define\((?=function)/m, "$1root._ = _;\n\n$&'" + moduleId + "', ");
+      }
       // customize Lo-Dash's export bootstrap
       if (!isAMD || isModularize) {
         source = source.replace(/^(?: *\/\/.*\n)*( *)if *\(typeof +define[\s\S]+?else /m, '$1');
@@ -4456,10 +4459,14 @@
         source = source.replace(/^(?: *\/\/.*\n)*( *)if *\(moduleExports[\s\S]+?else *\{([\s\S]+?\n)\1}\n+/m, '$1$2');
       }
       if (!isCommonJS || isModularize) {
-        source = source.replace(/^(?: *\/\/.*\n)*(?:( *)(})? *else *\{)?\s*freeExports\.\w+ *=[\s\S]+?(?:\n\1})?\n+/m, '$1$2\n');
+        source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)}?) *else *\{)?\s*freeExports\.\w+ *=[\s\S]+?(?:\n\2})?\n+/m, function(match, prelude) {
+          return prelude ? prelude + '\n' : '';
+        });
       }
       if (!isGlobal || isModularize) {
-        source = source.replace(/^(?: *\/\/.*\n)*(?:( *)(})? *else(?: *if *\(_\))? *\{)?(?:\s*\/\/.*)*\s*(?:root\._|_\.templates) *=[\s\S]+?(?:\n\1})?\n+/gm, '$1$2\n');
+        source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)}?) *else(?: *if *\(_\))? *\{)?(?:\s*\/\/.*)*\s*(?:root\._|_\.templates) *=[\s\S]+?(?:\n\2})?\n+/gm, function(match, prelude) {
+          return prelude ? prelude + '\n' : '';
+        });
       }
       // remove `if (freeExports && freeModule) {...}` if it's empty
       if (isAMD && isGlobal && !isModularize) {
@@ -4727,8 +4734,8 @@
 
     // flag to specify creating a custom build
     var isCustom = !isModularize && (
-      isLegacy || isMapped || isModern || isStrict || isUnderscore || outputPath ||
-      /(?:category|exclude|exports|iife|include|minus|plus)=.*$/.test(options) ||
+      isLegacy || isMapped || isModern || isStrict || isTemplate || isUnderscore || outputPath ||
+      /\b(?:category|exclude|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
       !_.isEqual(exportsOptions, ['amd', 'commonjs', 'global', 'node'])
     );
 
