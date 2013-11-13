@@ -1880,12 +1880,12 @@
   }
 
   /**
-   *  Extracts the option value from an option string.
+   * Extracts the option value from an option string.
    *
    * @private
    * @param {string} name The name of the option to inspect.
    * @param {string} string The options string.
-   * @returns {String|undefined} Returns the option value, else `undefined`.
+   * @returns {string|undefined} Returns the option value, else `undefined`.
    */
   function optionToValue(name, string) {
     var result = (result = string.match(RegExp('^' + name + '=([\\s\\S]+)$'))) && result[1].trim();
@@ -2929,22 +2929,22 @@
       }
 
       // categories of functions to include in the build
-      var categoryOptions = options.reduce(function(accumulator, value) {
+      var categoryOptions = options.reduce(function(result, value) {
         value = optionToArray('category', value);
         if (value.length) {
-          accumulator = _.union(value.map(function(category) {
+          result = _.union(value.map(function(category) {
             return capitalize(category.toLowerCase());
           }));
         }
-        return accumulator;
+        return result;
       }, []);
 
       // functions to include in the build
-      var includeFuncs = options.reduce(function(accumulator, value) {
+      var includeFuncs = options.reduce(function(result, value) {
         value = optionToFuncsArray('include', value, funcDepMap);
         return value.length
-          ? _.union(accumulator, value)
-          : accumulator;
+          ? _.union(result, value)
+          : result;
       }, categoryOptions.slice());
 
       // properties to include in the build
@@ -2954,19 +2954,19 @@
       var includeVars = _.intersection(includeFuncs, varDependencies);
 
       // functions to remove from the build
-      var minusFuncs = options.reduce(function(accumulator, value) {
+      var minusFuncs = options.reduce(function(result, value) {
         value = optionToFuncsArray('(?:exclude|minus)', value, funcDepMap);
         return value.length
-          ? _.union(accumulator, value)
-          : accumulator;
+          ? _.union(result, value)
+          : result;
       }, []);
 
       // functions to add to the build
-      var plusFuncs = options.reduce(function(accumulator, value) {
+      var plusFuncs = options.reduce(function(result, value) {
         value = optionToFuncsArray('plus', value, funcDepMap);
         return value.length
-          ? _.union(accumulator, value)
-          : accumulator;
+          ? _.union(result, value)
+          : result;
       }, []);
 
       // expand categories to function names
