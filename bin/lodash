@@ -951,7 +951,7 @@
               '  import ' + depName + " from '" + depPath + "'";
           }, '') + ';',
           '%output%',
-          'export default = ' + identifier + ';'
+          'export default ' + identifier + ';'
         );
       }
       else {
@@ -1064,7 +1064,7 @@
                 '  import ' + depName + " from '" + depPath + "'";
             }, '') + ';',
             '%output%',
-            'export default = ' + identifier + ';'
+            'export default ' + identifier + ';'
           );
         }
         else {
