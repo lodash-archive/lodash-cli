@@ -228,7 +228,7 @@
     'wrapperToString': [],
     'wrapperValueOf': [],
     'zip': ['max', 'pluck'],
-    'zipObject': [],
+    'zipObject': ['isArray'],
 
     // private functions
     'baseBind': ['baseCreate', 'isObject', 'setBindData'],
