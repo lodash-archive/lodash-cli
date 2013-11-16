@@ -6,9 +6,9 @@
   var vm = require('vm');
 
   /** Load other modules */
-  var _ = require('lodash/lodash.js'),
-      minify = require('../lib/minify.js'),
-      util = require('../lib/util.js');
+  var _ = require('lodash/lodash'),
+      minify = require('../lib/minify'),
+      util = require('../lib/util');
 
   /** Module shortcuts */
   var fs = util.fs,
@@ -2818,7 +2818,7 @@
           varDepMap = _.cloneDeep(varDependencyMap);
 
       // the path to the source file
-      var filePath = require.resolve('lodash/lodash.js');
+      var filePath = require.resolve('lodash/lodash');
 
       // used to specify a custom IIFE to wrap Lo-Dash
       var iife = options.reduce(function(result, value) {
