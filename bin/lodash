@@ -123,7 +123,7 @@
     'contains': ['baseEach', 'getIndexOf', 'isArray', 'isString'],
     'countBy': ['createAggregator'],
     'create': ['assign', 'baseCreate'],
-    'createCallback': ['baseCreateCallback', 'baseIsEqual', 'isObject', 'keys'],
+    'createCallback': ['baseCreateCallback', 'baseIsEqual', 'isObject', 'keys', 'property'],
     'curry': ['createWrapper'],
     'debounce': ['isFunction', 'isObject'],
     'defaults': ['createIterator'],
@@ -194,6 +194,7 @@
     'partialRight': ['createWrapper', 'slice'],
     'pick': ['baseFlatten', 'createCallback', 'forIn', 'isObject'],
     'pluck': ['map'],
+    'property': [],
     'pull': [],
     'random': ['baseRandom'],
     'range': [],
@@ -414,6 +415,7 @@
       'once',
       'partial',
       'partialRight',
+      'property',
       'throttle',
       'wrap'
     ],
@@ -600,6 +602,7 @@
     'noop',
     'parseInt',
     'partialRight',
+    'property',
     'pull',
     'remove',
     'runInContext',
@@ -779,10 +782,10 @@
       ].join('\n'));
     }
     // replace wrapper `Array` method assignments
-    source = source.replace(/^(?:(?: *\/\/.*\n)*(?: *if *\(.+\n)?( *)(baseEach|forEach)\(\['[\s\S]+?\n\1}\);(?:\n *})?\n+)+/m, function(match, indent, methodName) {
+    source = source.replace(/^(?:(?: *\/\/.*\n)*(?: *if *\(.+\n)?( *)(baseEach|forEach)\(\['[\s\S]+?\n\1}\);(?:\n *})?\n+)+/m, function(match, indent, funcName) {
       return indent + [
         '// add `Array` mutator functions to the wrapper',
-        methodName + "(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
+        funcName + "(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
         '  var func = arrayRef[methodName];',
         '  lodash.prototype[methodName] = function() {',
         '    var value = this.__wrapped__;',
@@ -798,7 +801,7 @@
         '});',
         '',
         '// add `Array` accessor functions to the wrapper',
-        methodName + "(['concat', 'join', 'slice'], function(methodName) {",
+        funcName + "(['concat', 'join', 'slice'], function(methodName) {",
         '  var func = arrayRef[methodName];',
         '  lodash.prototype[methodName] = function() {',
         '    var value = this.__wrapped__,',
@@ -3316,6 +3319,9 @@
             }
           });
         }
+        if (_.contains(minusFuncs, 'pluck')) {
+          _.pull(funcDepMap.createCallback, 'property');
+        }
         if (_.contains(minusFuncs, 'where')) {
           _.pull(funcDepMap.createCallback, 'baseIsEqual', 'isObject', 'keys');
           funcDepMap.createCallback.push('identity');
@@ -3558,22 +3564,6 @@
               '    });',
               '  }',
               '  return result;',
-              '}'
-            ].join('\n'));
-
-            // replace `_.pluck`
-            source = replaceFunction(source, 'pluck', [
-              'function pluck(collection, property) {',
-              '  var index = -1,',
-              '      length = collection ? collection.length : 0;',
-              '',
-              "  if (typeof length == 'number') {",
-              '    var result = Array(length);',
-              '    while (++index < length) {',
-              '      result[index] = collection[index][property];',
-              '    }',
-              '  }',
-              '  return result || map(collection, property);',
               '}'
             ].join('\n'));
 
@@ -4217,7 +4207,7 @@
         // remove "_.pluck" style callback support from `_.createCallback`
         else if (_.contains(minusFuncs, 'pluck')) {
           source = source.replace(matchFunction(source, 'createCallback'), function(match) {
-            return match.replace(/^(?: *\/\/.*\n)*( *)if *\(type\b[\s\S]+?\n\1}\n/m, '');
+            return match.replace(/^(?: *\/\/.*\n)*( *)if *\(type.+?'object'\)[\s\S]+?\n\1}\n/m, '');
           });
         }
         // remove "_.where" style callback support from `_.createCallback`
@@ -4388,9 +4378,9 @@
               }
             });
 
-            // unexpose methods
+            // unexpose Lo-Dash methods for the Underscore build
             source = source.replace(getMethodAssignments(source), function(match) {
-              return _.reduce(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'noop', 'unzip', 'zipObject'], function(result, funcName) {
+              return _.reduce(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'noop', 'property', 'unzip', 'zipObject'], function(result, funcName) {
                 return isLodash(funcName)
                   ? result
                   : result.replace(RegExp('^(?: *//.*\\s*)* *lodash\\.' + funcName + ' *=[\\s\\S]+?;\\n', 'm'), '');

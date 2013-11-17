@@ -177,6 +177,7 @@
       'once',
       'partial',
       'partialRight',
+      'property',
       'throttle',
       'wrap'
     ],
@@ -322,6 +323,7 @@
     'noop',
     'parseInt',
     'partialRight',
+    'property',
     'pull',
     'remove',
     'runInContext',
@@ -1276,6 +1278,10 @@
             var actual = lodash[methodName]();
           } catch(e) { }
           deepEqual(actual, [], '_.' + methodName + ' should return an empty array when no `array` argument is provided: ' + basename);
+        });
+
+        _.each(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'noop', 'property', 'unzip', 'zipObject'], function(methodName) {
+          equal(methodName in lodash, false, 'should not expose _.' + methodName + ': ' + basename);
         });
 
         start();

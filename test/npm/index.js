@@ -129,6 +129,7 @@ lodash.partial = require('lodash.partial');
 lodash.partialRight = require('lodash.partialright');
 lodash.pick = require('lodash.pick');
 lodash.pluck = require('lodash.pluck');
+lodash.property = require('lodash.property');
 lodash.pull = require('lodash.pull');
 lodash.random = require('lodash.random');
 lodash.range = require('lodash.range');
