@@ -121,6 +121,7 @@ lodash.merge = require('lodash.merge');
 lodash.min = require('lodash.min');
 lodash.mixin = require('lodash.mixin');
 lodash.noop = require('lodash.noop');
+lodash.now = require('lodash.now');
 lodash.omit = require('lodash.omit');
 lodash.once = require('lodash.once');
 lodash.pairs = require('lodash.pairs');

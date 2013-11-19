@@ -125,7 +125,7 @@
     'create': ['assign', 'baseCreate'],
     'createCallback': ['baseCreateCallback', 'baseIsEqual', 'isObject', 'keys', 'property'],
     'curry': ['createWrapper'],
-    'debounce': ['isFunction', 'isObject'],
+    'debounce': ['isFunction', 'isObject', 'now'],
     'defaults': ['createIterator'],
     'defer': ['isFunction', 'slice'],
     'delay': ['isFunction', 'slice'],
@@ -186,6 +186,7 @@
     'mixin': ['forEach', 'functions', 'isFunction', 'lodash'],
     'noConflict': [],
     'noop': [],
+    'now': [],
     'omit': ['baseDifference', 'baseFlatten', 'createCallback', 'forIn'],
     'once': ['isFunction'],
     'pairs': ['keys'],
@@ -324,6 +325,7 @@
     'isRegExp': ['objectTypes'],
     'keys': ['reNative'],
     'memoize': ['keyPrefix'],
+    'now': ['reNative'],
     'parseInt': ['root'],
     'reEscapedHtml': ['htmlUnescapes'],
     'releaseArray': ['arrayPool', 'maxPoolSize'],
@@ -465,6 +467,7 @@
       'mixin',
       'noConflict',
       'noop',
+      'now',
       'parseInt',
       'random',
       'result',
@@ -600,6 +603,7 @@
     'isPlainObject',
     'merge',
     'noop',
+    'now',
     'parseInt',
     'partialRight',
     'property',
@@ -1637,7 +1641,7 @@
    */
   function getIsArrayFork(source) {
     return matchFunction(source, 'isArray')
-      .replace(/^[\s\S]+?=\s*nativeIsArray\b/, '')
+      .replace(/^[\s\S]+?(?=\|\|)/, '')
       .replace(/[;\s]+$/, '');
   }
 
@@ -1674,6 +1678,19 @@
    */
   function getNamesByCategory(category) {
     return categoryMap[category] || [];
+  }
+
+  /**
+   * Gets the `_.isArray` fork from `source`.
+   *
+   * @private
+   * @param {string} source The source to inspect.
+   * @returns {string} Returns the fork.
+   */
+  function getNowFork(source) {
+    return matchFunction(source, 'now')
+      .replace(/^[\s\S]+?(?=\|\|)/, '')
+      .replace(/[;\s]+$/, '');
   }
 
   /**
@@ -2191,6 +2208,17 @@
    */
   function removeMethodAssignments(source) {
     return source.replace(getMethodAssignments(source), '');
+  }
+
+  /**
+   * Removes the `_.now` fork from `source`.
+   *
+   * @private
+   * @param {string} source The source to process.
+   * @returns {string} Returns the modified source.
+   */
+  function removeNowFork(source) {
+    return source.replace(getNowFork(source), '');
   }
 
   /**
@@ -3090,6 +3118,7 @@
 
         // update dependencies
         if (isLegacy) {
+          _.pull(funcDepMap.debounce, 'now');
           funcDepMap.isPlainObject = funcDepMap.shimIsPlainObject.slice();
           funcDepMap.keys = funcDepMap.shimKeys.slice();
 
@@ -3417,9 +3446,11 @@
             return match.replace(/\bnow\(\)/g, '+new Date');
           });
 
-          // remove native `Array.isArray` branch in `_.isArray`
-          source = source.replace(matchFunction(source, 'isArray'), function(match) {
-            return match.replace(/\bnativeIsArray\s*\|\|\s*/, '');
+          // remove native branches from `_.isArray` and `_.now`
+          _.each(['isArray', 'now'], function(funcName) {
+            source = source.replace(matchFunction(source, funcName), function(match) {
+              return match.replace(/(=\s*)[\s\S]+?\|\|\s*/, '$1');
+            });
           });
 
           // replace `_.isPlainObject` with `shimIsPlainObject`
@@ -4380,7 +4411,7 @@
 
             // unexpose Lo-Dash methods for the Underscore build
             source = source.replace(getMethodAssignments(source), function(match) {
-              return _.reduce(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'noop', 'property', 'unzip', 'zipObject'], function(result, funcName) {
+              return _.reduce(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'noop', 'now', 'property', 'unzip', 'zipObject'], function(result, funcName) {
                 return isLodash(funcName)
                   ? result
                   : result.replace(RegExp('^(?: *//.*\\s*)* *lodash\\.' + funcName + ' *=[\\s\\S]+?;\\n', 'm'), '');
@@ -4588,7 +4619,8 @@
         'defer': removeDeferFork,
         'isArguments': removeIsArgumentsFork,
         'isArray': removeIsArrayFork,
-        'isFunction': removeIsFunctionFork
+        'isFunction': removeIsFunctionFork,
+        'now': removeNowFork
       },
       function(removeFork, funcName) {
         if (isExcluded(funcName)) {

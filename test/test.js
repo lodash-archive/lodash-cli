@@ -227,6 +227,7 @@
       'mixin',
       'noConflict',
       'noop',
+      'now',
       'parseInt',
       'random',
       'result',
@@ -321,6 +322,7 @@
     'isPlainObject',
     'merge',
     'noop',
+    'now',
     'parseInt',
     'partialRight',
     'property',
@@ -1280,7 +1282,7 @@
           deepEqual(actual, [], '_.' + methodName + ' should return an empty array when no `array` argument is provided: ' + basename);
         });
 
-        _.each(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'noop', 'property', 'unzip', 'zipObject'], function(methodName) {
+        _.each(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'noop', 'now', 'property', 'unzip', 'zipObject'], function(methodName) {
           equal(methodName in lodash, false, 'should not expose _.' + methodName + ': ' + basename);
         });
 
