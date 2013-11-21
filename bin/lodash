@@ -106,7 +106,6 @@
     'htmlUnescapes': ['invert'],
     'reEscapedHtml': ['keys'],
     'reUnescapedHtml': ['keys'],
-    'support': [],
 
     // public functions
     'after': ['isFunction'],
@@ -120,6 +119,7 @@
     'cloneDeep': ['baseClone', 'baseCreateCallback'],
     'compact': [],
     'compose': ['isFunction'],
+    'constant': [],
     'contains': ['baseEach', 'getIndexOf', 'isArray', 'isString'],
     'countBy': ['createAggregator'],
     'create': ['assign', 'baseCreate'],
@@ -154,7 +154,7 @@
     'indexBy': ['createAggregator'],
     'indexOf': ['baseIndexOf', 'sortedIndex'],
     'initial': ['createCallback', 'slice'],
-    'intersection': ['cacheIndexOf', 'createCache', 'getArray', 'getIndexOf', 'releaseArray', 'releaseObject'],
+    'intersection': ['cacheIndexOf', 'createCache', 'getArray', 'getIndexOf', 'isArguments', 'isArray', 'releaseArray', 'releaseObject'],
     'invert': ['keys'],
     'invoke': ['forEach', 'slice'],
     'isArguments': [],
@@ -179,6 +179,7 @@
     'lastIndexOf': [],
     'lodash': ['isArray', 'lodashWrapper'],
     'map': ['baseEach', 'createCallback', 'isArray'],
+    'mapValues': ['createCallback', 'forOwn'],
     'max': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
     'memoize': ['isFunction'],
     'merge': ['baseCreateCallback', 'baseMerge', 'getArray', 'isObject', 'releaseArray', 'slice'],
@@ -229,6 +230,7 @@
     'wrapperChain': [],
     'wrapperToString': [],
     'wrapperValueOf': [],
+    'xor': ['baseDifference', 'baseUniq', 'isArguments', 'isArray'],
     'zip': ['max', 'pluck'],
     'zipObject': ['isArray'],
 
@@ -362,6 +364,7 @@
       'union',
       'uniq',
       'without',
+      'xor',
       'zip',
       'zipObject'
     ],
@@ -417,7 +420,6 @@
       'once',
       'partial',
       'partialRight',
-      'property',
       'throttle',
       'wrap'
     ],
@@ -454,6 +456,7 @@
       'isString',
       'isUndefined',
       'keys',
+      'mapValues',
       'merge',
       'omit',
       'pairs',
@@ -462,6 +465,8 @@
       'values'
     ],
     'Utilities': [
+      'constant',
+      'createCallback',
       'escape',
       'identity',
       'mixin',
@@ -469,6 +474,7 @@
       'noop',
       'now',
       'parseInt',
+      'property',
       'random',
       'result',
       'runInContext',
@@ -587,6 +593,7 @@
     'at',
     'bindKey',
     'cloneDeep',
+    'constant',
     'create',
     'createCallback',
     'curry',
@@ -601,6 +608,7 @@
     'forOwn',
     'forOwnRight',
     'isPlainObject',
+    'mapValues',
     'merge',
     'noop',
     'now',
@@ -611,7 +619,8 @@
     'remove',
     'runInContext',
     'transform',
-    'wrapperToString'
+    'wrapperToString',
+    'xor'
   ];
 
   /** List of private functions */
@@ -3330,7 +3339,8 @@
             });
 
             _.forOwn(funcDepMap, function(deps, funcName) {
-              if (funcName != 'baseFlatten' && _.contains(deps, 'isArguments') &&
+              if (_.contains(deps, 'isArguments') &&
+                  !_.contains(['baseFlatten', 'intersection', 'xor'], funcName) &&
                   !(isUnderscore && isLodash(funcName))) {
                 _.pull(deps, 'isArguments');
               }
@@ -3793,9 +3803,18 @@
           // replace `_.intersection`
           if (!isLodash('intersection')) {
             source = replaceFunction(source, 'intersection', [
-              'function intersection(array) {',
-              '  var args = arguments,',
-              '      argsLength = args.length,',
+              'function intersection() {',
+              '  var args = [],',
+              '      argsIndex = -1,',
+              '      argsLength = arguments.length;',
+              '',
+              '  while (++argsIndex < argsLength) {',
+              '    var value = arguments[argsIndex];',
+              '     if (isArray(value) || isArguments(value)) {',
+              '       args.push(value);',
+              '     }',
+              '  }',
+              '  var array = args[0],',
               '      index = -1,',
               '      indexOf = getIndexOf(),',
               '      length = array ? array.length : 0,',
@@ -3803,7 +3822,7 @@
               '',
               '  outer:',
               '  while (++index < length) {',
-              '    var value = array[index];',
+              '    value = array[index];',
               '    if (indexOf(result, value) < 0) {',
               '      var argsIndex = argsLength;',
               '      while (--argsIndex) {',

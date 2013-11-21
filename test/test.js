@@ -122,6 +122,7 @@
       'union',
       'uniq',
       'without',
+      'xor',
       'zip',
       'zipObject'
     ],
@@ -177,7 +178,6 @@
       'once',
       'partial',
       'partialRight',
-      'property',
       'throttle',
       'wrap'
     ],
@@ -214,6 +214,7 @@
       'isString',
       'isUndefined',
       'keys',
+      'mapValues',
       'merge',
       'omit',
       'pairs',
@@ -222,6 +223,8 @@
       'values'
     ],
     'Utilities': [
+      'constant',
+      'createCallback',
       'escape',
       'identity',
       'mixin',
@@ -229,6 +232,7 @@
       'noop',
       'now',
       'parseInt',
+      'property',
       'random',
       'result',
       'runInContext',
@@ -306,6 +310,7 @@
     'at',
     'bindKey',
     'cloneDeep',
+    'constant',
     'create',
     'createCallback',
     'curry',
@@ -320,6 +325,7 @@
     'forOwn',
     'forOwnRight',
     'isPlainObject',
+    'mapValues',
     'merge',
     'noop',
     'now',
@@ -330,7 +336,8 @@
     'remove',
     'runInContext',
     'transform',
-    'wrapperToString'
+    'wrapperToString',
+    'xor'
   ];
 
   /** List of all functions */
