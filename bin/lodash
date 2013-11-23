@@ -410,7 +410,6 @@
       'bind',
       'bindAll',
       'bindKey',
-      'createCallback',
       'compose',
       'curry',
       'debounce',
@@ -421,7 +420,10 @@
       'partial',
       'partialRight',
       'throttle',
-      'wrap'
+      'wrap',
+
+      // deprecated
+      'createCallback'
     ],
     'Objects': [
       'assign',
@@ -1169,9 +1171,13 @@
             "define(['" + depPaths.join("', '") + "'], function(" + deps.join(', ') + ') {',
             '%output%',
             '  return {',
-            deps.map(function(dep) {
-              return "    '" + dep + "': " + dep;
-            }).join(',\n'),
+            _.transform(deps, function(result, depName) {
+              _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
+                result.push( "    '" + otherName + "': " + otherName);
+              });
+            })
+            .sort()
+            .join(',\n'),
             '  };',
             '});'
           );
@@ -1180,23 +1186,34 @@
           iife.push('%output%');
 
           if (isEs6) {
-            push.apply(iife, depPaths.map(function(depPath, index) {
+            push.apply(iife, _.transform(depPaths, function(result, depPath, index) {
               var depName = deps[index];
-              return 'export ' + depName + " from '" + depPath + "';";
-            }));
+              _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
+                result.push('export ' + otherName + " from '" + otherName + "';");
+              });
+            })
+            .sort());
           }
           else if (isCommonJS) {
-            push.apply(iife, depPaths.map(function(depPath, index) {
+            push.apply(iife, _.transform(depPaths, function(result, depPath, index) {
               var depName = deps[index];
-              return 'exports.' + depName + " = require('" + depPath + "')." + depName + ';';
-            }));
+              _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
+                result.push('exports.' + otherName + " = require('" + depPath + "')." + otherName + ';');
+              });
+            })
+            .sort());
           }
           else {
             iife.push(
               'module.exports = {',
-              depPaths.map(function(depPath, index) {
-                return "  '" + deps[index] + "': require('" + depPath + "')";
-              }).join(',\n'),
+              _.transform(depPaths, function(result, depPath, index) {
+                var depName = deps[index];
+                _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
+                  result.push("  '" + otherName + "': require('" + depPath + "')");
+                });
+              })
+              .sort()
+              .join(',\n'),
               '};'
             );
           }
