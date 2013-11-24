@@ -1189,7 +1189,7 @@
             push.apply(iife, _.transform(depPaths, function(result, depPath, index) {
               var depName = deps[index];
               _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
-                result.push('export ' + otherName + " from '" + otherName + "';");
+                result.push('export ' + otherName + " from '" + depName + "';");
               });
             })
             .sort());
@@ -1198,7 +1198,7 @@
             push.apply(iife, _.transform(depPaths, function(result, depPath, index) {
               var depName = deps[index];
               _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
-                result.push('exports.' + otherName + " = require('" + depPath + "')." + otherName + ';');
+                result.push('exports.' + otherName + " = require('" + depPath + "')." + depName + ';');
               });
             })
             .sort());
