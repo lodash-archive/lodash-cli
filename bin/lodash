@@ -1173,7 +1173,7 @@
             '  return {',
             _.transform(deps, function(result, depName) {
               _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
-                result.push( "    '" + otherName + "': " + otherName);
+                result.push( "    '" + otherName + "': " + depName);
               });
             })
             .sort()
