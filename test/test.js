@@ -391,7 +391,8 @@
   function expandFuncNames(funcNames) {
     return funcNames.reduce(function(result, funcName) {
       var realName = getRealName(funcName);
-      push.apply(result, [realName].concat(getAliases(realName)));
+      result.push(realName);
+      push.apply(result, getAliases(realName));
       return result;
     }, []);
   }
@@ -1037,20 +1038,55 @@
         process.chdir(__dirname);
 
         build(['modularize', 'modern', 'include=' + funcName, 'exports=node', '-o', outputPath], function(data) {
-          var basename = path.basename(data.outputPath, '.js');
-
           if (funcName == 'lodash') {
-            var func = require(path.join(outputPath));
-            ok(func(1) instanceof func);
+            delete require.cache[outputPath];
+            var lodash = require(outputPath);
+            ok(lodash(1) instanceof lodash, outputPath);
           }
           else {
-            var lodash = {};
-            lodash[funcName] = require(path.join(outputPath, 'utilities', funcName));
+            var moduleId = path.join(outputPath, 'utilities', funcName);
+            delete require.cache[moduleId];
+
+            lodash = {};
+            lodash[funcName] = require(moduleId);
+
             equal(fs.existsSync(path.join(outputPath, 'index.js')), false);
-            testMethod(lodash, funcName, basename);
+            testMethod(lodash, funcName);
           }
           start();
         });
+      });
+    });
+
+    asyncTest('module aliases', function() {
+      var start = _.once(function() {
+        fs.rmrfSync(outputPath);
+        process.chdir(cwd);
+        QUnit.start();
+      });
+
+      process.chdir(__dirname);
+
+      build(['modularize', 'modern', 'exports=node', '-o', outputPath], function(data) {
+        delete require.cache[outputPath];
+        var lodash = require(outputPath);
+
+        _.each(['arrays', 'chaining', 'collections', 'functions', 'objects', 'utilities'], function(category) {
+          var moduleId = path.join(outputPath, category);
+          delete require.cache[moduleId];
+
+          var categoryModule = require(moduleId),
+              funcNames = categoryMap[capitalize(category)];
+
+          _.each(funcNames, function(funcName) {
+            var aliases = getAliases(funcName);
+            _.each(aliases, function(alias) {
+              ok(_.isFunction(lodash[alias]), 'should have `' + alias + '` as an alias of `' + funcName + '` in lodash');
+              ok(_.isFunction(categoryModule[alias]), 'should have `' + alias + '` as an alias of `' + funcName + '` in lodash/' + category);
+            });
+          });
+        });
+        start();
       });
     });
   }());
