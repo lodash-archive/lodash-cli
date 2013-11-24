@@ -310,7 +310,6 @@
     'createIterator': ['indicatorObject', 'objectTypes'],
     'debounce': ['reNative'],
     'defaults': ['defaultsIteratorOptions'],
-    'defer': ['objectTypes', 'reNative', 'root'],
     'escape': ['reUnescapedHtml'],
     'escapeHtmlChar': ['htmlEscapes'],
     'forIn': ['eachIteratorOptions', 'forOwnIteratorOptions'],
@@ -1526,18 +1525,6 @@
   }
 
   /**
-   * Gets the `_.defer` fork from `source`.
-   *
-   * @private
-   * @param {string} source The source to inspect.
-   * @returns {string} Returns the fork.
-   */
-  function getDeferFork(source) {
-    var result = source.match(/(?:\s*\/\/.*)*\n( *)if *\(setImmediate[\s\S]+?\n\1}/);
-    return result ? result[0] : '';
-  }
-
-  /**
    * Gets an array of depenants for the given function name(s).
    *
    * @private
@@ -1992,17 +1979,6 @@
    */
   function removeBaseCreateFork(source) {
     return source.replace(getBaseCreateFork(source), '');
-  }
-
-  /**
-   * Removes the `_.defer` fork from `source`.
-   *
-   * @private
-   * @param {string} source The source to process.
-   * @returns {string} Returns the modified source.
-   */
-  function removeDeferFork(source) {
-    return source.replace(getDeferFork(source), '');
   }
 
   /**
@@ -3183,9 +3159,6 @@
             _.pull(funcDepMap[funcName], 'setBindData');
           });
         }
-        if (isLegacy || isMobile || !(isCommonJS || isNode) || (isUnderscore && !isLodash('defer'))) {
-          _.pull(varDepMap.defer, 'objectTypes', 'reNative');
-        }
         if (!isModularize && _.contains(plusFuncs, 'chain') == !isUnderscore) {
           _.pull(funcDepMap.mixin, 'isFunction');
         }
@@ -3534,9 +3507,6 @@
           if (isLegacy || isMobile || (!isLodash('assign') && !isLodash('defaults') && !isLodash('forIn') && !isLodash('forOwn'))) {
             source = removeKeysOptimization(source);
           }
-        }
-        if (isLegacy || isMobile || !(isCommonJS || isNode) || (isUnderscore && !isLodash('defer'))) {
-          source = removeDeferFork(source);
         }
         if (isModern || isUnderscore) {
           source = removeSupportArgsClass(source);
@@ -4652,7 +4622,6 @@
       // remove forks of removed functions
       _.forOwn({
         'baseCreate': removeBaseCreateFork,
-        'defer': removeDeferFork,
         'isArguments': removeIsArgumentsFork,
         'isArray': removeIsArrayFork,
         'isFunction': removeIsFunctionFork,

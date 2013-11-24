@@ -1462,7 +1462,7 @@
     funcNames.forEach(function(funcName) {
       _.times(2, function(index) {
         var command = 'underscore plus=' + funcName,
-            expected = !(funcName == 'defer' && global.setImmediate);
+            expected = true;
 
         if (funcName == 'createCallback') {
           expected = !!index;
