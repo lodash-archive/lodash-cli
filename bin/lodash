@@ -184,7 +184,7 @@
     'memoize': ['isFunction'],
     'merge': ['baseCreateCallback', 'baseMerge', 'getArray', 'isObject', 'releaseArray', 'slice'],
     'min': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
-    'mixin': ['forEach', 'functions', 'isFunction', 'lodash'],
+    'mixin': ['forEach', 'functions', 'isFunction', 'isObject', 'lodash'],
     'noConflict': [],
     'noop': [],
     'now': [],
@@ -739,62 +739,70 @@
    * @returns {string} Returns the modified source.
    */
   function addUnderscoreChaining(source, isModularize) {
-    // remove `lodash.prototype.toString` and `lodash.prototype.valueOf` assignments
-    source = source.replace(/^ *lodash\.prototype\.(?:toString|valueOf) *=.+\n/gm, '');
-
-    // remove `lodash.prototype` batch method assignments
-    source = source.replace(/(?:\s*\/\/.*)*\n( *)forOwn\(lodash,[\s\S]+?\n\1}.+/g, '');
-
     // replace `_.mixin`
-    if (!isModularize) {
-      source = replaceFunction(source, 'mixin', [
-        'function mixin(object) {',
-        '  forEach(functions(object), function(methodName) {',
-        '    var func = lodash[methodName] = object[methodName];',
-        '',
-        '    lodash.prototype[methodName] = function() {',
-        '      var args = [this.__wrapped__];',
-        '      push.apply(args, arguments);',
-        '',
-        '      var result = func.apply(lodash, args);',
-        '      return this.__chain__',
-        '        ? new lodashWrapper(result, true)',
-        '        : result;',
-        '    };',
-        '  });',
-        '}'
-      ].join('\n'));
-    }
-    else {
-      source = replaceFunction(source, 'mixin', [
-        'function mixin(object, source) {',
-        '  var ctor = object,',
-        '      isFunc = !source || isFunction(ctor);',
-        '',
-        '  if (!source) {',
-        '    ctor = lodashWrapper;',
-        '    source = object;',
-        '    object = lodash;',
-        '  }',
-        '  forEach(functions(source), function(methodName) {',
-        '    var func = object[methodName] = source[methodName];',
-        '    if (isFunc) {',
-        '      ctor.prototype[methodName] = function() {',
-        '        var args = [this.__wrapped__];',
-        '        push.apply(args, arguments);',
-        '',
-        '        var result = func.apply(object, args);',
-        '        if (this.__chain__) {',
-        '          result = new ctor(result);',
-        '          result.__chain__ = true;',
-        '        }',
-        '        return result;',
-        '      };',
-        '    }',
-        '  });',
-        '}'
-      ].join('\n'));
-    }
+    source = replaceFunction(source, 'mixin', (isModularize
+      ? [
+          'function mixin(object, source) {',
+          '  if (!source) {',
+          '    ctor = lodashWrapper;',
+          '    source = object;',
+          '    object = lodash;',
+          '  }',
+          '  var ctor = object,',
+          '      isFunc = isFunction(ctor);',
+          '',
+          '  forEach(functions(source), function(methodName) {',
+          '    var func = object[methodName] = source[methodName];',
+          '    if (isFunc) {',
+          '      ctor.prototype[methodName] = function() {',
+          '        var args = [this.__wrapped__];',
+          '        push.apply(args, arguments);',
+          '',
+          '        var result = func.apply(object, args);',
+          '        if (this.__chain__) {',
+          '          result = new ctor(result);',
+          '          result.__chain__ = true;',
+          '        }',
+          '        return result;',
+          '      };',
+          '    }',
+          '  });',
+          '}'
+        ]
+      : [
+          'function mixin(object) {',
+          '  forEach(functions(object), function(methodName) {',
+          '    var func = lodash[methodName] = object[methodName];',
+          '',
+          '    lodash.prototype[methodName] = function() {',
+          '      var args = [this.__wrapped__];',
+          '      push.apply(args, arguments);',
+          '',
+          '      var result = func.apply(lodash, args);',
+          '      return this.__chain__',
+          '        ? new lodashWrapper(result, true)',
+          '        : result;',
+          '    };',
+          '  });',
+          '}'
+        ]
+    ).join('\n'));
+
+    // move `mixin(lodash)`
+    source = source.replace(getMethodAssignments(source), function(match) {
+      match = removeMixinCalls(match);
+
+      // insert `mixin(lodash)` before `_.VERSION`
+      return match.replace(/(?:\n *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)?\n( *)lodash\.VERSION/, function(match, indent) {
+        return [
+          '',
+          '// add functions to `lodash.prototype`',
+          'mixin(lodash);',
+          match
+        ].join('\n' + indent);
+      });
+    });
+
     // replace wrapper `Array` method assignments
     source = source.replace(/^(?:(?: *\/\/.*\n)*(?: *if *\(.+\n)?( *)(baseEach|forEach)\(\['[\s\S]+?\n\1}\);(?:\n *})?\n+)+/m, function(match, indent, funcName) {
       return indent + [
@@ -832,21 +840,11 @@
       ].join('\n' + indent);
     });
 
-    // move `mixin(lodash)`
-    source = source.replace(getMethodAssignments(source), function(match) {
-      // remove `mixin(lodash)`
-      match = match.replace(/(?:\s*\/\/.*)*\s*mixin\(lodash\).+/, '');
+    // remove `lodash.prototype.toString` and `lodash.prototype.valueOf` assignments
+    source = source.replace(/^ *lodash\.prototype\.(?:toString|valueOf) *=.+\n/gm, '');
 
-      // insert `mixin(lodash)` before `_.VERSION`
-      return match.replace(/(?:\n *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)?\n( *)lodash\.VERSION/, function(match, indent) {
-        return [
-          '',
-          '// add functions to `lodash.prototype`',
-          'mixin(lodash);',
-          match
-        ].join('\n' + indent);
-      });
-    });
+    // remove `lodash.prototype` batch method assignments
+    source = source.replace(/(?:\s*\/\/.*)*\n( *)forOwn\(lodash,[\s\S]+?\n\1}.+/g, '');
 
     return source;
   }
@@ -868,6 +866,7 @@
         isEs6 = state.isEs6,
         isNode = state.isNode,
         isNpm = state.isNpm,
+        isUnderscore = state.isUnderscore,
         objDepMap = state.objDepMap,
         outputPath = state.outputPath,
         varDepMap = state.varDepMap;
@@ -1122,20 +1121,41 @@
 
         // wrap `_.mixin`
         source = source.replace(/^ *lodashWrapper\.prototype\s*=[^;]+;\n/m, function(match) {
-          return match + [
+          var code = [
             '',
             '  // wrap `_.mixin` so it works when provided only one argument',
-            '  mixin = (function(fn) {',
-            '    return function(object, source) {',
-            '      if (!source) {',
-            '        source = object;',
-            '        object = lodash;',
-            '      }',
-            '      return fn(object, source);',
+            '  mixin = (function(fn) {'
+          ];
+
+          if (isUnderscore) {
+            code.push(
+              '    return function(object, source) {',
+              '      if (!source) {',
+              '        source = object;',
+              '        object = lodash;',
+              '      }',
+              '      return fn(object, source);'
+            );
+          } else {
+            code.push(
+              '    var functions = objects.functions;',
+              '    return function(object, source, options) {',
+              '      if (!source || (!options && !functions(source).length)) {',
+              '        if (options == null) {',
+              '          options = source;',
+              '        }',
+              '        source = object;',
+              '        object = lodash;',
+              '      }',
+              '      return fn(object, source, options);'
+            );
+          }
+          code.push(
             '    };',
             '  }(mixin));',
             ''
-          ].join('\n');
+          );
+          return match + code.join('\n');
         });
 
         // add `_.support` and `_.templateSettings`
@@ -1933,10 +1953,8 @@
    * @returns {string} Returns the modified source.
    */
   function removeChaining(source) {
+    source = removeMixinCalls(source);
     source = removeSpliceObjectsFix(source);
-
-    // remove `_.mixin` call
-    source = source.replace(/(?:\s*\/\/.*)*\s*mixin\(lodash\).+/, '');
 
     // remove all `lodash.prototype` additions
     source = source
@@ -2210,6 +2228,17 @@
    */
   function removeMethodAssignments(source) {
     return source.replace(getMethodAssignments(source), '');
+  }
+
+  /**
+   * Removes all `_.mixin` calls from `source`.
+   *
+   * @private
+   * @param {string} source The source to inspect.
+   * @returns {string} Returns the modified source.
+   */
+  function removeMixinCalls(source) {
+    return source.replace(/(?:\s*\/\/.*)*\n( *)mixin\((?:.+?|[\s\S]+?\1(?:}.+?)?)\);/g, '');
   }
 
   /**
@@ -3159,8 +3188,11 @@
             _.pull(funcDepMap[funcName], 'setBindData');
           });
         }
-        if (!isModularize && _.contains(plusFuncs, 'chain') == !isUnderscore) {
-          _.pull(funcDepMap.mixin, 'isFunction');
+        if (_.contains(plusFuncs, 'chain') == !isUnderscore) {
+          if (!isModularize) {
+            _.pull(funcDepMap.mixin, 'isFunction');
+          }
+          _.pull(funcDepMap.mixin, 'isObject');
         }
         if (isUnderscore) {
           if (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep')) {
@@ -4439,7 +4471,7 @@
 
           // remove `lodash` branch in `_.mixin`
           source = source.replace(matchFunction(source, 'mixin'), function(match) {
-            return match.replace(/^(?: *\/\/.*\n)*( *)if *\(!source[\s\S]+?\n\1}/m, '');
+            return match.replace(/^(?: *\/\/.*\n)*( *)if *\(!source[\s\S]+?\n\1}\n+/m, '');
           });
 
           // replace `lodash` use in `_.templateSettings.imports`
@@ -4552,8 +4584,7 @@
         source = source.replace(/(?:\s*\/\/.*)*\n *lodashWrapper\.prototype *=.+/, '');
       }
       if (isExcluded(isModularize ? 'lodash' : 'mixin')) {
-        // remove `_.mixin` call
-        source = source.replace(/(?:\s*\/\/.*)*\s*mixin\(lodash\).+/, '');
+        source = removeMixinCalls(source);
       }
       if (isExcluded(isModularize ? 'lodash' : 'wrapperValueOf')) {
         source = removeChaining(source);

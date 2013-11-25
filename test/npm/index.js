@@ -1,4 +1,5 @@
-var forEach = require('lodash.foreach'),
+var functions = require('lodash.functions'),
+    forEach = require('lodash.foreach'),
     forOwn = require('lodash.forown'),
     isArray = require('lodash.isarray'),
     lodashWrapper = require('lodash._lodashwrapper'),
@@ -37,12 +38,15 @@ lodashWrapper.prototype = lodash.prototype;
 
 // wrap `_.mixin` so it works when provided only one argument
 mixin = (function(fn) {
-  return function(object, source) {
-    if (!source) {
+  return function(object, source, options) {
+    if (!source || (!options && !functions(source).length)) {
+      if (options == null) {
+        options = source;
+      }
       source = object;
       object = lodash;
     }
-    return fn(object, source);
+    return fn(object, source, options);
   };
 }(mixin));
 
@@ -121,7 +125,7 @@ lodash.max = require('lodash.max');
 lodash.memoize = require('lodash.memoize');
 lodash.merge = require('lodash.merge');
 lodash.min = require('lodash.min');
-lodash.mixin = require('lodash.mixin');
+lodash.mixin = mixin;
 lodash.noop = require('lodash.noop');
 lodash.now = require('lodash.now');
 lodash.omit = require('lodash.omit');
