@@ -896,11 +896,7 @@
     var buildCallback = function(data) {
       var source = data.source;
       source = addCommandsToHeader(source, state.options);
-
-      // remove @license from copyright header so module builders may strip them
-      source = source.replace(/^ \* @license\n/m, '');
-
-      data.source = source;
+      data.source = cleanupSource(source);
       defaultBuildCallback(data);
     };
 
@@ -1000,7 +996,7 @@
         if (!isAMD) {
           source = trimIndent(source);
         }
-        data.source = source;
+        data.source = removeLicenseTag(source);
         buildCallback(data);
 
         if (isNpm) {
@@ -1173,7 +1169,7 @@
         if (!isAMD) {
           source = trimIndent(source);
         }
-        data.source = cleanupSource(source);
+        data.source = source;
         buildCallback(data);
       });
     }());
@@ -1240,7 +1236,10 @@
         state.iife = iife.join('\n');
         state.buildFuncs = state.includeFuncs = state.includeObjs = state.includeVars = empty;
         state.outputPath = path.join(outputPath, category.toLowerCase() + '.js');
-        build(state, buildCallback);
+        build(state, function(data) {
+          data.source = removeLicenseTag(data.source);
+          buildCallback(data);
+        });
       });
     }
     if (callback) {
@@ -1946,6 +1945,32 @@
   }
 
   /**
+   * Removes all Lo-Dash assignments from `source`.
+   *
+   * @private
+   * @param {string} source The source to inspect.
+   * @returns {string} Returns the modified source.
+   */
+  function removeAssignments(source) {
+    source = removeMethodAssignments(source);
+
+    // remove intermediate assignments
+    source = source.replace(/(=\s*)lodash\.\w+\s*=\s*/g, '$1');
+    return source;
+  }
+
+  /**
+   * Removes the `baseCreate` fork from `source`.
+   *
+   * @private
+   * @param {string} source The source to process.
+   * @returns {string} Returns the modified source.
+   */
+  function removeBaseCreateFork(source) {
+    return source.replace(getBaseCreateFork(source), '');
+  }
+
+  /**
    * Removes support for Lo-Dash wrapper chaining in `source`.
    *
    * @private
@@ -1986,17 +2011,6 @@
    */
   function removeComments(source) {
     return source.replace(/^ *(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.+)\n/gm, '');
-  }
-
-  /**
-   * Removes the `baseCreate` fork from `source`.
-   *
-   * @private
-   * @param {string} source The source to process.
-   * @returns {string} Returns the modified source.
-   */
-  function removeBaseCreateFork(source) {
-    return source.replace(getBaseCreateFork(source), '');
   }
 
   /**
@@ -2203,20 +2217,16 @@
     return source;
   }
 
-
   /**
-   * Removes all Lo-Dash assignments from `source`.
+   * Removes the `@license` tag from the copyright header so minifiers and
+   * build optimizers may strip them.
    *
    * @private
    * @param {string} source The source to inspect.
    * @returns {string} Returns the modified source.
    */
-  function removeAssignments(source) {
-    source = removeMethodAssignments(source);
-
-    // remove intermediate assignments
-    source = source.replace(/(=\s*)lodash\.\w+\s*=\s*/g, '$1');
-    return source;
+  function removeLicenseTag(source) {
+    return source.replace(/^ \* @license\n/m, '');
   }
 
   /**
@@ -3262,7 +3272,7 @@
                 (funcName == 'baseUniq' && isLodash('uniq'))) {
               return;
             }
-            _.pull(funcDepMap[funcName], 'cacheIndexOf', 'createCache').push('getIndexOf');
+            _.pull(funcDepMap[funcName], 'cacheIndexOf', 'createCache');
           });
 
           _.each(['isEqual', 'omit', 'pick'], function(funcName) {
