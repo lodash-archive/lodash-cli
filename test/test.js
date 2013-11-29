@@ -590,17 +590,21 @@
         process.chdir(__dirname);
 
         build(['modularize', 'modern', 'include=' + funcName, 'exports=node', '-o', outputPath], function(data) {
+          var reLicense = /@license/;
           emptyObject(require.cache);
 
           if (funcName == 'lodash') {
             var lodash = require(outputPath);
-            ok(lodash(1) instanceof lodash, outputPath);
+            ok(lodash(1) instanceof lodash, outputPath, '`lodash()` should return a `lodash` instance');
+            ok(reLicense.test(fs.readFileSync(require.resolve(outputPath), 'utf-8')), 'lodash module should preserve the copyright header');
           }
           else {
+            var modulePath = path.join(outputPath, 'utilities', funcName);
             lodash = {};
-            lodash[funcName] = require(path.join(outputPath, 'utilities', funcName));
+            lodash[funcName] = require(modulePath);
 
-            equal(fs.existsSync(path.join(outputPath, 'index.js')), false);
+            equal(fs.existsSync(path.join(outputPath, 'index.js')), false, 'should not create an index.js file');
+            equal(reLicense.test(fs.readFileSync(require.resolve(modulePath), 'utf-8')), false, funcName + ' module should not preserve the copyright header');
             testMethod(lodash, funcName);
           }
           start();
