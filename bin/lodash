@@ -235,7 +235,7 @@
     'zipObject': ['isArray'],
 
     // private functions
-    'baseBind': ['baseCreate', 'isObject', 'setBindData'],
+    'baseBind': ['baseCreate', 'isObject', 'setBindData', 'slice'],
     'baseClone': ['assign', 'baseEach', 'forOwn', 'getArray', 'isArray', 'isObject', 'isNode', 'releaseArray', 'slice'],
     'baseCreate': ['isObject', 'noop'],
     'baseCreateCallback': ['bind', 'identity', 'setBindData'],
@@ -253,7 +253,7 @@
     'charAtCallback': [],
     'compareAscending': [],
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
-    'createWrapper': ['baseBind', 'baseCreateWrapper', 'isFunction'],
+    'createWrapper': ['baseBind', 'baseCreateWrapper', 'isFunction', 'slice'],
     'createCache': ['cachePush', 'getObject', 'releaseObject'],
     'createIterator': ['baseCreateCallback', 'isArguments', 'isArray', 'isString', 'iteratorTemplate'],
     'escapeHtmlChar': [],
