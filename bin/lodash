@@ -3527,11 +3527,6 @@
           }
           else {
             source = removeIsFunctionFork(source);
-
-            // remove `shimIsPlainObject` from `_.isPlainObject`
-            source = source.replace(matchFunction(source, 'isPlainObject'), function(match) {
-              return match.replace(/!getPrototypeOf[^:]+:\s*/, '');
-            });
           }
         }
         if (isLegacy || isMobile || isUnderscore) {
