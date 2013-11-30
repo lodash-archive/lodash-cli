@@ -98,6 +98,7 @@
   /** Used to track function dependencies */
   var funcDependencyMap = {
     // properties
+    'support': ['isNative'],
     'templateSettings': ['escape'],
 
     // variables
@@ -158,7 +159,7 @@
     'invert': ['keys'],
     'invoke': ['forEach', 'slice'],
     'isArguments': [],
-    'isArray': [],
+    'isArray': ['isNative'],
     'isBoolean': [],
     'isDate': [],
     'isElement': [],
@@ -170,11 +171,11 @@
     'isNull': [],
     'isNumber': [],
     'isObject': [],
-    'isPlainObject': ['isArguments', 'shimIsPlainObject'],
+    'isPlainObject': ['isArguments', 'isNative', 'shimIsPlainObject'],
     'isRegExp': [],
     'isString': [],
     'isUndefined': [],
-    'keys': ['isArguments', 'isObject', 'shimKeys'],
+    'keys': ['isArguments', 'isNative', 'isObject', 'shimKeys'],
     'last': ['createCallback', 'slice'],
     'lastIndexOf': [],
     'lodash': ['isArray', 'lodashWrapper'],
@@ -187,7 +188,7 @@
     'mixin': ['forEach', 'functions', 'isFunction', 'isObject', 'lodash'],
     'noConflict': [],
     'noop': [],
-    'now': [],
+    'now': ['isNative'],
     'omit': ['baseDifference', 'baseFlatten', 'createCallback', 'forIn'],
     'once': ['isFunction'],
     'pairs': ['keys'],
@@ -237,7 +238,7 @@
     // private functions
     'baseBind': ['baseCreate', 'isObject', 'setBindData', 'slice'],
     'baseClone': ['assign', 'baseEach', 'forOwn', 'getArray', 'isArray', 'isObject', 'isNode', 'releaseArray', 'slice'],
-    'baseCreate': ['isObject', 'noop'],
+    'baseCreate': ['isNative', 'isObject', 'noop'],
     'baseCreateCallback': ['bind', 'identity', 'setBindData'],
     'baseCreateWrapper': ['baseCreate', 'isObject', 'slice', 'setBindData'],
     'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf', 'releaseObject'],
@@ -261,12 +262,13 @@
     'getArray': [],
     'getIndexOf': ['baseIndexOf', 'indexOf'],
     'getObject': [],
+    'isNative': [],
     'isNode': [],
     'iteratorTemplate': [],
     'lodashWrapper': [],
     'releaseArray': [],
     'releaseObject': [],
-    'setBindData': ['noop'],
+    'setBindData': ['isNative', 'noop'],
     'shimIsPlainObject': ['forIn', 'isArguments', 'isFunction', 'isNode'],
     'shimKeys': ['createIterator'],
     'slice': [],
@@ -299,16 +301,14 @@
   /** Used to track variable dependencies of identifiers */
   var varDependencyMap = {
     'assign': ['defaultsIteratorOptions'],
-    'baseCreate': ['reNative', 'root'],
+    'baseCreate': ['root'],
     'baseDifference': ['largeArraySize'],
     'baseEach': ['eachIteratorOptions'],
     'baseIsEqual': ['objectTypes'],
     'baseUniq': ['largeArraySize'],
-    'bind': ['reNative'],
     'cacheIndexOf': ['keyPrefix'],
     'cachePush': ['keyPrefix'],
     'createIterator': ['indicatorObject', 'objectTypes'],
-    'debounce': ['reNative'],
     'defaults': ['defaultsIteratorOptions'],
     'escape': ['reUnescapedHtml'],
     'escapeHtmlChar': ['htmlEscapes'],
@@ -319,22 +319,17 @@
     'getObject': ['objectPool'],
     'htmlUnescapes': ['htmlEscapes'],
     'intersection': ['largeArraySize'],
-    'isArray': ['reNative'],
     'isFinite': ['root'],
     'isObject': ['objectTypes'],
-    'isPlainObject': ['reNative'],
     'isRegExp': ['objectTypes'],
-    'keys': ['reNative'],
     'memoize': ['keyPrefix'],
-    'now': ['reNative'],
     'parseInt': ['root'],
     'reEscapedHtml': ['htmlUnescapes'],
     'releaseArray': ['arrayPool', 'maxPoolSize'],
     'releaseObject': ['maxPoolSize', 'objectPool'],
     'reUnescapedHtml': ['htmlEscapes'],
     'root': ['objectTypes'],
-    'setBindData': ['reNative'],
-    'support': ['reNative', 'root'],
+    'support': ['root'],
     'template': ['reInterpolate'],
     'templateSettings': ['reInterpolate'],
     'unescape': ['reEscapedHtml'],
@@ -652,6 +647,7 @@
     'getArray',
     'getIndexOf',
     'getObject',
+    'isNative',
     'isNode',
     'iteratorTemplate',
     'lodashWrapper',
@@ -3157,8 +3153,8 @@
           funcDepMap.isPlainObject = funcDepMap.shimIsPlainObject.slice();
           funcDepMap.keys = funcDepMap.shimKeys.slice();
 
-          _.forOwn(varDepMap, function(deps, funcName) {
-            _.pull(deps, 'reNative');
+          _.forOwn(funcDepMap, function(deps, funcName) {
+            _.pull(deps, 'isNative');
           });
         }
         if (isModularize) {
