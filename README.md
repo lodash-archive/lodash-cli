@@ -1,4 +1,4 @@
-# lodash-cli v2.4.0
+# lodash-cli v2.4.1
 
 The [Lo-Dash](http://lodash.com/) command-line interface for creating custom builds & precompiling templates.
 
@@ -34,6 +34,4 @@ lodash-cli has been tested in at least Node.js 0.6.21~0.10.22.
 |---|---|---|
 | [Blaine Bublitz](http://www.iceddev.com/) | [Kit Cambridge](http://kitcambridge.be/) | [Mathias Bynens](http://mathiasbynens.be/) |
 
-
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/lodash/lodash-cli/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
