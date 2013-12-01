@@ -33,7 +33,7 @@
   var QUnit = (
     global.addEventListener = Function.prototype,
     global.QUnit = require('../vendor/qunit/qunit/qunit.js'),
-    require('../vendor/qunit-clib/qunit-clib.js').runInContext(global),
+    require('../vendor/qunit-extras/qunit-extras.js').runInContext(global),
     delete global.addEventListener,
     global.QUnit
   );
