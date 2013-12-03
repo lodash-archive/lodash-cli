@@ -568,6 +568,484 @@
 
   /*--------------------------------------------------------------------------*/
 
+ console.log('test.js invoked with arguments: ' + JSON.stringify(process.argv));
+
+  QUnit.module('build command checks');
+
+  (function() {
+    var reHelp = /lodash --help/,
+        write = process.stdout.write;
+
+    var commands = [
+      'node.EXE build -s modern',
+      '-s strict underscore'
+    ];
+
+    commands.forEach(function(command) {
+      asyncTest('`lodash ' + command +'` is valid', function() {
+        var start = _.after(2, _.once(function() {
+          ok(true, 'should be valid');
+          QUnit.start();
+        }));
+
+        build(command.split(' '), start);
+      });
+    });
+
+    commands = [
+      'csp backbone',
+      'exports=es6',
+      'exports=npm',
+      'mobile underscore',
+      'modern template=./*.jst'
+    ];
+
+    commands.forEach(function(command) {
+      asyncTest('`lodash ' + command +'` is invalid', function() {
+        process.stdout.write = _.once(function(string) {
+          ok(reHelp.test(string));
+          process.stdout.write = write;
+          QUnit.start();
+        });
+
+        build(command.split(' '), function() {});
+      });
+    });
+  }());
+
+  /*--------------------------------------------------------------------------*/
+
+  QUnit.module('minified AMD snippet');
+
+  (function() {
+    asyncTest('r.js build optimizer check', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'exclude='], function(data) {
+        // uses the same regexp from the r.js build optimizer
+        var basename = path.basename(data.outputPath, '.js'),
+            defineHasRegExp = /typeof\s+define\s*==(=)?\s*['"]function['"]\s*&&\s*typeof\s+define\.amd\s*==(=)?\s*['"]object['"]\s*&&\s*define\.amd/g;
+
+        ok(defineHasRegExp.test(data.source), basename);
+        start();
+      });
+    });
+
+    asyncTest('Dojo builder check', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'exclude='], function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            reSpaceDefine = /\sdefine\(/;
+
+        ok(reSpaceDefine.test(data.source), basename);
+        start();
+      });
+    });
+  }());
+
+  /*--------------------------------------------------------------------------*/
+
+  QUnit.module('template builds');
+
+  (function() {
+    var templatePath = path.join(__dirname, 'fixture', 'template'),
+        quotesTemplatePath = path.join(templatePath, 'c', '\'".jst');
+
+    var commands = [
+      'template=' + path.join('fixture', 'template', '*.jst'),
+      'template=' + relativePrefix + path.join('fixture', 'template', '*.jst'),
+      'template=' + path.join(templatePath, '*.jst')
+    ];
+
+    commands.forEach(function(command) {
+      asyncTest('`lodash ' + command +'`', function() {
+        var start = _.after(2, _.once(function() {
+          process.chdir(cwd);
+          QUnit.start();
+        }));
+
+        process.chdir(__dirname);
+
+        build(['-s', command], function(data) {
+          var basename = path.basename(data.outputPath, '.js'),
+              context = createContext();
+
+          var object = {
+            'a': { 'people': ['moe', 'larry', 'curly'] },
+            'b': { 'name': 'larry' },
+            'c': { 'name': 'ES6' }
+          };
+
+          context._ = _;
+          vm.runInContext(data.source, context);
+
+          var actual = _.templates.a(object.a);
+          equal(actual.replace(/[\r\n]+/g, ''), '<ul><li>moe</li><li>larry</li><li>curly</li></ul>', basename);
+
+          equal(_.templates.b(object.b), 'hello larry!', basename);
+          equal(_.templates.c(object.c), 'hello ES6', basename);
+          ok(!('d' in _.templates), basename);
+
+          delete _.templates;
+          start();
+        });
+      });
+    });
+
+    commands = [
+      '',
+      'moduleId=underscore'
+    ];
+
+    commands.forEach(function(command) {
+      var expectedId = /underscore/.test(command) ? 'underscore' : 'lodash';
+
+      asyncTest('`lodash exports=amd' + (command ? ' ' + command + '`' : '` using the default `moduleId`'), function() {
+        var start = _.after(2, _.once(QUnit.start));
+
+        build(['-s', 'template=' + path.join(templatePath, '*.jst'), 'exports=amd'].concat(command || []), function(data) {
+          var moduleId,
+              basename = path.basename(data.outputPath, '.js'),
+              context = createContext();
+
+          context.define = function(requires, factory) {
+            factory(_);
+            moduleId = requires[0];
+          };
+
+          context.define.amd = {};
+          vm.runInContext(data.source, context);
+
+          var templates = _.templates;
+          equal(moduleId, expectedId, basename);
+          ok('a' in templates && 'b' in templates && 'c' in templates, basename);
+
+          var actual = templates.a({ 'people': ['moe', 'larry'] });
+          equal(actual.replace(/[\r\n]+/g, ''), '<ul><li>moe</li><li>larry</li></ul>', basename);
+
+          delete _.templates;
+          start();
+        });
+      });
+
+      asyncTest('`lodash settings=...' + (command ? ' ' + command : '') + '`', function() {
+        var start = _.after(2, _.once(QUnit.start));
+
+        build(['-s', 'template=' + path.join(templatePath, '*.tpl'), 'settings={interpolate:/{{([\\s\\S]+?)}}/}'].concat(command || []), function(data) {
+          var moduleId,
+              basename = path.basename(data.outputPath, '.js'),
+              context = createContext();
+
+          var object = {
+            'd': { 'name': 'mustache' }
+          };
+
+          context.define = function(requires, factory) {
+            factory(_);
+            moduleId = requires[0];
+          };
+
+          context.define.amd = {};
+          vm.runInContext(data.source, context);
+
+          equal(moduleId, expectedId, basename);
+          equal(_.templates.d(object.d), 'hallå mustache!', basename);
+
+          delete _.templates;
+          start();
+        });
+      });
+    });
+
+    commands = [
+      'template=' + path.join(templatePath, '**', '*.jst'),
+      'template=' + path.join('**', '*.jst')
+    ];
+
+    commands.forEach(function(command, index) {
+      asyncTest('`recursive path `' + command + '`', function() {
+        var start = _.after(2, _.once(function() {
+          if (!isWindows) {
+            fs.unlinkSync(quotesTemplatePath);
+          }
+          process.chdir(cwd);
+          QUnit.start();
+        }));
+
+        if (index) {
+          process.chdir(templatePath);
+        }
+        if (!isWindows) {
+          // manually create template `'".jst` to avoid issues in Windows
+          fs.writeFileSync(quotesTemplatePath, 'hello <%= name %>', 'utf8');
+        }
+        build(['-s', command], function(data) {
+          var basename = path.basename(data.outputPath, '.js'),
+              context = createContext();
+
+          context._ = _;
+          vm.runInContext(data.source, context);
+
+          equal(_.templates.b({ 'name': 'moe' }), 'hello moe!', basename);
+          equal(_.templates.c({ 'name': 'larry' }), 'hello larry', basename);
+          equal(_.templates.c.c({ 'name': 'curly' }), 'hello curly!', basename);
+
+          if (!isWindows) {
+            equal(_.templates.c['\'"']({ 'name': 'quotes' }), 'hello quotes', basename);
+          }
+          delete _.templates;
+          start();
+        });
+      });
+    });
+
+    var exportsCommands = [
+      'exports=amd',
+      'exports=commonjs',
+      'exports=global',
+      'exports=node',
+      'exports=none'
+    ];
+
+    exportsCommands.forEach(function(command, index) {
+      asyncTest('`lodash ' + command +'`', function() {
+        var start = _.after(2, _.once(QUnit.start));
+
+        build(['-s',  'template=' + path.join(templatePath, '*.jst'), command], function(data) {
+          var templates,
+              basename = path.basename(data.outputPath, '.js'),
+              context = createContext(),
+              defaultTemplates = { 'c': function() { return ''; } },
+              source = data.source;
+
+          switch(index) {
+            case 0:
+              context.define = function(requires, factory) { factory(_); };
+              context.define.amd = {};
+              vm.runInContext(source, context);
+
+              templates = _.templates || defaultTemplates;
+              break;
+
+            case 1:
+              context.exports = {};
+              context.module = {};
+              context.require = function() { return _; };
+              vm.runInContext(source, context);
+
+              templates = context.exports.templates || defaultTemplates;
+              break;
+
+            case 2:
+              context._ = _;
+              vm.runInContext(source, context);
+
+              templates = context._.templates || defaultTemplates;
+              break;
+
+            case 3:
+              context.exports = {};
+              context.module = { 'exports': context.exports };
+              context.require = function() { return _; };
+              vm.runInContext(source, context);
+
+              templates = context.module.exports || defaultTemplates;
+              break;
+
+            case 4:
+              vm.runInContext(source, context);
+              strictEqual(context._, undefined, basename);
+          }
+          if (templates) {
+            equal(templates.c({ 'name': 'moe' }), 'hello moe', basename);
+          }
+          delete _.templates;
+          start();
+        });
+      });
+    });
+
+    asyncTest('`lodash iife=%output%`', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'template=' + path.join(templatePath, '*.jst'), 'iife=%output%'], function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            context = createContext(),
+            defaultTemplates = { 'c': function() { return ''; } },
+            source = data.source;
+
+        ok(!/^null/.test(source));
+
+        context._ = _;
+        vm.runInContext(source, context);
+
+        var templates = context._.templates || defaultTemplates;
+        equal(templates.c({ 'name': 'moe' }), 'hello moe', basename);
+
+        delete _.templates;
+        start();
+      });
+    });
+  }());
+
+  /*--------------------------------------------------------------------------*/
+
+  QUnit.module('independent builds');
+
+  (function() {
+    var reCustom = /Custom Build/,
+        reLicense = /^\/\**\s+\* @license[\s\S]+?\*\/\n/;
+
+    asyncTest('debug only', function() {
+      var start = _.once(QUnit.start);
+      build(['-d', '-s'], function(data) {
+        equal(path.basename(data.outputPath, '.js'), 'lodash');
+        start();
+      });
+    });
+
+    asyncTest('debug custom', function() {
+      var start = _.once(QUnit.start);
+      build(['-d', '-s', 'backbone'], function(data) {
+        equal(path.basename(data.outputPath, '.js'), 'lodash.custom');
+
+        var comment = data.source.match(reLicense);
+        ok(reCustom.test(comment));
+        start();
+      });
+    });
+
+    asyncTest('minified only', function() {
+      var start = _.once(QUnit.start);
+      build(['-m', '-s'], function(data) {
+        equal(path.basename(data.outputPath, '.js'), 'lodash.min');
+        start();
+      });
+    });
+
+    asyncTest('minified custom', function() {
+      var start = _.once(QUnit.start);
+      build(['-m', '-s', 'backbone'], function(data) {
+        equal(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
+
+        var comment = data.source.match(reLicense);
+        ok(reCustom.test(comment));
+        start();
+      });
+    });
+  }());
+
+  /*--------------------------------------------------------------------------*/
+
+  QUnit.module('compat modifier');
+
+  (function() {
+    asyncTest('`lodash compat`', function() {
+      var sources = [];
+
+      var check = _.after(2, _.once(function() {
+        equal(sources[0], sources[1]);
+        QUnit.start();
+      }));
+
+      var callback = function(data) {
+        // remove copyright header before adding to `sources`
+        sources.push(data.source.replace(reHeader, ''));
+        check();
+      };
+
+      build(['-s', '-d'], callback);
+      build(['-s', '-d', 'compat'], callback);
+    });
+  }());
+
+  /*--------------------------------------------------------------------------*/
+
+  QUnit.module('csp modifier');
+
+  (function() {
+    asyncTest('`lodash csp`', function() {
+      var sources = [];
+
+      var check = _.after(2, _.once(function() {
+        ok(_.every(sources, function(source) {
+          // remove `Function` use in `_.template` before checking the entire source
+          return !/\bFunction\(/.test(source.replace(/= *\w+\(\w+, *['"]return.+?apply.+?\)/, ''));
+        }));
+
+        equal(sources[0], sources[1]);
+        QUnit.start();
+      }));
+
+      var callback = function(data) {
+        sources.push(data.source.replace(reHeader, ''));
+        check();
+      };
+
+      build(['-s', '-d', 'csp'], callback);
+      build(['-s', '-d', 'modern'], callback);
+    });
+  }());
+
+  /*--------------------------------------------------------------------------*/
+
+  QUnit.module('mobile modifier');
+
+  (function() {
+    asyncTest('`lodash mobile`', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'mobile'], function(data) {
+        var array = [1, 2, 3],
+            basename = path.basename(data.outputPath, '.js'),
+            context = createContext(),
+            object1 = [{ 'a': 1 }],
+            object2 = [{ 'b': 2 }],
+            object3 = [{ 'a': 1, 'b': 2 }],
+            circular1 = { 'a': 1 },
+            circular2 = { 'a': 1 };
+
+        circular1.b = circular1;
+        circular2.b = circular2;
+
+        vm.runInContext(data.source, context);
+        var lodash = context._;
+
+        deepEqual(lodash.merge(object1, object2), object3, basename);
+        deepEqual(lodash.sortBy([3, 2, 1], _.identity), array, basename);
+        strictEqual(lodash.isEqual(circular1, circular2), true, basename);
+
+        var actual = lodash.cloneDeep(circular1);
+        ok(actual != circular1 && actual.b == actual, basename);
+        start();
+      });
+    });
+  }());
+
+  /*--------------------------------------------------------------------------*/
+
+  QUnit.module('modern modifier');
+
+  (function() {
+    asyncTest('`lodash modern`', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'modern'], function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            context = createContext();
+
+        vm.runInContext(data.source, context);
+        var lodash = context._;
+
+        strictEqual(lodash.isPlainObject(Object.create(null)), true, basename);
+        start();
+      });
+    });
+  }());
+
+  /*--------------------------------------------------------------------------*/
+
   QUnit.module('modularize modifier');
 
   (function() {
