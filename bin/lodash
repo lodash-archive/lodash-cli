@@ -784,16 +784,16 @@
         ]
     ).join('\n'));
 
-    // move `mixin(lodash)`
+    // move `mixin(...)`
     source = source.replace(getMethodAssignments(source), function(match) {
       match = removeMixinCalls(match);
 
-      // insert `mixin(lodash)` before `_.VERSION`
+      // insert `mixin(...)` before `_.VERSION`
       return match.replace(/(?:\n *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)?\n( *)lodash\.VERSION/, function(match, indent) {
         return [
           '',
           '// add functions to `lodash.prototype`',
-          'mixin(lodash);',
+          'mixin(assign({}, lodash));',
           match
         ].join('\n' + indent);
       });
@@ -3165,12 +3165,12 @@
             delete varDepMap.root;
           }
           objDepMap.lodash = ['support', 'templateSettings'];
-          funcDepMap.lodash.push('baseEach', 'forOwn', 'mixin');
+          funcDepMap.lodash.push('assign', 'baseEach', 'forOwn', 'mixin');
           _.pull(funcDepMap.mixin, 'lodash');
         }
         else {
           funcDepMap.chain.push('wrapperChain');
-          funcDepMap.wrapperValueOf.push('baseEach', 'chain', 'forOwn', 'mixin', 'wrapperChain', 'wrapperToString');
+          funcDepMap.wrapperValueOf.push('assign', 'baseEach', 'chain', 'forOwn', 'mixin', 'wrapperChain', 'wrapperToString');
 
           _.each(['lodashWrapper', 'tap', 'wrapperChain', 'wrapperToString'], function(funcName) {
             funcDepMap[funcName].push('wrapperValueOf');
