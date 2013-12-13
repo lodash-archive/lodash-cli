@@ -109,7 +109,7 @@
 
     // public functions
     'after': ['isFunction'],
-    'assign': ['createIterator'],
+    'assign': ['baseCreateCallback', 'isObject', 'keys'],
     'at': ['baseFlatten', 'isString'],
     'bind': ['createWrapper', 'slice'],
     'bindAll': ['baseFlatten', 'createWrapper', 'functions'],
@@ -126,7 +126,7 @@
     'createCallback': ['baseCreateCallback', 'baseIsEqual', 'isObject', 'keys', 'property'],
     'curry': ['createWrapper'],
     'debounce': ['isFunction', 'isObject', 'now'],
-    'defaults': ['createIterator'],
+    'defaults': ['isObject', 'keys'],
     'defer': ['isFunction', 'slice'],
     'delay': ['isFunction', 'slice'],
     'difference': ['baseDifference', 'baseFlatten'],
@@ -145,7 +145,7 @@
     'forEachRight': ['baseCreateCallback', 'baseEach', 'isArray', 'isString', 'keys'],
     'forIn': ['createIterator'],
     'forInRight': ['baseCreateCallback', 'forIn'],
-    'forOwn': ['createIterator'],
+    'forOwn': ['baseCreateCallback', 'keys'],
     'forOwnRight': ['baseCreateCallback', 'keys'],
     'functions': ['forIn', 'isFunction'],
     'groupBy': ['createAggregator'],
@@ -3187,11 +3187,6 @@
             funcDepMap[funcName].push('wrapperValueOf');
           });
         }
-        if (isMobile) {
-          _.each(['assign', 'defaults'], function(funcName) {
-            _.pull(funcDepMap[funcName], 'keys');
-          });
-        }
         if (isLegacy || isMobile || isUnderscore) {
           _.pull(objDepMap.baseCreateCallback, 'support');
 
@@ -3304,7 +3299,7 @@
           });
         }
         if (isModern || isUnderscore) {
-          _.each(['assign', 'baseEach', 'defaults', 'forIn', 'forOwn', 'shimKeys'], function(funcName) {
+          _.each(['baseEach', 'forIn', 'shimKeys'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
               var deps = _.pull(funcDepMap[funcName], 'createIterator');
               _.pull(varDepMap[funcName] || (varDepMap[funcName] = []), 'eachIteratorOptions').push('objectTypes');
@@ -3312,7 +3307,7 @@
               if (funcName != 'baseEach') {
                 deps.push('isArguments');
               }
-              if (funcName != 'defaults' && funcName != 'shimKeys') {
+              if (funcName != 'shimKeys') {
                 deps.push('baseCreateCallback');
               }
               if (funcName != 'forIn' && funcName != 'shimKeys') {
