@@ -162,7 +162,7 @@
     'isArray': ['isNative'],
     'isBoolean': [],
     'isDate': [],
-    'isElement': [],
+    'isElement': ['isNode', 'isPlainObject'],
     'isEmpty': ['forOwn', 'isArguments', 'isFunction'],
     'isEqual': ['baseCreateCallback', 'baseIsEqual'],
     'isFinite': [],
@@ -287,6 +287,7 @@
     'bind': ['support'],
     'forEachRight': ['support'],
     'isArguments': ['support'],
+    'isElement': ['support'],
     'isEmpty': ['support'],
     'isPlainObject': ['support'],
     'iteratorTemplate': ['support'],
@@ -321,6 +322,7 @@
     'intersection': ['largeArraySize'],
     'isFinite': ['root'],
     'isObject': ['objectTypes'],
+    'isNative': ['reNative'],
     'isRegExp': ['objectTypes'],
     'memoize': ['keyPrefix'],
     'parseInt': ['root'],
@@ -329,7 +331,7 @@
     'releaseObject': ['maxPoolSize', 'objectPool'],
     'reUnescapedHtml': ['htmlEscapes'],
     'root': ['objectTypes'],
-    'support': ['root'],
+    'support': ['reNative', 'root'],
     'template': ['reInterpolate'],
     'templateSettings': ['reInterpolate'],
     'unescape': ['reEscapedHtml'],
@@ -1673,6 +1675,18 @@
   }
 
   /**
+   * Gets the `_.isElement` fork from `source`.
+   *
+   * @private
+   * @param {string} source The source to inspect.
+   * @returns {string} Returns the fork.
+   */
+  function getIsElementFork(source) {
+    var result = source.match(/(?:\s*\/\/.*)*\n( *)if *\(!support\.dom[\s\S]+?\n *};\n\1}/);
+    return result ? result[0] : '';
+  }
+
+  /**
    * Gets the `_.isFunction` fork from `source`.
    *
    * @private
@@ -2174,6 +2188,17 @@
   }
 
   /**
+   * Removes the `_.isElement` fork from `source`.
+   *
+   * @private
+   * @param {string} source The source to process.
+   * @returns {string} Returns the modified source.
+   */
+  function removeIsElementFork(source) {
+    return source.replace(getIsElementFork(source), '');
+  }
+
+  /**
    * Removes the `_.isFunction` fork from `source`.
    *
    * @private
@@ -2383,6 +2408,19 @@
   }
 
   /**
+   * Removes all `support.dom` references from `source`.
+   *
+   * @private
+   * @param {string} source The source to process.
+   * @returns {string} Returns the modified source.
+   */
+  function removeSupportDom(source) {
+    source = removeSupportProp(source, 'dom');
+    source = removeIsElementFork(source);
+    return source;
+  }
+
+  /**
    * Removes all `support.enumErrorProps` references from `source`.
    *
    * @private
@@ -2451,6 +2489,11 @@
       return match.replace(/\s*\|\|\s*\(!support\.nodeClass[\s\S]+?\)\)\)/, '');
     });
 
+    // remove `support.nodeClass` from `_.isElement`
+    source = source.replace(matchFunction(source, 'isElement'), function(match) {
+      return match.replace(/\(support\.nodeClass\s*\?\s*([^:]+?)\s*:[\s\S]+?\)\)/, '$1');
+    });
+
     return source;
   }
 
@@ -2471,7 +2514,7 @@
         .replace(/\s*if *\(\s*\)[^}]+}/, '');
     });
 
-    // remove `nonEnumArgs` from `iteratorTemplate`
+    // remove `support.nonEnumArgs` from `iteratorTemplate`
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
       return match
         .replace(/^(?: *\/\/.*\n)*( *["'] *)<% *} *else *if *\(support\.nonEnumArgs[\s\S]+?(\1<% *} *%>.+)/m, '$2')
@@ -2584,7 +2627,7 @@
         // match a `try` block
         '(?: *try\\b.+\\n)?' +
         // match the `support` property assignment
-        ' *support\\.' + propName + ' *=.+\\n' +
+        ' *support\\.' + propName + ' *=[\\s\\S]+?;\\n' +
         // match `catch` block
         '(?:( *).+?catch\\b[\\s\\S]+?\\n\\1}\\n)?'
       ), '');
@@ -3210,6 +3253,9 @@
           if (!isLodash('flatten')) {
             _.pull(funcDepMap.flatten, 'map');
           }
+          if (!isLodash('isElement')) {
+            funcDepMap.isElement = [];
+          }
           if (!isLodash('isEmpty')) {
             funcDepMap.isEmpty = ['isArray', 'isString'];
           }
@@ -3319,7 +3365,7 @@
             if (_.contains(deps, 'isNode')) {
               _.pull(deps, 'isNode');
             }
-            if (_.contains(deps, 'toString') && funcName != 'contains' && funcName != 'parseInt') {
+            if (_.contains(deps, 'isString') && funcName != 'contains' && funcName != 'parseInt') {
               _.pull(deps, 'isString');
             }
           });
@@ -3848,6 +3894,16 @@
               '    }',
               '  }',
               '  return result;',
+              '}'
+            ].join('\n'));
+          }
+          // replace `_.isElement`
+          if (!isLodash('isElement')) {
+            source = removeSupportDom(source);
+
+            source = replaceFunction(source, 'isElement', [
+              'function isElement(value) {',
+              '  return value && value.nodeType === 1 || false;',
               '}'
             ].join('\n'));
           }
@@ -4587,11 +4643,15 @@
       if (isExcluded(isModularize ? 'lodash' : 'wrapperValueOf')) {
         source = removeChaining(source);
       }
+      if (isExcluded('clone', 'isElement', 'isEqual', 'isPlainObject') ||
+          (isUnderscore && !isLodash('isElement'))) {
+        source = removeVar(source, 'window');
+      }
       if (!isModularize) {
         if (isExcluded('bind')) {
           source = removeSupportProp(source, 'fastBind');
         }
-        if (isExcluded('clone', 'isEqual', 'isPlainObject')) {
+        if (isExcluded('clone', 'isElement', 'isEqual', 'isPlainObject')) {
           source = removeSupportNodeClass(source);
         }
         if (isExcluded('createIterator')) {
@@ -4602,6 +4662,9 @@
         }
         if (isExcluded('isArguments', 'isEmpty')) {
           source = removeSupportArgsClass(source);
+        }
+        if (isExcluded('isElement')) {
+          source = removeSupportDom(source);
         }
         if (isExcluded('isPlainObject')) {
           source = removeSupportOwnLast(source);
@@ -4653,6 +4716,7 @@
         'baseCreate': removeBaseCreateFork,
         'isArguments': removeIsArgumentsFork,
         'isArray': removeIsArrayFork,
+        'isElement': removeIsElementFork,
         'isFunction': removeIsFunctionFork,
         'now': removeNowFork
       },
@@ -4747,7 +4811,7 @@
           source = source.replace(/\blodash\.support *= */, '');
         }
       }
-      if (!matchVar(source, 'root') && !matchVar(source, 'setImmediate')) {
+      if (!matchVar(source, 'root')) {
         source = removeVar(source, 'freeGlobal');
       }
     }
