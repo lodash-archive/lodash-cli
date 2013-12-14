@@ -281,6 +281,7 @@
     'at': ['support'],
     'baseClone': ['support'],
     'baseCreateCallback': ['support'],
+    'baseEach': ['support'],
     'baseIsEqual': ['support'],
     'bind': ['support'],
     'forEachRight': ['support'],
