@@ -4568,10 +4568,6 @@
       if (isExcluded(isModularize ? 'lodash' : 'wrapperValueOf')) {
         source = removeChaining(source);
       }
-      if (isExcluded('clone', 'isElement', 'isEqual', 'isPlainObject') ||
-          (isUnderscore && !isLodash('isElement'))) {
-        source = removeVar(source, 'window');
-      }
       if (!isModularize) {
         if (isExcluded('bind')) {
           source = removeSupportProp(source, 'fastBind');
