@@ -102,7 +102,6 @@
     'templateSettings': ['escape'],
 
     // variables
-    'eachIteratorOptions': ['keys'],
     'htmlUnescapes': ['invert'],
     'reEscapedHtml': ['keys'],
     'reUnescapedHtml': ['keys'],
@@ -241,7 +240,7 @@
     'baseCreateCallback': ['bind', 'identity', 'setBindData'],
     'baseCreateWrapper': ['baseCreate', 'isObject', 'slice', 'setBindData'],
     'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf', 'releaseObject'],
-    'baseEach': ['createIterator'],
+    'baseEach': ['baseCreateCallback', 'forOwn', 'isString'],
     'baseFlatten': ['isArguments', 'isArray'],
     'baseIndexOf': [],
     'baseIsEqual': ['forIn', 'getArray', 'isArguments', 'isFunction', 'isNode', 'releaseArray'],
@@ -255,7 +254,7 @@
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
     'createWrapper': ['baseBind', 'baseCreateWrapper', 'isFunction', 'slice'],
     'createCache': ['cachePush', 'getObject', 'releaseObject'],
-    'createIterator': ['baseCreateCallback', 'isArguments', 'isArray', 'isString', 'iteratorTemplate'],
+    'createIterator': ['baseCreateCallback', 'isArguments', 'iteratorTemplate'],
     'escapeHtmlChar': [],
     'escapeStringChar': [],
     'getArray': [],
@@ -302,7 +301,6 @@
   var varDependencyMap = {
     'baseCreate': ['root'],
     'baseDifference': ['largeArraySize'],
-    'baseEach': ['eachIteratorOptions'],
     'baseIsEqual': ['objectTypes'],
     'baseUniq': ['largeArraySize'],
     'cacheIndexOf': ['keyPrefix'],
@@ -310,7 +308,7 @@
     'createIterator': ['indicatorObject', 'objectTypes'],
     'escape': ['reUnescapedHtml'],
     'escapeHtmlChar': ['htmlEscapes'],
-    'forIn': ['eachIteratorOptions'],
+    'forIn': ['objectTypes'],
     'getArray': ['arrayPool'],
     'getObject': ['objectPool'],
     'htmlUnescapes': ['htmlEscapes'],
@@ -326,6 +324,7 @@
     'releaseObject': ['maxPoolSize', 'objectPool'],
     'reUnescapedHtml': ['htmlEscapes'],
     'root': ['objectTypes'],
+    'shimKeys': ['objectTypes'],
     'support': ['reNative', 'root'],
     'template': ['reInterpolate'],
     'templateSettings': ['reInterpolate'],
@@ -569,11 +568,7 @@
   /** Used to inline `iteratorTemplate` */
   var iteratorOptions = [
     'args',
-    'array',
-    'bottom',
-    'firstArg',
     'init',
-    'keys',
     'loop',
     'shadowedProps',
     'support',
@@ -2400,9 +2395,7 @@
 
     // remove `support.enumErrorProps` from `iteratorTemplate`
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
-      return match
-        .replace(/^(?: *\/\/.*\n)* *["'] *(?:<% *)?if *\(support\.enumErrorProps *(?:&&|\))(.+?}["']|[\s\S]+?<% *} *(?:%>|["'])).+/gm, '')
-        .replace(/support\.enumErrorProps\s*\|\|\s*/g, '');
+      return match.replace(/^(?: *\/\/.*\n)* *["'] *(?:<% *)?if *\(support\.enumErrorProps *(?:&&|\))(.+?\}(?:\\n)?["']|[\s\S]+?<% *} *(?:%>|["'])).+/gm, '');
     });
 
     return source;
@@ -2427,9 +2420,7 @@
 
     // remove `support.enumPrototypes` from `iteratorTemplate`
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
-      return match
-        .replace(/^(?: *\/\/.*\n)* *["'] *(?:<% *)?if *\(support\.enumPrototypes *(?:&&|\))(.+?}["']|[\s\S]+?<% *} *(?:%>|["'])).+/gm, '')
-        .replace(/support\.enumPrototypes\s*\|\|\s*/g, '');
+      return match.replace(/^(?: *\/\/.*\n)* *["'] *(?:<% *)?if *\(support\.enumPrototypes *(?:&&|\))(.+?\}(?:\\n)?["']|[\s\S]+?<% *} *(?:%>|["'])).+/gm, '');
     });
 
     return source;
@@ -2484,9 +2475,7 @@
 
     // remove `support.nonEnumArgs` from `iteratorTemplate`
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
-      return match
-        .replace(/^(?: *\/\/.*\n)*( *["'] *)<% *} *else *if *\(support\.nonEnumArgs[\s\S]+?(\1<% *} *%>.+)/m, '$2')
-        .replace(/\s*\|\|\s*support\.nonEnumArgs/, '');
+      return match.replace(/^(?: *\/\/.*\n)*( *["'] *)<% *if *\(support\.nonEnumArgs[\s\S]+?\1<% *} *%>.+/m, '');
     });
 
     return source;
@@ -2553,9 +2542,11 @@
   function removeSupportUnindexedChars(source) {
     source = removeSupportProp(source, 'unindexedChars');
 
-    // remove `support.unindexedChars` from `_.at`
-    source = source.replace(matchFunction(source, 'at'), function(match) {
-      return match.replace(/^ *if *\(support\.unindexedChars[^}]+}\n/m, '');
+    // remove `support.unindexedChars` from `_.at` and `baseEach`
+    _.each(['at', 'baseEach'], function(funcName) {
+      source = source.replace(matchFunction(source, funcName), function(match) {
+        return match.replace(/^( *)if *\(support\.unindexedChars[\s\S]+?\n\1}\n/m, '');
+      });
     });
 
     // remove `support.unindexedChars` from `_.forEachRight` and `_.sample`
@@ -2568,13 +2559,6 @@
     // remove `support.unindexedChars` from `_.toArray`
     source = source.replace(matchFunction(source, 'toArray'), function(match) {
       return match.replace(/(return\b).+?support\.unindexedChars[^:]+:\s*/, '$1 ');
-    });
-
-    // remove `support.unindexedChars` from `iteratorTemplate`
-    source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
-      return match
-        .replace(/'if *\(<%= *array *%>[^']*/, '$&\\n')
-        .replace(/^(?: *\/\/.*\n)* *["']( *)<% *if *\(support\.unindexedChars[\s\S]+?["']\1<% *} *%>.+/m, '');
     });
 
     return source;
@@ -2757,7 +2741,7 @@
   }
 
   /**
-   * Hard-codes the `strict` template option value for `iteratorTemplate`.
+   * Add or remove the "use strict" directive from `source`.
    *
    * @private
    * @param {string} source The source to process.
@@ -2765,15 +2749,7 @@
    * @returns {string} Returns the modified source.
    */
   function setUseStrictOption(source, value) {
-    // inject or remove the "use strict" directive
-    source = source.replace(/^([\s\S]*?function[^{]+\{)(?:\s*'use strict';)?/, '$1' + (value ? "\n  'use strict';" : ''));
-
-    // replace `strict` branch in `iteratorTemplate` with hard-coded option
-    source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
-      return match.replace(/(template\()(?:\s*"'use strict.+)?/, '$1' + (value ? '\n    "\'use strict\';\\n" +' : ''));
-    });
-
-    return source;
+    return source.replace(/^([\s\S]*?function[^{]+\{)(?:\s*'use strict';)?/, '$1' + (value ? "\n  'use strict';" : ''));
   }
 
   /**
@@ -3299,19 +3275,16 @@
           });
         }
         if (isModern || isUnderscore) {
-          _.each(['baseEach', 'forIn', 'shimKeys'], function(funcName) {
+          _.each(['at', 'baseEach', 'forEachRight', 'sample', 'toArray'], function(funcName) {
+            _.pull(funcDepMap[funcName], 'isString');
+          });
+
+          _.each(['forIn', 'shimKeys'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
               var deps = _.pull(funcDepMap[funcName], 'createIterator');
-              _.pull(varDepMap[funcName] || (varDepMap[funcName] = []), 'eachIteratorOptions').push('objectTypes');
-
-              if (funcName != 'baseEach') {
-                deps.push('isArguments');
-              }
+              deps.push('isArguments');
               if (funcName != 'shimKeys') {
                 deps.push('baseCreateCallback');
-              }
-              if (funcName != 'forIn' && funcName != 'shimKeys') {
-                deps.push('keys');
               }
             }
           });
@@ -3319,7 +3292,7 @@
           _.forOwn(objDepMap, function(deps, funcName) {
             if (!(isMobile && funcName == 'keys') &&
                 !(isUnderscore && isLodash(funcName)) &&
-                !_.contains(['baseCreateCallback', 'lodash', 'wrapperValueOf'], funcName)) {
+                !_.contains(['baseCreateCallback', 'isElement', 'lodash', 'wrapperValueOf'], funcName)) {
               _.pull(deps, 'support');
             }
           });
@@ -3327,9 +3300,6 @@
           _.forOwn(funcDepMap, function(deps, funcName) {
             if (_.contains(deps, 'isNode')) {
               _.pull(deps, 'isNode');
-            }
-            if (_.contains(deps, 'isString') && funcName != 'contains' && funcName != 'parseInt') {
-              _.pull(deps, 'isString');
             }
           });
 
@@ -3649,11 +3619,6 @@
                 });
               });
             });
-
-            // replace `array` property value of `eachIteratorOptions` with `false`
-            source = source.replace(/^( *)var eachIteratorOptions *= *[\s\S]+?\n\1};\n/m, function(match) {
-              return match.replace(/(^ *'array':)[^,]+/m, '$1 false');
-            });
           }
         }
         if (isUnderscore) {
@@ -3674,10 +3639,10 @@
               '    return object;',
               '  }',
               '  for (var argsIndex = 1, argsLength = arguments.length; argsIndex < argsLength; argsIndex++) {',
-              '    var iterable = arguments[argsIndex];',
-              '    if (iterable) {',
-              '      for (var key in iterable) {',
-              '        object[key] = iterable[key];',
+              '    var source = arguments[argsIndex];',
+              '    if (source) {',
+              '      for (var key in source) {',
+              '        object[key] = source[key];',
               '      }',
               '    }',
               '  }',
@@ -3721,11 +3686,11 @@
               '    return object;',
               '  }',
               '  for (var argsIndex = 1, argsLength = arguments.length; argsIndex < argsLength; argsIndex++) {',
-              '    var iterable = arguments[argsIndex];',
-              '    if (iterable) {',
-              '      for (var key in iterable) {',
+              '    var source = arguments[argsIndex];',
+              '    if (source) {',
+              '      for (var key in source) {',
               "        if (typeof object[key] == 'undefined') {",
-              '          object[key] = iterable[key];',
+              '          object[key] = source[key];',
               '        }',
               '      }',
               '    }',
@@ -4306,13 +4271,13 @@
         // replace `baseEach` references with `forEach` and `forOwn`
         if (isUnderscore || (isModern && !isMobile)) {
           // replace `baseEach` with `_.forOwn` in "Collections" functions
-          source = source.replace(/\bbaseEach(?=\(collection)/g, 'forOwn');
+          source = source.replace(/^( *)baseEach(?=\(collection)/gm, '$1forOwn');
 
           // replace `baseEach` with `_.forEach` in the rest of the functions
           source = source.replace(/(\?\s*)baseEach(?=\s*:)/g, '$1forEach');
 
           // replace `baseEach` with `_.forEach` in the function assignment snippet
-          source = source.replace(/\bbaseEach(?=\(\[')/g, 'forEach');
+          source = source.replace(/^( *)baseEach(?=\(\[')/gm, '$1forEach');
         }
 
         var context = vm.createContext({
