@@ -22,13 +22,14 @@
       objectRef = Object.prototype;
 
   /** Native method shortcuts */
-  var hasOwnProperty = objectRef.hasOwnProperty,
+  var create = Object.create,
+      hasOwnProperty = objectRef.hasOwnProperty,
       push = arrayRef.push,
       slice = arrayRef.slice;
 
   /** Memoize regexp creation */
   var RegExp = (function() {
-    var cache = {};
+    var cache = createMap();
     return function(pattern, flags) {
       if (flags && /g/.test(flags)) {
         return global.RegExp(pattern, flags);
@@ -48,7 +49,7 @@
   var stdout = process.stdout;
 
   /** Used to associate aliases with their real names */
-  var aliasToRealMap = {
+  var aliasToRealMap = createMap({
     'all': 'every',
     'any': 'some',
     'collect': 'map',
@@ -71,10 +72,10 @@
     'unique': 'uniq',
     'unzip': 'zip',
     'value': 'wrapperValueOf'
-  };
+  });
 
   /** Used to associate real names with their aliases */
-  var realToAliasMap = {
+  var realToAliasMap = createMap({
     'assign': ['extend'],
     'contains': ['include'],
     'every': ['all'],
@@ -93,10 +94,10 @@
     'wrapperValueOf': ['value'],
     'zip': ['unzip'],
     'zipObject': ['object']
-  };
+  });
 
   /** Used to track function dependencies */
-  var funcDependencyMap = {
+  var funcDependencyMap = createMap({
     // properties
     'support': ['isNative'],
     'templateSettings': ['escape'],
@@ -274,10 +275,10 @@
 
     // used by the `backbone` and `underscore` builds
     'findWhere': ['where']
-  };
+  });
 
   /** Used to track Lo-Dash object dependencies of identifiers */
-  var objDependencyMap = {
+  var objDependencyMap = createMap({
     'at': ['support'],
     'baseClone': ['support'],
     'baseCreateCallback': ['support'],
@@ -296,10 +297,10 @@
     'template': ['templateSettings'],
     'toArray': ['support'],
     'wrapperValueOf': ['support']
-  };
+  });
 
   /** Used to track variable dependencies of identifiers */
-  var varDependencyMap = {
+  var varDependencyMap = createMap({
     'baseClone': ['toString'],
     'baseCreate': ['root'],
     'baseDifference': ['largeArraySize'],
@@ -343,10 +344,10 @@
     'templateSettings': ['reInterpolate'],
     'unescape': ['reEscapedHtml'],
     'unescapeHtmlChar': ['htmlUnescapes']
-  };
+  });
 
   /** Used to track the category of identifiers */
-  var categoryMap = {
+  var categoryMap = createMap({
     'Arrays': [
       'compact',
       'difference',
@@ -489,7 +490,13 @@
       'unescape',
       'uniqueId'
     ]
-  };
+  });
+
+  /* Used to enforce dependencies at the top level */
+  var topLevel = createMap({
+    'lodash': true,
+    'support': true
+  });
 
   /** List of Backbone's Lo-Dash dependencies */
   var backboneDependencies = [
@@ -881,11 +888,6 @@
         identifiers = _.pull(buildFuncs.concat(includeObjs, includeVars), 'lodash'),
         version = state.lodash.VERSION;
 
-    var topLevel = {
-      'lodash': true,
-      'support': true
-    };
-
     var categories = _.uniq(_.compact(identifiers.map(function(identifier) {
       return getCategory(identifier, funcDepMap);
     }))).sort();
@@ -901,29 +903,6 @@
       defaultBuildCallback(data);
     };
 
-    var getDepPath = function(dep, fromPath) {
-      var sep = '/',
-          toPath = getPath(dep),
-          relative = path.relative(fromPath || '', toPath).replace(RegExp(path.sepEscaped, 'g'), sep);
-
-      if (relative.charAt(0) != '.') {
-        relative = '.' + (relative ? sep + relative : '');
-      }
-      return relative + sep + dep;
-    };
-
-    var getDepPaths = function(dependencies, fromPath) {
-      return dependencies.map(function(dep) {
-        return getDepPath(dep, fromPath);
-      });
-    };
-
-    var getPath = function(identifier) {
-      return topLevel[identifier]
-        ? ''
-        : (getCategory(identifier, funcDepMap) || 'internals').toLowerCase();
-    };
-
     // prepare state
     state.isAMD = state.isCommonJS = state.isNode = state.isNpm = false;
     state.plusFuncs = state.minusFuncs = empty;
@@ -936,7 +915,7 @@
     identifiers.forEach(function(identifier) {
       var isInternal = _.contains(internals, identifier),
           moduleName = isNpm ? 'lodash.' + (isInternal ? '_' : '') + identifier.toLowerCase() : identifier,
-          modulePath = isNpm ? moduleName : getPath(identifier),
+          modulePath = isNpm ? moduleName : getPath(identifier, funcDepMap),
           iife = [];
 
       var deps = getDependencies(identifier, funcDepMap, true)
@@ -946,7 +925,7 @@
 
       var depPaths = isNpm
         ? deps.map(function(dep) { return 'lodash.' + (_.contains(internals, dep) ? '_' : '') + dep.toLowerCase(); })
-        : getDepPaths(deps, modulePath);
+        : getDepPaths(deps, modulePath, funcDepMap);
 
       if (isAMD) {
         iife.push(
@@ -1046,7 +1025,7 @@
           categoryDepPaths = categoryDeps.map(function(dep) { return './' + dep; }),
           identifier = 'lodash',
           basename = identifier,
-          modulePath = getPath(identifier);
+          modulePath = getPath(identifier, funcDepMap);
 
       var deps = getDependencies(identifier, funcDepMap, true)
         .concat(objDepMap[identifier] || empty)
@@ -1055,7 +1034,7 @@
 
       var depNames = categoryDeps.concat(deps),
           depArgs = depNames.join(', '),
-          depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath)),
+          depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath, funcDepMap)),
           iife = [];
 
       if (isAMD) {
@@ -1179,7 +1158,7 @@
     if (!isNpm) {
       categories.forEach(function(category) {
         var deps = _.intersection(categoryMap[category], identifiers).sort(),
-            depPaths = getDepPaths(deps),
+            depPaths = getDepPaths(deps, null, funcDepMap),
             iife = [];
 
         if (isAMD) {
@@ -1296,7 +1275,7 @@
       }
       var basePath = (path.dirname(pattern) + path.sep).replace(RegExp('(^|' + path.sepEscaped + ')\\*\\*.*$'),  '$1'),
           insertAt = source.length,
-          templates = {};
+          templates = createMap();
 
       filePaths.forEach(function(filePath) {
         var text = fs.readFileSync(filePath, 'utf8'),
@@ -1313,7 +1292,7 @@
         while (++index < length) {
           var key = props[index];
           if (!object[key]) {
-            object[key] = {};
+            object[key] = createMap();
           }
           object = object[key];
         }
@@ -1408,6 +1387,18 @@
       .replace(/^ *\n+/, '')
       // add trailing newline
       .trimRight() + '\n';
+  }
+
+  /**
+   * Creates a map object. If a `properties` object is provided its own
+   * enumerable properties are assigned to the created object.
+   *
+   * @private
+   * @param {Object} [properties] The properties to assign to the object.
+   * @returns {Object} Returns the new object.
+   */
+  function createMap(properties) {
+    return _.assign(create(null), properties);
   }
 
   /**
@@ -1542,6 +1533,24 @@
   function getBaseCreateFork(source) {
     var result = source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!nativeCreate)[\s\S]+?\n *}\(\)\);\n\1}/);
     return result ? result[0] : '';
+  }
+
+
+  function getDepPath(dep, fromPath, depMap) {
+    var sep = '/',
+        toPath = getPath(dep, depMap),
+        relative = path.relative(fromPath || '', toPath).replace(RegExp(path.sepEscaped, 'g'), sep);
+
+    if (relative.charAt(0) != '.') {
+      relative = '.' + (relative ? sep + relative : '');
+    }
+    return relative + sep + dep;
+  }
+
+  function getDepPaths(dependencies, fromPath, depMap) {
+    return dependencies.map(function(dep) {
+      return getDepPath(dep, fromPath, depMap);
+    });
   }
 
   /**
@@ -1735,6 +1744,12 @@
     return matchFunction(source, 'now')
       .replace(/^[\s\S]+?(?=\|\|)/, '')
       .replace(/[;\s]+$/, '');
+  }
+
+  function getPath(identifier, depMap) {
+    return topLevel[identifier]
+      ? ''
+      : (getCategory(identifier, depMap) || 'internals').toLowerCase();
   }
 
   /**
@@ -2875,9 +2890,9 @@
       /*----------------------------------------------------------------------*/
 
       // clone dependencies to modify
-      var funcDepMap = _.cloneDeep(funcDependencyMap),
-          objDepMap = _.cloneDeep(objDependencyMap),
-          varDepMap = _.cloneDeep(varDependencyMap);
+      var funcDepMap = createMap(_.cloneDeep(funcDependencyMap)),
+          objDepMap = createMap(_.cloneDeep(objDependencyMap)),
+          varDepMap = createMap(_.cloneDeep(varDependencyMap));
 
       // the path to the source file
       var filePath = require.resolve('lodash/lodash.js');
@@ -2967,7 +2982,7 @@
         return value
           ? _.assign(result, Function('return {' + value.replace(/^\{|}$/g, '') + '}')())
           : result;
-      }, _.clone(_.templateSettings));
+      }, _.cloneDeep(_.templateSettings));
 
       // flags to specify export options
       var isAMD = _.contains(exportsOptions, 'amd'),
@@ -4712,7 +4727,7 @@
       // remove unused variables
       (function() {
         var isShallow = isExcluded('runInContext'),
-            useMap = {},
+            useMap = createMap(),
             snippet = removeStrings(removeComments(source)),
             varNames = _.difference(getVars(snippet, isShallow), includeFuncs, includeObjs, includeVars);
 

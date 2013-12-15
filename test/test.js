@@ -54,7 +54,7 @@
   }, 0);
 
   /** Used to associate aliases with their real names */
-  var aliasToRealMap = {
+  var aliasToRealMap = createMap({
     'all': 'every',
     'any': 'some',
     'collect': 'map',
@@ -76,10 +76,10 @@
     'unique': 'uniq',
     'unzip': 'zip',
     'value': 'wrapperValueOf'
-  };
+  });
 
   /** Used to associate real names with their aliases */
-  var realToAliasMap = {
+  var realToAliasMap = createMap({
     'assign': ['extend'],
     'contains': ['include'],
     'every': ['all'],
@@ -98,10 +98,10 @@
     'wrapperValueOf': ['value'],
     'zip': ['unzip'],
     'zipObject': ['object']
-  };
+  });
 
   /** Used to track the category of identifiers */
-  var categoryMap = {
+  var categoryMap = createMap({
     'Arrays': [
       'compact',
       'difference',
@@ -242,7 +242,7 @@
       'unescape',
       'uniqueId'
     ]
-  };
+  });
 
   /** List of Backbone's Lo-Dash dependencies */
   var backboneDependencies = [
@@ -397,6 +397,18 @@
         context.module = { 'exports': context.exports };
     }
     return context;
+  }
+
+  /**
+   * Creates a map object. If a `properties` object is provided its own
+   * enumerable properties are assigned to the created object.
+   *
+   * @private
+   * @param {Object} [properties] The properties to assign to the object.
+   * @returns {Object} Returns the new object.
+   */
+  function createMap(properties) {
+    return _.assign(Object.create(null), properties);
   }
 
   /**
@@ -1931,7 +1943,7 @@
       'zip'
     ];
 
-    var tested = {};
+    var tested = createMap();
 
     function strip(value) {
       return String(value)
