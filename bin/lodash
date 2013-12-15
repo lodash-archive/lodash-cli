@@ -3290,6 +3290,12 @@
             }
           });
 
+          _.forOwn(funcDepMap, function(deps, funcName) {
+            if (_.contains(deps, 'isNode')) {
+              _.pull(deps, 'isNode');
+            }
+          });
+
           _.forOwn(objDepMap, function(deps, funcName) {
             if (!(isMobile && funcName == 'keys') &&
                 !(isUnderscore && isLodash(funcName)) &&
@@ -3298,13 +3304,10 @@
             }
           });
 
-          _.forOwn(funcDepMap, function(deps, funcName) {
-            if (_.contains(deps, 'isNode')) {
-              _.pull(deps, 'isNode');
-            }
-          });
-
           if (isUnderscore) {
+            if (!isLodash('isElement')) {
+              _.pull(objDepMap.isElement, 'support');
+            }
             _.forOwn(funcDepMap, function(deps, funcName) {
               if (_.every(getDependants(funcName, funcDepMap).concat(funcName), function(otherName) {
                     return !isLodash(otherName);
