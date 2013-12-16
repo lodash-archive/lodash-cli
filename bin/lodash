@@ -4108,6 +4108,15 @@
               '}'
             ].join('\n'));
           }
+          // replace `_.tap`
+          if (!isLodash('tap')) {
+             source = replaceFunction(source, 'tap', [
+              'function tap(value, interceptor) {',
+              '  interceptor(value);',
+              '  return value;',
+              '}'
+            ].join('\n'));
+          }
           // replace `_.template`
           if (!isLodash('template')) {
             source = replaceFunction(source, 'template', [
