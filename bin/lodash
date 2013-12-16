@@ -301,22 +301,25 @@
 
   /** Used to track variable dependencies of identifiers */
   var varDependencyMap = createMap({
-    'baseClone': ['toString'],
+    'baseClone': ['hasOwnProperty', 'toString'],
     'baseCreate': ['root'],
     'baseDifference': ['largeArraySize'],
-    'baseIsEqual': ['objectTypes', 'toString'],
+    'baseIsEqual': ['hasOwnProperty', 'objectTypes', 'toString'],
     'baseUniq': ['largeArraySize'],
     'cacheIndexOf': ['keyPrefix'],
     'cachePush': ['keyPrefix'],
-    'createIterator': ['indicatorObject', 'objectTypes'],
+    'countBy': ['hasOwnProperty'],
+    'createIterator': ['hasOwnProperty', 'indicatorObject', 'objectTypes', 'toString'],
     'escape': ['reUnescapedHtml'],
     'escapeHtmlChar': ['htmlEscapes'],
-    'forIn': ['objectTypes', 'toString'],
     'getArray': ['arrayPool'],
     'getObject': ['objectPool'],
+    'groupBy': ['hasOwnProperty'],
+    'has':['hasOwnProperty'],
     'htmlUnescapes': ['htmlEscapes'],
     'intersection': ['largeArraySize'],
-    'isArguments': ['toString'],
+    'invert': ['hasOwnProperty'],
+    'isArguments': ['hasOwnProperty', 'toString'],
     'isArray': ['toString'],
     'isBoolean': ['toString'],
     'isDate': ['toString'],
@@ -330,7 +333,8 @@
     'isPlainObject': ['toString'],
     'isRegExp': ['objectTypes', 'toString'],
     'isString': ['toString'],
-    'memoize': ['keyPrefix'],
+    'lodash': ['hasOwnProperty'],
+    'memoize': ['hasOwnProperty', 'keyPrefix'],
     'parseInt': ['root'],
     'reEscapedHtml': ['htmlUnescapes'],
     'releaseArray': ['arrayPool', 'maxPoolSize'],
@@ -338,11 +342,10 @@
     'reNative': ['toString'],
     'reUnescapedHtml': ['htmlEscapes'],
     'root': ['objectTypes'],
-    'shimIsPlainObject': ['toString'],
-    'shimKeys': ['objectTypes', 'toString'],
+    'shimIsPlainObject': ['hasOwnProperty', 'toString'],
     'support': ['reNative', 'root', 'toString'],
     'template': ['reInterpolate'],
-    'templateSettings': ['reInterpolate'],
+    'templateSettings': ['reEscape', 'reEvaluate', 'reInterpolate'],
     'unescape': ['reEscapedHtml'],
     'unescapeHtmlChar': ['htmlUnescapes']
   });
@@ -3309,8 +3312,13 @@
           });
 
           _.each(['forIn', 'shimKeys'], function(funcName) {
+            var deps = varDepMap[funcName] || (varDepMap[funcName] = []);
+            deps.push('objectTypes');
+            if (funcName == 'shimKeys') {
+              deps.push('hasOwnProperty');
+            }
             if (!(isUnderscore && isLodash(funcName))) {
-              var deps = _.pull(funcDepMap[funcName], 'createIterator');
+              deps = _.pull(funcDepMap[funcName], 'createIterator');
               deps.push('isArguments');
               if (funcName != 'shimKeys') {
                 deps.push('baseCreateCallback');
