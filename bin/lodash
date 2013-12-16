@@ -2986,7 +2986,7 @@
         return value
           ? _.assign(result, Function('return {' + value.replace(/^\{|}$/g, '') + '}')())
           : result;
-      }, _.cloneDeep(_.templateSettings));
+      }, _.clone(_.templateSettings));
 
       // flags to specify export options
       var isAMD = _.contains(exportsOptions, 'amd'),
