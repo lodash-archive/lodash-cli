@@ -335,6 +335,7 @@
     'reEscapedHtml': ['htmlUnescapes'],
     'releaseArray': ['arrayPool', 'maxPoolSize'],
     'releaseObject': ['maxPoolSize', 'objectPool'],
+    'reNative': ['toString'],
     'reUnescapedHtml': ['htmlEscapes'],
     'root': ['objectTypes'],
     'shimIsPlainObject': ['toString'],
