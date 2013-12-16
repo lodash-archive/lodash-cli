@@ -3371,7 +3371,7 @@
              _.pull(funcDepMap[funcName], 'baseEach').push('forOwn');
             });
 
-            _.each(['every', 'find', 'filter', 'forEach', 'forIn', 'forOwn', 'map', 'reduce', 'shimKeys'], function(funcName) {
+            _.each(['every', 'find', 'filter', 'forEach', 'forEachRight', 'map', 'reduce'], function(funcName) {
               if (!(isUnderscore && isLodash(funcName))) {
                 _.pull(funcDepMap[funcName], 'isArray');
               }
