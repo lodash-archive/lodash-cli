@@ -3170,6 +3170,9 @@
         if (isLegacy) {
           _.pull(funcDepMap.debounce, 'now');
           funcDepMap.isPlainObject = funcDepMap.shimIsPlainObject.slice();
+          objDepMap.isPlainObject = objDepMap.shimIsPlainObject.slice();
+          varDepMap.isPlainObject = varDepMap.shimIsPlainObject.slice();
+
           funcDepMap.keys = funcDepMap.shimKeys.slice();
 
           _.forOwn(funcDepMap, function(deps, funcName) {
@@ -3229,6 +3232,7 @@
           }
           if (!isLodash('isEmpty')) {
             funcDepMap.isEmpty = ['isArray', 'isString'];
+            varDepMap.isEmpty = ['hasOwnProperty'];
           }
           if (!isLodash('lodash')) {
             _.pull(funcDepMap.lodash, 'isArray');
