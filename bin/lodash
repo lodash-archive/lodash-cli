@@ -45,6 +45,9 @@
   /** Used to detect the Node.js executable in command-line arguments */
   var reNode = RegExp('(?:^|' + path.sepEscaped + ')node(?:\\.exe)?$', 'i');
 
+  /** Used to match string literals */
+  var reStrings = /(["'])(?:(?!\1)[^\n\\]|\\.)*\1/g;
+
   /** Shortcut to the `stdout` object */
   var stdout = process.stdout;
 
@@ -1357,9 +1360,22 @@
    * @returns {string} Returns the modified source.
    */
   function cleanupCompiled(source) {
-    return source
+    var strings = [];
+
+    source = source.replace(reStrings, function(match) {
+      strings.push(match);
+      return '__lodash_string_token__';
+    });
+
+    source = source
       .replace(/\b(function) *(\()/g, '$1$2')
       .replace(/([{}]) *;/g, '$1');
+
+    source = source.replace(/__lodash_string_token__/g, function() {
+      return strings.shift();
+    });
+
+    return source;
   }
 
   /**
@@ -2351,7 +2367,7 @@
    * @returns {string} Returns the modified source.
    */
   function removeStrings(source) {
-    return source.replace(/(["'])(?:(?!\1)[^\n\\]|\\.)*\1/g, '');
+    return source.replace(reStrings, '');
   }
 
   /**

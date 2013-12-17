@@ -697,7 +697,7 @@
 
           equal(_.templates.b(object.b), 'hello larry!', basename);
           equal(_.templates.c(object.c), 'hello ES6', basename);
-          ok(!('d' in _.templates), basename);
+          equal('e' in _.templates, false, basename);
 
           delete _.templates;
           start();
@@ -731,7 +731,7 @@
 
           var templates = _.templates;
           equal(moduleId, expectedId, basename);
-          ok('a' in templates && 'b' in templates && 'c' in templates, basename);
+          deepEqual(_.difference(['a', 'b', 'c', 'd'], _.keys(templates)), [], basename);
 
           var actual = templates.a({ 'people': ['moe', 'larry'] });
           equal(actual.replace(/[\r\n]+/g, ''), '<ul><li>moe</li><li>larry</li></ul>', basename);
@@ -750,7 +750,7 @@
               context = createContext();
 
           var object = {
-            'd': { 'name': 'mustache' }
+            'e': { 'name': 'mustache' }
           };
 
           context.define = function(requires, factory) {
@@ -762,7 +762,7 @@
           vm.runInContext(data.source, context);
 
           equal(moduleId, expectedId, basename);
-          equal(_.templates.d(object.d), 'hallå mustache!', basename);
+          equal(_.templates.e(object.e), 'hallå mustache!', basename);
 
           delete _.templates;
           start();
@@ -776,7 +776,7 @@
     ];
 
     commands.forEach(function(command, index) {
-      asyncTest('`recursive path `' + command + '`', function() {
+      asyncTest('recursive path `' + command + '`', function() {
         var start = _.after(2, _.once(function() {
           if (!isWindows) {
             fs.unlinkSync(quotesTemplatePath);
@@ -824,7 +824,7 @@
       asyncTest('`lodash ' + command +'`', function() {
         var start = _.after(2, _.once(QUnit.start));
 
-        build(['-s',  'template=' + path.join(templatePath, '*.jst'), command], function(data) {
+        build(['-s',  'template=' + path.join(templatePath, 'c.jst'), command], function(data) {
           var templates,
               basename = path.basename(data.outputPath, '.js'),
               context = createContext(),
@@ -881,10 +881,9 @@
     asyncTest('`lodash iife=%output%`', function() {
       var start = _.after(2, _.once(QUnit.start));
 
-      build(['-s', 'template=' + path.join(templatePath, '*.jst'), 'iife=%output%'], function(data) {
+      build(['-s', 'template=' + path.join(templatePath, 'c.jst'), 'iife=%output%'], function(data) {
         var basename = path.basename(data.outputPath, '.js'),
             context = createContext(),
-            defaultTemplates = { 'c': function() { return ''; } },
             source = data.source;
 
         ok(!/^null/.test(source));
@@ -892,8 +891,24 @@
         context._ = _;
         vm.runInContext(source, context);
 
-        var templates = context._.templates || defaultTemplates;
-        equal(templates.c({ 'name': 'moe' }), 'hello moe', basename);
+        equal(_.templates.c({ 'name': 'moe' }), 'hello moe', basename);
+
+        delete _.templates;
+        start();
+      });
+    });
+
+    asyncTest('should not modify whitespace in templates', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'template=' + path.join(templatePath, 'd.jst')], function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            context = createContext();
+
+        context._ = _;
+        vm.runInContext(data.source, context);
+
+        equal(_.templates.d({ 'value': '1' }), 'function  () {  ; return 1 ;   } ;', basename);
 
         delete _.templates;
         start();
