@@ -27,9 +27,9 @@ matrix:
     - node_js: "0.10"
       env: BIN="ringo"   BUILD="legacy"
     - node_js: "0.6"
-      env: TEST="node ./test/test.js --time-limit 48m"
+      env: TEST="node ./test/test.js --time-limit 45m"
     - node_js: "0.10"
-      env: TEST="node ./test/test.js --time-limit 48m"
+      env: TEST="node ./test/test.js --time-limit 45m"
 git:
   depth: 10
 branches:
