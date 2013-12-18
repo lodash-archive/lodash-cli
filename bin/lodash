@@ -1272,7 +1272,7 @@
       '    root = freeGlobal;',
       '  }',
       '',
-      '  var _ = root._;',
+      '  var _ = root._ || {};',
       ''
     ];
 
@@ -1326,7 +1326,10 @@
       '      lodash.templates = lodash.extend(lodash.templates || {}, templates);',
       '    });',
       '  } else if (freeExports && freeModule) {',
-      "    _ = require('" + moduleId + "');",
+      '    try {',
+      "      _ = require('" + moduleId + "');",
+      '    } catch(e) { }',
+      '',
       '    if (moduleExports) {',
       '      (freeModule.exports = templates).templates = templates;',
       '    } else {',

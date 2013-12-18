@@ -898,6 +898,26 @@
       });
     });
 
+    asyncTest('should work without Lo-Dash in Node.js', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'template=' + path.join(templatePath, 'c.jst')], function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            context = createContext();
+
+        context.exports = {};
+        context.module = { 'exports': context.exports };
+        context.require = function() { throw new ReferenceError; };
+        vm.runInContext(data.source, context);
+
+        var templates = context.module.exports || { 'c': function() { return ''; } };
+        equal(templates.c({ 'name': 'moe' }), 'hello moe', basename);
+
+        delete _.templates;
+        start();
+      });
+    });
+
     asyncTest('should not modify whitespace in templates', function() {
       var start = _.after(2, _.once(QUnit.start));
 
@@ -909,8 +929,6 @@
         vm.runInContext(data.source, context);
 
         equal(_.templates.d({ 'value': '1' }), 'function  () {\n;\n  return 1 ;\n} ;', basename);
-
-        delete _.templates;
         start();
       });
     });
@@ -995,6 +1013,11 @@
     asyncTest('`lodash csp`', function() {
       var sources = [];
 
+      var callback = function(data) {
+        sources.push(data.source.replace(reHeader, ''));
+        check();
+      };
+
       var check = _.after(2, _.once(function() {
         ok(_.every(sources, function(source) {
           // remove `Function` use in `_.template` before checking the entire source
@@ -1004,11 +1027,6 @@
         equal(sources[0], sources[1]);
         QUnit.start();
       }));
-
-      var callback = function(data) {
-        sources.push(data.source.replace(reHeader, ''));
-        check();
-      };
 
       build(['-s', '-d', 'csp'], callback);
       build(['-s', '-d', 'modern'], callback);
@@ -1153,6 +1171,7 @@
               });
             });
           });
+
           start();
         });
       });
@@ -1743,7 +1762,6 @@
           } catch(e) {
             console.log(e);
           }
-
           var lodash = context.lodash || {};
           ok(_.isString(lodash.VERSION), basename);
           start();
@@ -1777,7 +1795,6 @@
           lodash.mixin({ 'x': _.noop });
           equal(lodash.x, _.noop, basename);
           equal(typeof lodash.prototype.x, 'function', basename);
-
           start();
         });
       });
@@ -1815,7 +1832,6 @@
 
           equal(moduleId, expectedId, basename);
           ok(_.isFunction(context._), basename);
-
           start();
         });
       });
