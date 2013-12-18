@@ -908,7 +908,7 @@
         context._ = _;
         vm.runInContext(data.source, context);
 
-        equal(_.templates.d({ 'value': '1' }), 'function  () {  ; return 1 ;   } ;', basename);
+        equal(_.templates.d({ 'value': '1' }), 'function  () {\n;\n  return 1 ;\n} ;', basename);
 
         delete _.templates;
         start();

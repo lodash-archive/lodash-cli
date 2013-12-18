@@ -1360,22 +1360,11 @@
    * @returns {string} Returns the modified source.
    */
   function cleanupCompiled(source) {
-    var strings = [];
-
-    source = source.replace(reStrings, function(match) {
-      strings.push(match);
-      return '__lodash_string_token__';
+    return stringFree(source, function(source) {
+      return source
+        .replace(/\b(function) *(\()/g, '$1$2')
+        .replace(/([{}]) *;/g, '$1');
     });
-
-    source = source
-      .replace(/\b(function) *(\()/g, '$1$2')
-      .replace(/([{}]) *;/g, '$1');
-
-    source = source.replace(/__lodash_string_token__/g, function() {
-      return strings.shift();
-    });
-
-    return source;
   }
 
   /**
@@ -1386,27 +1375,29 @@
    * @returns {string} Returns the modified source.
    */
   function cleanupSource(source) {
-    return source
-      // consolidate consecutive horizontal rule comment separators
-      .replace(/(?:\s*\/\*-+\*\/\s*){2,}/g, function(separators) {
-        return separators.match(/^\s*/)[0] + separators.slice(separators.lastIndexOf('/*'));
-      })
-      // remove unneeded single line comments
-      .replace(/(\{\s*)?(\n *\/\/.*)(\s*\})/g, function(match, prelude, comment, postlude) {
-        return (!prelude && postlude) ? postlude : match;
-      })
-      // remove unneeded horizontal rule comment separators
-      .replace(/(\{\n)\s*\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*\})/gm, '$1$2')
-      // remove lines with just spaces and semicolons
-      .replace(/^ *;\n/gm, '')
-      // remove trailing spaces from lines
-      .replace(/ *$/gm, '')
-      // consolidate multiple newlines
-      .replace(/\n{3,}/g, '\n\n')
-      // remove leading empty lines
-      .replace(/^ *\n+/, '')
-      // add trailing newline
-      .trimRight() + '\n';
+    return stringFree(source, function(source) {
+      return source
+        // consolidate consecutive horizontal rule comment separators
+        .replace(/(?:\s*\/\*-+\*\/\s*){2,}/g, function(separators) {
+          return separators.match(/^\s*/)[0] + separators.slice(separators.lastIndexOf('/*'));
+        })
+        // remove unneeded single line comments
+        .replace(/(\{\s*)?(\n *\/\/.*)(\s*\})/g, function(match, prelude, comment, postlude) {
+          return (!prelude && postlude) ? postlude : match;
+        })
+        // remove unneeded horizontal rule comment separators
+        .replace(/(\{\n)\s*\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*\})/gm, '$1$2')
+        // remove lines with just spaces and semicolons
+        .replace(/^ *;\n/gm, '')
+        // remove trailing spaces from lines
+        .replace(/ *$/gm, '')
+        // consolidate multiple newlines
+        .replace(/\n{3,}/g, '\n\n')
+        // remove leading empty lines
+        .replace(/^ *\n+/, '')
+        // add trailing newline
+        .trimRight() + '\n';
+    });
   }
 
   /**
@@ -2798,6 +2789,30 @@
    */
   function setUseStrictOption(source, value) {
     return source.replace(/^([\s\S]*?function[^{]+\{)(?:\s*'use strict';)?/, '$1' + (value ? "\n  'use strict';" : ''));
+  }
+
+  /**
+   * This function allows `callback` to modify `source` with string literals
+   * removed and returns the modified source with string literals restored.
+   *
+   * @private
+   * @param {string} source The source to modify.
+   * @param {Function} [callback] The function to modify the string free source.
+   * @returns {string} Returns the modified source.
+   */
+  function stringFree(source, callback) {
+    var strings = [];
+
+    source = callback(source.replace(reStrings, function(match) {
+      strings.push(match);
+      return '__lodash_string_token__';
+    })) || '';
+
+    source = source.replace(/__lodash_string_token__/g, function() {
+      return strings.shift();
+    });
+
+    return source;
   }
 
   /**
