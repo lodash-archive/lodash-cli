@@ -123,7 +123,7 @@
     'compact': [],
     'compose': ['isFunction'],
     'constant': [],
-    'contains': ['baseEach', 'getIndexOf', 'isArray', 'isString'],
+    'contains': ['baseEach', 'getIndexOf', 'isArray', 'isNative', 'isString'],
     'countBy': ['createAggregator'],
     'create': ['assign', 'baseCreate'],
     'createCallback': ['baseCreateCallback', 'baseIsEqual', 'isObject', 'keys', 'property'],
