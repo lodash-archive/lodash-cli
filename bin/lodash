@@ -3530,16 +3530,21 @@
           source = removeSupportProp(source, 'fastBind');
           source = replaceSupportProp(source, 'argsClass', 'false');
 
-          // replace `now()` with `+new Date` in `_.debounce`
-          source = source.replace(matchFunction(source, 'debounce'), function(match) {
-            return match.replace(/\bnow\(\)/g, '+new Date');
-          });
-
           // remove native branches from `_.isArray` and `_.now`
           _.each(['isArray', 'now'], function(funcName) {
             source = source.replace(matchFunction(source, funcName), function(match) {
               return match.replace(/(=\s*)[\s\S]+?\|\|\s*/, '$1');
             });
+          });
+
+          // remove native branch in `_.contains`
+          source = source.replace(matchFunction(source, 'contains'), function(match) {
+            return match.replace(/nativeContains[^:]+:\s*/, '');
+          });
+
+          // replace `now()` with `+new Date` in `_.debounce`
+          source = source.replace(matchFunction(source, 'debounce'), function(match) {
+            return match.replace(/\bnow\(\)/g, '+new Date');
           });
 
           // replace `_.isPlainObject` with `shimIsPlainObject`
