@@ -3256,7 +3256,7 @@
             _.pull(funcDepMap.wrapperValueOf, 'wrapperToString');
           }
           if (!isLodash('contains')) {
-            _.pull(funcDepMap.contains, 'isArray', 'isString');
+            _.pull(funcDepMap.contains, 'isArray', 'isNative', 'isString');
           }
           if (!isLodash('flatten')) {
             _.pull(funcDepMap.flatten, 'map');
