@@ -704,7 +704,7 @@
    * @returns {string} Returns the modified source.
    */
   function addCommandsToHeader(source, commands) {
-    return source.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *Lo-Dash [\w.-]+)(.*)/, function() {
+    return source.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *Lo-Dash [.$\w\-]+)(.*)/, function() {
       // remove `node path/to/build.js` from `commands`
       if (reNode.test(commands[0])) {
         commands.splice(0, 2);
@@ -996,7 +996,7 @@
             .replace('Lo-Dash', '[Lo-Dash](http://lodash.com/)')
             .replace('Node.js', '[Node.js](http://nodejs.org/)')
             .replace('lodash-cli', '[lodash-cli](https://npmjs.org/package/lodash-cli)')
-            .replace(/`_\.(\w+)`/, '[$&](http://lodash.com/docs#$1)');
+            .replace(/`_\.([$\w]+)`/, '[$&](http://lodash.com/docs#$1)');
 
           var templateData = {
             'name': moduleName,
@@ -1084,11 +1084,11 @@
 
         // remove unneeded method and alias assignments
         _.each(_.difference(allFuncs, buildFuncs), function(funcName) {
-          source = source.replace(RegExp('^(?: *//.*\\s*)* *lodash(?:\\.prototype)?\\.\\w+ *= *' + funcName + ';\\n', 'gm'), '');
+          source = source.replace(RegExp('^(?: *//.*\\s*)* *lodash(?:\\.prototype)?\\.[$\\w]+ *= *' + funcName + ';\\n', 'gm'), '');
         });
 
         // add category namespaces to each lodash function assignment
-        source = source.replace(/(lodash(?:\.prototype)?\.\w+\s*=\s*)(\w+)/g, function(match, prelude, identifier) {
+        source = source.replace(/(lodash(?:\.prototype)?\.[$\w]+\s*=\s*)([$\w]+)/g, function(match, prelude, identifier) {
           return _.contains(deps, identifier)
             ? match
             : prelude + getCategory(identifier, funcDepMap).toLowerCase() + '.' + identifier;
@@ -1724,7 +1724,7 @@
    * @returns {string} Returns the method assignments snippet.
    */
   function getMethodAssignments(source) {
-    var result = source.match(/\n\n(?:\s*\/\/.*)*\s*lodash\.\w+\s*=[\s\S]+lodash\.\w+\s=.+/);
+    var result = source.match(/\n\n(?:\s*\/\/.*)*\s*lodash\.[$\w]+\s*=[\s\S]+lodash\.[$\w]+\s=.+/);
     return result ? result[0] : '';
   }
 
@@ -1800,11 +1800,11 @@
 
     var result = _.reduce([
       // match a varaible at the start of a declaration list
-      indentA + 'var (\\w+) *=.+?,\\n(?= *\\w+ *=)',
+      indentA + 'var ([$\\w]+) *=.+?,\\n(?= *[$\\w]+ *=)',
       // match a variable declaration in a declaration list
-      indentB + '(\\w+) *=.+?[,;]\\n',
+      indentB + '([$\\w]+) *=.+?[,;]\\n',
       // match a variable that is not part of a declaration list
-      '(' + indentA + ')var (\\w+) *(?:|= *(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[(\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1[^\\n ]+?));\\n'
+      '(' + indentA + ')var ([$\\w]+) *(?:|= *(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1[^\\n ]+?));\\n'
     ], function(result, reSource) {
       source = source.replace(RegExp('^' + reSource, 'gm'), function(match, indent, varName) {
         if (typeof varName == 'number') {
@@ -1836,7 +1836,7 @@
     }
     // remove the variable assignment from the source
     source = source.replace(match, '');
-    return RegExp('[^\\w"\'.]' + varName + '\\b(?!\\s*=)').test(source);
+    return RegExp('[^.$"\'\\w]' + varName + '\\b(?!\\s*=)').test(source);
   }
 
   /**
@@ -1868,7 +1868,7 @@
 
     return result && (
            /@type +Function\b/i.test(result[0]) ||
-           /(?:function(?:\s+\w+)?\b|create[A-Z][a-z]+|template)\(/.test(result[1]))
+           /(?:function(?:\s+[$\w]+)?\b|create[A-Z][a-z]+|template)\(/.test(result[1]))
       ? (leadingComments ? result[0] : '') + result[1]
       : '';
   }
@@ -1910,11 +1910,11 @@
 
     var reSources = [
       // match a varaible at the start of a declaration list
-      indentA + 'var ' + varName + ' *=.+?,\\n(?= *\\w+ *=)',
+      indentA + 'var ' + varName + ' *=.+?,\\n(?= *[$\\w]+ *=)',
       // match a variable declaration in a declaration list
       indentB + varName + ' *=.+?[,;]\\n',
       // match a variable that is not part of a declaration list
-      '(' + indentA + ')var ' + varName + ' *(?:|= *(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[(\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1[^\\n ]+?));\\n'
+      '(' + indentA + ')var ' + varName + ' *(?:|= *(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1[^\\n ]+?));\\n'
     ];
 
     // match complex variable assignments
@@ -1987,7 +1987,7 @@
   function removeAssignments(source) {
     // remove method and intermediate assignments
     source = removeMethodAssignments(source);
-    source = source.replace(/(=\s*)lodash\.\w+\s*=\s*/g, '$1');
+    source = source.replace(/(=\s*)lodash\.[$\w]+\s*=\s*/g, '$1');
     return source;
   }
 
@@ -2083,7 +2083,7 @@
       return source;
     }
     // remove data object property assignment
-    var modified = snippet.replace(RegExp("^(?: *\\/\\/.*\\n)* *(\\w+)\\." + identifier + " *= *(.+\\n+)", 'm'), function(match, object, postlude) {
+    var modified = snippet.replace(RegExp("^(?: *\\/\\/.*\\n)* *([$\\w]+)\\." + identifier + " *= *(.+\\n+)", 'm'), function(match, object, postlude) {
       return RegExp('\\b' + object + '\\.').test(postlude) ? postlude : '\n';
     });
 
@@ -2133,7 +2133,7 @@
   function removeFromReleaseObject(source, identifier) {
     return source.replace(matchFunction(source, 'releaseObject'), function(match) {
       // remove object property assignments
-      return match.replace(RegExp("(?:(^ *)| *)(\\w+)\\." + identifier + " *= *(.+\\n+)", 'm'), function(match, indent, object, postlude) {
+      return match.replace(RegExp("(?:(^ *)| *)([$\\w]+)\\." + identifier + " *= *(.+\\n+)", 'm'), function(match, indent, object, postlude) {
         return (indent || '') + RegExp('\\b' + object + '\\.').test(postlude) ? postlude : '';
       });
     });
@@ -2298,7 +2298,7 @@
    * @returns {string} Returns the modified source.
    */
   function removePseudoPrivates(source) {
-    return source.replace(/^(?: *\/\/.*\s*)* *lodash\._\w+ *=[\s\S]+?;\n/gm, '');
+    return source.replace(/^(?: *\/\/.*\s*)* *lodash\._[$\w]+ *=[\s\S]+?;\n/gm, '');
   }
 
   /**
@@ -2649,14 +2649,14 @@
       function() {
         // remove a variable declaration in a declaration list
         return source.replace(RegExp(
-          '( *(?:var +)?\\w+ *=.+?),\\n *' + varName + ' *=.+?([,;])(?=\\n)'
+          '( *(?:var +)?[$\\w]+ *=.+?),\\n *' + varName + ' *=.+?([,;])(?=\\n)'
         ), '$1$2');
       },
       function() {
         // remove a variable that is not part of a declaration list
         return source.replace(RegExp(
           multilineComment +
-          '( *)var ' + varName + ' *(?:|= *(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[(\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1[^\\n ]+?));\\n'
+          '( *)var ' + varName + ' *(?:|= *(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1[^\\n ]+?));\\n'
         ), '');
       }
     ], function(func) {
@@ -4321,7 +4321,7 @@
 
             // replace complex lodash wrapper checks with simpler ones
             source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
-              return match.replace(/hasOwnProperty\.call\((\w+), *'__wrapped__'\)/g, '$1 instanceof lodash')
+              return match.replace(/hasOwnProperty\.call\(([$\w]+), *'__wrapped__'\)/g, '$1 instanceof lodash')
             });
           }
 
@@ -4529,7 +4529,7 @@
           source = source.replace(/\b(lodash\.)(?=templateSettings *=)/, 'var ');
 
           // remove the `lodash` namespace from properties
-          source = source.replace(/\blodash\.(?!com|prototype)(\w+)\b(?!\s*=)/g, '$1');
+          source = source.replace(/\blodash\.(?!com|prototype)([$\w]+)\b(?!\s*=)/g, '$1');
 
           // remove all horizontal rule comment separators
           source = source.replace(/^ *\/\*-+\*\/\n/gm, '');
@@ -4583,7 +4583,7 @@
         source = source.replace(/^(?: *\/\/.*\n)*( *)if *\(moduleExports[\s\S]+?else *\{([\s\S]+?\n)\1}\n+/m, '$1$2');
       }
       if (!isCommonJS || isModularize) {
-        source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)}?) *else *\{)?\s*freeExports\.\w+ *=[\s\S]+?(?:\n\2})?\n+/m, function(match, prelude) {
+        source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)}?) *else *\{)?\s*freeExports\.[$\w]+ *=[\s\S]+?(?:\n\2})?\n+/m, function(match, prelude) {
           return prelude ? prelude + '\n' : '';
         });
       }
@@ -4712,7 +4712,7 @@
             source = removeFromCreateIterator(source, funcName);
 
             // remove method and alias assignments
-            source = source.replace(RegExp('^(?: *//.*\\s*)* *lodash(?:\\.prototype)?\\.\\w+ *= *' + funcName + ';\\n', 'gm'), '');
+            source = source.replace(RegExp('^(?: *//.*\\s*)* *lodash(?:\\.prototype)?\\.[$\\w]+ *= *' + funcName + ';\\n', 'gm'), '');
           }
         }
       });
