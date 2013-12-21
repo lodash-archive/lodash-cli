@@ -4301,7 +4301,7 @@
           }
           // replace `htmlEscapes` entries with hex entities
           if (!isLodash('escape')) {
-            _.each(['htmlEscapes', 'htmlUnescapes'], function(varName) {
+            _.each(['htmlEscapes', 'htmlUnescapes', 'reEscapedHtml'], function(varName) {
               source = source.replace(matchVar(source, varName), function(match) {
                 return match.replace('#39', '#x27');
               });
