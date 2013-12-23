@@ -121,7 +121,7 @@
     'contains': ['baseEach', 'getIndexOf', 'isArray', 'isNative', 'isString'],
     'countBy': ['createAggregator'],
     'create': ['assign', 'baseCreate'],
-    'createCallback': ['baseCreateCallback', 'baseIsEqual', 'isObject', 'keys', 'property'],
+    'createCallback': ['baseCreateCallback', 'match', 'property'],
     'curry': ['createWrapper'],
     'debounce': ['isFunction', 'isObject', 'now'],
     'defaults': ['isObject', 'keys'],
@@ -178,6 +178,7 @@
     'lodash': ['isArray', 'lodashWrapper'],
     'map': ['baseEach', 'createCallback', 'isArray'],
     'mapValues': ['createCallback', 'forOwn'],
+    'match': ['baseIsEqual', 'isObject', 'keys'],
     'max': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
     'memoize': ['isFunction'],
     'merge': ['baseCreateCallback', 'baseMerge', 'getArray', 'isObject', 'releaseArray', 'slice'],
@@ -474,6 +475,7 @@
       'createCallback',
       'escape',
       'identity',
+      'match',
       'mixin',
       'noConflict',
       'noop',
@@ -616,6 +618,7 @@
     'forOwnRight',
     'isPlainObject',
     'mapValues',
+    'match',
     'merge',
     'noop',
     'now',
@@ -3433,7 +3436,7 @@
           _.pull(funcDepMap.createCallback, 'property');
         }
         if (_.contains(minusFuncs, 'where')) {
-          _.pull(funcDepMap.createCallback, 'baseIsEqual', 'isObject', 'keys');
+          _.pull(funcDepMap.createCallback, 'match');
           funcDepMap.createCallback.push('identity');
         }
         // add function names explicitly
@@ -3838,8 +3841,8 @@
               '}'
             ].join('\n'));
 
-            // simplify `_.createCallback`
-            source = source.replace(matchFunction(source, 'createCallback'), function(match) {
+            // simplify `_.match`
+            source = source.replace(matchFunction(source, 'match'), function(match) {
               return match
                 // remove unnecessary fast path
                 .replace(/^(( *)var props *=.+?),[\s\S]+?\n\2}/m, '$1;')
@@ -4341,13 +4344,13 @@
         // remove "_.pluck" style callback support from `_.createCallback`
         else if (_.contains(minusFuncs, 'pluck')) {
           source = source.replace(matchFunction(source, 'createCallback'), function(match) {
-            return match.replace(/^(?: *\/\/.*\n)*( *)if *\(type.+?'object'\)[\s\S]+?\n\1}\n/m, '');
+            return match.replace(/(return\b).+?property[^:]+:\s*/m, '$1 ');
           });
         }
         // remove "_.where" style callback support from `_.createCallback`
         else if (_.contains(minusFuncs, 'where')) {
           source = source.replace(matchFunction(source, 'createCallback'), function(match) {
-            return match.replace(/^(?: *\/\/.*\n)*( *)var props\b[\s\S]+?\n\1return[\s\S]+?\n\1}/m, '$1return identity');
+            return match.replace(/\bmatch\(.+?\)/m, 'identity');
           });
         }
         // add Underscore's chaining functions
@@ -4514,7 +4517,7 @@
 
             // unexpose Lo-Dash methods for the Underscore build
             source = source.replace(getMethodAssignments(source), function(match) {
-              return _.reduce(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'noop', 'now', 'property', 'unzip', 'zipObject'], function(result, funcName) {
+              return _.reduce(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'match', 'noop', 'now', 'property', 'unzip', 'zipObject'], function(result, funcName) {
                 return isLodash(funcName)
                   ? result
                   : result.replace(RegExp('^(?: *//.*\\s*)* *lodash\\.' + funcName + ' *=[\\s\\S]+?;\\n', 'm'), '');
