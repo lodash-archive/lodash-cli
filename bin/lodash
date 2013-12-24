@@ -4143,6 +4143,9 @@
                   if (!isUnderscore && (funcName == 'min' || funcName == 'max')) {
                     return match;
                   }
+                  if (funcName == 'reduce') {
+                    match = match.replace(/if *\(noaccum(?=\))/, '$& && length');
+                  }
                   // replace `_.isArray` checks with simpler type checks
                   return match.replace(/^(( *)if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)(( *)var index[^;]+.+\n+)/m, function(snippet, statement, indent, vars) {
                     vars = vars
