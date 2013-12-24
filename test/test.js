@@ -5,7 +5,7 @@
   var vm = require('vm');
 
   /** Load other modules */
-  var _ = require('lodash'),
+  var _ = require('lodash/dist/lodash.compat.js'),
       build = require('../bin/lodash'),
       minify = require('../lib/minify.js'),
       util = require('../lib/util.js');
