@@ -3279,7 +3279,11 @@
           source = removeSupportUnindexedChars(source);
           source = removeSupportNodeClass(source);
 
-          if (!isMobile) {
+          if (isMobile) {
+            source = replaceSupportProp(source, 'enumPrototypes', 'true');
+            source = replaceSupportProp(source, 'nonEnumArgs', 'true');
+          }
+          else {
             source = removeSupportEnumErrorProps(source);
             source = removeSupportEnumPrototypes(source);
             source = removeSupportNonEnumArgs(source);
