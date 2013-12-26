@@ -1377,14 +1377,17 @@
       return source
         // consolidate consecutive horizontal rule comment separators
         .replace(/(?:\s*\/\*-+\*\/\s*){2,}/g, function(separators) {
-          return separators.match(/^\s*/)[0] + separators.slice(separators.lastIndexOf('/*'));
+          var indent = separators.match(/^\s*/)[0];
+          return indent + separators.slice(separators.lastIndexOf('/*'));
         })
         // remove unneeded single line comments
         .replace(/(\{\s*)?(\n *\/\/.*)(\s*\})/g, function(match, prelude, comment, postlude) {
           return (!prelude && postlude) ? postlude : match;
         })
         // remove unneeded horizontal rule comment separators
-        .replace(/(\{\n)\s*\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*\})/gm, '$1$2')
+        .replace(/(\{\s*\n) *\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*\})/gm, '$1$2')
+        // remove trailing horizontal rule comments
+        .replace(/\s*\/\*-+\*\/\s*$/, '')
         // remove lines with just spaces and semicolons
         .replace(/^ *;\n/gm, '')
         // remove trailing spaces from lines
@@ -2841,7 +2844,7 @@
     var sourceMapURL;
 
     // use to pre-populate the build state
-    var state = _.isObject(options) && !_.isArray(options) && options;
+    var state = _.isPlainObject(options) && options;
 
     // used to capture warnings for invalid command-line arguments
     var warnings = [];
@@ -2936,9 +2939,6 @@
 
       // flag to specify only creating the debug build
       var isDebug = _.contains(options, '-d') || _.contains(options, '--debug');
-
-      // flag to indicate that a custom IIFE was specified
-      var isIIFE = typeof iife == 'string';
 
       // flag to specify creating a source map for the minified source
       var isMapped = _.contains(options, '-p') || _.contains(options, '--source-map');
@@ -4206,10 +4206,6 @@
                 .replace(/\(step.*\|\|.+?\)/, 'step')
             });
           }
-          // remove `_.templateSettings.imports assignment
-          if (!isModularize) {
-            source = source.replace(/,[^']*'imports':[^}]+}/, '');
-          }
           // remove chainability
           _.each(['baseEach', 'forEach', 'forEachRight'], function(funcName) {
             if (!(isLodash(funcName) || (funcName == 'baseEach' && !_.isEmpty(plusFuncs)))) {
@@ -4502,6 +4498,16 @@
                 : result.replace(RegExp('^(?: *//.*\\s*)* *lodash\\.' + funcName + ' *=[\\s\\S]+?;\\n', 'm'), '');
             }, match);
           });
+
+          if (!isModularize) {
+            // remove `_.templateSettings.imports assignment
+            source = source.replace(/,[^']*'imports':[^}]+}/, '');
+
+            // unexpose `lodash.support`
+            if (!isLodash('support')) {
+              source = source.replace(/\blodash\.support *= */, '');
+            }
+          }
         }
         if (isModularize) {
           source = removeGetIndexOf(source);
@@ -4598,7 +4604,6 @@
           'isDebug': true,
           'isES6': isES6,
           'isGlobal': isGlobal,
-          'isIIFE': true,
           'isLegacy': isLegacy,
           'isMapped': isMapped,
           'isMobile': isMobile,
@@ -4635,7 +4640,12 @@
       if (isExcluded(isModularize ? 'lodash' : 'wrapperValueOf')) {
         source = removeChaining(source);
       }
-      if (!isModularize) {
+      if (isModularize) {
+        if (isExcluded('lodash')) {
+          source = removeAssignments(source);
+        }
+      }
+      else {
         if (isExcluded('clone', 'isElement', 'isEqual', 'isPlainObject')) {
           source = removeSupportNodeClass(source);
         }
@@ -4747,6 +4757,9 @@
         });
       });
 
+      if (!_.contains(includeVars, 'root')) {
+        source = removeVar(source, 'freeGlobal');
+      }
       if (isModularize) {
         // remove unneeded variable dependencies
         _.each(varDependencies, function(varName) {
@@ -4783,24 +4796,12 @@
           }
         }
       }());
-
-      if (isModularize) {
-        if (isExcluded('lodash')) {
-          source = removeAssignments(source);
-        }
-      }
-      else if (isUnderscore) {
-        // unexpose `lodash.support`
-        if (!isLodash('support')) {
-          source = source.replace(/\blodash\.support *= */, '');
-        }
-      }
-      if (!matchVar(source, 'root')) {
-        source = removeVar(source, 'freeGlobal');
-      }
     }
 
     /*------------------------------------------------------------------------*/
+
+    // flag to indicate that a custom IIFE was specified
+    var isIIFE = typeof iife == 'string';
 
     // customize Lo-Dash's IIFE
     if (isIIFE) {
