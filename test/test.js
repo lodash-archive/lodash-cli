@@ -686,8 +686,8 @@
               context = createContext();
 
           var object = {
-            'a': { 'people': ['moe', 'larry', 'curly'] },
-            'b': { 'name': 'larry' },
+            'a': { 'people': ['fred', 'barney', 'pebbles'] },
+            'b': { 'name': 'fred' },
             'c': { 'name': 'ES6' }
           };
 
@@ -695,9 +695,9 @@
           vm.runInContext(data.source, context);
 
           var actual = _.templates.a(object.a);
-          equal(actual.replace(/[\r\n]+/g, ''), '<ul><li>moe</li><li>larry</li><li>curly</li></ul>', basename);
+          equal(actual.replace(/[\r\n]+/g, ''), '<ul><li>fred</li><li>barney</li><li>pebbles</li></ul>', basename);
 
-          equal(_.templates.b(object.b), 'hello larry!', basename);
+          equal(_.templates.b(object.b), 'hello fred!', basename);
           equal(_.templates.c(object.c), 'hello ES6', basename);
 
           delete _.templates;
@@ -734,8 +734,8 @@
           equal(moduleId, expectedId, basename);
           deepEqual(_.difference(['a', 'b', 'c', 'd', 'e'], _.keys(templates)), [], basename);
 
-          var actual = templates.a({ 'people': ['moe', 'larry'] });
-          equal(actual.replace(/[\r\n]+/g, ''), '<ul><li>moe</li><li>larry</li></ul>', basename);
+          var actual = templates.a({ 'people': ['fred', 'barney'] });
+          equal(actual.replace(/[\r\n]+/g, ''), '<ul><li>fred</li><li>barney</li></ul>', basename);
 
           delete _.templates;
           start();
@@ -796,9 +796,9 @@
           context._ = _;
           vm.runInContext(data.source, context);
 
-          equal(_.templates.b({ 'name': 'moe' }), 'hello moe!', basename);
-          equal(_.templates.c({ 'name': 'larry' }), 'hello larry', basename);
-          equal(_.templates.c.c({ 'name': 'curly' }), 'hello curly!', basename);
+          equal(_.templates.b({ 'name': 'fred' }), 'hello fred!', basename);
+          equal(_.templates.c({ 'name': 'barney' }), 'hello barney', basename);
+          equal(_.templates.c.c({ 'name': 'pebbles' }), 'hello pebbles!', basename);
 
           if (!isWindows) {
             equal(_.templates.c['\'"']({ 'name': 'quotes' }), 'hello quotes', basename);
@@ -867,7 +867,7 @@
               strictEqual(context._, undefined, basename);
           }
           if (templates) {
-            equal(templates.c({ 'name': 'moe' }), 'hello moe', basename);
+            equal(templates.c({ 'name': 'fred' }), 'hello fred', basename);
           }
           delete _.templates;
           start();
@@ -888,7 +888,7 @@
         context._ = _;
         vm.runInContext(source, context);
 
-        equal(_.templates.c({ 'name': 'moe' }), 'hello moe', basename);
+        equal(_.templates.c({ 'name': 'fred' }), 'hello fred', basename);
 
         delete _.templates;
         start();
@@ -1404,8 +1404,8 @@
         deepEqual(lodash.findWhere(collection, { 'a': 1 }), collection[0], '_.findWhere: ' + basename);
         strictEqual(lodash.findWhere(collection, {}), undefined, '_.findWhere should return `undefined` if no match is found: ' + basename);
 
-        var expected = [[['moe', 30, true]], [['larry', 40, false]]];
-        actual = lodash.zip(lodash.zip(['moe', 'larry'], [30, 40], [true, false]));
+        var expected = [[['fred', 30, true]], [['barney', 40, false]]];
+        actual = lodash.zip(lodash.zip(['fred', 'barney'], [30, 40], [true, false]));
         deepEqual(actual, expected, '_.zip is unable to correctly consume it\'s output: ' + basename);
 
         _.each(['difference', 'intersection', 'unique'], function(methodName) {
