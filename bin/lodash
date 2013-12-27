@@ -1297,6 +1297,11 @@
         ''
       );
     }
+    source.push(
+      hr,
+      ''
+    );
+
     glob(pattern, { 'sync': true }, function(exception, filePaths) {
       if (exception) {
         throw exception;
@@ -1336,11 +1341,16 @@
           .replace(/^ *}$/m, '  $&')
           .replace(/'/g, "\\'")
           .replace(/([^\\])"/g, "$1'") +
-        ';', ''
+        ';',
+        ''
       );
     });
 
-    source.push("  if (typeof define == 'function' && typeof define.amd == 'object' && define.amd) {");
+    source.push(
+      hr,
+      '',
+      "  if (typeof define == 'function' && typeof define.amd == 'object' && define.amd) {"
+    );
 
     if (isStandalone) {
       source.push(
@@ -4226,7 +4236,11 @@
             }
 
             _.each(['createAggregator', 'every', 'filter', 'find', 'max', 'min', 'reduce', 'some'], function(funcName) {
-              if (!(isUnderscore && (isLodash(funcName) || (funcName == 'find' && isLodash('findWhere'))))) {
+              if (!(isUnderscore && (
+                    isLodash(funcName) ||
+                    (funcName == 'find' && isLodash('findWhere')) ||
+                    (funcName == 'filter' && isLodash('where'))
+                  ))) {
                 source = source.replace(matchFunction(source, funcName), function(match) {
                   if (!isUnderscore && (funcName == 'min' || funcName == 'max')) {
                     return match;

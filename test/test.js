@@ -699,6 +699,7 @@
 
           equal(_.templates.b(object.b), 'hello fred!', basename);
           equal(_.templates.c(object.c), 'hello ES6', basename);
+          deepEqual(_.difference(['a', 'b', 'c', 'd', 'e'], _.keys(_.templates)), [], basename);
 
           delete _.templates;
           start();
@@ -730,12 +731,7 @@
           context.define.amd = {};
           vm.runInContext(data.source, context);
 
-          var templates = _.templates;
           equal(moduleId, expectedId, basename);
-          deepEqual(_.difference(['a', 'b', 'c', 'd', 'e'], _.keys(templates)), [], basename);
-
-          var actual = templates.a({ 'people': ['fred', 'barney'] });
-          equal(actual.replace(/[\r\n]+/g, ''), '<ul><li>fred</li><li>barney</li></ul>', basename);
 
           delete _.templates;
           start();
@@ -908,9 +904,9 @@
         vm.runInContext(data.source, context);
 
         var templates = context.module.exports || { 'd': function() { return ''; } },
-            actual = templates.d({ 'name': 'fred' });
+            actual = templates.d({ 'name': 'fred & barney' });
 
-        equal(actual, '<span>hello fred!</span>', basename);
+        equal(actual, '<span>hello fred &amp; barney!</span>', basename);
 
         delete _.templates;
         start();
