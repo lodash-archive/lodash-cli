@@ -1386,15 +1386,7 @@
       source.push(
         '  }',
         '  else {',
-        '    (function() {',
-        '      var hasOwnProperty = {}.hasOwnProperty,',
-        '          object = root.templates || (root.templates = {});',
-        '      for (var key in templates) {',
-        '        if (hasOwnProperty.call(templates, key)) {',
-        '          object[key] = templates[key];',
-        '        }',
-        '      }',
-        '    }());',
+        '    root.templates = templates;',
         '  }'
       );
     }
