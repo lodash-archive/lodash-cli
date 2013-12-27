@@ -699,7 +699,6 @@
 
           equal(_.templates.b(object.b), 'hello larry!', basename);
           equal(_.templates.c(object.c), 'hello ES6', basename);
-          equal('e' in _.templates, false, basename);
 
           delete _.templates;
           start();
@@ -733,7 +732,7 @@
 
           var templates = _.templates;
           equal(moduleId, expectedId, basename);
-          deepEqual(_.difference(['a', 'b', 'c', 'd'], _.keys(templates)), [], basename);
+          deepEqual(_.difference(['a', 'b', 'c', 'd', 'e'], _.keys(templates)), [], basename);
 
           var actual = templates.a({ 'people': ['moe', 'larry'] });
           equal(actual.replace(/[\r\n]+/g, ''), '<ul><li>moe</li><li>larry</li></ul>', basename);
@@ -751,10 +750,6 @@
               basename = path.basename(data.outputPath, '.js'),
               context = createContext();
 
-          var object = {
-            'e': { 'name': 'mustache' }
-          };
-
           context.define = function(requires, factory) {
             factory(_);
             moduleId = requires[0];
@@ -764,7 +759,7 @@
           vm.runInContext(data.source, context);
 
           equal(moduleId, expectedId, basename);
-          equal(_.templates.e(object.e), 'hallå mustache!', basename);
+          equal(_.templates.f({ 'name': 'mustache' }), 'hallå mustache!', basename);
 
           delete _.templates;
           start();
@@ -900,10 +895,10 @@
       });
     });
 
-    asyncTest('should work without Lo-Dash in Node.js', function() {
+    asyncTest('should work with `moduleId=none`', function() {
       var start = _.after(2, _.once(QUnit.start));
 
-      build(['-s', 'template=' + path.join(templatePath, 'c.jst')], function(data) {
+      build(['-s', 'template=' + path.join(templatePath, 'd.jst'), 'moduleId=none'], function(data) {
         var basename = path.basename(data.outputPath, '.js'),
             context = createContext();
 
@@ -912,8 +907,10 @@
         context.require = function() { throw new ReferenceError; };
         vm.runInContext(data.source, context);
 
-        var templates = context.module.exports || { 'c': function() { return ''; } };
-        equal(templates.c({ 'name': 'moe' }), 'hello moe', basename);
+        var templates = context.module.exports || { 'd': function() { return ''; } },
+            actual = templates.d({ 'name': 'fred' });
+
+        equal(actual, '<span>hello fred!</span>', basename);
 
         delete _.templates;
         start();
@@ -923,14 +920,14 @@
     asyncTest('should not modify whitespace in templates', function() {
       var start = _.after(2, _.once(QUnit.start));
 
-      build(['-s', 'template=' + path.join(templatePath, 'd.jst')], function(data) {
+      build(['-s', 'template=' + path.join(templatePath, 'e.jst')], function(data) {
         var basename = path.basename(data.outputPath, '.js'),
             context = createContext();
 
         context._ = _;
         vm.runInContext(data.source, context);
 
-        equal(_.templates.d({ 'value': '1' }), 'function  () {\n;\n  return 1 ;\n} ;', basename);
+        equal(_.templates.e({ 'value': '1' }), 'function  () {\n;\n  return 1 ;\n} ;', basename);
         start();
       });
     });

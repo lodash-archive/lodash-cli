@@ -707,7 +707,7 @@
    * @returns {string} Returns the modified source.
    */
   function addCommandsToHeader(source, commands) {
-    return source.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *Lo-Dash [.$\w\-]+)(.*)/, function() {
+    return source.replace(getHeader(source), function(header) {
       // remove `node path/to/build.js` from `commands`
       if (reNode.test(commands[0])) {
         commands.splice(0, 2);
@@ -728,15 +728,17 @@
 
         return command;
       });
+
       // add build commands to copyright/license header
-      var parts = slice.call(arguments, 1);
-      return (
-        parts[0] +
-        parts[1] +
-        (parts[2] || '') +
-        parts[3] + ' (Custom Build)' + parts[4] + '\n' +
-        parts[1] + ' Build: `lodash ' + commands.join(' ') + '`'
-      );
+      return header.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *Lo-Dash [.$\w\-]+)(.*)/, function() {
+        return (
+          arguments[1] +
+          arguments[2] +
+          (arguments[3] || '') +
+          arguments[4] + ' (Custom Build)' + arguments[5] + '\n' +
+          arguments[2] + ' Build: `lodash ' + commands.join(' ') + '`'
+        );
+      });
     });
   }
 
@@ -1240,10 +1242,13 @@
   function buildTemplate(state) {
     var glob = require('glob'),
         moduleId = state.moduleId || 'lodash',
+        isStandalone = moduleId == 'none',
         pattern = state.templatePattern,
         settings = state.templateSettings;
 
     pattern || (pattern = path.join(cwd, '*.jst'));
+
+    var hr = '  /*--------------------------------------------------------------------------*/';
 
     var source = [
       ';(function() {',
@@ -1266,11 +1271,32 @@
       '  var freeModule = objectTypes[typeof module] && module && !module.nodeType && module;',
       '',
       '  var moduleExports = freeModule && freeModule.exports === freeExports && freeExports;',
-      '',
-      '  var _ = root._ || {};',
       ''
     ];
 
+    if (isStandalone) {
+      build(['exports=none', 'include=escape', 'iife=%output%', '-d', '-s'], function(data) {
+        var escapeSource = data.source;
+        escapeSource = removeHeader(escapeSource);
+        escapeSource = removeFunction(escapeSource, 'lodash');
+        escapeSource = removeAssignments(escapeSource);
+        escapeSource = cleanupSource(escapeSource);
+
+        source.push(
+          '',
+          escapeSource,
+          '',
+          "  var _ = { 'escape': escape };",
+          ''
+        );
+      });
+    }
+    else {
+      source.push(
+        '  var _ = root._ || {};',
+        ''
+      );
+    }
     glob(pattern, { 'sync': true }, function(exception, filePaths) {
       if (exception) {
         throw exception;
@@ -1314,27 +1340,63 @@
       );
     });
 
+    source.push("  if (typeof define == 'function' && typeof define.amd == 'object' && define.amd) {");
+
+    if (isStandalone) {
+      source.push(
+        '    define(function() {',
+        '      return templates;'
+      );
+    }
+    else {
+      source.push(
+        "    define(['" + moduleId + "'], function(lodash) {",
+        '      _ = lodash;',
+        '      lodash.templates = lodash.extend(lodash.templates || {}, templates);'
+      );
+    }
     source.push(
-      "  if (typeof define == 'function' && typeof define.amd == 'object' && define.amd) {",
-      "    define(['" + moduleId + "'], function(lodash) {",
-      '      _ = lodash;',
-      '      lodash.templates = lodash.extend(lodash.templates || {}, templates);',
       '    });',
-      '  } else if (freeExports && freeModule) {',
-      '    try {',
-      "      _ = require('" + moduleId + "');",
-      '    } catch(e) { }',
-      '',
+      '  }',
+      '  else if (freeExports && freeModule) {'
+    );
+
+    if (!isStandalone) {
+      source.push("    _ = require('" + moduleId + "');");
+    }
+    source.push(
       '    if (moduleExports) {',
       '      (freeModule.exports = templates).templates = templates;',
       '    } else {',
       '      freeExports.templates = templates;',
-      '    }',
-      '  } else if (_) {',
-      '    _.templates = _.extend(_.templates || {}, templates);',
-      '  }',
-      '}.call(this));'
+      '    }'
     );
+
+    if (isStandalone) {
+      source.push(
+        '  }',
+        '  else {',
+        '    (function() {',
+        '      var hasOwnProperty = {}.hasOwnProperty,',
+        '          object = root.templates || (root.templates = {});',
+        '      for (var key in templates) {',
+        '        if (hasOwnProperty.call(templates, key)) {',
+        '          object[key] = templates[key];',
+        '        }',
+        '      }',
+        '    }());',
+        '  }'
+      );
+    }
+    else {
+      source.push(
+        '  }',
+        '  else if (_) {',
+        '    _.templates = _.extend(_.templates || {}, templates);',
+        '  }'
+      );
+    }
+    source.push('}.call(this));');
 
     return source.join('\n');
   }
@@ -1386,7 +1448,7 @@
         })
         // remove unneeded horizontal rule comment separators
         .replace(/(\{\s*\n) *\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*\})/gm, '$1$2')
-        // remove trailing horizontal rule comments
+        // remove trailing horizontal rule comment separators
         .replace(/\s*\/\*-+\*\/\s*$/, '')
         // remove lines with just spaces and semicolons
         .replace(/^ *;\n/gm, '')
@@ -1659,6 +1721,17 @@
         (match == '}' && !_.contains(source, '}', index + 2) ? '' : '  ')
       ) + match;
     });
+  }
+
+  /**
+   * Gets the copyright/license header of `source`.
+   *
+   * @private
+   * @param {string} source The source to process.
+   * @returns {string} Returns the copyright/license header.
+   */
+  function getHeader(source) {
+    return _.result(/^(?:\s*\/\/.*|\s*\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\n/.exec(source), 0) || '';
   }
 
   /**
@@ -2185,6 +2258,17 @@
     });
 
     return source;
+  }
+
+  /**
+   * Removes the copyright/license header from `source`.
+   *
+   * @private
+   * @param {string} source The source to process.
+   * @returns {string} Returns the modified source.
+   */
+  function removeHeader(source) {
+    return source.replace(getHeader(source), '');
   }
 
   /**
@@ -4807,7 +4891,7 @@
     if (isIIFE) {
       source = (function() {
         var token = '%output%',
-            header = source.match(/^\/\**[\s\S]+?\*\/\n/) || '',
+            header = getHeader(source),
             index = iife.indexOf(token);
 
         return header + (index < 0
