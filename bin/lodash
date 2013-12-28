@@ -210,7 +210,7 @@
     'shuffle': ['baseRandom', 'forEach'],
     'size': ['keys'],
     'some': ['baseEach', 'createCallback', 'isArray'],
-    'sortBy': ['compareAscending', 'createCallback', 'forEach', 'getArray', 'getObject', 'isArray', 'map', 'releaseArray', 'releaseObject'],
+    'sortBy': ['compareAscending', 'compareMultipleAscending', 'createCallback', 'forEach', 'getObject', 'isArray', 'map', 'releaseObject'],
     'sortedIndex': ['createCallback', 'identity'],
     'tap': [],
     'template': ['defaults', 'escape', 'escapeStringChar', 'keys', 'values'],
@@ -236,6 +236,7 @@
     // private functions
     'baseBind': ['baseCreate', 'isObject', 'setBindData', 'slice'],
     'baseClone': ['assign', 'baseEach', 'forOwn', 'getArray', 'isArray', 'isObject', 'isNode', 'releaseArray', 'slice'],
+    'baseCompareAscending': [],
     'baseCreate': ['isNative', 'isObject', 'noop'],
     'baseCreateCallback': ['bind', 'identity', 'setBindData'],
     'baseCreateWrapper': ['baseCreate', 'isObject', 'slice', 'setBindData'],
@@ -250,7 +251,8 @@
     'cacheIndexOf': ['baseIndexOf'],
     'cachePush': [],
     'charAtCallback': [],
-    'compareAscending': [],
+    'compareAscending': ['baseCompareAscending'],
+    'compareMultipleAscending': ['baseCompareAscending'],
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
     'createWrapper': ['baseBind', 'baseCreateWrapper', 'isFunction', 'slice'],
     'createCache': ['cachePush', 'getObject', 'releaseObject'],
@@ -637,6 +639,7 @@
   var privateFuncs = [
     'baseBind',
     'baseClone',
+    'baseCompareAscending',
     'baseCreate',
     'baseCreateCallback',
     'baseCreateWrapper',
@@ -652,6 +655,7 @@
     'cachePush',
     'charAtCallback',
     'compareAscending',
+    'compareMultipleAscending',
     'createAggregator',
     'createWrapper',
     'createCache',
@@ -3884,6 +3888,8 @@
           }
           // replace `_.sortBy`
           if (!isLodash('sortBy')) {
+            _.pull(funcDepMap.sortBy, 'compareMultipleAscending', 'isArray', 'map');
+
             source = replaceFunction(source, 'sortBy', [
               'function sortBy(collection, callback, thisArg) {',
               '  var index = -1,',
@@ -3893,7 +3899,7 @@
               '  callback = lodash.createCallback(callback, thisArg, 3);',
               '  forEach(collection, function(value, key, collection) {',
               '    result[++index] = {',
-              "      'criteria': [callback(value, key, collection)],",
+              "      'criteria': callback(value, key, collection),",
               "      'index': index,",
               "      'value': value",
               '    };',
