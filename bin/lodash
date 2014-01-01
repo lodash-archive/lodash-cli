@@ -264,6 +264,7 @@
     'getObject': [],
     'isNative': [],
     'isNode': [],
+    'isWhitespaceAt': [],
     'iteratorTemplate': [],
     'lodashWrapper': [],
     'releaseArray': [],
@@ -272,7 +273,7 @@
     'shimIsPlainObject': ['forIn', 'isArguments', 'isFunction', 'isNode'],
     'shimKeys': ['createIterator'],
     'slice': [],
-    'trim': ['isNative'],
+    'trim': ['isNative', 'isWhitespaceAt'],
     'unescapeHtmlChar': [],
 
     // used by the `backbone` and `underscore` builds
@@ -668,6 +669,7 @@
     'getObject',
     'isNative',
     'isNode',
+    'isWhitespaceAt',
     'iteratorTemplate',
     'lodashWrapper',
     'releaseArray',
