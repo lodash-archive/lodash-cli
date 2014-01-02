@@ -183,7 +183,7 @@
     'memoize': ['isFunction'],
     'merge': ['baseCreateCallback', 'baseMerge', 'getArray', 'isObject', 'releaseArray', 'slice'],
     'min': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
-    'mixin': ['forEach', 'functions', 'isFunction', 'isObject', 'lodash'],
+    'mixin': ['functions', 'isFunction', 'isObject', 'lodash'],
     'noConflict': [],
     'noop': [],
     'now': ['isNative'],
@@ -766,46 +766,57 @@
       ? [
           'function mixin(object, source) {',
           '  if (!source) {',
-          '    ctor = lodashWrapper;',
           '    source = object;',
           '    object = lodash;',
           '  }',
-          '  var ctor = object,',
-          '      isFunc = isFunction(ctor);',
+          '  var index = -1,',
+          '      isFunc = isFunction(object),',
+          '      methodNames = functions(source),',
+          '      length = methodNames.length;',
           '',
-          '  forEach(functions(source), function(methodName) {',
-          '    var func = object[methodName] = source[methodName];',
+          '  while (++index < length) {',
+          '    var methodName = methodNames[index],',
+          '        func = object[methodName] = source[methodName];',
+          '',
           '    if (isFunc) {',
-          '      ctor.prototype[methodName] = function() {',
-          '        var args = [this.__wrapped__];',
-          '        push.apply(args, arguments);',
+          '      object.prototype[methodName] = (function(func) {',
+          '        return function() {',
+          '          var args = [this.__wrapped__];',
+          '          push.apply(args, arguments);',
           '',
-          '        var result = func.apply(object, args);',
-          '        if (this.__chain__) {',
-          '          result = new ctor(result);',
-          '          result.__chain__ = true;',
-          '        }',
-          '        return result;',
-          '      };',
+          '          var result = func.apply(object, args);',
+          '          if (this.__chain__) {',
+          '            result = new object(result);',
+          '            result.__chain__ = true;',
+          '          }',
+          '          return result;',
+          '        };',
+          '      }(func));',
           '    }',
-          '  });',
+          '  }',
           '}'
         ]
       : [
-          'function mixin(object) {',
-          '  forEach(functions(object), function(methodName) {',
-          '    var func = lodash[methodName] = object[methodName];',
+          'function mixin(source) {',
+          '  var index = -1,',
+          '      methodNames = functions(source),',
+          '      length = methodNames.length;',
           '',
-          '    lodash.prototype[methodName] = function() {',
-          '      var args = [this.__wrapped__];',
-          '      push.apply(args, arguments);',
+          '  while (++index < length) {',
+          '    var methodName = methodNames[index];',
+          '    lodash.prototype[methodName] = (function() {',
+          '      var func = lodash[methodName] = source[methodName];',
+          '      return function() {',
+          '        var args = [this.__wrapped__];',
+          '        push.apply(args, arguments);',
           '',
-          '      var result = func.apply(lodash, args);',
-          '      return this.__chain__',
-          '        ? new lodashWrapper(result, true)',
-          '        : result;',
-          '    };',
-          '  });',
+          '        var result = func.apply(lodash, args);',
+          '        return this.__chain__',
+          '          ? new lodashWrapper(result, true)',
+          '          : result;',
+          '      };',
+          '    }());',
+          '  }',
           '}'
         ]
     ).join('\n'));
@@ -1114,7 +1125,7 @@
           var code = [
             '',
             '  // wrap `_.mixin` so it works when provided only one argument',
-            '  mixin = (function(fn) {'
+            '  mixin = (function(func) {'
           ];
 
           if (isUnderscore) {
@@ -1124,7 +1135,7 @@
               '        source = object;',
               '        object = lodash;',
               '      }',
-              '      return fn(object, source);'
+              '      return func(object, source);'
             );
           } else {
             code.push(
@@ -1137,7 +1148,7 @@
               '        source = object;',
               '        object = lodash;',
               '      }',
-              '      return fn(object, source, options);'
+              '      return func(object, source, options);'
             );
           }
           code.push(
@@ -2118,11 +2129,6 @@
       '  // no operation performed',
       '}'
     ].join('\n'));
-
-    // replace `lodashWrapper` with `lodash` in `_.mixin`
-    source = source.replace(matchFunction(source, 'mixin'), function(match) {
-      return match.replace(/\blodashWrapper\b/, 'lodash');
-    });
 
     return source;
   }
@@ -3417,7 +3423,6 @@
         }
         if (isLegacy || isMobile || isUnderscore) {
           source = removeEsOptimization(source);
-
           _.pull(objDepMap.baseCreateCallback, 'support');
 
           _.each(['baseBind', 'baseCreateCallback', 'baseCreateWrapper'], function(funcName) {
@@ -3426,11 +3431,11 @@
         }
         if (_.contains(plusFuncs, 'chain') == !isUnderscore) {
           source = addUnderscoreChaining(source, isModularize);
+          _.pull(funcDepMap.mixin, 'isObject');
 
           if (!isModularize) {
             _.pull(funcDepMap.mixin, 'isFunction');
           }
-          _.pull(funcDepMap.mixin, 'isObject');
         }
         if (isUnderscore) {
           if (!isLodash('chain')) {
