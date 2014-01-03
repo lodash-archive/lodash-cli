@@ -223,17 +223,12 @@
       'values'
     ],
     'Strings': [
-      'escape',
-      'template',
-      'templateSettings',
       'trim',
       'trimLeft',
-      'trimRight',
-      'unescape'
+      'trimRight'
     ],
     'Utilities': [
       'constant',
-      'createCallback',
       'escape',
       'identity',
       'match',
