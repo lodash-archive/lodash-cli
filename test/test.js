@@ -222,6 +222,15 @@
       'transform',
       'values'
     ],
+    'Strings': [
+      'escape',
+      'template',
+      'templateSettings',
+      'trim',
+      'trimLeft',
+      'trimRight',
+      'unescape'
+    ],
     'Utilities': [
       'constant',
       'createCallback',
@@ -338,6 +347,9 @@
     'remove',
     'runInContext',
     'transform',
+    'trim',
+    'trimLeft',
+    'trimRight',
     'wrapperToString',
     'xor'
   ];

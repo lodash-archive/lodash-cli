@@ -37,7 +37,7 @@ function lodash(value) {
 lodashWrapper.prototype = lodash.prototype;
 
 // wrap `_.mixin` so it works when provided only one argument
-mixin = (function(fn) {
+mixin = (function(func) {
   return function(object, source, options) {
     if (!source || (!options && !functions(source).length)) {
       if (options == null) {
@@ -46,7 +46,7 @@ mixin = (function(fn) {
       source = object;
       object = lodash;
     }
-    return fn(object, source, options);
+    return func(object, source, options);
   };
 }(mixin));
 
@@ -158,6 +158,9 @@ lodash.throttle = require('lodash.throttle');
 lodash.times = require('lodash.times');
 lodash.toArray = require('lodash.toarray');
 lodash.transform = require('lodash.transform');
+lodash.trim = require('lodash.trim');
+lodash.trimLeft = require('lodash.trimleft');
+lodash.trimRight = require('lodash.trimright');
 lodash.unescape = require('lodash.unescape');
 lodash.union = require('lodash.union');
 lodash.uniq = require('lodash.uniq');

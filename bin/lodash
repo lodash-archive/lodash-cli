@@ -218,6 +218,9 @@
     'times': ['baseCreateCallback'],
     'toArray': ['isString', 'slice', 'values'],
     'transform': ['baseCreate', 'baseEach', 'createCallback', 'forOwn', 'isArray'],
+    'trim': ['isNative', 'trimmedLeftIndex', 'trimmedRightIndex'],
+    'trimLeft': ['isNative', 'trimmedLeftIndex'],
+    'trimRight': ['isNative', 'trimmedRightIndex'],
     'unescape': ['unescapeHtmlChar'],
     'union': ['baseFlatten', 'baseUniq'],
     'uniq': ['baseUniq', 'createCallback'],
@@ -272,7 +275,6 @@
     'shimIsPlainObject': ['forIn', 'isArguments', 'isFunction', 'isNode'],
     'shimKeys': ['createIterator'],
     'slice': [],
-    'trim': ['isNative', 'trimmedLeftIndex', 'trimmedRightIndex'],
     'trimmedLeftIndex': [],
     'trimmedRightIndex': [],
     'unescapeHtmlChar': [],
@@ -475,6 +477,15 @@
       'transform',
       'values'
     ],
+    'Strings': [
+      'escape',
+      'template',
+      'templateSettings',
+      'trim',
+      'trimLeft',
+      'trimRight',
+      'unescape'
+    ],
     'Utilities': [
       'constant',
       'createCallback',
@@ -634,6 +645,9 @@
     'remove',
     'runInContext',
     'transform',
+    'trim',
+    'trimLeft',
+    'trimRight',
     'wrapperToString',
     'xor'
   ];
@@ -678,7 +692,6 @@
     'shimIsPlainObject',
     'shimKeys',
     'slice',
-    'trim',
     'trimmedLeftIndex',
     'trimmedRightIndex',
     'unescapeHtmlChar'
@@ -1628,7 +1641,7 @@
    * @returns {string} Returns the fork.
    */
   function getBaseCreateFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!nativeCreate)[\s\S]+?\n *}\(\)\);\n\1}/), 0) || '';
+    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!nativeCreate)\b[\s\S]+?\n *}\(\)\);\n\1}/), 0) || '';
   }
 
   function getDepPath(dep, fromPath, depMap) {
@@ -1775,7 +1788,7 @@
    * @returns {string} Returns the fork.
    */
   function getIsArgumentsFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!support\.argsClass|!isArguments)[\s\S]+?\n *};\n\1}/), 0) || '';
+    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n *};\n\1}/), 0) || '';
   }
 
   /**
@@ -1799,7 +1812,7 @@
    * @returns {string} Returns the fork.
    */
   function getIsElementFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(!support\.dom[\s\S]+?\n *};\n\1}/), 0) || '';
+    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(!support\.dom\b[\s\S]+?\n *};\n\1}/), 0) || '';
   }
 
   /**
@@ -1889,7 +1902,29 @@
    * @returns {string} Returns the fork.
    */
   function getTrimFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(!nativeTrim[\s\S]+?\n *};\n\1}/), 0) || '';
+    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(!nativeTrim\b[\s\S]+?\n *};\n\1}/), 0) || '';
+  }
+
+  /**
+   * Gets the `trimLeft` fork from `source`.
+   *
+   * @private
+   * @param {string} source The source to inspect.
+   * @returns {string} Returns the fork.
+   */
+  function getTrimLeftFork(source) {
+    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(!nativeTrimLeft\b[\s\S]+?\n *};\n\1}/), 0) || '';
+  }
+
+  /**
+   * Gets the `trimRight` fork from `source`.
+   *
+   * @private
+   * @param {string} source The source to inspect.
+   * @returns {string} Returns the fork.
+   */
+  function getTrimRightFork(source) {
+    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(!nativeTrimRight\b[\s\S]+?\n *};\n\1}/), 0) || '';
   }
 
   /**
@@ -2160,7 +2195,7 @@
       source = source.replace(matchFunction(source, funcName), function(match) {
         return match
           .replace(/(?:\s*\/\/.*)*\n( *)var bindData *=[\s\S]+?\n\1}/, '')
-          .replace(/(?:\s*\/\/.*)*\n( *)if *\(bindData[\s\S]+?\n\1}/, '')
+          .replace(/(?:\s*\/\/.*)*\n( *)if *\(bindData\b[\s\S]+?\n\1}/, '')
           .replace(/(?:\s*\/\/.*)*\n.+?setBindData.+/, '')
       });
     });
@@ -2432,7 +2467,7 @@
     // remove function scaffolding, leaving most of its content
     source = source.replace(matchFunction(source, 'runInContext', true), function(match) {
       match = replaceIndent(match, 2, 1);
-      return match.replace(/^[\s\S]+?function runInContext[\s\S]+?context *= *context.+| *return lodash[\s\S]+$/g, '');
+      return match.replace(/^[\s\S]+?function runInContext\b[\s\S]+?context *= *context.+| *return lodash\b[\s\S]+$/g, '');
     });
 
     // cleanup adjusted source
@@ -2452,7 +2487,7 @@
    * @returns {string} Returns the modified source.
    */
   function removeSpliceObjectsFix(source) {
-    return source.replace(/(?:\s*\/\/.*)*\n( *)if *\(!support\.spliceObjects[\s\S]+?(?:\{\s*}|\n\1})/, '');
+    return source.replace(/(?:\s*\/\/.*)*\n( *)if *\(!support\.spliceObjects\b[\s\S]+?(?:\{\s*}|\n\1})/, '');
   }
 
   /**
@@ -2489,7 +2524,7 @@
     // remove `support.argsClass` from `_.isPlainObject`
     _.each(['shimIsPlainObject', 'isPlainObject'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
-        return match.replace(/\s*\|\|\s*\(!support\.argsClass[\s\S]+?\)\)/, '');
+        return match.replace(/\s*\|\|\s*\(!support\.argsClass\b[\s\S]+?\)\)/, '');
       });
     });
 
@@ -2539,7 +2574,7 @@
 
     // remove `support.enumErrorProps` from `iteratorTemplate`
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
-      return match.replace(/^(?: *\/\/.*\n)* *["'] *(?:<% *)?if *\(support\.enumErrorProps *(?:&&|\))(.+?\}(?:\\n)?["']|[\s\S]+?<% *} *(?:%>|["'])).+/gm, '');
+      return match.replace(/^(?: *\/\/.*\n)* *["'] *(?:<% *)?if *\(support\.enumErrorProps\b *(?:&&|\))(.+?\}(?:\\n)?["']|[\s\S]+?<% *} *(?:%>|["'])).+/gm, '');
     });
 
     return source;
@@ -2564,7 +2599,7 @@
 
     // remove `support.enumPrototypes` from `iteratorTemplate`
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
-      return match.replace(/^(?: *\/\/.*\n)* *["'] *(?:<% *)?if *\(support\.enumPrototypes *(?:&&|\))(.+?\}(?:\\n)?["']|[\s\S]+?<% *} *(?:%>|["'])).+/gm, '');
+      return match.replace(/^(?: *\/\/.*\n)* *["'] *(?:<% *)?if *\(support\.enumPrototypes\b *(?:&&|\))(.+?\}(?:\\n)?["']|[\s\S]+?<% *} *(?:%>|["'])).+/gm, '');
     });
 
     return source;
@@ -2583,13 +2618,13 @@
     // remove `support.nodeClass` from `baseClone` and `shimIsPlainObject`
     _.each(['baseClone', 'shimIsPlainObject'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
-        return match.replace(/\s*\|\|\s*\(!support\.nodeClass[\s\S]+?\)\)/, '');
+        return match.replace(/\s*\|\|\s*\(!support\.nodeClass\b[\s\S]+?\)\)/, '');
       });
     });
 
     // remove `support.nodeClass` from `baseIsEqual`
     source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
-      return match.replace(/\s*\|\|\s*\(!support\.nodeClass[\s\S]+?\)\)\)/, '');
+      return match.replace(/\s*\|\|\s*\(!support\.nodeClass\b[\s\S]+?\)\)\)/, '');
     });
 
     // remove `support.nodeClass` from `_.isElement`
@@ -2613,13 +2648,13 @@
     // remove `support.nonEnumArgs` from `_.keys`
     source = source.replace(matchFunction(source, 'keys'), function(match) {
       return match
-        .replace(/(?:\s*\|\|\s*)?\(support\.nonEnumArgs[\s\S]+?\)\)/, '')
+        .replace(/(?:\s*\|\|\s*)?\(support\.nonEnumArgs\b[\s\S]+?\)\)/, '')
         .replace(/\s*if *\(\s*\)[^}]+}/, '');
     });
 
     // remove `support.nonEnumArgs` from `iteratorTemplate`
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
-      return match.replace(/^(?: *\/\/.*\n)*( *["'] *)<% *if *\(support\.nonEnumArgs[\s\S]+?\1<% *} *%>.+/m, '');
+      return match.replace(/^(?: *\/\/.*\n)*( *["'] *)<% *if *\(support\.nonEnumArgs\b[\s\S]+?\1<% *} *%>.+/m, '');
     });
 
     return source;
@@ -2639,7 +2674,7 @@
 
     // remove `support.nonEnumShadows` from `iteratorTemplate`
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
-      return match.replace(/^(?: *\/\/.*\n)* *["']( *)<% *if *\(support\.nonEnumShadows[\s\S]+?["']\1<% *} *%>.+/m, '');
+      return match.replace(/^(?: *\/\/.*\n)* *["']( *)<% *if *\(support\.nonEnumShadows\b[\s\S]+?["']\1<% *} *%>.+/m, '');
     });
 
     return source;
@@ -2657,7 +2692,7 @@
 
     // remove `support.ownLast` from `shimIsPlainObject`
     source = source.replace(matchFunction(source, 'shimIsPlainObject'), function(match) {
-      return match.replace(/(?:\s*\/\/.*)*\n( *)if *\(support\.ownLast[\s\S]+?\n\1}/, '');
+      return match.replace(/(?:\s*\/\/.*)*\n( *)if *\(support\.ownLast\b[\s\S]+?\n\1}/, '');
     });
 
     return source;
@@ -2689,7 +2724,7 @@
     // remove `support.unindexedChars` from `_.at` and `baseEach`
     _.each(['at', 'baseEach'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
-        return match.replace(/^( *)if *\(support\.unindexedChars[\s\S]+?\n\1}\n/m, '');
+        return match.replace(/^( *)if *\(support\.unindexedChars\b[\s\S]+?\n\1}\n/m, '');
       });
     });
 
@@ -2739,6 +2774,28 @@
    */
   function removeTrimFork(source) {
     return source.replace(getTrimFork(source), '');
+  }
+
+  /**
+   * Removes the `trimLeft` fork from `source`.
+   *
+   * @private
+   * @param {string} source The source to process.
+   * @returns {string} Returns the modified source.
+   */
+  function removeTrimLeftFork(source) {
+    return source.replace(getTrimLeftFork(source), '');
+  }
+
+  /**
+   * Removes the `trimRight` fork from `source`.
+   *
+   * @private
+   * @param {string} source The source to process.
+   * @returns {string} Returns the modified source.
+   */
+  function removeTrimRightFork(source) {
+    return source.replace(getTrimRightFork(source), '');
   }
 
   /**
@@ -3345,6 +3402,8 @@
             'baseCreate': [getBaseCreateFork, removeBaseCreateFork],
             'isArguments': [getIsArgumentsFork, removeIsArgumentsFork],
             'trim': [getTrimFork, removeTrimFork],
+            'trimLeft': [getTrimLeftFork, removeTrimLeftFork],
+            'trimRight': [getTrimRightFork, removeTrimRightFork]
           },
           function(funcs, funcName) {
             var getFork = funcs[0],
@@ -4652,7 +4711,7 @@
 
           // remove `lodash` branch in `_.mixin`
           source = source.replace(matchFunction(source, 'mixin'), function(match) {
-            return match.replace(/^(?: *\/\/.*\n)*( *)if *\(!source[\s\S]+?\n\1}\n+/m, '');
+            return match.replace(/^(?: *\/\/.*\n)*( *)if *\(!source\b[\s\S]+?\n\1}\n+/m, '');
           });
 
           // replace `lodash` use in `_.templateSettings.imports`
@@ -4693,10 +4752,10 @@
       }
       // customize Lo-Dash's export bootstrap
       if (!isAMD || isModularize) {
-        source = source.replace(/^(?: *\/\/.*\n)*( *)if *\(typeof +define[\s\S]+?else /m, '$1');
+        source = source.replace(/^(?: *\/\/.*\n)*( *)if *\(typeof +define\b[\s\S]+?else /m, '$1');
       }
       if (!isNode || isModularize) {
-        source = source.replace(/^(?: *\/\/.*\n)*( *)if *\(moduleExports[\s\S]+?else *\{([\s\S]+?\n)\1}\n+/m, '$1$2');
+        source = source.replace(/^(?: *\/\/.*\n)*( *)if *\(moduleExports\b[\s\S]+?else *\{([\s\S]+?\n)\1}\n+/m, '$1$2');
       }
       if (!isCommonJS || isModularize) {
         source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)}?) *else *\{)?\s*freeExports\.[$\w]+ *=[\s\S]+?(?:\n\2})?\n+/m, function(match, prelude) {
@@ -4842,7 +4901,9 @@
         'isElement': removeIsElementFork,
         'isFunction': removeIsFunctionFork,
         'now': removeNowFork,
-        'trim': removeTrimFork
+        'trim': removeTrimFork,
+        'trimLeft': removeTrimLeftFork,
+        'trimRight': removeTrimRightFork
       },
       function(removeFork, funcName) {
         if (isExcluded(funcName)) {
@@ -4859,7 +4920,7 @@
 
       // remove code used to resolve unneeded `support` properties
       source = source.replace(matchProp(source, 'support'), function(match) {
-        return match.replace(/^ *\(function[\s\S]+?\n(( *)var ctor *=[\s\S]+?(?:\n *for.+)+\n)([\s\S]+?)}\(1\)\);\n/m, function(match, setup, indent, body) {
+        return match.replace(/^ *\(function\b[\s\S]+?\n(( *)var ctor *=[\s\S]+?(?:\n *for.+)+\n)([\s\S]+?)}\(1\)\);\n/m, function(match, setup, indent, body) {
           var modified = setup;
 
           if (!/\.spliceObjects *=(?! *(?:false|true))/.test(body)) {
