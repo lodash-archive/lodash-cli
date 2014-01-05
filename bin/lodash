@@ -1136,7 +1136,9 @@
 
         // remove unneeded method and alias assignments
         _.each(_.difference(allFuncs, buildFuncs), function(funcName) {
-          source = source.replace(RegExp('^(?: *//.*\\s*)* *lodash(?:\\.prototype)?\\.[$\\w]+ *= *' + funcName + ';\\n', 'gm'), '');
+          source = source.replace(RegExp('^( *//.*\\n)* *lodash(?:\\.prototype)?\\.[$\\w]+ *= *' + funcName + ';\\n(\\n)?', 'gm'), function(match, comment, newline) {
+            return !newline && comment || '';
+          });
         });
 
         // add category namespaces to each lodash function assignment
@@ -4822,7 +4824,7 @@
     if (!isTemplate) {
       if (isExcluded(isModularize ? 'lodash' : 'lodashWrapper')) {
         // remove `lodashWrapper.prototype` assignment
-        source = source.replace(/(?:\s*\/\/.*)*\n *lodashWrapper\.prototype *=.+/, '');
+        source = source.replace(/(?: *\/\/.*\n)* *lodashWrapper\.prototype *=.+\n/, '');
       }
       if (isExcluded(isModularize ? 'lodash' : 'mixin')) {
         source = removeMixinCalls(source);
@@ -4890,7 +4892,9 @@
             source = removeFromCreateIterator(source, funcName);
 
             // remove method and alias assignments
-            source = source.replace(RegExp('^(?: *//.*\\s*)* *lodash(?:\\.prototype)?\\.[$\\w]+ *= *' + funcName + ';\\n', 'gm'), '');
+            source = source.replace(RegExp('^( *//.*\\n)* *lodash(?:\\.prototype)?\\.[$\\w]+ *= *' + funcName + ';\\n(\\n)?', 'gm'), function(match, comment, newline) {
+              return !newline && comment || '';
+            });
           }
         }
       });
