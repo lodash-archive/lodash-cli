@@ -112,6 +112,7 @@
     'bind': ['createWrapper', 'slice'],
     'bindAll': ['baseFlatten', 'createWrapper', 'functions'],
     'bindKey': ['createWrapper', 'slice'],
+    'capitalize': [],
     'chain': ['lodashWrapper'],
     'clone': ['baseClone', 'baseCreateCallback'],
     'cloneDeep': ['baseClone', 'baseCreateCallback'],
@@ -478,6 +479,7 @@
       'values'
     ],
     'Strings': [
+      'capitalize',
       'trim',
       'trimLeft',
       'trimRight'
@@ -627,6 +629,7 @@
   var lodashOnlyFuncs = [
     'at',
     'bindKey',
+    'capitalize',
     'cloneDeep',
     'constant',
     'create',
@@ -1445,17 +1448,6 @@
     source.push('}.call(this));');
 
     return source.join('\n');
-  }
-
-  /**
-   * Capitalizes a given string.
-   *
-   * @private
-   * @param {string} string The string to capitalize.
-   * @returns {string} Returns the capitalized string.
-   */
-  function capitalize(string) {
-    return string[0].toUpperCase() + string.slice(1);
   }
 
   /**
@@ -3225,7 +3217,7 @@
         value = optionToArray('category', value);
         if (value.length) {
           result = _.union(value.map(function(category) {
-            return capitalize(category.toLowerCase());
+            return _.capitalize(category.toLowerCase());
           }));
         }
         return result;

@@ -57,6 +57,7 @@ lodash.at = require('lodash.at');
 lodash.bind = require('lodash.bind');
 lodash.bindAll = require('lodash.bindall');
 lodash.bindKey = require('lodash.bindkey');
+lodash.capitalize = require('lodash.capitalize');
 lodash.clone = require('lodash.clone');
 lodash.cloneDeep = require('lodash.clonedeep');
 lodash.compact = require('lodash.compact');

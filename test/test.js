@@ -314,6 +314,7 @@
   var lodashOnlyFuncs = [
     'at',
     'bindKey',
+    'capitalize',
     'cloneDeep',
     'constant',
     'create',
@@ -364,17 +365,6 @@
   });
 
   /*--------------------------------------------------------------------------*/
-
-  /**
-   * Capitalizes a given string.
-   *
-   * @private
-   * @param {string} string The string to capitalize.
-   * @returns {string} Returns the capitalized string.
-   */
-  function capitalize(string) {
-    return string[0].toUpperCase() + string.slice(1);
-  }
 
   /**
    * Creates a context object to use with `vm.runInContext`.
@@ -1161,7 +1151,7 @@
           }
           _.each(['arrays', 'chaining', 'collections', 'functions', 'objects', 'utilities'], function(category) {
             var categoryModule = require(path.join(outputPath, category)),
-                funcNames = categoryMap[capitalize(category)];
+                funcNames = categoryMap[_.capitalize(category)];
 
             _.each(funcNames, function(funcName) {
               var aliases = getAliases(funcName);
@@ -2134,7 +2124,7 @@
             if (/\bcategory=/.test(command)) {
               var categories = command.match(/\bcategory=(\S*)/)[1].split(/, */);
               funcNames = (funcNames || []).concat(categories.map(function(category) {
-                return capitalize(category.toLowerCase());
+                return _.capitalize(category.toLowerCase());
               }));
             }
             // add function names required by Backbone and Underscore builds
