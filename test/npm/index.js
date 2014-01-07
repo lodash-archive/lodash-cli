@@ -151,6 +151,7 @@ lodash.result = require('lodash.result');
 lodash.sample = require('lodash.sample');
 lodash.shuffle = require('lodash.shuffle');
 lodash.size = require('lodash.size');
+lodash.slice = require('lodash.slice');
 lodash.some = require('lodash.some');
 lodash.sortBy = require('lodash.sortby');
 lodash.sortedIndex = require('lodash.sortedindex');

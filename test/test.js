@@ -118,6 +118,7 @@
       'range',
       'remove',
       'rest',
+      'slice',
       'sortedIndex',
       'union',
       'uniq',
@@ -342,6 +343,7 @@
     'pull',
     'remove',
     'runInContext',
+    'slice',
     'transform',
     'trim',
     'trimLeft',
@@ -1408,7 +1410,7 @@
           deepEqual(actual, [], '_.' + methodName + ' should return an empty array when no `array` argument is provided: ' + basename);
         });
 
-        _.each(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'match', 'noop', 'now', 'property', 'unzip', 'zipObject'], function(methodName) {
+        _.each(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'match', 'noop', 'now', 'property', 'slice', 'unzip', 'zipObject'], function(methodName) {
           equal(methodName in lodash, false, 'should not expose _.' + methodName + ': ' + basename);
         });
 

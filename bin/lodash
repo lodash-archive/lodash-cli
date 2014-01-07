@@ -210,6 +210,7 @@
     'sample': ['baseRandom', 'isString', 'shuffle', 'values'],
     'shuffle': ['baseRandom', 'forEach'],
     'size': ['keys'],
+    'slice': [],
     'some': ['baseEach', 'createCallback', 'isArray'],
     'sortBy': ['compareAscending', 'compareMultipleAscending', 'createCallback', 'forEach', 'getObject', 'isArray', 'map', 'releaseObject'],
     'sortedIndex': ['createCallback', 'identity'],
@@ -275,7 +276,6 @@
     'setBindData': ['isNative', 'noop'],
     'shimIsPlainObject': ['forIn', 'isArguments', 'isFunction', 'isNode'],
     'shimKeys': ['createIterator'],
-    'slice': [],
     'trimmedLeftIndex': [],
     'trimmedRightIndex': [],
     'unescapeHtmlChar': [],
@@ -372,6 +372,7 @@
       'range',
       'remove',
       'rest',
+      'slice',
       'sortedIndex',
       'union',
       'uniq',
@@ -657,6 +658,7 @@
     'pull',
     'remove',
     'runInContext',
+    'slice',
     'transform',
     'trim',
     'trimLeft',
@@ -4684,7 +4686,7 @@
 
           // unexpose Lo-Dash methods for the Underscore build
           source = source.replace(getMethodAssignments(source), function(match) {
-            return _.reduce(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'match', 'noop', 'now', 'property', 'unzip', 'zipObject'], function(result, funcName) {
+            return _.reduce(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'match', 'noop', 'now', 'property', 'slice', 'unzip', 'zipObject'], function(result, funcName) {
               return isLodash(funcName)
                 ? result
                 : result.replace(RegExp('^(?: *//.*\\s*)* *lodash\\.' + funcName + ' *=[\\s\\S]+?;\\n', 'm'), '');
