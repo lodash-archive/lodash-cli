@@ -220,9 +220,9 @@
     'times': ['baseCreateCallback'],
     'toArray': ['isString', 'slice', 'values'],
     'transform': ['baseCreate', 'baseEach', 'createCallback', 'forOwn', 'isArray'],
-    'trim': ['isNative', 'trimmedLeftIndex', 'trimmedRightIndex'],
-    'trimLeft': ['isNative', 'trimmedLeftIndex'],
-    'trimRight': ['isNative', 'trimmedRightIndex'],
+    'trim': ['isNative', 'shimTrim'],
+    'trimLeft': ['isNative', 'shimTrimLeft'],
+    'trimRight': ['isNative', 'shimTrimRight'],
     'unescape': ['unescapeHtmlChar'],
     'union': ['baseFlatten', 'baseUniq'],
     'uniq': ['baseUniq', 'createCallback'],
@@ -256,6 +256,8 @@
     'cacheIndexOf': ['baseIndexOf'],
     'cachePush': [],
     'charAtCallback': [],
+    'charsLeftIndex': [],
+    'charsRightIndex': [],
     'compareAscending': ['baseCompareAscending'],
     'compareMultipleAscending': ['baseCompareAscending'],
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
@@ -276,6 +278,9 @@
     'setBindData': ['isNative', 'noop'],
     'shimIsPlainObject': ['forIn', 'isArguments', 'isFunction', 'isNode'],
     'shimKeys': ['createIterator'],
+    'shimTrim':  ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
+    'shimTrimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
+    'shimTrimRight': ['charsRightIndex', 'trimmedRightIndex'],
     'trimmedLeftIndex': [],
     'trimmedRightIndex': [],
     'unescapeHtmlChar': [],
@@ -686,6 +691,8 @@
     'cacheIndexOf',
     'cachePush',
     'charAtCallback',
+    'charsLeftIndex',
+    'charsRightIndex',
     'compareAscending',
     'compareMultipleAscending',
     'createAggregator',
@@ -706,7 +713,9 @@
     'setBindData',
     'shimIsPlainObject',
     'shimKeys',
-    'slice',
+    'shimTrim',
+    'shimTrimLeft',
+    'shimTrimRight',
     'trimmedLeftIndex',
     'trimmedRightIndex',
     'unescapeHtmlChar'
@@ -1901,39 +1910,6 @@
   }
 
   /**
-   * Gets the `trim` fork from `source`.
-   *
-   * @private
-   * @param {string} source The source to inspect.
-   * @returns {string} Returns the fork.
-   */
-  function getTrimFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(!nativeTrim\b[\s\S]+?\n *};\n\1}/), 0) || '';
-  }
-
-  /**
-   * Gets the `trimLeft` fork from `source`.
-   *
-   * @private
-   * @param {string} source The source to inspect.
-   * @returns {string} Returns the fork.
-   */
-  function getTrimLeftFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(!nativeTrimLeft\b[\s\S]+?\n *};\n\1}/), 0) || '';
-  }
-
-  /**
-   * Gets the `trimRight` fork from `source`.
-   *
-   * @private
-   * @param {string} source The source to inspect.
-   * @returns {string} Returns the fork.
-   */
-  function getTrimRightFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(!nativeTrimRight\b[\s\S]+?\n *};\n\1}/), 0) || '';
-  }
-
-  /**
    * Creates a sorted array of all variables defined outside of Lo-Dash functions.
    *
    * @private
@@ -2772,39 +2748,6 @@
   }
 
   /**
-   * Removes the `trim` fork from `source`.
-   *
-   * @private
-   * @param {string} source The source to process.
-   * @returns {string} Returns the modified source.
-   */
-  function removeTrimFork(source) {
-    return source.replace(getTrimFork(source), '');
-  }
-
-  /**
-   * Removes the `trimLeft` fork from `source`.
-   *
-   * @private
-   * @param {string} source The source to process.
-   * @returns {string} Returns the modified source.
-   */
-  function removeTrimLeftFork(source) {
-    return source.replace(getTrimLeftFork(source), '');
-  }
-
-  /**
-   * Removes the `trimRight` fork from `source`.
-   *
-   * @private
-   * @param {string} source The source to process.
-   * @returns {string} Returns the modified source.
-   */
-  function removeTrimRightFork(source) {
-    return source.replace(getTrimRightFork(source), '');
-  }
-
-  /**
    * Removes a variable, of the given variable name, from `source`.
    *
    * @private
@@ -3385,31 +3328,31 @@
             return match.replace(/\bnow\(\)/g, '+new Date');
           });
 
-          // replace `_.isPlainObject` with `shimIsPlainObject`
-          funcDepMap.isPlainObject = funcDepMap.shimIsPlainObject.slice();
-          objDepMap.isPlainObject = objDepMap.shimIsPlainObject.slice();
-          varDepMap.isPlainObject = varDepMap.shimIsPlainObject.slice();
+          // replace methods with their shim counterparts
+          _.each(['isPlainObject', 'trim', 'trimLeft', 'trimRight'], function(funcName) {
+            var shimName = 'shim' + _.capitalize(funcName);
+            funcDepMap[funcName] = _.slice(funcDepMap[shimName]);
+            objDepMap[funcName] = _.slice(objDepMap[shimName]);
+            varDepMap[funcName] = _.slice(varDepMap[shimName]);
 
-          source = source.replace(
-            matchFunction(source, 'isPlainObject').replace(/^ *var isPlainObject *= */m, ''),
-            matchFunction(source, 'shimIsPlainObject').replace(/^ *function shimIsPlainObject/m, 'function').replace(/\s*$/, ';\n')
-          );
+            source = source.replace(
+              matchFunction(source, funcName).replace(RegExp('^ *var ' + funcName + ' *= *', 'm'), ''),
+              matchFunction(source, shimName).replace(RegExp('^ *function ' + shimName, 'm'), 'function').replace(/\s*$/, ';\n')
+            );
+          });
 
           // replace `_.keys` with `shimKeys`
-          funcDepMap.keys = funcDepMap.shimKeys.slice();
+          funcDepMap.keys = _.slice(funcDepMap.shimKeys);
 
           source = source.replace(
             matchFunction(source, 'keys').replace(/^ *var keys.*= */m, ''),
             matchFunction(source, 'shimKeys').replace(/^ *var shimKeys *= */m, '')
           );
 
-          // replace `baseCreate`, `trim`, and `_.isArguments` with their forks
+          // replace `baseCreate` and `_.isArguments` with their forks
           _.forOwn({
             'baseCreate': [getBaseCreateFork, removeBaseCreateFork],
-            'isArguments': [getIsArgumentsFork, removeIsArgumentsFork],
-            'trim': [getTrimFork, removeTrimFork],
-            'trimLeft': [getTrimLeftFork, removeTrimLeftFork],
-            'trimRight': [getTrimRightFork, removeTrimRightFork]
+            'isArguments': [getIsArgumentsFork, removeIsArgumentsFork]
           },
           function(funcs, funcName) {
             var getFork = funcs[0],
@@ -4908,10 +4851,7 @@
         'isArray': removeIsArrayFork,
         'isElement': removeIsElementFork,
         'isFunction': removeIsFunctionFork,
-        'now': removeNowFork,
-        'trim': removeTrimFork,
-        'trimLeft': removeTrimLeftFork,
-        'trimRight': removeTrimRightFork
+        'now': removeNowFork
       },
       function(removeFork, funcName) {
         if (isExcluded(funcName)) {
