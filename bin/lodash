@@ -313,6 +313,8 @@
 
   /** Used to track variable dependencies of identifiers */
   var varDependencyMap = createMap({
+    'assign': ['indexTypes'],
+    'at': ['indexTypes'],
     'baseClone': ['hasOwnProperty', 'toString'],
     'baseCreate': ['root'],
     'baseDifference': ['largeArraySize'],
@@ -320,10 +322,13 @@
     'baseUniq': ['largeArraySize'],
     'cacheIndexOf': ['keyPrefix'],
     'cachePush': ['keyPrefix'],
+    'clone': ['indexTypes'],
     'countBy': ['hasOwnProperty'],
     'createIterator': ['hasOwnProperty', 'indicatorObject', 'objectTypes', 'toString'],
+    'defaults': ['indexTypes'],
     'escape': ['reUnescapedHtml'],
     'escapeHtmlChar': ['htmlEscapes'],
+    'flatten': ['indexTypes'],
     'getArray': ['arrayPool'],
     'getObject': ['objectPool'],
     'groupBy': ['hasOwnProperty'],
@@ -345,7 +350,10 @@
     'isRegExp': ['objectTypes', 'toString'],
     'isString': ['toString'],
     'lodash': ['hasOwnProperty'],
+    'max': ['indexTypes'],
+    'min': ['indexTypes'],
     'memoize': ['hasOwnProperty', 'keyPrefix'],
+    'merge': ['indexTypes'],
     'parseInt': ['root'],
     'releaseArray': ['arrayPool', 'maxPoolSize'],
     'releaseObject': ['maxPoolSize', 'objectPool'],
@@ -356,7 +364,8 @@
     'template': ['reInterpolate'],
     'templateSettings': ['reEscape', 'reEvaluate', 'reInterpolate'],
     'unescape': ['reEscapedHtml'],
-    'unescapeHtmlChar': ['htmlUnescapes']
+    'unescapeHtmlChar': ['htmlUnescapes'],
+    'uniq': ['indexTypes']
   });
 
   /** Used to track the category of identifiers */
@@ -3508,12 +3517,16 @@
           // replace `_.assign`
           if (!isLodash('assign')) {
             source = replaceFunction(source, 'assign', [
-              'function assign(object) {',
+              'function assign(object, source, guard) {',
               '  if (!object) {',
               '    return object;',
               '  }',
-              '  for (var argsIndex = 1, argsLength = arguments.length; argsIndex < argsLength; argsIndex++) {',
-              '    var source = arguments[argsIndex];',
+              '  var args = arguments,',
+              '      argsIndex = 0,',
+              '      argsLength = indexTypes[typeof guard] && args[3] && args[3][guard] === source ? 2 : args.length;',
+              '',
+              '  while (++argsIndex < argsLength) {',
+              '    source = args[argsIndex];',
               '    if (source) {',
               '      for (var key in source) {',
               '        object[key] = source[key];',
@@ -3527,6 +3540,7 @@
           // replace `_.clone`
           if (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep')) {
             _.pull(funcDepMap.clone, 'baseClone').push('assign', 'isArray', 'isObject', 'slice');
+            _.pull(varDepMap.clone, 'indexTypes');
 
             source = replaceFunction(source, 'clone', [
               'function clone(value) {',
@@ -3559,12 +3573,16 @@
           // replace `_.defaults`
           if (!isLodash('defaults')) {
             source = replaceFunction(source, 'defaults', [
-              'function defaults(object) {',
+              'function defaults(object, source, guard) {',
               '  if (!object) {',
               '    return object;',
               '  }',
-              '  for (var argsIndex = 1, argsLength = arguments.length; argsIndex < argsLength; argsIndex++) {',
-              '    var source = arguments[argsIndex];',
+              '  var args = arguments,',
+              '      argsIndex = 0,',
+              '      argsLength = indexTypes[typeof guard] && args[3] && args[3][guard] === source ? 2 : args.length;',
+              '',
+              '  while (++argsIndex < argsLength) {',
+              '    source = args[argsIndex];',
               '    if (source) {',
               '      for (var key in source) {',
               "        if (typeof object[key] == 'undefined') {",
@@ -3661,6 +3679,7 @@
           // replace `_.flatten`
           if (!isLodash('flatten')) {
             _.pull(funcDepMap.flatten, 'map');
+            _.pull(varDepMap.flatten, 'indexTypes');
 
             source = replaceFunction(source, 'flatten', [
               'function flatten(array, isShallow) {',
