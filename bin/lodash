@@ -4391,58 +4391,46 @@
               !isLodash('forIn') && !isLodash('forInRight') &&
               !isLodash('forOwn') && !isLodash('forOwnRight')) {
 
-            _.each(['baseEach', 'forEach', 'forIn', 'forInRight', 'forOwn', 'forOwnRight'], function(funcName) {
-              (varDepMap[funcName] || (varDepMap[funcName] = [])).push('indicatorObject');
+            source = source.replace(matchVar(source, 'idCounter'), function(match) {
+              return match + [
+                '',
+                '  /** Used by methods to exit iteration */',
+                "  var breakIndicator = '__lodash_break_1335248838000__';",
+                ''
+              ].join('\n');
+            });
 
+            source = source.replace(matchFunction(source, 'createIterator'), function(match) {
+              return match.replace(/isArguments,/g, 'breakIndicator, $&');
+            });
+
+            _.each(['baseEach', 'forEach', 'forIn', 'forInRight', 'forOwn', 'forOwnRight'], function(funcName) {
               source = source.replace(matchFunction(source, funcName), function(match) {
-                return match.replace(/=== *false/g, '=== indicatorObject');
+                return match.replace(/=== *false/g, '=== breakIndicator');
               });
             });
 
-            // add `indicatorObject` to `createIterator`
-            source = source.replace(matchFunction(source, 'createIterator'), function(match) {
-              return match.replace(/isArguments,/g, 'indicatorObject, $&');
-            });
-
-            // modify functions that use `_.forEach` to use the private `indicatorObject`
-            _.each(['findLast', 'forEachRight', 'transform'], function(funcName) {
-              (varDepMap[funcName] || (varDepMap[funcName] = [])).push('indicatorObject');
-            });
-
-            // modify functions that use `_.forIn` to use the private `indicatorObject`
-            _.each(['baseIsEqual', 'shimIsPlainObject'], function(funcName) {
-              (varDepMap[funcName] || (varDepMap[funcName] = [])).push('indicatorObject');
-            });
-
-            // modify functions that use `_.forOwn` to use the private `indicatorObject`
-            _.each(['contains', 'every', 'find', 'findKey', 'some'], function(funcName) {
-              (varDepMap[funcName] || (varDepMap[funcName] = [])).push('indicatorObject');
-            });
-
-            // modify functions that use `_.forOwnRight` to use the private `indicatorObject`
-            (varDepMap.findLastKey || (varDepMap.findLastKey = [])).push('indicatorObject');
-
             _.each(['forEachRight', 'transform'], function(funcName) {
               source = source.replace(matchFunction(source, funcName), function(match) {
-                return match.replace(/return callback[^)]+\)/, '$& === false && indicatorObject');
+                return match.replace(/return callback[^)]+\)/, '$& === false && breakIndicator');
               });
             });
 
             _.each(['baseIsEqual', 'every'], function(funcName) {
               source = source.replace(matchFunction(source, funcName), function(match) {
-                return match.replace(/\(result *= *(.+?)\);/g, '!(result = $1) && indicatorObject;');
+                return match.replace(/\(result *= *(.+?)\);/g, '!(result = $1) && breakIndicator;');
               });
             });
 
             _.each(['find', 'findKey', 'findLast', 'findLastKey', 'shimIsPlainObject'], function(funcName) {
               source = source.replace(matchFunction(source, funcName), function(match) {
-                return match.replace(/return false/, 'return indicatorObject');
+                return match.replace(/return false/, 'return breakIndicator');
               });
             });
 
             _.each(['contains', 'some'], function(funcName) {
               source = source.replace(matchFunction(source, funcName), function(match) {
-                return match.replace(/!\(result *= *(.+?)\);/, '(result = $1) && indicatorObject;');
+                return match.replace(/!\(result *= *(.+?)\);/, '(result = $1) && breakIndicator;');
               });
             });
           }
