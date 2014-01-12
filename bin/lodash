@@ -263,7 +263,7 @@
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
     'createWrapper': ['baseBind', 'baseCreateWrapper', 'isFunction', 'slice'],
     'createCache': ['cachePush', 'getObject', 'releaseObject'],
-    'createIterator': ['baseCreateCallback', 'isArguments', 'iteratorTemplate'],
+    'createIterator': ['baseCreateCallback', 'isArguments', 'isObject', 'iteratorTemplate'],
     'escapeHtmlChar': [],
     'escapeStringChar': [],
     'getArray': [],
@@ -313,30 +313,16 @@
 
   /** Used to track variable dependencies of identifiers */
   var varDependencyMap = createMap({
-    'assign': ['indexTypes'],
-    'at': ['indexTypes'],
     'baseCreate': ['root'],
-    'baseIsEqual': ['objectTypes'],
-    'clone': ['indexTypes'],
-    'createIterator': ['objectTypes'],
-    'defaults': ['indexTypes'],
-    'flatten': ['indexTypes'],
     'getArray': ['arrayPool'],
     'getObject': ['objectPool'],
     'isFinite': ['root'],
-    'isObject': ['objectTypes'],
-    'isRegExp': ['objectTypes'],
-    'max': ['indexTypes'],
-    'min': ['indexTypes'],
-    'merge': ['indexTypes'],
     'parseInt': ['root'],
     'releaseArray': ['arrayPool'],
     'releaseObject': ['objectPool'],
-    'root': ['objectTypes'],
     'support': ['root'],
     'template': ['reInterpolate'],
-    'templateSettings': ['reEscape', 'reEvaluate', 'reInterpolate'],
-    'uniq': ['indexTypes']
+    'templateSettings': ['reEscape', 'reEvaluate', 'reInterpolate']
   });
 
   /** Used to track the category of identifiers */
@@ -3494,8 +3480,12 @@
               '  }',
               '  var args = arguments,',
               '      argsIndex = 0,',
-              '      argsLength = indexTypes[typeof guard] && args[3] && args[3][guard] === source ? 2 : args.length;',
+              '      argsLength = args.length,',
+              '      type = typeof guard;',
               '',
+              "  if ((type == 'number' || type == 'string') && args[3] && args[3][guard] === source) {",
+              '    argsLength = 2;',
+              '  }',
               '  while (++argsIndex < argsLength) {',
               '    source = args[argsIndex];',
               '    if (source) {',
@@ -3511,7 +3501,6 @@
           // replace `_.clone`
           if (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep')) {
             _.pull(funcDepMap.clone, 'baseClone').push('assign', 'isArray', 'isObject', 'slice');
-            _.pull(varDepMap.clone, 'indexTypes');
 
             source = replaceFunction(source, 'clone', [
               'function clone(value) {',
@@ -3550,8 +3539,12 @@
               '  }',
               '  var args = arguments,',
               '      argsIndex = 0,',
-              '      argsLength = indexTypes[typeof guard] && args[3] && args[3][guard] === source ? 2 : args.length;',
+              '      argsLength = args.length,',
+              '      type = typeof guard;',
               '',
+              "  if ((type == 'number' || type == 'string') && args[3] && args[3][guard] === source) {",
+              '    argsLength = 2;',
+              '  }',
               '  while (++argsIndex < argsLength) {',
               '    source = args[argsIndex];',
               '    if (source) {',
@@ -3650,7 +3643,6 @@
           // replace `_.flatten`
           if (!isLodash('flatten')) {
             _.pull(funcDepMap.flatten, 'map');
-            _.pull(varDepMap.flatten, 'indexTypes');
 
             source = replaceFunction(source, 'flatten', [
               'function flatten(array, isShallow) {',
@@ -3765,8 +3757,8 @@
               '      otherType = typeof b;',
               '',
               '  if (a === a &&',
-              "      !(a && objectTypes[type]) &&",
-              "      !(b && objectTypes[otherType])) {",
+              "      !(a && (type == 'function' || type == 'object')) &&",
+              "      !(b && (otherType == 'function' || otherType == 'object'))) {",
               '    return false;',
               '  }',
               '  if (a == null || b == null) {',
@@ -4154,11 +4146,8 @@
 
           _.each(['forIn', 'shimKeys'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
-              var deps = varDepMap[funcName] || (varDepMap[funcName] = []);
-              deps.push('objectTypes');
-
-              deps = _.pull(funcDepMap[funcName], 'createIterator');
-              deps.push('isArguments');
+              var deps = _.pull(funcDepMap[funcName], 'createIterator');
+              deps.push('isArguments', 'isObject');
               if (funcName != 'shimKeys') {
                 deps.push('baseCreateCallback');
               }
@@ -4265,8 +4254,6 @@
             }
             // replace `_.isRegExp`
             if (!isUnderscore) {
-              _.pull(varDepMap.isRegExp, 'objectTypes');
-
               source = replaceFunction(source, 'isRegExp', [
                 'function isRegExp(value) {',
                 "  return value && typeof value == 'object' && toString.call(value) == regexpClass || false;",
