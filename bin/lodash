@@ -3694,6 +3694,23 @@
               '}'
             ].join('\n'));
           }
+          // replace `_.invert`
+          if (!isLodash('invert')) {
+            source = replaceFunction(source, 'invert', [
+              'function invert(object) {',
+              '  var index = -1,',
+              '      props = keys(object),',
+              '      length = props.length,',
+              '      result = {};',
+              '',
+              '  while (++index < length) {',
+              '    var key = props[index];',
+              '    result[object[key]] = key;',
+              '  }',
+              '  return result;',
+              '}'
+            ].join('\n'));
+          }
           // replace `_.isElement`
           if (!isLodash('isElement')) {
             funcDepMap.isElement = [];
