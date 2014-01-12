@@ -317,6 +317,7 @@
     'at': ['indexTypes'],
     'baseCreate': ['root'],
     'baseIsEqual': ['objectTypes'],
+    'clone': ['indexTypes'],
     'createIterator': ['objectTypes'],
     'defaults': ['indexTypes'],
     'flatten': ['indexTypes'],
@@ -3727,7 +3728,6 @@
           // replace `_.isEmpty`
           if (!isLodash('isEmpty')) {
             funcDepMap.isEmpty = ['isArray', 'isString'];
-            varDepMap.isEmpty = ['hasOwnProperty'];
 
             source = replaceFunction(source, 'isEmpty', [
               'function isEmpty(value) {',
@@ -3883,7 +3883,7 @@
                 'function memoize(func, resolver) {',
                 '  var cache = {};',
                 '  return function() {',
-                '    var key = resolver ? resolver.apply(this, arguments) : keyPrefix + arguments[0];',
+                "    var key = resolver ? resolver.apply(this, arguments) : '_' + arguments[0];",
                 '    return hasOwnProperty.call(cache, key)',
                 '      ? cache[key]',
                 '      : (cache[key] = func.apply(this, arguments));',
@@ -4156,9 +4156,7 @@
             if (!(isUnderscore && isLodash(funcName))) {
               var deps = varDepMap[funcName] || (varDepMap[funcName] = []);
               deps.push('objectTypes');
-              if (funcName == 'shimKeys') {
-                deps.push('hasOwnProperty');
-              }
+
               deps = _.pull(funcDepMap[funcName], 'createIterator');
               deps.push('isArguments');
               if (funcName != 'shimKeys') {
