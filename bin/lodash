@@ -916,14 +916,6 @@
         identifiers = _.pull(buildFuncs.concat(includeObjs, includeVars), 'lodash'),
         version = state.lodash.VERSION;
 
-    var categories = _.uniq(_.compact(identifiers.map(function(identifier) {
-      return getCategory(identifier, funcDepMap);
-    }))).sort();
-
-    var internals = _.reject(identifiers, function(identifier) {
-      return topLevel[identifier] || getCategory(identifier, funcDepMap);
-    });
-
     var buildCallback = function(data) {
       var source = data.source;
       source = addCommandsToHeader(source, state.options);
@@ -931,28 +923,76 @@
       defaultBuildCallback(data);
     };
 
+    var getInlinees = function(funcName, stack) {
+      stack || (stack = []);
+      return _.reduce(_.filter(funcDepMap[funcName], isPrivate), function(inlinees, funcName) {
+        var dependants = [];
+        _.each(funcDepMap, function(otherDeps, otherName) {
+          if (_.contains(otherDeps, funcName)) {
+            dependants.push(otherName);
+          }
+        });
+
+        // inline functions if they have only one dependent or all dependents are being inlined
+        if (dependants.length === 1 || !_.difference(dependants, stack).length) {
+          inlinees.push(funcName);
+          push.apply(inlinees, getInlinees(funcName, inlinees));
+        }
+        return inlinees;
+      }, []);
+    };
+
+    // create map of private functions to be inlined
+    var funcInlineMap = _.transform(_.difference(buildFuncs, privateFuncs), function(object, funcName) {
+      var inlinees = getInlinees(funcName);
+      if (inlinees.length) {
+        object[funcName] = inlinees;
+      }
+    }, createMap());
+
+    // exclude `_.noConflict` and "Chaining" functions for npm builds
+    if (isNpm) {
+      identifiers = _.difference(identifiers, categoryMap.Chaining.concat('noConflict'));
+    }
+    // exclude identifiers that are to be inlined
+    identifiers = _.reject(identifiers, function(identifier) {
+      return _.some(funcInlineMap, function(deps) {
+        return _.contains(deps, identifier);
+      });
+    });
+
+    var categories = _.uniq(_.compact(identifiers.map(function(identifier) {
+      return getCategory(identifier, funcDepMap);
+    }))).sort();
+
     // prepare state
     state.isAMD = state.isCommonJS = state.isNode = state.isNpm = false;
     state.plusFuncs = state.minusFuncs = empty;
 
-    if (isNpm) {
-      // exclude `_.noConflict` and "Chaining" methods
-      identifiers = _.difference(identifiers, categoryMap.Chaining.concat('noConflict'));
-    }
     // create modules for each identifier
     identifiers.forEach(function(identifier) {
-      var isInternal = _.contains(internals, identifier),
+      var iife = [],
+          inlinees = [identifier],
+          inlineFuncs = funcInlineMap[identifier],
+          inlineObjs = _.contains(includeObjs, identifier) && inlinees,
+          inlineVars = _.contains(includeVars, identifier) && inlinees,
+          isInternal = isPrivate(identifier),
           moduleName = isNpm ? 'lodash.' + (isInternal ? '_' : '') + identifier.toLowerCase() : identifier,
-          modulePath = isNpm ? moduleName : getPath(identifier, funcDepMap),
-          iife = [];
+          modulePath = isNpm ? moduleName : getPath(identifier, funcDepMap);
 
-      var deps = getDependencies(identifier, funcDepMap, true)
-        .concat(objDepMap[identifier] || empty)
-        .concat(varDepMap[identifier] || empty)
-        .sort();
+      if (_.contains(allFuncs, identifier)) {
+        inlineFuncs = _.union(inlineFuncs, inlinees);
+      }
+      var deps = _.difference(_.reduce(inlineFuncs || inlinees, function(deps, identifier) {
+        return _.union(deps,
+          getDependencies(identifier, funcDepMap, true),
+          objDepMap[identifier],
+          varDepMap[identifier]
+        );
+      }, []), inlineFuncs).sort();
 
       var depPaths = isNpm
-        ? deps.map(function(dep) { return 'lodash.' + (_.contains(internals, dep) ? '_' : '') + dep.toLowerCase(); })
+        ? deps.map(function(dep) { return 'lodash.' + (isPrivate(dep) ? '_' : '') + dep.toLowerCase(); })
         : getDepPaths(deps, modulePath, funcDepMap);
 
       if (isAMD) {
@@ -991,13 +1031,14 @@
       state.iife = iife.join('\n');
       state.outputPath = path.join(outputPath, modulePath, (isNpm ? 'index' : identifier) + '.js');
 
-      var include = [identifier];
-      if (_.contains(includeObjs, identifier)) {
-        state.includeObjs = include;
-      } else if (_.contains(includeVars, identifier)) {
-        state.includeVars = include;
-      } else {
-        state.buildFuncs = state.includeFuncs = include;
+      if (inlineObjs) {
+        state.includeObjs = inlineObjs;
+      }
+      if (inlineVars) {
+        state.includeVars = inlineVars;
+      }
+      if (inlineFuncs) {
+        state.buildFuncs = state.includeFuncs = inlineFuncs;
       }
       build(state, function(data) {
         var source = data.source;
@@ -1918,7 +1959,18 @@
   }
 
   /**
-   * Determines if a variable, of the given variable name, is used in `source`.
+   * Checks if `funcName` is a private function.
+   *
+   * @private
+   * @param {string} funcName The name of the function.
+   * @returns {boolean} Returns `true` if the function is private, else `false`.
+   */
+  function isPrivate(funcName) {
+    return _.contains(privateFuncs, funcName);
+  }
+
+  /**
+   * Checks if the variable `varName` is used in `source`.
    *
    * @private
    * @param {string} source The source to process.
