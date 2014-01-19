@@ -153,7 +153,7 @@
     'indexBy': ['createAggregator'],
     'indexOf': ['baseIndexOf', 'sortedIndex'],
     'initial': ['createCallback', 'slice'],
-    'intersection': ['cacheIndexOf', 'createCache', 'getArray', 'getIndexOf', 'isArguments', 'isArray', 'releaseArray', 'releaseObject'],
+    'intersection': ['cacheIndexOf', 'createCache', 'getArray', 'getIndexOf', 'isArguments', 'isArray', 'releaseArray'],
     'invert': ['keys'],
     'invoke': ['forEach', 'slice'],
     'isArguments': [],
@@ -245,16 +245,15 @@
     'baseCreate': ['isNative', 'isObject', 'noop'],
     'baseCreateCallback': ['bind', 'identity', 'setBindData'],
     'baseCreateWrapper': ['baseCreate', 'isObject', 'slice', 'setBindData'],
-    'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf', 'releaseObject'],
+    'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
     'baseEach': ['baseCreateCallback', 'forOwn', 'isString'],
     'baseFlatten': ['isArguments', 'isArray'],
     'baseIndexOf': [],
     'baseIsEqual': ['forIn', 'getArray', 'isArguments', 'isFunction', 'isNode', 'releaseArray'],
     'baseMerge': ['forEach', 'forOwn', 'isArray', 'isPlainObject'],
     'baseRandom': [],
-    'baseUniq': ['cacheIndexOf', 'createCache', 'getArray', 'getIndexOf', 'releaseArray', 'releaseObject'],
+    'baseUniq': ['cacheIndexOf', 'createCache', 'getArray', 'getIndexOf', 'releaseArray'],
     'cacheIndexOf': ['baseIndexOf'],
-    'cachePush': [],
     'charAtCallback': [],
     'charsLeftIndex': [],
     'charsRightIndex': [],
@@ -262,7 +261,7 @@
     'compareMultipleAscending': ['baseCompareAscending'],
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
     'createWrapper': ['baseBind', 'baseCreateWrapper', 'isFunction', 'slice'],
-    'createCache': ['cachePush', 'getObject', 'releaseObject'],
+    'createCache': ['isNative'],
     'createIterator': ['baseCreateCallback', 'isArguments', 'isObject', 'iteratorTemplate'],
     'escapeHtmlChar': [],
     'escapeStringChar': [],
@@ -655,7 +654,6 @@
     'baseRandom',
     'baseUniq',
     'cacheIndexOf',
-    'cachePush',
     'charAtCallback',
     'charsLeftIndex',
     'charsRightIndex',
@@ -933,7 +931,7 @@
           }
         });
 
-        // inline functions if they have only one dependent or all dependents are being inlined
+        // inline functions with only one dependent or all dependents are inlined
         if (dependants.length === 1 || !_.difference(dependants, stack).length) {
           inlinees.push(funcName);
           push.apply(inlinees, getInlinees(funcName, inlinees));
@@ -2198,7 +2196,7 @@
     source = removeSupportProp(source, 'funcDecomp');
     source = removeSupportProp(source, 'funcNames');
 
-    // remove `__bindData__` logic and `setBindData` function calls
+    // remove `expando` logic and `setData` function calls
     _.each(['baseBind', 'baseCreateCallback', 'baseCreateWrapper', 'createWrapper'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
         return match
@@ -2248,40 +2246,6 @@
   }
 
   /**
-   * Removes all references to `identifier` from `getObject` in `source`.
-   *
-   * @private
-   * @param {string} source The source to process.
-   * @param {string} identifier The name of the property to remove.
-   * @returns {string} Returns the modified source.
-   */
-  function removeFromGetObject(source, identifier) {
-    return source.replace(matchFunction(source, 'getObject'), function(match) {
-      // remove object property assignments
-      return match
-        .replace(RegExp("^(?: *\\/\\/.*\\n)* *'" + identifier + "':.+\\n+", 'm'), '')
-        .replace(/,(?=\s*})/, '');
-    });
-  }
-
-  /**
-   * Removes all references to `identifier` from `releaseObject` in `source`.
-   *
-   * @private
-   * @param {string} source The source to process.
-   * @param {string} identifier The name of the property to remove.
-   * @returns {string} Returns the modified source.
-   */
-  function removeFromReleaseObject(source, identifier) {
-    return source.replace(matchFunction(source, 'releaseObject'), function(match) {
-      // remove object property assignments
-      return match.replace(RegExp("(?:(^ *)| *)([$\\w]+)\\." + identifier + " *= *(.+\\n+)", 'm'), function(match, indent, object, postlude) {
-        return (indent || '') + RegExp('\\b' + object + '\\.').test(postlude) ? postlude : '';
-      });
-    });
-  }
-
-  /**
    * Removes the `funcName` function declaration, expression, or assignment and
    * associated code from `source`.
    *
@@ -2324,7 +2288,7 @@
     // simplify `isLarge` assignments
     _.each(['baseDifference', 'baseUniq'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
-        return match.replace(/\b(largeArraySize).+?baseIndexOf\b/g, '$1');
+        return match.replace(/\b(LARGE_ARRAY_SIZE).+?baseIndexOf\b/g, '$1');
       });
     });
 
@@ -3478,15 +3442,6 @@
           if (!isLodash('chain')) {
             _.pull(funcDepMap.wrapperValueOf, 'wrapperToString');
           }
-          _.each(['baseDifference', 'baseUniq', 'intersection'], function(funcName) {
-            if (isLodash(funcName) ||
-                (funcName == 'baseDifference' && isLodash('difference')) ||
-                (funcName == 'baseUniq' && isLodash('uniq'))) {
-              return;
-            }
-            _.pull(funcDepMap[funcName], 'cacheIndexOf', 'createCache');
-          });
-
           _.each(['isEqual', 'omit', 'pick'], function(funcName) {
             if (isLodash(funcName) || (funcName == 'isEqual' && isLodash('baseIsEqual'))) {
               return;
@@ -3507,7 +3462,7 @@
 
           _.forOwn(varDepMap, function(deps, funcName) {
             if (!isLodash(funcName)) {
-              _.pull(deps, 'arrayPool', 'largeArraySize', 'maxPoolSize', 'objectPool');
+              _.pull(deps, 'arrayPool', 'objectPool');
             }
           });
 
@@ -3611,25 +3566,6 @@
               '}'
             ].join('\n'));
           }
-          // replace `_.difference`
-          if (!isLodash('baseDifference') && !isLodash('difference')) {
-            source = replaceFunction(source, 'baseDifference', [
-              'function baseDifference(array, values) {',
-              '  var index = -1,',
-              '      indexOf = getIndexOf(),',
-              '      length = array ? array.length : 0,',
-              '      result = [];',
-              '',
-              '  while (++index < length) {',
-              '    var value = array[index];',
-              '    if (indexOf(values, value) < 0) {',
-              '      result.push(value);',
-              '    }',
-              '  }',
-              '  return result;',
-              '}'
-            ].join('\n'));
-          }
           // add Underscore's `_.findWhere` and `_.where`
           if (!isLodash('findWhere') && !isLodash('where')) {
             _.pull(funcDepMap.createCallback, 'baseIsEqual', 'isObject');
@@ -3702,43 +3638,6 @@
               '}'
             ].join('\n'));
           }
-          // replace `_.intersection`
-          if (!isLodash('intersection')) {
-            source = replaceFunction(source, 'intersection', [
-              'function intersection() {',
-              '  var args = [],',
-              '      argsIndex = -1,',
-              '      argsLength = arguments.length;',
-              '',
-              '  while (++argsIndex < argsLength) {',
-              '    var value = arguments[argsIndex];',
-              '     if (isArray(value) || isArguments(value)) {',
-              '       args.push(value);',
-              '     }',
-              '  }',
-              '  var array = args[0],',
-              '      index = -1,',
-              '      indexOf = getIndexOf(),',
-              '      length = array ? array.length : 0,',
-              '      result = [];',
-              '',
-              '  outer:',
-              '  while (++index < length) {',
-              '    value = array[index];',
-              '    if (indexOf(result, value) < 0) {',
-              '      var argsIndex = argsLength;',
-              '      while (--argsIndex) {',
-              '        if (indexOf(args[argsIndex], value) < 0) {',
-              '          continue outer;',
-              '        }',
-              '      }',
-              '      result.push(value);',
-              '    }',
-              '  }',
-              '  return result;',
-              '}'
-            ].join('\n'));
-          }
           // replace `_.invert`
           if (!isLodash('invert')) {
             source = replaceFunction(source, 'invert', [
@@ -3792,7 +3691,7 @@
           }
           // replace `_.isEqual`
           if (!isLodash('baseIsEqual') && !isLodash('isEqual')) {
-            _.pull(funcDepMap.baseIsEqual, 'isArguments');
+            _.pull(funcDepMap.baseIsEqual, 'getArray', 'isArguments', 'releaseArray');
 
             source = replaceFunction(source, 'isEqual', [
               'function isEqual(a, b) {',
@@ -3998,7 +3897,7 @@
           }
           // replace `_.sortBy`
           if (!isLodash('sortBy')) {
-            _.pull(funcDepMap.sortBy, 'compareMultipleAscending', 'isArray', 'map');
+            _.pull(funcDepMap.sortBy, 'compareMultipleAscending', 'getObject', 'isArray', 'map', 'releaseObject');
 
             source = replaceFunction(source, 'sortBy', [
               'function sortBy(collection, callback, thisArg) {',
@@ -4122,7 +4021,7 @@
           }
           // replace `_.toArray`
           if (!isLodash('toArray')) {
-             _.pull(funcDepMap.toArray, 'isString').push('isArray', 'map');
+            _.pull(funcDepMap.toArray, 'isString').push('isArray', 'map');
 
             source = replaceFunction(source, 'toArray', [
               'function toArray(collection) {',
@@ -4133,34 +4032,6 @@
               '    return map(collection);',
               '  }',
               '  return values(collection);',
-              '}'
-            ].join('\n'));
-          }
-          // replace `baseUniq`
-          if (!isLodash('baseUniq') && !isLodash('uniq')) {
-            source = replaceFunction(source, 'baseUniq', [
-              'function baseUniq(array, isSorted, callback) {',
-              '  var index = -1,',
-              '      indexOf = getIndexOf(),',
-              '      length = array ? array.length : 0,',
-              '      result = [],',
-              '      seen = callback ? [] : result;',
-              '',
-              '  while (++index < length) {',
-              '    var value = array[index],',
-              '        computed = callback ? callback(value, index, array) : value;',
-              '',
-              '    if (isSorted',
-              '          ? !index || seen[seen.length - 1] !== computed',
-              '          : indexOf(seen, computed) < 0',
-              '        ) {',
-              '      if (callback) {',
-              '        seen.push(computed);',
-              '      }',
-              '      result.push(value);',
-              '    }',
-              '  }',
-              '  return result;',
               '}'
             ].join('\n'));
           }
@@ -4183,6 +4054,98 @@
               '',
               '  while (++index < length) {',
               '    result[index] = pluck(arguments, index);',
+              '  }',
+              '  return result;',
+              '}'
+            ].join('\n'));
+          }
+        }
+        if (isLegacy || isUnderscore) {
+          // replace `baseDifference`
+          if (!(isUnderscore && (isLodash('baseDifference') || isLodash('difference')))) {
+            _.pull(funcDepMap.baseDifference, 'cacheIndexOf', 'createCache');
+
+            source = replaceFunction(source, 'baseDifference', [
+              'function baseDifference(array, values) {',
+              '  var index = -1,',
+              '      indexOf = getIndexOf(),',
+              '      length = array ? array.length : 0,',
+              '      result = [];',
+              '',
+              '  while (++index < length) {',
+              '    var value = array[index];',
+              '    if (indexOf(values, value) < 0) {',
+              '      result.push(value);',
+              '    }',
+              '  }',
+              '  return result;',
+              '}'
+            ].join('\n'));
+          }
+          // replace `_.intersection`
+          if (!(isUnderscore && isLodash('intersection'))) {
+            _.pull(funcDepMap.intersection, 'cacheIndexOf', 'createCache', 'getArray', 'releaseArray');
+
+            source = replaceFunction(source, 'intersection', [
+              'function intersection() {',
+              '  var args = [],',
+              '      argsIndex = -1,',
+              '      argsLength = arguments.length;',
+              '',
+              '  while (++argsIndex < argsLength) {',
+              '    var value = arguments[argsIndex];',
+              '     if (isArray(value) || isArguments(value)) {',
+              '       args.push(value);',
+              '     }',
+              '  }',
+              '  var array = args[0],',
+              '      index = -1,',
+              '      indexOf = getIndexOf(),',
+              '      length = array ? array.length : 0,',
+              '      result = [];',
+              '',
+              '  outer:',
+              '  while (++index < length) {',
+              '    value = array[index];',
+              '    if (indexOf(result, value) < 0) {',
+              '      var argsIndex = argsLength;',
+              '      while (--argsIndex) {',
+              '        if (indexOf(args[argsIndex], value) < 0) {',
+              '          continue outer;',
+              '        }',
+              '      }',
+              '      result.push(value);',
+              '    }',
+              '  }',
+              '  return result;',
+              '}'
+            ].join('\n'));
+          }
+          // replace `baseUniq`
+          if (!(isUnderscore && (isLodash('baseUniq') || isLodash('uniq')))) {
+            _.pull(funcDepMap.baseUniq, 'cacheIndexOf', 'createCache', 'getArray', 'releaseArray');
+
+            source = replaceFunction(source, 'baseUniq', [
+              'function baseUniq(array, isSorted, callback) {',
+              '  var index = -1,',
+              '      indexOf = getIndexOf(),',
+              '      length = array ? array.length : 0,',
+              '      result = [],',
+              '      seen = callback ? [] : result;',
+              '',
+              '  while (++index < length) {',
+              '    var value = array[index],',
+              '        computed = callback ? callback(value, index, array) : value;',
+              '',
+              '    if (isSorted',
+              '          ? !index || seen[seen.length - 1] !== computed',
+              '          : indexOf(seen, computed) < 0',
+              '        ) {',
+              '      if (callback) {',
+              '        seen.push(computed);',
+              '      }',
+              '      result.push(value);',
+              '    }',
               '  }',
               '  return result;',
               '}'
@@ -4371,20 +4334,6 @@
           }
         }
         if (isUnderscore) {
-          _.forOwn(funcDepMap, function(deps, funcName) {
-            if (_.every(getDependants(funcName, funcDepMap).concat(funcName), function(otherName) {
-                  return !isLodash(otherName);
-                })) {
-              deps = funcDepMap[funcName];
-              if (_.contains(deps, 'releaseArray')) {
-                _.pull(deps, 'getArray', 'releaseArray');
-              }
-              if (_.contains(deps, 'releaseObject')) {
-                _.pull(deps, 'getObject', 'releaseObject');
-              }
-            }
-          });
-
           // replace `lodash.createCallback` references with `createCallback`
           if (!isLodash('createCallback')) {
             source = source.replace(/\blodash\.(createCallback\()\b/g, '$1');
@@ -4866,13 +4815,6 @@
             return match
               .replace(/'Error',? */, '')
               .replace(/,(?=\s*])/, '');
-          });
-        }
-        if (isExcluded('sortBy')) {
-          _.each([removeFromGetObject, removeFromReleaseObject], function(func) {
-            source = func(source, 'criteria');
-            source = func(source, 'index');
-            source = func(source, 'value');
           });
         }
       }
