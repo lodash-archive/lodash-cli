@@ -3882,7 +3882,7 @@
           }
           // replace `_.random`
           if (!isLodash('random')) {
-             source = replaceFunction(source, 'random', [
+            source = replaceFunction(source, 'random', [
               'function random(min, max) {',
               '  if (min == null && max == null) {',
               '    max = 1;',
@@ -3895,6 +3895,17 @@
               '    max = +max || 0;',
               '  }',
               '  return min + floor(nativeRandom() * (max - min + 1));',
+              '}'
+            ].join('\n'));
+          }
+          // replace `_.result`
+          if (!isLodash('result')) {
+            source = replaceFunction(source, 'result', [
+              'function result(object, key) {',
+              '  if (object != null) {',
+              '    var value = object[key];',
+              '    return isFunction(value) ? object[key]() : value;',
+              '  }',
               '}'
             ].join('\n'));
           }
