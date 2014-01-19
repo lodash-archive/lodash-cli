@@ -983,8 +983,8 @@
       if (_.contains(allFuncs, identifier)) {
         inlineFuncs = _.union(inlineFuncs, inlinees);
       }
-      var deps = _.difference(_.reduce(inlineFuncs || inlinees, function(deps, identifier) {
-        return _.union(deps,
+      var depNames = _.difference(_.reduce(inlineFuncs || inlinees, function(result, identifier) {
+        return _.union(result,
           getDependencies(identifier, funcDepMap, true),
           objDepMap[identifier],
           varDepMap[identifier]
@@ -992,12 +992,12 @@
       }, []), inlineFuncs).sort();
 
       var depPaths = isNpm
-        ? deps.map(function(dep) { return 'lodash.' + (isPrivate(dep) ? '_' : '') + dep.toLowerCase(); })
-        : getDepPaths(deps, modulePath, funcDepMap);
+        ? depNames.map(function(depName) { return 'lodash.' + (isPrivate(depName) ? '_' : '') + depName.toLowerCase(); })
+        : getDepPaths(depNames, modulePath, funcDepMap);
 
       if (isAMD) {
         iife.push(
-          'define([' + (depPaths.length ? "'" + depPaths.join("', '") + "'" : '') + '], function(' + deps.join(', ') + ') {',
+          'define([' + (depPaths.length ? "'" + depPaths.join("', '") + "'" : '') + '], function(' + depNames.join(', ') + ') {',
           '%output%',
           '  return ' + identifier + ';',
           '});'
@@ -1006,7 +1006,7 @@
       else if (isES6) {
         iife.push(
           _.reduce(depPaths, function(result, depPath, index) {
-            var depName = deps[index];
+            var depName = depNames[index];
             return result + (result ? ';\n' : '') +
               '  import ' + depName + " from '" + depPath + "'";
           }, '') + ';',
@@ -1017,7 +1017,7 @@
       else {
         iife.push(
           _.reduce(depPaths, function(result, depPath, index) {
-            var depName = deps[index];
+            var depName = depNames[index];
             return result + (result ? ',\n      ' : '  var ') +
               depName + " = require('" + depPath + "')" +
               (isCommonJS ? '.' + depName : '');
@@ -1091,7 +1091,7 @@
         return;
       }
       var categoryDeps = _.invoke(categories, 'toLowerCase'),
-          categoryDepPaths = categoryDeps.map(function(dep) { return './' + dep; }),
+          categoryDepPaths = categoryDeps.map(function(depName) { return './' + depName; }),
           identifier = 'lodash',
           basename = identifier,
           modulePath = getPath(identifier, funcDepMap);
@@ -1228,16 +1228,16 @@
     // create category modules
     if (!isNpm) {
       categories.forEach(function(category) {
-        var deps = _.intersection(_.union(categoryMap[category], categoryFluxMap[category]), identifiers).sort(),
-            depPaths = getDepPaths(deps, null, funcDepMap),
+        var depNames = _.intersection(_.union(categoryMap[category], categoryFluxMap[category]), identifiers).sort(),
+            depPaths = getDepPaths(depNames, null, funcDepMap),
             iife = [];
 
         if (isAMD) {
           iife.push(
-            "define(['" + depPaths.join("', '") + "'], function(" + deps.join(', ') + ') {',
+            "define(['" + depPaths.join("', '") + "'], function(" + depNames.join(', ') + ') {',
             '%output%',
             '  return {',
-            _.transform(deps, function(result, depName) {
+            _.transform(depNames, function(result, depName) {
               _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
                 result.push( "    '" + otherName + "': " + depName);
               });
@@ -1253,7 +1253,7 @@
 
           if (isES6) {
             push.apply(iife, _.transform(depPaths, function(result, depPath, index) {
-              var depName = deps[index];
+              var depName = depNames[index];
               _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
                 result.push('export ' + otherName + " from '" + depName + "';");
               });
@@ -1262,7 +1262,7 @@
           }
           else if (isCommonJS) {
             push.apply(iife, _.transform(depPaths, function(result, depPath, index) {
-              var depName = deps[index];
+              var depName = depNames[index];
               _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
                 result.push('exports.' + otherName + " = require('" + depPath + "')." + depName + ';');
               });
@@ -1273,7 +1273,7 @@
             iife.push(
               'module.exports = {',
               _.transform(depPaths, function(result, depPath, index) {
-                var depName = deps[index];
+                var depName = depNames[index];
                 _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
                   result.push("  '" + otherName + "': require('" + depPath + "')");
                 });
@@ -1666,20 +1666,20 @@
     return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!nativeCreate)\b[\s\S]+?\n *}\(\)\);\n\1}/), 0) || '';
   }
 
-  function getDepPath(dep, fromPath, depMap) {
+  function getDepPath(depName, fromPath, depMap) {
     var sep = '/',
-        toPath = getPath(dep, depMap),
+        toPath = getPath(depName, depMap),
         relative = path.relative(fromPath || '', toPath).replace(RegExp(path.sepEscaped, 'g'), sep);
 
     if (relative.charAt(0) != '.') {
       relative = '.' + (relative ? sep + relative : '');
     }
-    return relative + sep + dep;
+    return relative + sep + depName;
   }
 
   function getDepPaths(dependencies, fromPath, depMap) {
-    return dependencies.map(function(dep) {
-      return getDepPath(dep, fromPath, depMap);
+    return dependencies.map(function(depName) {
+      return getDepPath(depName, fromPath, depMap);
     });
   }
 
@@ -1698,9 +1698,9 @@
     stack || (stack = []);
 
     // iterate over the dependency map, adding names of functions that have `funcName` as a dependency
-    return _.uniq(_.transform(depMap, function(result, deps, otherName) {
+    return _.uniq(_.transform(depMap, function(result, depNames, otherName) {
       if (!_.contains(stack, otherName) && _.some(funcNames, function(funcName) {
-            return _.contains(deps, funcName);
+            return _.contains(depNames, funcName);
           })) {
         stack.push(otherName);
         result.push(otherName);
@@ -1734,21 +1734,21 @@
     }
     depMap || (depMap = funcDependencyMap);
 
-    var deps = _.isArray(funcName)
+    var depNames = _.isArray(funcName)
       ? funcName
       : (hasOwnProperty.call(depMap, funcName) && depMap[funcName]);
 
-    if (!_.size(deps)) {
+    if (!_.size(depNames)) {
       return [];
     }
     if (isShallow) {
-      return deps.slice();
+      return depNames.slice();
     }
     stack || (stack = []);
 
     // recursively accumulate the dependencies of the `funcName` function, and
     // the dependencies of its dependencies, and so on
-    return _.uniq(_.transform(deps, function(result, otherName) {
+    return _.uniq(_.transform(depNames, function(result, otherName) {
       if (!_.contains(stack, otherName)) {
         stack.push(otherName);
         push.apply(result, getDependencies(otherName, depMap, isShallow, stack).concat(otherName));
@@ -3365,8 +3365,8 @@
           });
 
           // remove native branches from methods
-          _.forOwn(funcDepMap, function(deps, funcName) {
-            _.pull(deps, 'isNative');
+          _.forOwn(funcDepMap, function(depNames, funcName) {
+            _.pull(depNames, 'isNative');
           });
 
           source = source.replace(matchFunction(source, 'contains'), function(match) {
@@ -3381,8 +3381,8 @@
         }
         if (isModularize) {
           if (!isCommonJS) {
-            _.forOwn(varDepMap, function(deps) {
-              _.pull(deps, 'root');
+            _.forOwn(varDepMap, function(depNames) {
+              _.pull(depNames, 'root');
             });
             delete varDepMap.root;
           }
@@ -3451,20 +3451,20 @@
             _.pull(funcDepMap[funcName], 'baseCreateCallback', 'createCallback');
           });
 
-          _.forOwn(funcDepMap, function(deps, funcName) {
+          _.forOwn(funcDepMap, function(depNames, funcName) {
             if (_.every(getDependants(funcName, funcDepMap).concat(funcName), function(otherName) {
                   return !isLodash(otherName);
                 })) {
-              deps = funcDepMap[funcName];
-              if (_.contains(deps, 'charAtCallback')) {
-                _.pull(deps, 'charAtCallback', 'isArray', 'isString');
+              depNames = funcDepMap[funcName];
+              if (_.contains(depNames, 'charAtCallback')) {
+                _.pull(depNames, 'charAtCallback', 'isArray', 'isString');
               }
             }
           });
 
-          _.forOwn(varDepMap, function(deps, funcName) {
+          _.forOwn(varDepMap, function(depNames, funcName) {
             if (!isLodash(funcName)) {
-              _.pull(deps, 'arrayPool', 'objectPool');
+              _.pull(depNames, 'arrayPool', 'objectPool');
             }
           });
 
@@ -4178,18 +4178,18 @@
             }
           });
 
-          _.forOwn(funcDepMap, function(deps, funcName) {
-            if (_.contains(deps, 'isNode') &&
+          _.forOwn(funcDepMap, function(depNames, funcName) {
+            if (_.contains(depNames, 'isNode') &&
                 !(isUnderscore && isLodash(funcName))) {
-              _.pull(deps, 'isNode');
+              _.pull(depNames, 'isNode');
             }
           });
 
-          _.forOwn(objDepMap, function(deps, funcName) {
+          _.forOwn(objDepMap, function(depNames, funcName) {
             if (!(isMobile && funcName == 'keys') &&
                 !(isUnderscore && isLodash(funcName)) &&
                 !_.contains(['baseCreateCallback', 'isElement', 'lodash', 'wrapperValueOf'], funcName)) {
-              _.pull(deps, 'support');
+              _.pull(depNames, 'support');
             }
           });
 
@@ -4200,11 +4200,11 @@
               }
             });
 
-            _.forOwn(funcDepMap, function(deps, funcName) {
-              if (_.contains(deps, 'isArguments') &&
+            _.forOwn(funcDepMap, function(depNames, funcName) {
+              if (_.contains(depNames, 'isArguments') &&
                   !_.contains(['baseFlatten', 'intersection', 'xor'], funcName) &&
                   !(isUnderscore && isLodash(funcName))) {
-                _.pull(deps, 'isArguments');
+                _.pull(depNames, 'isArguments');
               }
             });
 
@@ -4341,6 +4341,8 @@
           // remove conditional `charCodeCallback` use from `_.max` and `_.min`
           _.each(['max', 'min'], function(funcName) {
             if (!isLodash(funcName)) {
+              _.pull(funcDepMap[funcName], 'charAtCallback', 'isArray', 'isString');
+
               source = source.replace(matchFunction(source, funcName), function(match) {
                 return match.replace(/=.+?isString[^:]+:\s*/g, '= ');
               });
@@ -4397,9 +4399,9 @@
           }
         }
         if (isModularize) {
-          _.forOwn(funcDepMap, function(deps, funcName) {
-            if (_.contains(deps, 'getIndexOf')) {
-              _.pull(deps, 'getIndexOf').push('baseIndexOf');
+          _.forOwn(funcDepMap, function(depNames, funcName) {
+            if (_.contains(depNames, 'getIndexOf')) {
+              _.pull(depNames, 'getIndexOf').push('baseIndexOf');
             }
           });
         }
@@ -4469,14 +4471,14 @@
             }
             stack.push(funcName);
             _.each([varDepMap, objDepMap], function(otherDepMap) {
-              var otherDeps = otherDepMap[funcName];
-              if (otherDeps) {
-                var validDeps = _.transform(otherDeps, function(result, depName) {
-                  var deps = depMap[depName];
-                  push.apply(result, deps || []);
+              var depNames = otherDepMap[funcName];
+              if (depNames) {
+                var validDeps = _.transform(depNames, function(result, depName) {
+                  var depNames = depMap[depName];
+                  push.apply(result, depNames || []);
                 });
 
-                push.apply(validDeps, _.filter(otherDeps, function(depName) {
+                push.apply(validDeps, _.filter(depNames, function(depName) {
                   return _.contains(allDeps, depName);
                 }));
 
