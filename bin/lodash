@@ -142,7 +142,7 @@
     'flatten': ['baseFlatten', 'map'],
     'forEach': ['baseCreateCallback', 'baseEach', 'isArray'],
     'forEachRight': ['baseCreateCallback', 'baseEach', 'isArray', 'isString', 'keys'],
-    'forIn': ['baseForIn'],
+    'forIn': ['baseCreateCallback', 'baseForIn'],
     'forInRight': ['baseCreateCallback', 'baseForIn'],
     'forOwn': ['baseForOwn', 'baseCreateCallback'],
     'forOwnRight': ['baseCreateCallback', 'keys'],
@@ -2289,9 +2289,9 @@
     });
 
     // simplify `isLarge` assignments
-    _.each(['baseDifference', 'baseUniq'], function(funcName) {
+    _.each(['baseDifference', 'baseUniq', 'intersection'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
-        return match.replace(/\b(LARGE_ARRAY_SIZE).+?baseIndexOf\b/g, '$1');
+        return match.replace(/ *&& *indexOf *=== *baseIndexOf\b/g, '');
       });
     });
 
