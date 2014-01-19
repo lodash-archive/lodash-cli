@@ -135,18 +135,18 @@
     'find': ['baseEach', 'createCallback', 'isArray'],
     'findIndex': ['createCallback'],
     'findLastIndex': ['createCallback'],
-    'findKey': ['createCallback', 'forOwn'],
+    'findKey': ['createCallback', 'baseForOwn'],
     'findLast': ['createCallback', 'forEachRight'],
     'findLastKey': ['createCallback', 'forOwnRight'],
     'first': ['createCallback', 'slice'],
     'flatten': ['baseFlatten', 'map'],
     'forEach': ['baseCreateCallback', 'baseEach', 'isArray'],
     'forEachRight': ['baseCreateCallback', 'baseEach', 'isArray', 'isString', 'keys'],
-    'forIn': ['createIterator'],
-    'forInRight': ['baseCreateCallback', 'forIn'],
-    'forOwn': ['baseCreateCallback', 'keys'],
+    'forIn': ['baseForIn'],
+    'forInRight': ['baseCreateCallback', 'baseForIn'],
+    'forOwn': ['baseForOwn', 'baseCreateCallback'],
     'forOwnRight': ['baseCreateCallback', 'keys'],
-    'functions': ['forIn', 'isFunction'],
+    'functions': ['baseForIn', 'isFunction'],
     'groupBy': ['createAggregator'],
     'has': [],
     'identity': [],
@@ -155,13 +155,13 @@
     'initial': ['createCallback', 'slice'],
     'intersection': ['cacheIndexOf', 'createCache', 'getArray', 'getIndexOf', 'isArguments', 'isArray', 'releaseArray'],
     'invert': ['keys'],
-    'invoke': ['forEach', 'slice'],
+    'invoke': ['baseEach', 'slice'],
     'isArguments': [],
     'isArray': ['isNative'],
     'isBoolean': [],
     'isDate': [],
     'isElement': ['isNode', 'isPlainObject'],
-    'isEmpty': ['forOwn', 'isArguments', 'isFunction'],
+    'isEmpty': ['baseForOwn', 'isArguments', 'isFunction'],
     'isEqual': ['baseCreateCallback', 'baseIsEqual'],
     'isFinite': [],
     'isFunction': [],
@@ -178,7 +178,7 @@
     'lastIndexOf': [],
     'lodash': ['isArray', 'lodashWrapper'],
     'map': ['baseEach', 'createCallback', 'isArray'],
-    'mapValues': ['createCallback', 'forOwn'],
+    'mapValues': ['baseForOwn', 'createCallback'],
     'match': ['baseIsEqual', 'isObject', 'keys'],
     'max': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
     'memoize': ['isFunction'],
@@ -188,13 +188,13 @@
     'noConflict': [],
     'noop': [],
     'now': ['isNative'],
-    'omit': ['baseDifference', 'baseFlatten', 'createCallback', 'forIn'],
+    'omit': ['baseDifference', 'baseFlatten', 'baseForIn', 'createCallback'],
     'once': ['isFunction'],
     'pairs': ['keys'],
     'parseInt': ['trim'],
     'partial': ['createWrapper', 'slice'],
     'partialRight': ['createWrapper', 'slice'],
-    'pick': ['baseFlatten', 'createCallback', 'forIn', 'isObject'],
+    'pick': ['baseFlatten', 'baseForIn', 'createCallback', 'isObject'],
     'pluck': ['map'],
     'property': [],
     'pull': [],
@@ -208,18 +208,18 @@
     'result': ['isFunction'],
     'runInContext': ['defaults', 'pick'],
     'sample': ['baseRandom', 'isString', 'shuffle', 'values'],
-    'shuffle': ['baseRandom', 'forEach'],
+    'shuffle': ['baseEach', 'baseRandom'],
     'size': ['keys'],
     'slice': [],
     'some': ['baseEach', 'createCallback', 'isArray'],
-    'sortBy': ['compareAscending', 'compareMultipleAscending', 'createCallback', 'forEach', 'getObject', 'isArray', 'map', 'releaseObject'],
+    'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'createCallback', 'getObject', 'isArray', 'map', 'releaseObject'],
     'sortedIndex': ['createCallback', 'identity'],
     'tap': [],
     'template': ['defaults', 'escape', 'escapeStringChar', 'keys', 'values'],
     'throttle': ['debounce', 'isFunction', 'isObject'],
     'times': ['baseCreateCallback'],
     'toArray': ['isString', 'slice', 'values'],
-    'transform': ['baseCreate', 'baseEach', 'createCallback', 'forOwn', 'isArray'],
+    'transform': ['baseCreate', 'baseEach', 'baseForOwn', 'createCallback', 'isArray'],
     'trim': ['isNative', 'shimTrim'],
     'trimLeft': ['isNative', 'shimTrimLeft'],
     'trimRight': ['isNative', 'shimTrimRight'],
@@ -240,17 +240,19 @@
 
     // private functions
     'baseBind': ['baseCreate', 'isObject', 'setBindData', 'slice'],
-    'baseClone': ['assign', 'baseEach', 'forOwn', 'getArray', 'isArray', 'isObject', 'isNode', 'releaseArray', 'slice'],
+    'baseClone': ['assign', 'baseEach', 'baseForOwn', 'getArray', 'isArray', 'isObject', 'isNode', 'releaseArray', 'slice'],
     'baseCompareAscending': [],
     'baseCreate': ['isNative', 'isObject', 'noop'],
     'baseCreateCallback': ['bind', 'identity', 'setBindData'],
     'baseCreateWrapper': ['baseCreate', 'isObject', 'slice', 'setBindData'],
     'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
-    'baseEach': ['baseCreateCallback', 'forOwn', 'isString'],
+    'baseEach': ['baseForOwn', 'isString'],
     'baseFlatten': ['isArguments', 'isArray'],
+    'baseForIn': ['createIterator'],
+    'baseForOwn': ['keys'],
     'baseIndexOf': [],
-    'baseIsEqual': ['forIn', 'getArray', 'isArguments', 'isFunction', 'isNode', 'releaseArray'],
-    'baseMerge': ['forEach', 'forOwn', 'isArray', 'isPlainObject'],
+    'baseIsEqual': ['baseForIn', 'getArray', 'isArguments', 'isFunction', 'isNode', 'releaseArray'],
+    'baseMerge': ['baseEach', 'baseForOwn', 'isArray', 'isPlainObject'],
     'baseRandom': [],
     'baseUniq': ['cacheIndexOf', 'createCache', 'getArray', 'getIndexOf', 'releaseArray'],
     'cacheIndexOf': ['baseIndexOf'],
@@ -262,7 +264,7 @@
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
     'createWrapper': ['baseBind', 'baseCreateWrapper', 'isFunction', 'slice'],
     'createCache': ['isNative'],
-    'createIterator': ['baseCreateCallback', 'isArguments', 'isObject', 'iteratorTemplate'],
+    'createIterator': ['isArguments', 'isObject', 'iteratorTemplate'],
     'escapeHtmlChar': [],
     'escapeStringChar': [],
     'getArray': [],
@@ -275,7 +277,7 @@
     'releaseArray': [],
     'releaseObject': [],
     'setBindData': ['isNative', 'noop'],
-    'shimIsPlainObject': ['forIn', 'isArguments', 'isFunction', 'isNode'],
+    'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
     'shimKeys': ['createIterator'],
     'shimTrim':  ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
     'shimTrimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
@@ -592,7 +594,6 @@
     'loop',
     'shadowedProps',
     'support',
-    'top',
     'useHas'
   ];
 
@@ -648,6 +649,8 @@
     'baseDifference',
     'baseEach',
     'baseFlatten',
+    'baseForIn',
+    'baseForOwn',
     'baseIndexOf',
     'baseIsEqual',
     'baseMerge',
@@ -838,10 +841,10 @@
     });
 
     // replace wrapper `Array` method assignments
-    source = source.replace(/^(?:(?: *\/\/.*\n)*(?: *if *\(.+\n)?( *)(baseEach|forEach)\(\['[\s\S]+?\n\1}\);(?:\n *})?\n+)+/m, function(match, indent, funcName) {
+    source = source.replace(/^(?:(?: *\/\/.*\n)*(?: *if *\(.+\n)?( *)baseEach\(\['[\s\S]+?\n\1}\);(?:\n *})?\n+)+/m, function(match, indent) {
       return indent + [
         '// add `Array` mutator functions to the wrapper',
-        funcName + "(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
+        "baseEach(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
         '  var func = arrayRef[methodName];',
         '  lodash.prototype[methodName] = function() {',
         '    var value = this.__wrapped__;',
@@ -857,7 +860,7 @@
         '});',
         '',
         '// add `Array` accessor functions to the wrapper',
-        funcName + "(['concat', 'join', 'slice'], function(methodName) {",
+        "baseEach(['concat', 'join', 'slice'], function(methodName) {",
         '  var func = arrayRef[methodName];',
         '  lodash.prototype[methodName] = function() {',
         '    var value = this.__wrapped__,',
@@ -878,7 +881,7 @@
     source = source.replace(/^ *lodash\.prototype\.(?:toString|valueOf) *=.+\n/gm, '');
 
     // remove `lodash.prototype` batch method assignments
-    source = source.replace(/(?:\s*\/\/.*)*\n( *)forOwn\(lodash,[\s\S]+?\n\1}.+/g, '');
+    source = source.replace(/(?:\s*\/\/.*)*\n( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+/g, '');
 
     return source;
   }
@@ -2160,8 +2163,8 @@
 
     // remove all `lodash.prototype` additions
     source = source
-      .replace(/(?:\s*\/\/.*)*\n( *)forOwn\(lodash,[\s\S]+?\n\1}.+/g, '')
-      .replace(/(?:\s*\/\/.*)*\n( *)(?:baseEach|forEach)\(\['[\s\S]+?\n\1}.+/g, '')
+      .replace(/(?:\s*\/\/.*)*\n( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+/g, '')
+      .replace(/(?:\s*\/\/.*)*\n( *)baseEach\(\['[\s\S]+?\n\1}.+/g, '')
       .replace(/(?:\s*\/\/.*)*\n *lodash\.prototype\.[\s\S]+?;/g, '');
 
     // replace `lodash` with a simpler version
@@ -3385,12 +3388,12 @@
             delete varDepMap.root;
           }
           objDepMap.lodash = ['support', 'templateSettings'];
-          funcDepMap.lodash.push('assign', 'baseEach', 'forOwn', 'mixin');
+          funcDepMap.lodash.push('assign', 'baseEach', 'baseForOwn', 'mixin');
           _.pull(funcDepMap.mixin, 'lodash');
         }
         else {
           funcDepMap.chain.push('wrapperChain');
-          funcDepMap.wrapperValueOf.push('assign', 'baseEach', 'chain', 'forOwn', 'mixin', 'wrapperChain', 'wrapperToString');
+          funcDepMap.wrapperValueOf.push('assign', 'baseEach', 'baseForOwn', 'chain', 'mixin', 'wrapperChain', 'wrapperToString');
 
           _.each(['lodashWrapper', 'tap', 'wrapperChain', 'wrapperToString'], function(funcName) {
             funcDepMap[funcName].push('wrapperValueOf');
@@ -3792,7 +3795,7 @@
               '    }',
               '  }',
               '  else {',
-              '    forIn(b, function(value, key, b) {',
+              '    baseForIn(b, function(value, key, b) {',
               '      if (hasOwnProperty.call(b, key)) {',
               '        size++;',
               '        return (result = hasOwnProperty.call(a, key) && baseIsEqual(a[key], value, stackA, stackB));',
@@ -3800,7 +3803,7 @@
               '    });',
               '',
               '    if (result) {',
-              '      forIn(a, function(value, key, a) {',
+              '      baseForIn(a, function(value, key, a) {',
               '        if (hasOwnProperty.call(a, key)) {',
               '          return (result = --size > -1);',
               '        }',
@@ -3839,7 +3842,7 @@
             source = replaceFunction(source, 'omit', [
               'function omit(object) {',
               '  var props = [];',
-              '  forIn(object, function(value, key) {',
+              '  baseForIn(object, function(value, key) {',
               '    props.push(key);',
               '  });',
               '  props = baseDifference(props, baseFlatten(arguments, true, false, 1));',
@@ -3858,7 +3861,7 @@
           }
           // replace `_.pick`
           if (!isLodash('pick')) {
-            _.pull(funcDepMap.pick, 'forIn', 'isObject');
+            _.pull(funcDepMap.pick, 'baseForIn', 'isObject');
 
             source = replaceFunction(source, 'pick', [
               'function pick(object) {',
@@ -4159,13 +4162,9 @@
             }
           });
 
-          _.each(['forIn', 'shimKeys'], function(funcName) {
+          _.each(['baseForIn', 'shimKeys'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
-              var deps = _.pull(funcDepMap[funcName], 'createIterator');
-              deps.push('isArguments', 'isObject');
-              if (funcName != 'shimKeys') {
-                deps.push('baseCreateCallback');
-              }
+              _.pull(funcDepMap[funcName], 'createIterator').push('isArguments', 'isObject');
             }
           });
 
@@ -4185,29 +4184,6 @@
           });
 
           if (!isMobile) {
-            _.each(['baseClone', 'lodash', 'transform', 'wrapperValueOf'], function(funcName) {
-              if (!(isUnderscore && (isLodash(funcName) ||
-                  (funcName == 'lodash' || funcName == 'wrapperValueOf') && !_.isEmpty(plusFuncs)))) {
-                _.pull(funcDepMap[funcName], 'baseEach').push('forEach');
-              }
-            });
-
-            _.each(['contains', 'createAggregator', 'every', 'filter', 'find', 'forEach', 'forEachRight', 'map', 'max', 'min', 'reduce', 'some'], function(funcName) {
-              if (!(isUnderscore && isLodash(funcName))) {
-                _.pull(funcDepMap[funcName], 'baseEach').push('forOwn');
-              }
-            });
-
-            _.each(['max', 'min'], function(funcName) {
-              if (!(isUnderscore && isLodash(funcName))) {
-                funcDepMap[funcName].push('forEach');
-
-                source = source.replace(matchFunction(source, funcName), function(match) {
-                  return match.replace(/\bbaseEach\(/, 'forEach(');
-                });
-              }
-            });
-
             _.each(['createAggregator', 'every', 'filter', 'find', 'forEach', 'forEachRight', 'map', 'reduce'], function(funcName) {
               if (!(isUnderscore && isLodash(funcName))) {
                 _.pull(funcDepMap[funcName], 'isArray');
@@ -4320,17 +4296,6 @@
                 });
               }
             });
-
-            if (!isUnderscore || _.isEmpty(plusFuncs)) {
-              // replace `baseEach` with `_.forOwn` in "Collections" functions
-              source = source.replace(/^( *)baseEach(?=\((?:collection|iterable))/gm, '$1forOwn');
-
-              // replace `baseEach` with `_.forEach` in the rest of the functions
-              source = source.replace(/(\?\s*)baseEach(?=\s*:)/g, '$1forEach');
-
-              // replace `baseEach` with `_.forEach` in the function assignment snippet
-              source = source.replace(/^( *)baseEach(?=\(\[')/gm, '$1forEach');
-            }
           }
         }
         if (isUnderscore) {
@@ -4390,7 +4355,7 @@
               return match.replace(/isArguments,/g, 'breakIndicator, $&');
             });
 
-            _.each(['baseEach', 'forEach', 'forIn', 'forInRight', 'forOwn', 'forOwnRight'], function(funcName) {
+            _.each(['baseEach', 'baseForIn', 'baseForOwn', 'forEach', 'forInRight', 'forOwnRight'], function(funcName) {
               source = source.replace(matchFunction(source, funcName), function(match) {
                 return match.replace(/=== *false/g, '=== breakIndicator');
               });
@@ -4604,7 +4569,7 @@
 
         if (isModern || isUnderscore) {
           // inline functions defined with `createIterator`
-          _.each(['forIn', 'shimKeys'], function(funcName) {
+          _.each(['baseForIn', 'shimKeys'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
               var func = lodash['_' + funcName] || lodash[funcName];
               source = source.replace(matchFunction(source, funcName), function(match) {
@@ -4615,20 +4580,17 @@
           });
         }
         if (isUnderscore) {
-          // remove `thisArg` from unexposed `forEachRight`, `forIn` and `forOwn`
-          _.each(['forEachRight', 'forIn', 'forOwn'], function(funcName) {
-            if (!isLodash(funcName)) {
-              source = source.replace(matchFunction(source, funcName), function(match) {
-                return match
-                  .replace(/(callback), *thisArg/g, '$1')
-                  .replace(/^ *callback *=.+\n/m, '');
-              });
-            }
-          });
-
+          // remove `thisArg` from unexposed `forEachRight`
+          if (!isLodash('forEachRight')) {
+            source = source.replace(matchFunction(source, 'forEachRight'), function(match) {
+              return match
+                .replace(/(callback), *thisArg/g, '$1')
+                .replace(/^ *callback *=.+\n/m, '');
+            });
+          }
           // unexpose Lo-Dash methods for the Underscore build
           source = source.replace(getMethodAssignments(source), function(match) {
-            return _.reduce(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'forIn', 'forOwn', 'isPlainObject', 'match', 'noop', 'now', 'property', 'slice', 'unzip', 'zipObject'], function(result, funcName) {
+            return _.reduce(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'isPlainObject', 'match', 'noop', 'now', 'property', 'slice', 'unzip', 'zipObject'], function(result, funcName) {
               return isLodash(funcName)
                 ? result
                 : result.replace(RegExp('^(?: *//.*\\s*)* *lodash\\.' + funcName + ' *=[\\s\\S]+?;\\n', 'm'), '');
