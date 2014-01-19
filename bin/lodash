@@ -308,8 +308,7 @@
     'sample': ['support'],
     'shimIsPlainObject': ['support'],
     'template': ['templateSettings'],
-    'toArray': ['support'],
-    'wrapperValueOf': ['support']
+    'toArray': ['support']
   });
 
   /** Used to track variable dependencies of identifiers */
