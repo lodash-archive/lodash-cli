@@ -923,15 +923,14 @@
       defaultBuildCallback(data);
     };
 
-    var getInlinees = function(funcName, stack) {
+    var getInlinees = function(identifier, stack) {
       stack || (stack = []);
-      return _.reduce(_.filter(funcDepMap[funcName], isPrivate), function(inlinees, funcName) {
-        var dependants = [];
-        _.each(funcDepMap, function(otherDeps, otherName) {
-          if (_.contains(otherDeps, funcName)) {
+      return _.reduce(_.filter(funcDepMap[identifier], isPrivate), function(inlinees, funcName) {
+        var dependants = _.transform(funcDepMap, function(dependants, depNames, otherName) {
+          if (_.contains(depNames, funcName)) {
             dependants.push(otherName);
           }
-        });
+        }, []);
 
         // inline functions with only one dependent or all dependents are inlined
         if (dependants.length === 1 || !_.difference(dependants, stack).length) {
@@ -942,11 +941,11 @@
       }, []);
     };
 
-    // create map of private functions to be inlined
-    var funcInlineMap = _.transform(_.difference(buildFuncs, privateFuncs), function(object, funcName) {
+    // create map of private identifiers to be inlined
+    var inlineMap = _.transform(_.difference(buildFuncs, privateFuncs), function(result, funcName) {
       var inlinees = getInlinees(funcName);
       if (inlinees.length) {
-        object[funcName] = inlinees;
+        result[funcName] = inlinees;
       }
     }, createMap());
 
@@ -956,8 +955,8 @@
     }
     // exclude identifiers that are to be inlined
     identifiers = _.reject(identifiers, function(identifier) {
-      return _.some(funcInlineMap, function(deps) {
-        return _.contains(deps, identifier);
+      return _.some(inlineMap, function(inlinees) {
+        return _.contains(inlinees, identifier);
       });
     });
 
@@ -972,24 +971,32 @@
     // create modules for each identifier
     identifiers.forEach(function(identifier) {
       var iife = [],
-          inlinees = [identifier],
-          inlineFuncs = funcInlineMap[identifier],
-          inlineObjs = _.contains(includeObjs, identifier) && inlinees,
-          inlineVars = _.contains(includeVars, identifier) && inlinees,
           isInternal = isPrivate(identifier),
           moduleName = isNpm ? 'lodash.' + (isInternal ? '_' : '') + identifier.toLowerCase() : identifier,
           modulePath = isNpm ? moduleName : getPath(identifier, funcDepMap);
 
-      if (_.contains(allFuncs, identifier)) {
-        inlineFuncs = _.union(inlineFuncs, inlinees);
-      }
-      var depNames = _.difference(_.reduce(inlineFuncs || inlinees, function(result, identifier) {
+      var inlinees = [identifier];
+      push.apply(inlinees, inlineMap[identifier] || []);
+
+      var inlineFuncs = _.filter(inlinees, function(inlinee) {
+        return _.contains(allFuncs, inlinee);
+      });
+
+      var inlineObjs = _.filter(inlinees, function(inlinee) {
+        return _.contains(includeObjs, inlinee);
+      });
+
+      var inlineVars = _.filter(inlinees, function(inlinee) {
+        return _.contains(includeVars, inlinee);
+      });
+
+      var depNames = _.difference(_.reduce(inlinees, function(result, identifier) {
         return _.union(result,
           getDependencies(identifier, funcDepMap, true),
           objDepMap[identifier],
           varDepMap[identifier]
         );
-      }, []), inlineFuncs).sort();
+      }, []), inlinees).sort();
 
       var depPaths = isNpm
         ? depNames.map(function(depName) { return 'lodash.' + (isPrivate(depName) ? '_' : '') + depName.toLowerCase(); })
@@ -1031,14 +1038,14 @@
       state.iife = iife.join('\n');
       state.outputPath = path.join(outputPath, modulePath, (isNpm ? 'index' : identifier) + '.js');
 
-      if (inlineObjs) {
+      if (inlineFuncs.length) {
+        state.buildFuncs = state.includeFuncs = inlineFuncs;
+      }
+      if (inlineObjs.length) {
         state.includeObjs = inlineObjs;
       }
-      if (inlineVars) {
+      if (inlineVars.length) {
         state.includeVars = inlineVars;
-      }
-      if (inlineFuncs) {
-        state.buildFuncs = state.includeFuncs = inlineFuncs;
       }
       build(state, function(data) {
         var source = data.source;
