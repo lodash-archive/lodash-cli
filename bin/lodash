@@ -5030,7 +5030,7 @@
 
   /*--------------------------------------------------------------------------*/
 
-  // expose `build`
+  // export `build`
   if (module != require.main) {
     module.exports = build;
   }
