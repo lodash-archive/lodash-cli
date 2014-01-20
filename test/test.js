@@ -1279,8 +1279,7 @@
       var start = _.after(2, _.once(QUnit.start));
 
       build(['-s', 'underscore'], function(data) {
-        var array = [{ 'a': 1, 'b': 2 }, { 'a': 2, 'b': 2 }],
-            basename = path.basename(data.outputPath, '.js'),
+        var basename = path.basename(data.outputPath, '.js'),
             context = createContext();
 
         vm.runInContext(data.source, context);
@@ -1293,6 +1292,8 @@
         };
 
         equal(object.fn(), 2, '_.bind: ' + basename);
+
+        var array = [{ 'a': 1, 'b': 2 }, { 'a': 2, 'b': 2 }];
 
         var actual = lodash.clone('a', function() {
           return this.a;
@@ -1320,12 +1321,14 @@
 
         var expected = { 'a': 1, 'b': 2, 'c': 3};
         array = [{ 'b': 2 }, { 'c': 3 }];
+
         actual = _.reduce(array, lodash.extend, { 'a': 1});
         deepEqual(actual, expected, '_.extend should work with _.reduce: ' + basename);
 
         actual = _.reduce(array, lodash.defaults, { 'a': 1});
         deepEqual(actual, expected, '_.defaults should work with _.reduce: ' + basename);
 
+        array = [{ 'a': 1, 'b': 2 }, { 'a': 2, 'b': 2 }];
         actual = lodash.find(array, function(value) {
           return 'a' in value;
         });
