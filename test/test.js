@@ -1393,9 +1393,10 @@
         deepEqual(_.keys(actual), [], '_.pick should not accept a `callback`: ' + basename);
 
         actual = lodash.random(2, 4, true);
-        ok(!(actual % 1) && actual >= 2 && actual <= 4, '_.random should not support a `floating` argument: ' + basename);
+        ok(!(actual % 1) && actual >= 2 && actual <= 4, '_.random should ignore `floating`: ' + basename);
 
         deepEqual(lodash.range(1, 4, 0), [1, 2, 3], '_.range should not support a `step` of `0`');
+        strictEqual(lodash.result({}, 'a', 1), undefined, '_.result should ignore `defaultValue`: ' + basename);
         strictEqual(lodash.some([false, true, false]), true, '_.some: ' + basename);
 
         actual = lodash.tap([], function(value) { value.push(this); }, 'a');
