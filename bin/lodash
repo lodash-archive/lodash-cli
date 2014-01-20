@@ -3416,6 +3416,7 @@
         else {
           funcDepMap.chain.push('wrapperChain');
           funcDepMap.wrapperValueOf.push('assign', 'baseEach', 'baseForOwn', 'chain', 'mixin', 'wrapperChain', 'wrapperToString');
+          objDepMap.wrapperValueOf = ['support'];
 
           _.each(['lodashWrapper', 'tap', 'wrapperChain', 'wrapperToString'], function(funcName) {
             funcDepMap[funcName].push('wrapperValueOf');
