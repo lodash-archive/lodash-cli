@@ -1318,6 +1318,14 @@
         actual = lodash.extend({}, { 'a': 0 }, callback, [2]);
         strictEqual(actual.a, 0, '_.extend should ignore `callback` and `thisArg`: ' + basename);
 
+        var expected = { 'a': 1, 'b': 2, 'c': 3};
+        array = [{ 'b': 2 }, { 'c': 3 }];
+        actual = _.reduce(array, lodash.extend, { 'a': 1});
+        deepEqual(actual, expected, '_.extend should work with _.reduce: ' + basename);
+
+        actual = _.reduce(array, lodash.defaults, { 'a': 1});
+        deepEqual(actual, expected, '_.defaults should work with _.reduce: ' + basename);
+
         actual = lodash.find(array, function(value) {
           return 'a' in value;
         });
@@ -1340,13 +1348,15 @@
         equal(actual, 2, '_.forEach supports the `thisArg` argument when iterating objects: ' + basename);
 
         array = [{ 'a': [1, 2] }, { 'a': [3] }];
-
         actual = lodash.flatten(array, function(value, index) {
           return this[index].a;
         }, array);
 
         deepEqual(actual, array, '_.flatten should should ignore `callback` and `thisArg`: ' + basename);
         deepEqual(lodash.flatten(array, 'a'), array, '_.flatten should should ignore string `callback` values: ' + basename);
+
+        actual = _.map([[[['a']]], [[['b']]]], lodash.flatten);
+        deepEqual(actual, [['a'], ['b']], '_.flatten should perform a deep flatten when used as `callback` for _.map: ' + basename);
 
         object = { 'length': 0, 'splice': Array.prototype.splice };
         equal(lodash.isEmpty(object), false, '_.isEmpty should return `false` for jQuery/MooTools DOM query collections: ' + basename);
@@ -1362,6 +1372,10 @@
 
         equal(lodash.max('abc'), -Infinity, '_.max should return `-Infinity` for strings: ' + basename);
         equal(lodash.min('abc'), Infinity, '_.min should return `Infinity` for strings: ' + basename);
+
+        array = [[2, 3, 1], [5, 6, 4], [8, 9, 7]];
+        deepEqual(_.map(array, lodash.max), [3, 6, 9], '_.max should work when used as `callback` for _.map: ' + basename);
+        deepEqual(_.map(array, lodash.min), [1, 4, 7], '_.min should work when used as `callback` for _.map: ' + basename);
 
         object = {};
         lodash.mixin(object, { 'a': function(a) { return a[0]; } });
@@ -1387,6 +1401,11 @@
         equal(lodash.template('${a}', object), '${a}', '_.template should ignore ES6 delimiters: ' + basename);
         equal('support' in lodash, false, '_.support should not exist: ' + basename);
         equal('imports' in lodash.templateSettings, false, '_.templateSettings should not have an "imports" property: ' + basename);
+
+        array = [[2, 1, 2], [1, 2, 1]];
+        actual = _.map(array, lodash.uniq);
+        deepEqual(actual, [[2, 1], [1, 2]], '_.uniq should perform an unsorted uniq operation when used as `callback` for _.map: ' + basename);
+
         strictEqual(lodash.uniqueId(0), '1', '_.uniqueId should ignore a prefix of `0`: ' + basename);
 
         var collection = [{ 'a': { 'b': 1, 'c': 2 } }];
@@ -1399,7 +1418,7 @@
         deepEqual(lodash.findWhere(collection, { 'a': 1 }), collection[0], '_.findWhere: ' + basename);
         strictEqual(lodash.findWhere(collection, {}), undefined, '_.findWhere should return `undefined` if no match is found: ' + basename);
 
-        var expected = [[['fred', 30, true]], [['barney', 40, false]]];
+        expected = [[['fred', 30, true]], [['barney', 40, false]]];
         actual = lodash.zip(lodash.zip(['fred', 'barney'], [30, 40], [true, false]));
         deepEqual(actual, expected, '_.zip is unable to correctly consume it\'s output: ' + basename);
 
