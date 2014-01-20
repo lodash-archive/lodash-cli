@@ -926,15 +926,31 @@
     var getInlinees = function(identifier, stack) {
       stack || (stack = []);
       return _.reduce(_.filter(funcDepMap[identifier], isPrivate), function(inlinees, funcName) {
-        var dependants = _.transform(funcDepMap, function(dependants, depNames, otherName) {
+        var funcDependants = _.transform(funcDepMap, function(result, depNames, otherName) {
           if (_.contains(depNames, funcName)) {
-            dependants.push(otherName);
+            result.push(otherName);
           }
         }, []);
 
         // inline functions with only one dependent or all dependents are inlined
-        if (dependants.length === 1 || !_.difference(dependants, stack).length) {
+        if (funcDependants.length === 1 || !_.difference(funcDependants, stack).length) {
           inlinees.push(funcName);
+
+          // inline object and variable dependencies if all dependents are inlined
+          _.each([objDepMap, varDepMap], function(depMap) {
+            _.each(depMap[funcName], function(depName) {
+              var dependants = _.transform(depMap, function(result, depNames, otherName) {
+                if (_.contains(depNames, depName)) {
+                  result.push(otherName);
+                }
+              }, []);
+
+              if (!_.difference(dependants, inlinees).length) {
+                inlinees.push(depName);
+              }
+            });
+          });
+
           push.apply(inlinees, getInlinees(funcName, inlinees));
         }
         return inlinees;
