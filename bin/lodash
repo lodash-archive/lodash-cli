@@ -314,6 +314,7 @@
   /** Used to track variable dependencies of identifiers */
   var varDependencyMap = createMap({
     'baseCreate': ['root'],
+    'createCache': ['root'],
     'getArray': ['arrayPool'],
     'getObject': ['objectPool'],
     'isFinite': ['root'],
