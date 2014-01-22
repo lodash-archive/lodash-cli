@@ -4383,11 +4383,11 @@
               !isLodash('forIn') && !isLodash('forInRight') &&
               !isLodash('forOwn') && !isLodash('forOwnRight')) {
 
-            source = source.replace(matchVar(source, 'idCounter'), function(match) {
+            source = source.replace(matchVar(source, 'expando'), function(match) {
               return match + [
                 '',
                 '  /** Used by methods to exit iteration */',
-                "  var breakIndicator = '__lodash_break_1335248838000__';",
+                "  var breakIndicator = expando + 'breaker__';",
                 ''
               ].join('\n');
             });
