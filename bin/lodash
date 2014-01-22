@@ -42,11 +42,17 @@
   /** Used to create regexes that may detect multi-line comment blocks */
   var multilineComment = '(?:\\n */\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/)?\\n';
 
+  /** Used to replace string literals with tokens */
+  var stringToken = '__lodash@' + _.VERSION + '__token__';
+
   /** Used to detect the Node.js executable in command-line arguments */
   var reNode = RegExp('(?:^|' + path.sepEscaped + ')node(?:\\.exe)?$', 'i');
 
   /** Used to match string literals */
   var reStrings = /(["'])(?:(?!\1)[^\n\\]|\\.)*\1/g;
+
+  /** Used to match string tokens */
+  var reStringTokens = RegExp(stringToken.replace(/\./g, '\\$&'), 'g');
 
   /** Shortcut to the `stdout` object */
   var stdout = process.stdout;
@@ -239,12 +245,12 @@
     'zipObject': ['isArray'],
 
     // private functions
-    'baseBind': ['baseCreate', 'isObject', 'setBindData', 'slice'],
+    'baseBind': ['baseCreate', 'isObject', 'setData', 'slice'],
     'baseClone': ['assign', 'baseEach', 'baseForOwn', 'getArray', 'isArray', 'isObject', 'isNode', 'releaseArray', 'slice'],
     'baseCompareAscending': [],
     'baseCreate': ['isNative', 'isObject', 'noop'],
-    'baseCreateCallback': ['bind', 'identity', 'setBindData'],
-    'baseCreateWrapper': ['baseCreate', 'isObject', 'slice', 'setBindData'],
+    'baseCreateCallback': ['bind', 'identity', 'setData'],
+    'baseCreateWrapper': ['baseCreate', 'isObject', 'slice', 'setData'],
     'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
     'baseEach': ['baseForOwn', 'isString'],
     'baseFlatten': ['isArguments', 'isArray'],
@@ -276,7 +282,7 @@
     'lodashWrapper': [],
     'releaseArray': [],
     'releaseObject': [],
-    'setBindData': ['isNative', 'noop'],
+    'setData': ['isNative', 'noop'],
     'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
     'shimKeys': ['createIterator'],
     'shimTrim':  ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
@@ -677,7 +683,7 @@
     'lodashWrapper',
     'releaseArray',
     'releaseObject',
-    'setBindData',
+    'setData',
     'shimIsPlainObject',
     'shimKeys',
     'shimTrim',
@@ -830,7 +836,7 @@
       match = removeMixinCalls(match);
 
       // insert `mixin(...)` before `_.VERSION`
-      return match.replace(/(?:\n *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)?\n( *)lodash\.VERSION/, function(match, indent) {
+      return match.replace(/(?:\n *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)?\n( *)lodash\.VERSION\b/, function(match, indent) {
         return [
           '',
           '// add functions to `lodash.prototype`',
@@ -1185,9 +1191,11 @@
 
         // add category namespaces to each lodash function assignment
         source = source.replace(/(lodash(?:\.prototype)?\.[$\w]+\s*=\s*)([$\w]+)/g, function(match, prelude, identifier) {
-          return _.contains(deps, identifier)
-            ? match
-            : prelude + getCategory(identifier, funcDepMap).toLowerCase() + '.' + identifier;
+          if (_.contains(deps, identifier)) {
+            return match;
+          }
+          var category = getCategory(identifier, funcDepMap);
+          return prelude + (category ? category.toLowerCase() + '.' : '') + identifier;
         });
 
         // wrap `_.mixin`
@@ -1938,14 +1946,14 @@
   }
 
   /**
-   * Gets the `setBindData` fork from `source`.
+   * Gets the `setData` fork from `source`.
    *
    * @private
    * @param {string} source The source to inspect.
    * @returns {string} Returns the fork.
    */
-  function getSetBindDataFork(source) {
-    return _.result(matchFunction(source, 'setBindData').match(/!defineProperty[^:]+:\s*/), 0) || '';
+  function getSetDataFork(source) {
+    return _.result(matchFunction(source, 'setData').match(/!defineProperty[^:]+:\s*/), 0) || '';
   }
 
   /**
@@ -2226,9 +2234,9 @@
     _.each(['baseBind', 'baseCreateCallback', 'baseCreateWrapper', 'createWrapper'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
         return match
-          .replace(/(?:\s*\/\/.*)*\n( *)var bindData *=[\s\S]+?\n\1}/, '')
-          .replace(/(?:\s*\/\/.*)*\n( *)if *\(bindData\b[\s\S]+?\n\1}/, '')
-          .replace(/(?:\s*\/\/.*)*\n.+?setBindData.+/, '')
+          .replace(/(?:\s*\/\/.*)*\n( *)var data *=[\s\S]+?\n\1}/, '')
+          .replace(/(?:\s*\/\/.*)*\n( *)if *\(data\b[\s\S]+?\n\1}/, '')
+          .replace(/(?:\s*\/\/.*)*\n.+?setData.+/, '')
       });
     });
 
@@ -2943,10 +2951,10 @@
 
     source = callback(source.replace(reStrings, function(match) {
       strings.push(match);
-      return '__lodash_string_token__';
+      return stringToken;
     })) || '';
 
-    source = source.replace(/__lodash_string_token__/g, function() {
+    source = source.replace(reStringTokens, function() {
       return strings.shift();
     });
 
@@ -3454,7 +3462,7 @@
           _.pull(objDepMap.baseCreateCallback, 'support');
 
           _.each(['baseBind', 'baseCreateCallback', 'baseCreateWrapper'], function(funcName) {
-            _.pull(funcDepMap[funcName], 'setBindData');
+            _.pull(funcDepMap[funcName], 'setData');
           });
         }
         if (_.contains(plusFuncs, 'chain') == !isUnderscore) {
