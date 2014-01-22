@@ -1186,9 +1186,7 @@
 
         // remove unneeded method and alias assignments
         _.each(_.difference(allFuncs, buildFuncs), function(funcName) {
-          source = source.replace(RegExp('^( *//.*\\n)* *lodash(?:\\.prototype)?\\.[$\\w]+ *= *' + funcName + ';\\n(\\n)?', 'gm'), function(match, comment, newline) {
-            return !newline && comment || '';
-          });
+          source = removeMethodAssignment(source, funcName);
         });
 
         // add category namespaces to each lodash function assignment
@@ -2162,7 +2160,7 @@
    * Removes all Lo-Dash assignments from `source`.
    *
    * @private
-   * @param {string} source The source to inspect.
+   * @param {string} source The source to process.
    * @returns {string} Returns the modified source.
    */
   function removeAssignments(source) {
@@ -2399,10 +2397,26 @@
   }
 
   /**
+   * Removes a method assignment by name from `source`.
+   *
+   * @private
+   * @param {string} source The source to process.
+   * @param {string} [methodName] The name of the method assignment to remove.
+   * @returns {string} Returns the modified source.
+   */
+  function removeMethodAssignment(source, methodName) {
+    return source.replace(getMethodAssignments(source), function(match) {
+      return match.replace(RegExp('^( *//.*\\n)* *lodash(?:\\.prototype)?\\.[$\\w]+ *= *' + methodName + ';\\n(\\n)?', 'gm'), function(match, comment, newline) {
+        return (!newline && comment) || newline || '';
+      });
+    });
+  }
+
+  /**
    * Removes the Lo-Dash method assignments snippet from `source`.
    *
    * @private
-   * @param {string} source The source to inspect.
+   * @param {string} source The source to process.
    * @returns {string} Returns the modified source.
    */
   function removeMethodAssignments(source) {
@@ -4642,9 +4656,12 @@
           // unexpose Lo-Dash methods for the Underscore build
           source = source.replace(getMethodAssignments(source), function(match) {
             return _.reduce(['assign', 'create', 'callback', 'createCallback', 'eachRight', 'forEachRight', 'isPlainObject', 'match', 'noop', 'now', 'property', 'slice', 'unzip', 'zipObject'], function(result, funcName) {
-              return isLodash(funcName)
-                ? result
-                : result.replace(RegExp('^(?: *//.*\\s*)* *lodash\\.' + funcName + ' *=[\\s\\S]+?;\\n', 'm'), '');
+              if (isLodash(funcName)) {
+                return result;
+              }
+              return result.replace(RegExp('^( *//.*\\n)* *lodash\\.' + funcName + ' *=[\\s\\S]+?;\\n(\\n)?', 'gm'), function(match, comment, newline) {
+                return (!newline && comment) || newline || '';
+              });
             }, match);
           });
 
@@ -4840,11 +4857,7 @@
           source = removeFunction(source, funcName);
           if (!isModularize) {
             source = removeFromCreateIterator(source, funcName);
-
-            // remove method and alias assignments
-            source = source.replace(RegExp('^( *//.*\\n)* *lodash(?:\\.prototype)?\\.[$\\w]+ *= *' + funcName + ';\\n(\\n)?', 'gm'), function(match, comment, newline) {
-              return !newline && comment || '';
-            });
+            source = removeMethodAssignment(source, funcName);
           }
         }
       });
