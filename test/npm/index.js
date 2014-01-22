@@ -198,6 +198,8 @@ lodash.take = lodash.first;
 lodash.unique = lodash.uniq;
 lodash.unzip = lodash.zip;
 
+lodash.VERSION = require('lodash').VERSION;
+
 // add objects
 lodash.support = support;
 (lodash.templateSettings = templateSettings).imports._ = lodash;
