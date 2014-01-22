@@ -62,6 +62,7 @@
     'all': 'every',
     'any': 'some',
     'collect': 'map',
+    'callback': 'createCallback',
     'detect': 'find',
     'drop': 'rest',
     'each': 'forEach',
@@ -87,6 +88,7 @@
   var realToAliasMap = createMap({
     'assign': ['extend'],
     'contains': ['include'],
+    'createCallback': ['callback'],
     'every': ['all'],
     'filter': ['select'],
     'find': ['detect', 'findWhere'],
@@ -4639,7 +4641,7 @@
           }
           // unexpose Lo-Dash methods for the Underscore build
           source = source.replace(getMethodAssignments(source), function(match) {
-            return _.reduce(['assign', 'create', 'createCallback', 'eachRight', 'forEachRight', 'isPlainObject', 'match', 'noop', 'now', 'property', 'slice', 'unzip', 'zipObject'], function(result, funcName) {
+            return _.reduce(['assign', 'create', 'callback', 'createCallback', 'eachRight', 'forEachRight', 'isPlainObject', 'match', 'noop', 'now', 'property', 'slice', 'unzip', 'zipObject'], function(result, funcName) {
               return isLodash(funcName)
                 ? result
                 : result.replace(RegExp('^(?: *//.*\\s*)* *lodash\\.' + funcName + ' *=[\\s\\S]+?;\\n', 'm'), '');

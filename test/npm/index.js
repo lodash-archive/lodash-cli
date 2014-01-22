@@ -178,6 +178,7 @@ lodash.zipObject = require('lodash.zipobject');
 // add aliases
 lodash.all = lodash.every;
 lodash.any = lodash.some;
+lodash.callback = lodash.createCallback;
 lodash.collect = lodash.map;
 lodash.detect = lodash.find;
 lodash.drop = lodash.rest;
@@ -198,10 +199,9 @@ lodash.take = lodash.first;
 lodash.unique = lodash.uniq;
 lodash.unzip = lodash.zip;
 
-lodash.VERSION = require('lodash').VERSION;
-
-// add objects
+// add other properties
 lodash.support = support;
 (lodash.templateSettings = templateSettings).imports._ = lodash;
+lodash.VERSION = require('lodash').VERSION;
 
 module.exports = lodash;
