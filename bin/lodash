@@ -2236,7 +2236,7 @@
         return match
           .replace(/(?:\s*\/\/.*)*\n( *)var data *=[\s\S]+?\n\1}/, '')
           .replace(/(?:\s*\/\/.*)*\n( *)if *\(data\b[\s\S]+?\n\1}/, '')
-          .replace(/(?:\s*\/\/.*)*\n.+?setData.+/, '')
+          .replace(/(?:\s*\/\/.*)*\n.+?setData.+/, '');
       });
     });
 
@@ -2449,7 +2449,7 @@
    * @returns {string} Returns the modified source.
    */
   function removePseudoPrivates(source) {
-    return source.replace(/^(?: *\/\/.*\s*)* *lodash\._[$\w]+ *=[\s\S]+?;\n/gm, '');
+    return source.replace(/^(?: *\/\/.*\n)* *lodash\._[$\w]+ *=[\s\S]+?;\n/gm, '');
   }
 
   /**
@@ -2468,7 +2468,7 @@
     source = source.replace(/\btest\(runInContext\)/, 'test(function() { return this; })');
 
     // remove assignment
-    source = source.replace(/^(?: *\/\/.*\s*)* *lodash\.runInContext *=[\s\S]+?;\n/m, '');
+    source = source.replace(/^(?: *\/\/.*\n)* *lodash\.runInContext *=[\s\S]+?;\n/m, '');
 
     // remove function scaffolding, leaving most of its content
     source = source.replace(matchFunction(source, 'runInContext', true), function(match) {
@@ -2481,7 +2481,7 @@
       .replace(/\bcontext\b/g, 'root')
       .replace(/(?:\n +\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)?\n *var Array *=[\s\S]+?;\n/, '')
       .replace(/(return *|= *)_([;)])/g, '$1lodash$2')
-      .replace(/^(?: *\/\/.*\s*)* *var _ *= *runInContext\b.+\n+/m, '');
+      .replace(/^(?: *\/\/.*\n)* *var _ *= *runInContext\b.+\n+/m, '');
   }
 
   /**
@@ -2680,7 +2680,7 @@
 
     // remove `support.nonEnumShadows` from `iteratorTemplate`
     source = source.replace(matchFunction(source, 'iteratorTemplate'), function(match) {
-      return match.replace(/^(?: *\/\/.*\n)* *["']( *)<% *if *\(support\.nonEnumShadows\b[\s\S]+?["']\1<% *} *%>.+/m, '');
+      return match.replace(/^(?: *\/\/.*\n)*( *["'] *)<% *if *\(support\.nonEnumShadows\b[\s\S]+?\1<% *} *%>.+/m, '');
     });
 
     return source;
