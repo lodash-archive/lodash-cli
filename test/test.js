@@ -1,4 +1,4 @@
-;(function(undefined) {
+;(function() {
   'use strict';
 
   /** Load Node.js modules */
@@ -1090,6 +1090,11 @@
   (function() {
     var outputPath = path.join(__dirname, 'a');
 
+    var setup = function() {
+      process.chdir(__dirname);
+      fs.rmrfSync(outputPath);
+    };
+
     var funcNames = [
       'lodash',
       'mixin',
@@ -1099,12 +1104,11 @@
     funcNames.forEach(function(funcName) {
       asyncTest('`lodash modularize modern include=' + funcName + ' exports=node`', function() {
         var start = _.once(function() {
-          fs.rmrfSync(outputPath);
           process.chdir(cwd);
           QUnit.start();
         });
 
-        process.chdir(__dirname);
+        setup();
 
         build(['modularize', 'modern', 'include=' + funcName, 'exports=node', '-o', outputPath], function(data) {
           var reLicense = /@license/;
@@ -1137,12 +1141,11 @@
     commands.forEach(function(command, index) {
       asyncTest('module aliases', function() {
         var start = _.once(function() {
-          fs.rmrfSync(outputPath);
           process.chdir(cwd);
           QUnit.start();
         });
 
-        process.chdir(__dirname);
+        setup();
 
         build(['modularize', 'modern', command, '-o', outputPath], function(data) {
           emptyObject(require.cache);
@@ -1313,7 +1316,7 @@
         deepEqual(lodash.extend({}, new Foo), Foo.prototype, '_.extend should assign inherited `source` properties: ' + basename);
 
         var callback = function(a, b) {
-          actual = this[b];
+          return this[b];
         };
 
         actual = lodash.extend({}, { 'a': 0 }, callback, [2]);
@@ -1344,6 +1347,11 @@
         equal(last, _.last(array), '_.forEach should not exit early: ' + basename);
         equal(actual, undefined, '_.forEach should return `undefined`: ' + basename);
 
+        var callback = function(value, index) {
+          actual = this[index];
+        };
+
+        actual = undefined;
         lodash.forEach([1], callback, [2]);
         equal(actual, 2, '_.forEach supports the `thisArg` argument when iterating arrays: ' + basename);
 
