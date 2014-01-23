@@ -58,6 +58,7 @@
     'all': 'every',
     'any': 'some',
     'collect': 'map',
+    'callback': 'createCallback',
     'detect': 'find',
     'drop': 'rest',
     'each': 'forEach',
@@ -82,6 +83,7 @@
   var realToAliasMap = createMap({
     'assign': ['extend'],
     'contains': ['include'],
+    'createCallback': ['callback'],
     'every': ['all'],
     'filter': ['select'],
     'find': ['detect'],
