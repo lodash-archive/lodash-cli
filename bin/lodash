@@ -3435,15 +3435,15 @@
             delete varDepMap.root;
           }
           objDepMap.lodash = ['support', 'templateSettings'];
-          funcDepMap.lodash.push('assign', 'baseEach', 'baseForOwn', 'mixin');
+          funcDepMap.lodash.push('assign', 'baseEach', 'baseForOwn', 'mixin', 'wrapperChain', 'wrapperToString');
           _.pull(funcDepMap.mixin, 'lodash');
         }
         else {
           funcDepMap.chain.push('wrapperChain');
-          funcDepMap.wrapperValueOf.push('assign', 'baseEach', 'baseForOwn', 'chain', 'mixin', 'wrapperChain', 'wrapperToString');
+          funcDepMap.wrapperValueOf.push('assign', 'baseEach', 'baseForOwn', 'mixin', 'wrapperChain', 'wrapperToString');
           objDepMap.wrapperValueOf = ['support'];
 
-          _.each(['lodashWrapper', 'tap', 'wrapperChain', 'wrapperToString'], function(funcName) {
+          _.each(['chain', 'lodashWrapper', 'tap', 'wrapperChain', 'wrapperToString'], function(funcName) {
             funcDepMap[funcName].push('wrapperValueOf');
           });
         }
