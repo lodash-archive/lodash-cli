@@ -907,6 +907,7 @@
         var templates = context.module.exports || { 'd': function() { return ''; } },
             actual = templates.d({ 'name': 'fred & barney' });
 
+        ok(_.contains(basename, 'lodash.templates'), basename);
         equal(actual, '<span>hello fred &amp; barney!</span>', basename);
 
         delete _.templates;
@@ -935,8 +936,7 @@
   QUnit.module('independent builds');
 
   (function() {
-    var reCustom = /Custom Build/,
-        reLicense = /^\/\**\s+\* @license[\s\S]+?\*\/\n/;
+    var reLicense = /^\/\**\s+\* @license[\s\S]+?\*\/\n/;
 
     asyncTest('debug only', function() {
       var start = _.once(QUnit.start);
@@ -952,7 +952,7 @@
         equal(path.basename(data.outputPath, '.js'), 'lodash.custom');
 
         var comment = data.source.match(reLicense);
-        ok(reCustom.test(comment));
+        ok(_.contains(comment, 'Custom Build'));
         start();
       });
     });
@@ -971,7 +971,7 @@
         equal(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
 
         var comment = data.source.match(reLicense);
-        ok(reCustom.test(comment));
+        ok(_.contains(comment, 'Custom Build'));
         start();
       });
     });

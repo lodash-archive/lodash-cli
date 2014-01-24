@@ -5002,10 +5002,14 @@
     );
 
     // used as the basename of the output path
-    var basename = outputPath
-      ? path.basename(outputPath, '.js')
-      : 'lodash' + (isTemplate ? '.template' : isCustom ? '.custom' : '');
-
+    var basename = 'lodash';
+    if (outputPath) {
+      basename = outputPath;
+    } else if (isTemplate) {
+      basename += '.template' + (moduleId == 'none' ? 's' : '');
+    } else if (isCustom) {
+      basename += '.custom';
+    }
     // output debug build
     if (!isMinify && (isCustom || isDebug || isTemplate)) {
       if (isCustom) {
