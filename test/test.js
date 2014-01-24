@@ -951,7 +951,7 @@
       build(['-d', '-s', 'backbone'], function(data) {
         equal(path.basename(data.outputPath, '.js'), 'lodash.custom');
 
-        var comment = data.source.match(reLicense);
+        var comment = _.result(data.source.match(reLicense), 0);
         ok(_.contains(comment, 'Custom Build'));
         start();
       });
@@ -970,7 +970,7 @@
       build(['-m', '-s', 'backbone'], function(data) {
         equal(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
 
-        var comment = data.source.match(reLicense);
+        var comment = _.result(data.source.match(reLicense), 0);
         ok(_.contains(comment, 'Custom Build'));
         start();
       });
