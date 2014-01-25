@@ -1405,7 +1405,11 @@
       if (exception) {
         throw exception;
       }
-      var basePath = (path.dirname(pattern) + path.sep).replace(RegExp('(^|' + path.sepEscaped + ')\\*\\*.*$'),  '$1'),
+      var dirname = path.dirname(pattern);
+      if (dirname == '.') {
+        dirname = '';
+      }
+      var basePath = (dirname + path.sep).replace(RegExp('(^|' + path.sepEscaped + ')\\*\\*.*$'), '$1'),
           insertAt = source.length,
           templates = createMap();
 
@@ -1413,25 +1417,23 @@
         var text = fs.readFileSync(filePath, 'utf8'),
             precompiled = cleanupCompiled(getFunctionSource(_.template(text, null, settings), 2));
 
-        var index = -1,
-            object = templates;
-
         // glob uses *nix path separators even on Windows
         // https://github.com/isaacs/node-glob#windows
-        var props = filePath.slice(basePath.length).replace(/\..*$/, '').split('/'),
-            length = props.length - 1;
+        var clipped = filePath.slice(dirname ? basePath.length : 0).replace(/\..*$/, ''),
+            props = clipped.split('/');
 
-        while (++index < length) {
-          var key = props[index];
-          if (!object[key]) {
-            object[key] = createMap();
-          }
-          object = object[key];
-        }
+        // create namespace objects
+        props.reduce(function(object, key) {
+          return object[key] || (object[key] = createMap());
+        }, templates);
+
+        // escape namespace property names
+        props = props.map(function(key) {
+          return "['" + key.replace(/['\n\r\t]/g, '\\$&') + "']";
+        });
+
         // add template assignment to `source`
-        source.push('  templates' + props.map(function(prop) {
-          return "['" + prop.replace(/['\n\r\t]/g, '\\$&') + "']";
-        }).join('') + ' = ' + precompiled + ';', '');
+        source.push('  templates' + props.join('') + ' = ' + precompiled + ';', '');
       });
 
       // add the initial `_.templates` object to `source`

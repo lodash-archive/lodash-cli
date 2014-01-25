@@ -670,7 +670,8 @@
     var commands = [
       'template=' + path.join('fixture', 'template', '*.jst'),
       'template=' + relativePrefix + path.join('fixture', 'template', '*.jst'),
-      'template=' + path.join(templatePath, '*.jst')
+      'template=' + path.join(templatePath, '*.jst'),
+      'template=' + '*.jst'
     ];
 
     commands.forEach(function(command) {
@@ -680,7 +681,7 @@
           QUnit.start();
         }));
 
-        process.chdir(__dirname);
+        process.chdir(/=\*/.test(command) ? templatePath : __dirname);
 
         build(['-s', command], function(data) {
           var basename = path.basename(data.outputPath, '.js'),
@@ -689,7 +690,7 @@
           var object = {
             'a': { 'people': ['fred', 'barney', 'pebbles'] },
             'b': { 'name': 'fred' },
-            'c': { 'name': 'ES6' }
+            'c': { 'name': 'es6' }
           };
 
           context._ = _;
@@ -699,7 +700,7 @@
           equal(actual.replace(/[\r\n]+/g, ''), '<ul><li>fred</li><li>barney</li><li>pebbles</li></ul>', basename);
 
           equal(_.templates.b(object.b), 'hello fred!', basename);
-          equal(_.templates.c(object.c), 'hello ES6', basename);
+          equal(_.templates.c(object.c), 'hello es6', basename);
           deepEqual(_.difference(['a', 'b', 'c', 'd', 'e'], _.keys(_.templates)), [], basename);
 
           delete _.templates;
