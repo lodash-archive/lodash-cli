@@ -922,7 +922,7 @@
         readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
 
     var empty = [],
-        identifiers = _.pull(buildFuncs.concat(includeObjs, includeVars), 'lodash'),
+        identifiers = buildFuncs.concat(includeObjs, includeVars),
         version = state.lodash.VERSION;
 
     var buildCallback = function(data) {
@@ -974,12 +974,12 @@
       }
     }, createMap());
 
-    // exclude `_.noConflict` and "Chaining" functions for npm builds
+    // exclude `_.noConflict` and "Chain" functions for npm builds
     if (isNpm) {
       identifiers = _.difference(identifiers, categoryMap.Chaining.concat('noConflict'));
     }
-    // exclude identifiers that are to be inlined
-    identifiers = _.reject(identifiers, function(identifier) {
+    // remove identifiers that are to be inlined
+    _.remove(identifiers, function(identifier) {
       return _.some(inlineMap, function(inlinees) {
         return _.contains(inlinees, identifier);
       });
@@ -988,6 +988,9 @@
     var categories = _.uniq(_.compact(identifiers.map(function(identifier) {
       return getCategory(identifier, funcDepMap);
     }))).sort();
+
+    // remove `lodash` from `identifiers` because it's built separately
+    _.pull(identifiers, 'lodash');
 
     // prepare state
     state.isAMD = state.isCommonJS = state.isNode = state.isNpm = false;
@@ -3441,7 +3444,7 @@
             delete varDepMap.root;
           }
           objDepMap.lodash = ['support', 'templateSettings'];
-          funcDepMap.lodash.push('assign', 'baseEach', 'baseForOwn', 'mixin', 'wrapperChain', 'wrapperToString');
+          funcDepMap.lodash.push('assign', 'baseEach', 'baseForOwn', 'mixin');
           _.pull(funcDepMap.mixin, 'lodash');
         }
         else {
@@ -3496,7 +3499,7 @@
           }
         }
         if (isUnderscore) {
-          if (!isLodash('chain')) {
+          if (!isModularize && !isLodash('chain')) {
             _.pull(funcDepMap.wrapperValueOf, 'wrapperToString');
           }
           _.each(['isEqual', 'omit', 'pick'], function(funcName) {
