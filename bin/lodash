@@ -5012,7 +5012,7 @@
     if (outputPath) {
       basename = outputPath;
     } else if (isTemplate) {
-      basename += '.template' + (moduleId == 'none' ? 's' : '');
+      basename += '.template' + (moduleId ? 's' : '');
     } else if (isCustom) {
       basename += '.custom';
     }

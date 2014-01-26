@@ -721,19 +721,19 @@
         var start = _.after(2, _.once(QUnit.start));
 
         build(['-s', 'template=' + path.join(templatePath, '*.jst'), 'exports=amd'].concat(command || []), function(data) {
-          var moduleId,
+          var actualId,
               basename = path.basename(data.outputPath, '.js'),
               context = createContext();
 
           context.define = function(requires, factory) {
             factory(_);
-            moduleId = requires[0];
+            actualId = requires[0];
           };
 
           context.define.amd = {};
           vm.runInContext(data.source, context);
 
-          equal(moduleId, expectedId, basename);
+          equal(actualId, expectedId, basename);
 
           delete _.templates;
           start();
@@ -744,19 +744,19 @@
         var start = _.after(2, _.once(QUnit.start));
 
         build(['-s', 'template=' + path.join(templatePath, '*.tpl'), 'settings={interpolate:/{{([\\s\\S]+?)}}/}'].concat(command || []), function(data) {
-          var moduleId,
+          var actualId,
               basename = path.basename(data.outputPath, '.js'),
               context = createContext();
 
           context.define = function(requires, factory) {
             factory(_);
-            moduleId = requires[0];
+            actualId = requires[0];
           };
 
           context.define.amd = {};
           vm.runInContext(data.source, context);
 
-          equal(moduleId, expectedId, basename);
+          equal(actualId, expectedId, basename);
           equal(_.templates.f({ 'name': 'mustache' }), 'hallå mustache!', basename);
 
           delete _.templates;
@@ -816,7 +816,7 @@
     ];
 
     exportsCommands.forEach(function(command, index) {
-      asyncTest('`lodash ' + command +'`', function() {
+      asyncTest('should work with `' + command +'`', function() {
         var start = _.after(2, _.once(QUnit.start));
 
         build(['-s',  'template=' + path.join(templatePath, 'c.jst'), command], function(data) {
@@ -873,6 +873,50 @@
       });
     });
 
+    var idCommands = [
+      'moduleId=underscore',
+      'moduleId=none'
+    ];
+
+    idCommands.forEach(function(command, index) {
+      var expectedId = /underscore/.test(command) ? 'underscore' : '';
+
+      asyncTest('should work with `' + command + '`', function() {
+        var start = _.after(2, _.once(QUnit.start));
+
+        build(['-s', 'template=' + path.join(templatePath, 'd.jst'), command], function(data) {
+          var actualId = '',
+              basename = path.basename(data.outputPath, '.js'),
+              context = createContext();
+
+          context.exports = {};
+          context.module = { 'exports': context.exports };
+
+          if (expectedId) {
+            context.require = function(id) {
+              actualId = id;
+              return _;
+            };
+          } else {
+            context.require = function() {
+              throw new ReferenceError;
+            };
+          }
+          vm.runInContext(data.source, context);
+
+          var templates = context.module.exports || { 'd': function() { return ''; } },
+              actual = templates.d({ 'name': 'fred & barney' });
+
+          ok(_.contains(basename, 'lodash.templates'), basename);
+          equal(actualId, expectedId, basename);
+          equal(actual, '<span>hello fred &amp; barney!</span>', basename);
+
+          delete _.templates;
+          start();
+        });
+      });
+    });
+
     asyncTest('`lodash iife=%output%`', function() {
       var start = _.after(2, _.once(QUnit.start));
 
@@ -887,29 +931,6 @@
         vm.runInContext(source, context);
 
         equal(_.templates.c({ 'name': 'fred' }), 'hello fred', basename);
-
-        delete _.templates;
-        start();
-      });
-    });
-
-    asyncTest('should work with `moduleId=none`', function() {
-      var start = _.after(2, _.once(QUnit.start));
-
-      build(['-s', 'template=' + path.join(templatePath, 'd.jst'), 'moduleId=none'], function(data) {
-        var basename = path.basename(data.outputPath, '.js'),
-            context = createContext();
-
-        context.exports = {};
-        context.module = { 'exports': context.exports };
-        context.require = function() { throw new ReferenceError; };
-        vm.runInContext(data.source, context);
-
-        var templates = context.module.exports || { 'd': function() { return ''; } },
-            actual = templates.d({ 'name': 'fred & barney' });
-
-        ok(_.contains(basename, 'lodash.templates'), basename);
-        equal(actual, '<span>hello fred &amp; barney!</span>', basename);
 
         delete _.templates;
         start();
@@ -1846,19 +1867,19 @@
         var start = _.after(2, _.once(QUnit.start));
 
         build(['-s'].concat(command.split(' ')), function(data) {
-          var moduleId,
+          var actualId,
               basename = path.basename(data.outputPath, '.js'),
               context = createContext();
 
           context.define = function(id, factory) {
-            moduleId = id;
+            actualId = id;
             context._ = factory();
           };
 
           context.define.amd = {};
           vm.runInContext(data.source, context);
 
-          equal(moduleId, expectedId, basename);
+          equal(actualId, expectedId, basename);
           ok(_.isFunction(context._), basename);
           start();
         });
