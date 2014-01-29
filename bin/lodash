@@ -3680,7 +3680,7 @@
                 // remove unnecessary fast path
                 .replace(/^( *)(var props *=.+?),[\s\S]+?\n\1}/m, '$1$2;')
                 // remove `baseIsEqual` use
-                .replace(/=.+?\bbaseIsEqual\((.+?), *(.+?),.+?\)/, '= $1 === $2');
+                .replace(/\bbaseIsEqual\((.+?),\s*(.+?),\s*.+?\)/, '$1 === $2');
             });
 
             // replace alias assignment
