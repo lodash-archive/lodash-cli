@@ -3678,7 +3678,7 @@
             source = source.replace(matchFunction(source, 'match'), function(match) {
               return match
                 // remove unnecessary fast path
-                .replace(/^(( *)var props *=.+?),[\s\S]+?\n\2}/m, '$1;')
+                .replace(/^( *)(var props *=.+?),[\s\S]+?\n\1}/m, '$1$2;')
                 // remove `baseIsEqual` use
                 .replace(/=.+?\bbaseIsEqual\((.+?), *(.+?),.+?\)/, '= $1 === $2');
             });
