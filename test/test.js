@@ -1465,10 +1465,6 @@
           deepEqual(actual, [], '_.' + methodName + ' should return an empty array when no `array` argument is provided: ' + basename);
         });
 
-        _.each(['assign', 'create', 'callback', 'createCallback', 'eachRight', 'forEachRight', 'isPlainObject', 'match', 'noop', 'now', 'property', 'slice', 'unzip', 'zipObject'], function(methodName) {
-          equal(methodName in lodash, false, 'should not expose _.' + methodName + ': ' + basename);
-        });
-
         start();
       });
     });
