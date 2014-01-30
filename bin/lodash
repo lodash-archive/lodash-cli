@@ -4649,7 +4649,7 @@
         if (isUnderscore) {
           // unexpose Lo-Dash methods for the Underscore build
           source = source.replace(getMethodAssignments(source), function(match) {
-            return _.reduce(['assign', 'create', 'callback', 'createCallback', 'eachRight', 'forEachRight', 'isPlainObject', 'match', 'noop', 'now', 'property', 'slice', 'unzip', 'zipObject'], function(result, funcName) {
+            return _.reduce(['assign', 'create', 'callback', 'createCallback', 'isPlainObject', 'match', 'noop', 'now', 'property', 'slice', 'unzip', 'zipObject'], function(result, funcName) {
               if (isLodash(funcName)) {
                 return result;
               }
