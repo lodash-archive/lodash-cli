@@ -144,12 +144,12 @@
     'findIndex': ['createCallback'],
     'findLastIndex': ['createCallback'],
     'findKey': ['createCallback', 'baseForOwn'],
-    'findLast': ['createCallback', 'forEachRight'],
-    'findLastKey': ['createCallback', 'forOwnRight'],
+    'findLast': ['createCallback', 'baseEachRight'],
+    'findLastKey': ['createCallback', 'baseForOwnRight'],
     'first': ['createCallback', 'slice'],
     'flatten': ['baseFlatten', 'map'],
     'forEach': ['baseCreateCallback', 'baseEach', 'isArray'],
-    'forEachRight': ['baseCreateCallback', 'baseEach', 'isArray', 'isString', 'keys'],
+    'forEachRight': ['baseCreateCallback', 'baseEachRight', 'isArray'],
     'forIn': ['baseCreateCallback', 'baseForIn'],
     'forInRight': ['baseCreateCallback', 'baseForIn'],
     'forOwn': ['baseForOwn', 'baseCreateCallback'],
@@ -209,7 +209,7 @@
     'random': ['baseRandom'],
     'range': [],
     'reduce': ['baseEach', 'createCallback', 'isArray'],
-    'reduceRight': ['createCallback', 'forEachRight'],
+    'reduceRight': ['createCallback', 'baseEachRight'],
     'reject': ['createCallback', 'filter'],
     'remove': ['createCallback'],
     'rest': ['createCallback', 'slice'],
@@ -220,7 +220,7 @@
     'size': ['keys'],
     'slice': [],
     'some': ['baseEach', 'createCallback', 'isArray'],
-    'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'createCallback', 'getObject', 'isArray', 'map', 'releaseObject'],
+    'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'createCallback', 'getObject', 'isArray', 'releaseObject'],
     'sortedIndex': ['createCallback', 'identity'],
     'tap': [],
     'template': ['defaults', 'escape', 'escapeStringChar', 'keys', 'values'],
@@ -255,9 +255,11 @@
     'baseCreateWrapper': ['baseCreate', 'isObject', 'slice', 'setData'],
     'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
     'baseEach': ['baseForOwn', 'isString'],
+    'baseEachRight': ['baseForOwnRight', 'isString'],
     'baseFlatten': ['isArguments', 'isArray'],
     'baseForIn': ['createIterator'],
     'baseForOwn': ['keys'],
+    'baseForOwnRight': ['keys'],
     'baseIndexOf': [],
     'baseIsEqual': ['baseForIn', 'getArray', 'isArguments', 'isFunction', 'isNode', 'releaseArray'],
     'baseMerge': ['baseEach', 'baseForOwn', 'isArray', 'isPlainObject'],
@@ -304,9 +306,9 @@
     'baseClone': ['support'],
     'baseCreateCallback': ['support'],
     'baseEach': ['support'],
+    'baseEachRight': ['support'],
     'baseIsEqual': ['support'],
     'bind': ['support'],
-    'forEachRight': ['support'],
     'isArguments': ['support'],
     'isElement': ['support'],
     'isEmpty': ['support'],
@@ -2753,17 +2755,15 @@
     source = removeSupportProp(source, 'unindexedChars');
 
     // remove `support.unindexedChars` from `_.at` and `baseEach`
-    _.each(['at', 'baseEach'], function(funcName) {
+    _.each(['at', 'baseEach', 'baseEachRight'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
         return match.replace(/^( *)if *\(support\.unindexedChars\b[\s\S]+?\n\1}\n/m, '');
       });
     });
 
-    // remove `support.unindexedChars` from `_.forEachRight` and `_.sample`
-    _.each(['forEachRight', 'sample'], function(funcName) {
-      source = source.replace(matchFunction(source, funcName), function(match) {
-        return match.replace(/\s*else if *\(support\.unindexedChars[^}]+}/, '');
-      });
+    // remove `support.unindexedChars` from `_.sample`
+    source = source.replace(matchFunction(source, 'sample'), function(match) {
+      return match.replace(/\s*else if *\(support\.unindexedChars[^}]+}/, '');
     });
 
     // remove `support.unindexedChars` from `_.toArray`
@@ -3503,10 +3503,9 @@
             _.pull(funcDepMap.wrapperValueOf, 'wrapperToString');
           }
           _.each(['isEqual', 'omit', 'pick'], function(funcName) {
-            if (isLodash(funcName) || (funcName == 'isEqual' && isLodash('baseIsEqual'))) {
-              return;
+            if (!isLodash(funcName) && !(funcName == 'isEqual' && isLodash('baseIsEqual'))) {
+              _.pull(funcDepMap[funcName], 'baseCreateCallback', 'createCallback');
             }
-            _.pull(funcDepMap[funcName], 'baseCreateCallback', 'createCallback');
           });
 
           _.forOwn(funcDepMap, function(depNames, funcName) {
@@ -3972,7 +3971,7 @@
           }
           // replace `_.sortBy`
           if (!isLodash('sortBy')) {
-            _.pull(funcDepMap.sortBy, 'compareMultipleAscending', 'getObject', 'isArray', 'map', 'releaseObject');
+            _.pull(funcDepMap.sortBy, 'compareMultipleAscending', 'getObject', 'isArray', 'releaseObject');
 
             source = replaceFunction(source, 'sortBy', [
               'function sortBy(collection, callback, thisArg) {',
@@ -4228,7 +4227,7 @@
           }
         }
         if (isModern || isUnderscore) {
-          _.each(['at', 'baseEach', 'forEachRight', 'sample', 'toArray'], function(funcName) {
+          _.each(['at', 'baseEach', 'baseEachRight', 'sample', 'toArray'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
               _.pull(funcDepMap[funcName], 'isString');
             }
@@ -4296,6 +4295,7 @@
               source = replaceFunction(source, 'forEachRight', [
                 'function forEachRight(collection, callback, thisArg) {',
                 '  var length = collection ? collection.length : 0;',
+                '',
                 "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
                 "  if (typeof length == 'number') {",
                 '    while (length--) {',
@@ -4304,12 +4304,7 @@
                 '      }',
                 '    }',
                 '  } else {',
-                '    var props = keys(collection);',
-                '    length = props.length;',
-                '    baseEach(collection, function(value, key, collection) {',
-                '      key = props ? props[--length] : --length;',
-                '      return callback(collection[key], key, collection);',
-                '    });',
+                '    baseEachRight(collection, callback);',
                 '  }',
                 '  return collection;',
                 '}',
@@ -4392,8 +4387,8 @@
             });
           }
           // remove chainability
-          _.each(['baseEach', 'forEach', 'forEachRight'], function(funcName) {
-            if (!(isLodash(funcName) || (funcName == 'baseEach' && !_.isEmpty(plusFuncs)))) {
+          _.each(['baseEach', 'baseEachRight', 'forEach', 'forEachRight'], function(funcName) {
+            if (!isLodash(funcName) && !((funcName == 'baseEach' || funcName == 'baseEachRight') && !_.isEmpty(plusFuncs))) {
               source = source.replace(matchFunction(source, funcName), function(match) {
                 return match.replace(/\n *return .+?([}\s]+)$/, '$1');
               });
@@ -4429,15 +4424,13 @@
               return match.replace(/isArguments,/g, 'breakIndicator, $&');
             });
 
-            _.each(['baseEach', 'baseForIn', 'baseForOwn', 'forEach', 'forInRight', 'forOwnRight'], function(funcName) {
-              source = source.replace(matchFunction(source, funcName), function(match) {
-                return match.replace(/=== *false/g, '=== breakIndicator');
-              });
+            source = source.replace(matchFunction(source, 'transform'), function(match) {
+              return match.replace(/return callback[^)]+\)/, '$& === false && breakIndicator');
             });
 
-            _.each(['forEachRight', 'transform'], function(funcName) {
+            _.each(['baseEach', 'baseEachRight', 'baseForIn', 'baseForOwn', 'baseForOwnRight', 'forEach', 'forInRight', 'forOwnRight'], function(funcName) {
               source = source.replace(matchFunction(source, funcName), function(match) {
-                return match.replace(/return callback[^)]+\)/, '$& === false && breakIndicator');
+                return match.replace(/=== *false/g, '=== breakIndicator');
               });
             });
 
@@ -4654,14 +4647,6 @@
           });
         }
         if (isUnderscore) {
-          // remove `thisArg` from unexposed `forEachRight`
-          if (!isLodash('forEachRight')) {
-            source = source.replace(matchFunction(source, 'forEachRight'), function(match) {
-              return match
-                .replace(/(callback), *thisArg/g, '$1')
-                .replace(/^ *callback *=.+\n/m, '');
-            });
-          }
           // unexpose Lo-Dash methods for the Underscore build
           source = source.replace(getMethodAssignments(source), function(match) {
             return _.reduce(['assign', 'create', 'callback', 'createCallback', 'eachRight', 'forEachRight', 'isPlainObject', 'match', 'noop', 'now', 'property', 'slice', 'unzip', 'zipObject'], function(result, funcName) {
