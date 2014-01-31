@@ -3461,8 +3461,29 @@
           source = removeSupportArgsObject(source);
           source = removeSupportNonEnumShadows(source);
           source = removeSupportOwnLast(source);
-          source = removeSupportUnindexedChars(source);
+
+          _.forOwn(objDepMap, function(depNames, funcName) {
+            if (!(isMobile && funcName == 'keys') &&
+                !(isUnderscore && isLodash(funcName)) &&
+                !_.contains(['baseCreateCallback', 'isElement', 'lodash', 'wrapperValueOf'], funcName)) {
+              _.pull(depNames, 'support');
+            }
+          });
+
           source = removeSupportNodeClass(source);
+          _.forOwn(funcDepMap, function(depNames, funcName) {
+            if (_.contains(depNames, 'isNode') &&
+                !(isUnderscore && isLodash(funcName))) {
+              _.pull(depNames, 'isNode');
+            }
+          });
+
+          source = removeSupportUnindexedChars(source);
+          _.each(['at', 'baseEach', 'baseEachRight', 'sample', 'toArray'], function(funcName) {
+            if (!(isUnderscore && isLodash(funcName))) {
+              _.pull(funcDepMap[funcName], 'isString');
+            }
+          });
 
           if (isMobile) {
             source = replaceSupportProp(source, 'enumPrototypes', 'true');
@@ -4227,30 +4248,9 @@
           }
         }
         if (isModern || isUnderscore) {
-          _.each(['at', 'baseEach', 'baseEachRight', 'sample', 'toArray'], function(funcName) {
-            if (!(isUnderscore && isLodash(funcName))) {
-              _.pull(funcDepMap[funcName], 'isString');
-            }
-          });
-
           _.each(['baseForIn', 'shimKeys'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
               _.pull(funcDepMap[funcName], 'createIterator').push('isArguments', 'isObject');
-            }
-          });
-
-          _.forOwn(funcDepMap, function(depNames, funcName) {
-            if (_.contains(depNames, 'isNode') &&
-                !(isUnderscore && isLodash(funcName))) {
-              _.pull(depNames, 'isNode');
-            }
-          });
-
-          _.forOwn(objDepMap, function(depNames, funcName) {
-            if (!(isMobile && funcName == 'keys') &&
-                !(isUnderscore && isLodash(funcName)) &&
-                !_.contains(['baseCreateCallback', 'isElement', 'lodash', 'wrapperValueOf'], funcName)) {
-              _.pull(depNames, 'support');
             }
           });
 
@@ -4378,6 +4378,12 @@
               });
             });
           }
+          // remove chainability in `_.forEach`
+          if (!isLodash('forEach')) {
+            source = source.replace(matchFunction(source, 'forEach'), function(match) {
+              return match.replace(/\n *return .+?([}\s]+)$/, '$1');
+            });
+          }
           // remove support for a `step` of `0` in `_.range`
           if (!isLodash('range')) {
             source = source.replace(matchFunction(source, 'range'), function(match) {
@@ -4386,15 +4392,6 @@
                 .replace(/\(step.*\|\|.+?\)/, 'step')
             });
           }
-          // remove chainability
-          _.each(['baseEach', 'baseEachRight', 'forEach', 'forEachRight'], function(funcName) {
-            if (!isLodash(funcName) && !((funcName == 'baseEach' || funcName == 'baseEachRight') && !_.isEmpty(plusFuncs))) {
-              source = source.replace(matchFunction(source, funcName), function(match) {
-                return match.replace(/\n *return .+?([}\s]+)$/, '$1');
-              });
-            }
-          });
-
           // remove conditional `charCodeCallback` use from `_.max` and `_.min`
           _.each(['max', 'min'], function(funcName) {
             if (!isLodash(funcName)) {
