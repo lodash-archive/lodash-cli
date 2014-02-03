@@ -163,7 +163,7 @@
     'initial': ['createCallback', 'slice'],
     'intersection': ['cacheIndexOf', 'createCache', 'getArray', 'getIndexOf', 'isArguments', 'isArray', 'releaseArray'],
     'invert': ['keys'],
-    'invoke': ['baseEach', 'slice'],
+    'invoke': ['baseEach', 'isArray', 'slice'],
     'isArguments': [],
     'isArray': ['isNative'],
     'isBoolean': [],
@@ -3529,17 +3529,6 @@
             }
           });
 
-          _.forOwn(funcDepMap, function(depNames, funcName) {
-            if (_.every(getDependants(funcName, funcDepMap).concat(funcName), function(otherName) {
-                  return !isLodash(otherName);
-                })) {
-              depNames = funcDepMap[funcName];
-              if (_.contains(depNames, 'charAtCallback')) {
-                _.pull(depNames, 'charAtCallback', 'isArray', 'isString');
-              }
-            }
-          });
-
           _.forOwn(varDepMap, function(depNames, funcName) {
             if (!isLodash(funcName)) {
               _.pull(depNames, 'arrayPool', 'objectPool');
@@ -4255,7 +4244,7 @@
           });
 
           if (!isMobile) {
-            _.each(['createAggregator', 'every', 'filter', 'find', 'forEach', 'forEachRight', 'map', 'reduce'], function(funcName) {
+            _.each(['createAggregator', 'every', 'filter', 'find', 'forEach', 'forEachRight', 'invoke', 'map', 'reduce'], function(funcName) {
               if (!(isUnderscore && isLodash(funcName))) {
                 _.pull(funcDepMap[funcName], 'isArray');
               }
@@ -4342,7 +4331,7 @@
               ].join('\n'));
             }
 
-            _.each(['createAggregator', 'every', 'filter', 'find', 'max', 'min', 'reduce', 'some'], function(funcName) {
+            _.each(['createAggregator', 'every', 'filter', 'find', 'invoke', 'max', 'min', 'reduce', 'some'], function(funcName) {
               if (!(isUnderscore && (
                     isLodash(funcName) ||
                     (funcName == 'find' && isLodash('findWhere')) ||
@@ -4353,12 +4342,14 @@
                     return match;
                   }
                   // replace `_.isArray` checks with simpler type checks
-                  return match.replace(/^(( *)if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)(( *)var index[^;]+.+\n+)/m, function(snippet, statement, indent, vars) {
-                    vars = vars
-                      .replace(/\b(length *=)[^;=]+/, '$1 collection ? collection.length : 0')
-                      .replace(RegExp('^  ' + indent, 'gm'), indent);
-
-                    return vars + statement.replace(/\bisArray\([^\)]+\)/, "typeof length == 'number'");
+                  return match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index[^;]+.+\n+)?/m, function(snippet, indent, statement, vars) {
+                    if (vars) {
+                      vars = vars
+                        .replace(/\b(length *=)[^;=]+/, '$1 collection ? collection.length : 0')
+                        .replace(RegExp('^  ' + indent, 'gm'), indent);
+                    }
+                    return (vars || '') + indent +
+                      statement.replace(/\bisArray\([^\)]+\)/, "typeof length == 'number'");
                   });
                 });
               }
