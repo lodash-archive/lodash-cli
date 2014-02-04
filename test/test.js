@@ -1416,13 +1416,27 @@
         lodash.mixin(object, { 'a': function(a) { return a[0]; } });
         equal('a' in object, false, '_.mixin should not accept a destination object: ' + basename);
 
-        // avoid issues comparing objects with `deepEqual`
+        // avoid comparing objects created by `lodash` methods with `deepEqual`
+        // because QUnit has problems comparing objects from different realms
         object = { 'a': 1, 'b': 2, 'c': 3 };
         actual = lodash.omit(object, function(value) { return value == 3; });
         deepEqual(_.keys(actual).sort(), ['a', 'b', 'c'], '_.omit should not accept a `callback`: ' + basename);
 
         actual = lodash.pick(object, function(value) { return value != 3; });
         deepEqual(_.keys(actual), [], '_.pick should not accept a `callback`: ' + basename);
+
+        var collection = { '0': { '0': 0, 'a': 0 }, '1': { '1': 1, 'a': 1 } };
+        actual = _.map(collection, _.partialRight(lodash.omit, 'a'));
+        deepEqual([_.keys(actual[0]), _.keys(actual[1])] , [['0'], ['1']], '_.omit should work when used as a callback for _.map: ' + basename);
+
+        actual = _.map(collection, _.partialRight(lodash.pick, 'a'));
+        deepEqual([_.keys(actual[0]), _.keys(actual[1])] , [['a'], ['a']], '_.pick should work when used as a callback for _.map: ' + basename);
+
+        actual = lodash.omit({ '0': 'a' }, 0);
+        deepEqual(_.keys(actual), [], '_.omit should coerce property names to strings: ' + basename);
+
+        actual = lodash.pick({ '0': 'a', '1': 'b' }, 0);
+        deepEqual(_.keys(actual), ['0'], '_.pick should coerce property names to strings: ' + basename);
 
         actual = lodash.random(2, 4, true);
         ok(!(actual % 1) && actual >= 2 && actual <= 4, '_.random should ignore `floating`: ' + basename);
@@ -1444,7 +1458,7 @@
 
         strictEqual(lodash.uniqueId(0), '1', '_.uniqueId should ignore a prefix of `0`: ' + basename);
 
-        var collection = [{ 'a': { 'b': 1, 'c': 2 } }];
+        collection = [{ 'a': { 'b': 1, 'c': 2 } }];
         deepEqual(lodash.where(collection, { 'a': { 'b': 1 } }), [], '_.where performs shallow comparisons: ' + basename);
 
         collection = [{ 'a': 1 }, { 'a': 1 }];
