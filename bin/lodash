@@ -1706,7 +1706,7 @@
    * @returns {string} Returns the fork.
    */
   function getBaseCreateFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!nativeCreate)\b[\s\S]+?\n *}\(\)\);\n\1}/), 0) || '';
+    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!nativeCreate)\b[\s\S]+?\n *}\(\)\);\n\1}/), 0, '');
   }
 
   function getDepPath(depName, fromPath, depMap) {
@@ -1839,7 +1839,7 @@
    * @returns {string} Returns the copyright/license header.
    */
   function getHeader(source) {
-    return _.result(/^(?:\s*\/\/.*|\s*\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\n/.exec(source), 0) || '';
+    return _.result(/^(?:\s*\/\/.*|\s*\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\n/.exec(source), 0, '');
   }
 
   /**
@@ -1861,7 +1861,7 @@
    * @returns {string} Returns the fork.
    */
   function getIsArgumentsFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n *};\n\1}/), 0) || '';
+    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n *};\n\1}/), 0, '');
   }
 
   /**
@@ -1885,7 +1885,7 @@
    * @returns {string} Returns the fork.
    */
   function getIsElementFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(!support\.dom\b[\s\S]+?\n *};\n\1}/), 0) || '';
+    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(!support\.dom\b[\s\S]+?\n *};\n\1}/), 0, '');
   }
 
   /**
@@ -1896,7 +1896,7 @@
    * @returns {string} Returns the fork.
    */
   function getIsFunctionFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(isFunction\(\/x\/[\s\S]+?\n *};\n\1}/), 0) || '';
+    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(isFunction\(\/x\/[\s\S]+?\n *};\n\1}/), 0, '');
   }
 
   /**
@@ -1907,7 +1907,7 @@
    * @returns {string} Returns the method assignments snippet.
    */
   function getMethodAssignments(source) {
-    return _.result(source.match(/\n\n(?:\s*\/\/.*)*\s*lodash\.[$\w]+\s*=[\s\S]+lodash\.[$\w]+\s=.+/), 0) || '';
+    return _.result(source.match(/\n\n(?:\s*\/\/.*)*\s*lodash\.[$\w]+\s*=[\s\S]+lodash\.[$\w]+\s=.+/), 0, '');
   }
 
   /**
@@ -1964,7 +1964,7 @@
    * @returns {string} Returns the fork.
    */
   function getSetDataFork(source) {
-    return _.result(matchFunction(source, 'setData').match(/!defineProperty[^:]+:\s*/), 0) || '';
+    return _.result(matchFunction(source, 'setData').match(/!defineProperty[^:]+:\s*/), 0, '');
   }
 
   /**
@@ -2081,7 +2081,7 @@
       '(?: {2,4}var ' + propName + '\\b.+|(?: *|.*?=\\s*)lodash\\._?' + propName + '\\s*)=[\\s\\S]+?' +
       '(?:\\(function[\\s\\S]+?\\([^)]*\\)\\);\\n(?=\\n)|' +
       '[;}]\\n(?=\\n(?!\\s*\\(func)))'
-    )), 0) || '';
+    )), 0, '');
   }
 
   /**
