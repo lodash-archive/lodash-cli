@@ -202,6 +202,7 @@
     'parseInt': ['trim'],
     'partial': ['createWrapper', 'slice'],
     'partialRight': ['createWrapper', 'slice'],
+    'partition': ['createAggregator'],
     'pick': ['baseFlatten', 'baseForIn', 'createCallback', 'isObject', 'slice'],
     'pluck': ['map'],
     'property': [],
@@ -388,6 +389,7 @@
       'map',
       'max',
       'min',
+      'partition',
       'pluck',
       'reduce',
       'reduceRight',
@@ -635,6 +637,7 @@
     'now',
     'parseInt',
     'partialRight',
+    'partition',
     'property',
     'pull',
     'remove',
@@ -2044,7 +2047,7 @@
   function matchFunction(source, funcName, leadingComments) {
     var result = _.reduce([
       // match variable declarations using `createAggregator`, `createIterator` and `template`
-      '( *)var ' + funcName + ' *=.*?(?:create[A-Z][a-z]+|template)\\((?:.+|[\\s\\S]+?\\n\\3}?)\\);\\n',
+      '( *)var ' + funcName + ' *=.*?(?:create[A-Z][a-z]+|template)\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
       // match a function declaration
       '( *)function ' + funcName + '\\b[\\s\\S]+?\\n\\3}\\n',
       // match a variable declaration with function expression

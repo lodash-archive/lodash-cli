@@ -136,6 +136,7 @@ lodash.pairs = require('lodash.pairs');
 lodash.parseInt = require('lodash.parseint');
 lodash.partial = require('lodash.partial');
 lodash.partialRight = require('lodash.partialright');
+lodash.partition = require('lodash.partition');
 lodash.pick = require('lodash.pick');
 lodash.pluck = require('lodash.pluck');
 lodash.property = require('lodash.property');
