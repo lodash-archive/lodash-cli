@@ -1427,13 +1427,6 @@
         actual = lodash.pick(object, function(value) { return value != 3; });
         deepEqual(_.keys(actual), [], '_.pick should not accept a `callback`: ' + basename);
 
-        var collection = { '0': { '0': 0, 'a': 0 }, '1': { '1': 1, 'a': 1 } };
-        actual = _.map(collection, _.partialRight(lodash.omit, 'a'));
-        deepEqual([_.keys(actual[0]), _.keys(actual[1])] , [['0'], ['1']], '_.omit should work when used as a callback for _.map: ' + basename);
-
-        actual = _.map(collection, _.partialRight(lodash.pick, 'a'));
-        deepEqual([_.keys(actual[0]), _.keys(actual[1])] , [['a'], ['a']], '_.pick should work when used as a callback for _.map: ' + basename);
-
         actual = lodash.omit({ '0': 'a' }, 0);
         deepEqual(_.keys(actual), [], '_.omit should coerce property names to strings: ' + basename);
 
@@ -1460,7 +1453,7 @@
 
         strictEqual(lodash.uniqueId(0), '1', '_.uniqueId should ignore a prefix of `0`: ' + basename);
 
-        collection = [{ 'a': { 'b': 1, 'c': 2 } }];
+        var collection = [{ 'a': { 'b': 1, 'c': 2 } }];
         deepEqual(lodash.where(collection, { 'a': { 'b': 1 } }), [], '_.where performs shallow comparisons: ' + basename);
 
         collection = [{ 'a': 1 }, { 'a': 1 }];
