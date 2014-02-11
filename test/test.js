@@ -64,6 +64,7 @@
     'each': 'forEach',
     'eachRight': 'forEachRight',
     'extend': 'assign',
+    'findWhere': 'find',
     'foldl': 'reduce',
     'foldr': 'reduceRight',
     'head': 'first',
@@ -86,7 +87,7 @@
     'createCallback': ['callback'],
     'every': ['all'],
     'filter': ['select'],
-    'find': ['detect'],
+    'find': ['detect', 'findWhere'],
     'first': ['head', 'take'],
     'forEach': ['each'],
     'forEachRight': ['eachRight'],
@@ -145,7 +146,6 @@
       'filter',
       'find',
       'findLast',
-      'findWhere',
       'forEach',
       'forEachRight',
       'groupBy',
@@ -235,7 +235,7 @@
       'constant',
       'escape',
       'identity',
-      'match',
+      'matches',
       'mixin',
       'noConflict',
       'noop',
@@ -320,7 +320,6 @@
     'bindKey',
     'capitalize',
     'cloneDeep',
-    'constant',
     'create',
     'createCallback',
     'curry',
@@ -336,14 +335,10 @@
     'forOwnRight',
     'isPlainObject',
     'mapValues',
-    'match',
     'merge',
     'noop',
-    'now',
     'parseInt',
     'partialRight',
-    'partition',
-    'property',
     'pull',
     'remove',
     'runInContext',
@@ -516,7 +511,7 @@
           func(array, 'slice');
           func(object, 'toFixed');
         }
-        else if (methodName == 'findWhere' || methodName == 'where') {
+        else if (methodName == 'where') {
           func(array, object);
           func(object, object);
         }
@@ -1371,7 +1366,6 @@
         });
 
         equal(last, _.last(array), '_.forEach should not exit early: ' + basename);
-        equal(actual, undefined, '_.forEach should return `undefined`: ' + basename);
 
         var callback = function(value, index) {
           actual = this[index];
@@ -1457,11 +1451,8 @@
         deepEqual(lodash.where(collection, { 'a': { 'b': 1 } }), [], '_.where performs shallow comparisons: ' + basename);
 
         collection = [{ 'a': 1 }, { 'a': 1 }];
-        deepEqual(lodash.where(collection, { 'a': 1 }, true), collection[0], '_.where supports a `first` argument: ' + basename);
-        deepEqual(lodash.where(collection, {}, true), undefined, '_.where should return `undefined` when no match is found`: ' + basename);
-
         deepEqual(lodash.findWhere(collection, { 'a': 1 }), collection[0], '_.findWhere: ' + basename);
-        strictEqual(lodash.findWhere(collection, {}), undefined, '_.findWhere should return `undefined` if no match is found: ' + basename);
+        strictEqual(lodash.findWhere(collection, { 'b': 1 }), undefined, '_.findWhere should return `undefined` if no match is found: ' + basename);
 
         expected = [[['fred', 30, true]], [['barney', 40, false]]];
         actual = lodash.zip(lodash.zip(['fred', 'barney'], [30, 40], [true, false]));
@@ -1989,7 +1980,6 @@
       'findLast',
       'findLastIndex',
       'findLastKey',
-      'findWhere',
       'first',
       'flatten',
       'forEach',
@@ -2028,7 +2018,6 @@
       'uniq',
       'uniqueId',
       'value',
-      'where',
       'zip'
     ];
 
@@ -2059,7 +2048,7 @@
             command += ',chain';
           }
         }
-        if (_.contains(['contains', 'every', 'find', 'findKey', 'findWhere', 'some', 'transform'], funcName)) {
+        if (_.contains(['contains', 'every', 'find', 'findKey', 'some', 'transform'], funcName)) {
           expected = !!index;
           if (index) {
             command += ',forOwn';

@@ -130,7 +130,7 @@
     'contains': ['baseEach', 'getIndexOf', 'isArray', 'isNative', 'isString'],
     'countBy': ['createAggregator'],
     'create': ['assign', 'baseCreate'],
-    'createCallback': ['baseCreateCallback', 'match', 'property'],
+    'createCallback': ['baseCreateCallback', 'matches', 'property'],
     'curry': ['createWrapper'],
     'debounce': ['isFunction', 'isObject', 'now'],
     'defaults': ['isObject', 'keys'],
@@ -187,7 +187,7 @@
     'lodash': ['isArray', 'lodashWrapper'],
     'map': ['baseEach', 'createCallback', 'isArray'],
     'mapValues': ['baseForOwn', 'createCallback'],
-    'match': ['baseIsEqual', 'isObject', 'keys'],
+    'matches': ['baseIsEqual', 'isObject', 'keys'],
     'max': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
     'memoize': ['isFunction'],
     'merge': ['baseCreateCallback', 'baseMerge', 'getArray', 'isObject', 'releaseArray', 'slice'],
@@ -295,10 +295,7 @@
     'shimTrimRight': ['charsRightIndex', 'trimmedRightIndex'],
     'trimmedLeftIndex': [],
     'trimmedRightIndex': [],
-    'unescapeHtmlChar': [],
-
-    // used by the `backbone` and `underscore` builds
-    'findWhere': ['where']
+    'unescapeHtmlChar': []
   });
 
   /** Used to track Lo-Dash object dependencies of identifiers */
@@ -380,7 +377,6 @@
       'filter',
       'find',
       'findLast',
-      'findWhere',
       'forEach',
       'forEachRight',
       'groupBy',
@@ -472,7 +468,7 @@
     'Utilities': [
       'constant',
       'identity',
-      'match',
+      'matches',
       'mixin',
       'noConflict',
       'noop',
@@ -615,7 +611,6 @@
     'bindKey',
     'capitalize',
     'cloneDeep',
-    'constant',
     'create',
     'createCallback',
     'curry',
@@ -631,14 +626,10 @@
     'forOwnRight',
     'isPlainObject',
     'mapValues',
-    'match',
     'merge',
     'noop',
-    'now',
     'parseInt',
     'partialRight',
-    'partition',
-    'property',
     'pull',
     'remove',
     'runInContext',
@@ -718,7 +709,7 @@
   });
 
   /** List of Lo-Dash functions */
-  var lodashFuncs = _.difference(allFuncs, privateFuncs, ['findWhere']);
+  var lodashFuncs = _.difference(allFuncs, privateFuncs);
 
   /** List of Underscore functions */
   var underscoreFuncs = _.difference(allFuncs, lodashOnlyFuncs, privateFuncs);
@@ -3206,11 +3197,6 @@
 
       /*----------------------------------------------------------------------*/
 
-      // delete the `_.findWhere` dependency map to enable its alias mapping
-      if (!isUnderscore || isLodash('findWhere')) {
-        delete funcDepMap.findWhere;
-      }
-
       // categories of functions to include in the build
       var categoryOptions = options.reduce(function(result, value) {
         value = optionToArray('category', value);
@@ -3637,68 +3623,6 @@
               '  return object;',
               '}'
             ].join('\n'));
-          }
-          // add Underscore's `_.findWhere` and `_.where`
-          if (!isLodash('findWhere') && !isLodash('where')) {
-            _.pull(funcDepMap.createCallback, 'baseIsEqual', 'isObject');
-            funcDepMap.where.push('find', 'isEmpty');
-
-            source = source.replace(matchFunction(source, 'find'), function(match) {
-              var indent = getIndent(match);
-              return match && (match + [
-                '',
-                '/**',
-                ' * Examines each element in a `collection`, returning the first that',
-                ' * has the given properties. When checking `properties`, this method',
-                ' * performs a deep comparison between values to determine if they are',
-                ' * equivalent to each other.',
-                ' *',
-                ' * @static',
-                ' * @memberOf _',
-                ' * @category Collections',
-                ' * @param {Array|Object|string} collection The collection to iterate over.',
-                ' * @param {Object} properties The object of property values to filter by.',
-                ' * @returns {*} Returns the found element, else `undefined`.',
-                ' * @example',
-                ' *',
-                ' * var food = [',
-                " *   { 'name': 'apple',  'organic': false, 'type': 'fruit' },",
-                " *   { 'name': 'banana', 'organic': true,  'type': 'fruit' },",
-                " *   { 'name': 'beet',   'organic': false, 'type': 'vegetable' }",
-                ' * ];',
-                ' *',
-                " * _.findWhere(food, { 'type': 'vegetable' });",
-                " * // => { 'name': 'beet', 'organic': false, 'type': 'vegetable' }",
-                ' */',
-                'function findWhere(object, properties) {',
-                '  return where(object, properties, true);',
-                '}',
-                ''
-              ].join('\n' + indent));
-            });
-
-            // replace `_.where`
-            source = replaceFunction(source, 'where', [
-              'function where(collection, properties, first) {',
-              '  return (first && isEmpty(properties))',
-              '    ? undefined',
-              '    : (first ? find : filter)(collection, properties);',
-              '}'
-            ].join('\n'));
-
-            // simplify `_.match`
-            source = source.replace(matchFunction(source, 'match'), function(match) {
-              return match
-                // remove unnecessary fast path
-                .replace(/^( *)(var props *=.+?),[\s\S]+?\n\1}/m, '$1$2;')
-                // remove `baseIsEqual` use
-                .replace(/\bbaseIsEqual\((.+?),\s*(.+?),\s*.+?\)/, '$1 === $2');
-            });
-
-            // replace alias assignment
-            source = source.replace(getMethodAssignments(source), function(match) {
-              return match.replace(/^( *lodash.findWhere *= *).+/m, '$1findWhere;');
-            });
           }
           // replace `_.flatten`
           if (!isLodash('flatten')) {
@@ -4343,7 +4267,6 @@
             _.each(['createAggregator', 'every', 'filter', 'find', 'invoke', 'max', 'min', 'reduce', 'some'], function(funcName) {
               if (!(isUnderscore && (
                     isLodash(funcName) ||
-                    (funcName == 'find' && isLodash('findWhere')) ||
                     (funcName == 'filter' && isLodash('where'))
                   ))) {
                 source = source.replace(matchFunction(source, funcName), function(match) {
@@ -4378,10 +4301,18 @@
               });
             });
           }
-          // remove chainability in `_.forEach`
-          if (!isLodash('forEach')) {
-            source = source.replace(matchFunction(source, 'forEach'), function(match) {
-              return match.replace(/\n *return .+?([}\s]+)$/, '$1');
+          // remove support for deep comparisons from `_.matches`
+          if (!isLodash('matches')) {
+            _.pull(funcDepMap.matches, 'baseIsEqual', 'isObject');
+
+            source = source.replace(matchFunction(source, 'matches'), function(match) {
+              return match
+                // remove unnecessary fast path
+                .replace(/^( *)(var props *=.+?),[\s\S]+?\n\1}/m, '$1$2;')
+                // remove `baseIsEqual` use
+                .replace(/\bbaseIsEqual\((.+?),\s*(.+?),\s*.+?\)/, '$1 === $2')
+                // ensure `true` is returned when comparing empty `source` objects
+                .replace(/\b(result *= *)false\b/, '$1true');
             });
           }
           // remove support for a `step` of `0` in `_.range`
@@ -4471,11 +4402,11 @@
         }
         // remove "_.where" style callback support from `_.createCallback`
         else if (_.contains(minusFuncs, 'where')) {
-          _.pull(funcDepMap.createCallback, 'match');
+          _.pull(funcDepMap.createCallback, 'matches');
           funcDepMap.createCallback.push('identity');
 
           source = source.replace(matchFunction(source, 'createCallback'), function(match) {
-            return match.replace(/\bmatch\(.+?\)/m, 'identity');
+            return match.replace(/\bmatches\(.+?\)/m, 'identity');
           });
         }
         // add function names explicitly
@@ -4646,7 +4577,7 @@
         if (isUnderscore) {
           // unexpose Lo-Dash methods for the Underscore build
           source = source.replace(getMethodAssignments(source), function(match) {
-            return _.reduce(['assign', 'create', 'callback', 'createCallback', 'isPlainObject', 'match', 'noop', 'now', 'property', 'slice', 'unzip', 'zipObject'], function(result, funcName) {
+            return _.reduce(['assign', 'create', 'callback', 'createCallback', 'isPlainObject', 'noop', 'slice', 'unzip', 'zipObject'], function(result, funcName) {
               if (isLodash(funcName)) {
                 return result;
               }
@@ -4843,7 +4774,6 @@
       // remove functions from the build
       allFuncs.forEach(function(funcName) {
         if (!_.contains(buildFuncs, funcName) &&
-            !(funcName == 'findWhere' && !isUnderscore) &&
             !(funcName == 'lodash' && !isModularize)) {
           source = removeFunction(source, funcName);
           if (!isModularize) {
