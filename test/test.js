@@ -2254,6 +2254,7 @@
       process.exit(QUnit.config.stats.bad ? 1 : 0);
     }, timeLimit);
   }
+  QUnit.config.hidepassed = true;
   QUnit.config.noglobals = true;
   QUnit.start();
 }());
