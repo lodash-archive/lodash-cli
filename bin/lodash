@@ -2241,7 +2241,8 @@
         return match
           .replace(/(?:\s*\/\/.*)*\n( *)var data *=[\s\S]+?\n\1}/, '')
           .replace(/(?:\s*\/\/.*)*\n( *)if *\(data\b[\s\S]+?\n\1}/, '')
-          .replace(/(?:\s*\/\/.*)*\n.+?setData.+/, '');
+          .replace(/(?:\s*\/\/.*)*\n.+?setData.+/, '')
+          .replace(/^ *(?=data *=[^=])/m, '$&var ')
       });
     });
 
