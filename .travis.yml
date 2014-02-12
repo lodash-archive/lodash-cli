@@ -37,7 +37,6 @@ branches:
     - master
 before_install:
   - "git clone --depth=10 --branch=master git://github.com/lodash/lodash.git ./node_modules/lodash"
-  - "[ $TRAVIS_NODE_VERSION != '0.6' ] || npm config set ca \"\""
   - "[ $OUTPUT_PATH != false ] || OUTPUT_PATH=\"./$EXPORTS/$BUILD\""
   - "[ $TARGET_PATH != false ] || TARGET_PATH=\"../../../$EXPORTS/$BUILD/index.js\""
   - "[ $BIN != 'narwhal' ] || (wget https://github.com/280north/narwhal/archive/v0.3.2.zip && sudo unzip v0.3.2 -d /opt/ && rm v0.3.2.zip)"
