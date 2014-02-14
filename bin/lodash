@@ -4654,7 +4654,7 @@
       /*----------------------------------------------------------------------*/
 
       // set the AMD module id
-      if (isAMD && moduleId != null && !isModularize && !isTemplate) {
+      if (isAMD && !isModularize && !isTemplate && moduleId && moduleId != 'none') {
         source = source.replace(/^ *define\((?=function)/m, "$&'" + moduleId + "', ");
       }
       // customize Lo-Dash's export bootstrap
