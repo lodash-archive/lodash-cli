@@ -3151,7 +3151,7 @@
           return value.length ? value : result;
         }, isModularize
           ? ['amd']
-          : (isUnderscore ? ['commonjs', 'global', 'node'] : _.without(allExports, 'es6', 'npm'))
+          : _.without(allExports, 'es6', 'npm')
         );
         return isModularize ? _.first(result, 1) : result;
       }());
@@ -3159,7 +3159,7 @@
       // used to specify the AMD module ID of Lo-Dash used by precompiled templates
       var moduleId = options.reduce(function(result, value) {
         return optionToValue('moduleId', value) || result;
-      }, null);
+      }, isUnderscore ? 'underscore' : null);
 
       // used as the output path for the build
       var outputPath = options.reduce(function(result, value, index) {
