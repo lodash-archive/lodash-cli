@@ -3365,6 +3365,13 @@
 
         source = setUseStrictOption(source, isStrict);
 
+        if (!isUnderscore) {
+          _.pull(funcDepMap.createWrapper, 'getHolders');
+
+          source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
+            return match.replace(/\bgetHolders\([^)]+\)/g, '[]');
+          });
+        }
         if (isLegacy) {
           source = replaceSupportProp(source, 'argsClass', 'false');
 
