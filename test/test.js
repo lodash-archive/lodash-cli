@@ -1469,23 +1469,24 @@
       });
     });
 
-    asyncTest('should not have AMD support', function() {
+    asyncTest('should have AMD support', function() {
       var start = _.after(2, _.once(QUnit.start));
 
       build(['-s', 'underscore'], function(data) {
-        var basename = path.basename(data.outputPath, '.js'),
-            context = createContext(),
-            pass = true;
+        var actualId,
+            basename = path.basename(data.outputPath, '.js'),
+            context = createContext();
 
-        context.define = function(factory) {
-          pass = false;
+        context.define = function(id, factory) {
+          actualId = id;
           context._ = factory();
         };
 
         context.define.amd = {};
         vm.runInContext(data.source, context);
 
-        ok(pass, basename);
+        equal(actualId, 'underscore', basename);
+        ok(_.isFunction(context._), basename);
         start();
       });
     });
