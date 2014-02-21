@@ -4004,10 +4004,9 @@
               '',
               '  source += "\';\\n";',
               '  if (!variable) {',
-              "    variable = 'obj';",
-              "    source = 'with (' + variable + ' || {}) {\\n' + source + '\\n}\\n';",
+              "    source = 'with (obj || {}) {\\n' + source + '\\n}\\n';",
               '  }',
-              "  source = 'function(' + variable + ') {\\n' +",
+              "  source = 'function(' + (variable || 'obj') + ') {\\n' +",
               '    "var __t, __p = \'\', __j = Array.prototype.join;\\n" +',
               '    "function print() { __p += __j.call(arguments, \'\') }\\n" +',
               '    source +',
@@ -4637,13 +4636,13 @@
 
           source = source.replace(matchFunction(source, 'template'), function(match) {
             if (isUnderscore) {
-              // assign `_` via `template.imports`
+              // assign `_` using `template.imports`
               return match
                 .replace(/(_ *= *)lodash\b/, '$1templateSettings.imports._')
                 .replace(/= *_\.templateSettings(?=[,;])/, '$& || templateSettings');
             }
             return match
-              // assign `settings` via `template.imports`
+              // assign `settings` using `template.imports`
               .replace(/= *templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings')
               // remove debug sourceURL use in `_.template`
               .replace(/(?:\s*\/\/.*\n)* *var sourceURL[^;]+;|\+ *sourceURL/g, '');
