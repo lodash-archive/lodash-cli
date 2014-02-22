@@ -161,7 +161,7 @@
     'indexBy': ['createAggregator'],
     'indexOf': ['baseIndexOf', 'sortedIndex'],
     'initial': ['createCallback', 'slice'],
-    'intersection': ['cacheIndexOf', 'createCache', 'getArray', 'getIndexOf', 'isArguments', 'isArray', 'releaseArray'],
+    'intersection': ['cacheIndexOf', 'createCache', 'getIndexOf', 'isArguments', 'isArray'],
     'invert': ['keys'],
     'invoke': ['baseEach', 'isArray', 'slice'],
     'isArguments': [],
@@ -190,7 +190,7 @@
     'matches': ['baseIsEqual', 'isObject', 'keys'],
     'max': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
     'memoize': ['isFunction'],
-    'merge': ['baseCreateCallback', 'baseMerge', 'getArray', 'isObject', 'releaseArray', 'slice'],
+    'merge': ['baseCreateCallback', 'baseMerge', 'isObject', 'slice'],
     'min': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
     'mixin': ['functions', 'isFunction', 'isObject', 'lodash'],
     'noConflict': [],
@@ -221,7 +221,7 @@
     'size': ['keys'],
     'slice': [],
     'some': ['baseEach', 'createCallback', 'isArray'],
-    'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'createCallback', 'getObject', 'isArray', 'releaseObject'],
+    'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'createCallback', 'isArray'],
     'sortedIndex': ['createCallback', 'identity'],
     'tap': [],
     'template': ['defaults', 'escape', 'escapeStringChar', 'keys', 'values'],
@@ -249,7 +249,7 @@
 
     // private functions
     'baseBind': ['baseCreate', 'composeArgs', 'isObject', 'setData', 'slice'],
-    'baseClone': ['assign', 'baseEach', 'baseForOwn', 'getArray', 'isArray', 'isObject', 'isNode', 'releaseArray', 'slice'],
+    'baseClone': ['assign', 'baseEach', 'baseForOwn', 'isArray', 'isObject', 'isNode', 'slice'],
     'baseCompareAscending': [],
     'baseCreate': ['isNative', 'isObject', 'noop'],
     'baseCreateCallback': ['bind', 'identity', 'setData'],
@@ -262,10 +262,10 @@
     'baseForOwn': ['keys'],
     'baseForOwnRight': ['keys'],
     'baseIndexOf': [],
-    'baseIsEqual': ['baseForIn', 'getArray', 'isArguments', 'isFunction', 'isNode', 'releaseArray'],
+    'baseIsEqual': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
     'baseMerge': ['baseEach', 'baseForOwn', 'isArray', 'isPlainObject'],
     'baseRandom': [],
-    'baseUniq': ['cacheIndexOf', 'createCache', 'getArray', 'getIndexOf', 'releaseArray'],
+    'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
     'cacheIndexOf': ['baseIndexOf'],
     'charAtCallback': [],
     'charsLeftIndex': [],
@@ -280,16 +280,12 @@
     'createIterator': ['isArguments', 'isObject', 'iteratorTemplate'],
     'escapeHtmlChar': [],
     'escapeStringChar': [],
-    'getArray': [],
     'getHolders': [],
     'getIndexOf': ['baseIndexOf', 'indexOf'],
-    'getObject': [],
     'isNative': [],
     'isNode': [],
     'iteratorTemplate': [],
     'lodashWrapper': [],
-    'releaseArray': [],
-    'releaseObject': [],
     'setData': ['isNative', 'noop'],
     'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
     'shimKeys': ['createIterator'],
@@ -326,12 +322,8 @@
   var varDependencyMap = createMap({
     'baseCreate': ['root'],
     'createCache': ['root'],
-    'getArray': ['arrayPool'],
-    'getObject': ['objectPool'],
     'isFinite': ['root'],
     'parseInt': ['root'],
-    'releaseArray': ['arrayPool'],
-    'releaseObject': ['objectPool'],
     'support': ['root'],
     'template': ['reInterpolate'],
     'templateSettings': ['reEscape', 'reEvaluate', 'reInterpolate']
@@ -679,16 +671,12 @@
     'createIterator',
     'escapeHtmlChar',
     'escapeStringChar',
-    'getArray',
     'getHolders',
     'getIndexOf',
-    'getObject',
     'isNative',
     'isNode',
     'iteratorTemplate',
     'lodashWrapper',
-    'releaseArray',
-    'releaseObject',
     'setData',
     'shimIsPlainObject',
     'shimKeys',
@@ -3707,7 +3695,7 @@
           }
           // replace `_.isEqual`
           if (!isLodash('baseIsEqual') && !isLodash('isEqual')) {
-            _.pull(funcDepMap.baseIsEqual, 'getArray', 'isArguments', 'releaseArray');
+            _.pull(funcDepMap.baseIsEqual, 'isArguments');
 
             source = replaceFunction(source, 'isEqual', [
               'function isEqual(a, b) {',
@@ -3930,7 +3918,7 @@
           }
           // replace `_.sortBy`
           if (!isLodash('sortBy')) {
-            _.pull(funcDepMap.sortBy, 'compareMultipleAscending', 'getObject', 'isArray', 'releaseObject');
+            _.pull(funcDepMap.sortBy, 'compareMultipleAscending', 'isArray');
 
             source = replaceFunction(source, 'sortBy', [
               'function sortBy(collection, callback, thisArg) {',
@@ -4116,7 +4104,7 @@
           }
           // replace `_.intersection`
           if (!(isUnderscore && isLodash('intersection'))) {
-            _.pull(funcDepMap.intersection, 'cacheIndexOf', 'createCache', 'getArray', 'releaseArray');
+            _.pull(funcDepMap.intersection, 'cacheIndexOf', 'createCache');
 
             source = replaceFunction(source, 'intersection', [
               'function intersection() {',
@@ -4155,7 +4143,7 @@
           }
           // replace `baseUniq`
           if (!(isUnderscore && (isLodash('baseUniq') || isLodash('uniq')))) {
-            _.pull(funcDepMap.baseUniq, 'cacheIndexOf', 'createCache', 'getArray', 'releaseArray');
+            _.pull(funcDepMap.baseUniq, 'cacheIndexOf', 'createCache');
 
             source = replaceFunction(source, 'baseUniq', [
               'function baseUniq(array, isSorted, callback) {',
