@@ -4416,10 +4416,16 @@
                 .replace(/\b(result *= *)false\b/, '$1true');
             });
           }
-          // remove `_.bindKey` support from `baseCreateWrapper`
+          // remove `_.bindKey` support from `baseCreateWrapper` and `createWrapper`
           if (!isLodash('bindKey')) {
             source = source.replace(matchFunction(source, 'baseCreateWrapper'), function(match) {
               return match.replace(/^( *)if *\(isBindKey\b[\s\S]+?\n\1}\n/gm, '');
+            });
+
+            source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
+              return match
+                .replace(/!isBindKey *&& */, '')
+                .replace(/^( *)if *\(arity\b([\s\S]+?\n\1}){2}\n/m, '');
             });
           }
           // remove `_.curry` support from `baseCreateWrapper`
