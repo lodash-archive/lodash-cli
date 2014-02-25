@@ -3513,21 +3513,6 @@
           }
         }
         if (isUnderscore) {
-          if (!isModularize && !isLodash('chain')) {
-            _.pull(funcDepMap.wrapperValueOf, 'wrapperToString');
-          }
-          _.each(['isEqual', 'omit', 'pick'], function(funcName) {
-            if (!isLodash(funcName) && !(funcName == 'isEqual' && isLodash('baseIsEqual'))) {
-              _.pull(funcDepMap[funcName], 'baseCreateCallback', 'createCallback');
-            }
-          });
-
-          _.forOwn(varDepMap, function(depNames, funcName) {
-            if (!isLodash(funcName)) {
-              _.pull(depNames, 'arrayPool', 'objectPool');
-            }
-          });
-
           // replace `lodash`
           if (!isLodash('lodash')) {
             _.pull(funcDepMap.lodash, 'isArray');
@@ -3567,6 +3552,16 @@
               '}'
             ].join('\n'));
           }
+          // replace `_.bind`
+          if (!isLodash('bind')) {
+            source = replaceFunction(source, 'bind', [
+              'function bind(func, thisArg) {',
+              '  return arguments.length < 3',
+              '    ? createWrapper(func, BIND_FLAG, null, thisArg)',
+              '    : createWrapper(func, BIND_FLAG | PARTIAL_FLAG, null, thisArg, slice(arguments, 2));',
+              '}'
+            ].join('\n'));
+          }
           // replace `_.clone`
           if (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep')) {
             _.pull(funcDepMap.clone, 'baseClone').push('assign', 'isArray', 'isObject', 'slice');
@@ -3588,13 +3583,14 @@
               '  var indexOf = getIndexOf(),',
               '      length = collection ? collection.length : 0,',
               '      result = false;',
+              '',
               "  if (length && typeof length == 'number') {",
-              '    result = indexOf(collection, target) > -1;',
-              '  } else {',
-              '    baseEach(collection, function(value) {',
-              '      return !(result = value === target);',
-              '    });',
+              '    return indexOf(collection, target) > -1;',
               '  }',
+              '  baseEach(collection, function(value) {',
+              '    return !(result = value === target);',
+              '  });',
+              '',
               '  return result;',
               '}'
             ].join('\n'));
@@ -3628,6 +3624,19 @@
               '}'
             ].join('\n'));
           }
+          // replace `_.first`
+          if (!isLodash('first')) {
+            _.pull(funcDepMap.first, 'createCallback');
+
+            source = replaceFunction(source, 'first', [
+              'function first(array, n, guard) {',
+              '  if (n == null || guard) {',
+              '    return array ? array[0] : undefined;',
+              '  }',
+              '  return slice(array, 0, n > 0 ? n : 0);',
+              '}'
+              ].join('\n'));
+          }
           // replace `_.flatten`
           if (!isLodash('flatten')) {
             _.pull(funcDepMap.flatten, 'map');
@@ -3646,6 +3655,18 @@
               '}'
             ].join('\n'));
           }
+          // replace `_.initial`
+          if (!isLodash('initial')) {
+            _.pull(funcDepMap.initial, 'createCallback');
+
+            source = replaceFunction(source, 'initial', [
+              'function initial(array, n, guard) {',
+              '  var length = array ? array.length : 0;',
+              '  n = length - ((n == null || guard) ? 1 : n);',
+              '  return slice(array, 0, n > 0 ? n : 0);',
+              '}'
+            ].join('\n'));
+          }
           // replace `_.invert`
           if (!isLodash('invert')) {
             source = replaceFunction(source, 'invert', [
@@ -3659,6 +3680,24 @@
               '    var key = props[index];',
               '    result[object[key]] = key;',
               '  }',
+              '  return result;',
+              '}'
+            ].join('\n'));
+          }
+          // replace `_.invoke`
+          if (!isLodash('invoke')) {
+            source = replaceFunction(source, 'invoke', [
+              'function invoke(collection, methodName) {',
+              '  var index = -1,',
+              "      isFunc = typeof methodName == 'function',",
+              '      length = collection ? collection.length : 0,',
+              "      result = Array(typeof length == 'number' ? length : 0);",
+              '',
+              '  var args = slice(arguments, 2);',
+              '  baseEach(collection, function(value) {',
+              '    result[++index] = (isFunc ? methodName : value[methodName]).apply(value, args);',
+              '  });',
+              '',
               '  return result;',
               '}'
             ].join('\n'));
@@ -3824,6 +3863,21 @@
               });
             }
           }
+          // replace `_.last`
+          if (!isLodash('last')) {
+            _.pull(funcDepMap.last, 'createCallback');
+
+            source = replaceFunction(source, 'last', [
+              'function last(array, n, guard) {',
+              '  var length = array ? array.length : 0;',
+              '  if (n == null || guard) {',
+              '    return array ? array[length - 1] : undefined;',
+              '  }',
+              '  n = length - n;',
+              '  return slice(array, n > 0 ? n : 0);',
+              '}'
+              ].join('\n'));
+          }
           // replace `_.memoize`
           if (!isLodash('memoize')) {
              source = replaceFunction(source, 'memoize', [
@@ -3866,6 +3920,22 @@
               '}'
             ].join('\n'));
           }
+          // replace `_.partial`
+          if (!isLodash('partial')) {
+            source = replaceFunction(source, 'partial', [
+              'function partial(func) {',
+              '  return createWrapper(func, PARTIAL_FLAG, null, null, slice(arguments, 1));',
+              '}'
+            ].join('\n'));
+          }
+          // replace `_.partialRight`
+          if (!isLodash('partialRight')) {
+            source = replaceFunction(source, 'partialRight', [
+              'function partialRight(func) {',
+              '  return createWrapper(func, PARTIAL_RIGHT_FLAG, null, null, null, slice(arguments, 1));',
+              '}'
+            ].join('\n'));
+          }
           // replace `_.pick`
           if (!isLodash('pick')) {
             _.pull(funcDepMap.pick, 'baseForIn', 'isObject');
@@ -3904,6 +3974,21 @@
               '  return min + floor(nativeRandom() * (max - min + 1));',
               '}'
             ].join('\n'));
+          }
+          // replace `_.rest`
+          if (!isLodash('rest')) {
+            _.pull(funcDepMap.rest, 'createCallback');
+
+            source = replaceFunction(source, 'rest', [
+              'function rest(array, n, guard) {',
+              '  if (n == null || guard) {',
+              '    n = 1;',
+              '  } else {',
+              '    n = n > 0 ? n : 0;',
+              '  }',
+              '  return slice(array, n);',
+              '}'
+              ].join('\n'));
           }
           // replace `_.result`
           if (!isLodash('result')) {
@@ -4093,24 +4178,11 @@
               '  }',
               '  var index = -1,',
               '      indexOf = getIndexOf(),',
-              '      isCommon = indexOf === baseIndexOf,',
-              '      result = [],',
-              '      valuesLength = values ? values.length : 0;',
+              '      result = [];',
               '',
-              '  outer:',
               '  while (++index < length) {',
               '    var value = array[index];',
-              '',
-              '    if (isCommon) {',
-              '      var valuesIndex = valuesLength;',
-              '      while (valuesIndex--) {',
-              '        if (values[valuesIndex] === value) {',
-              '          continue outer;',
-              '        }',
-              '      }',
-              '      result.push(value);',
-              '    }',
-              '    else if (indexOf(values, value) < 0) {',
+              '    if (indexOf(values, value) < 0) {',
               '      result.push(value);',
               '    }',
               '  }',
@@ -4169,34 +4241,20 @@
               '  }',
               '  var index = -1,',
               '      indexOf = getIndexOf(),',
-              '      isCommon = !isSorted && indexOf === baseIndexOf,',
               '      result = [],',
               '      seen = (callback && !isSorted) ? [] : result;',
               '',
-              '  outer:',
               '  while (++index < length) {',
               '    var value = array[index],',
               '        computed = callback ? callback(value, index, array) : value;',
               '',
-              '    if (isCommon) {',
-              '      var seenIndex = seen.length;',
-              '      while (seenIndex--) {',
-              '        if (seen[seenIndex] === computed) {',
-              '          continue outer;',
-              '        }',
-              '      }',
-              '      if (callback) {',
-              '        seen.push(computed);',
-              '      }',
-              '      result.push(value);',
-              '    }',
-              '    else if (isSorted) {',
+              '    if (isSorted) {',
               '      if (!index || seen !== computed) {',
               '        seen = computed;',
               '        result.push(value);',
               '      }',
               '    }',
-              '    else if (indexOf(seen, computed) < 0) {',,
+              '    else if (indexOf(seen, computed) < 0) {',
               '      if (callback) {',
               '        seen.push(computed);',
               '      }',
@@ -4328,17 +4386,21 @@
           }
         }
         if (isUnderscore) {
-          // replace `lodash.createCallback` references with `createCallback`
+          // replace references to external `lodash.createCallback` with internal `createCallback`
           if (!isLodash('createCallback')) {
             source = source.replace(/\blodash\.(createCallback\()\b/g, '$1');
           }
-          // replace `htmlEscapes` entries with hex entities
+          // replace decimal NCRs in `htmlEscapes` with hexadecimal NCRs
           if (!isLodash('escape')) {
             _.each(['htmlEscapes', 'htmlUnescapes', 'reEscapedHtml'], function(varName) {
               source = source.replace(matchVar(source, varName), function(match) {
                 return match.replace('#39', '#x27');
               });
             });
+          }
+          // remove `_.prototype.toString`
+          if (!isModularize && !isLodash('chain')) {
+            _.pull(funcDepMap.wrapperValueOf, 'wrapperToString');
           }
           // remove support for deep comparisons from `_.matches`
           if (!isLodash('matches')) {
@@ -4354,6 +4416,28 @@
                 .replace(/\b(result *= *)false\b/, '$1true');
             });
           }
+          // remove `_.bindKey` support from `baseCreateWrapper`
+          if (!isLodash('bindKey')) {
+            source = source.replace(matchFunction(source, 'baseCreateWrapper'), function(match) {
+              return match.replace(/^( *)if *\(isBindKey\b[\s\S]+?\n\1}\n/gm, '');
+            });
+          }
+          // remove `_.curry` support from `baseCreateWrapper`
+          if (!isLodash('curry')) {
+            source = source.replace(matchFunction(source, 'baseCreateWrapper'), function(match) {
+              return match.replace(/^( *)if *\(isCurry\b[\s\S]+?\n\1}\n/gm, '');
+            });
+          }
+          // remove `_.partialRight` support from `baseCreateWrapper`
+          if (!isLodash('partialRight')) {
+            _.pull(funcDepMap.baseCreateWrapper, 'composeArgsRight');
+
+            _.each(['baseCreateWrapper', 'createWrapper'], function(funcName) {
+              source = source.replace(matchFunction(source, funcName), function(match) {
+                return match.replace(/^( *)if *\((isPartialRight|partialRightArgs)\b[\s\S]+?\n\1}\n/gm, '');
+              });
+            });
+          }
           // remove support for a `step` of `0` in `_.range`
           if (!isLodash('range')) {
             source = source.replace(matchFunction(source, 'range'), function(match) {
@@ -4362,6 +4446,20 @@
                 .replace(/\(step.*\|\|.+?\)/, 'step')
             });
           }
+          // remove `baseBind` from `createWrapper`
+          _.pull(funcDepMap.createWrapper, 'baseBind');
+
+          source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
+            return match.replace(/^( *return )[^;]+?(?=baseCreateWrapper)/m, '$1');
+          });
+
+          // remove callback support from `_.isEqual`, `_.omit`, and `_.pick`
+          _.each(['isEqual', 'omit', 'pick'], function(funcName) {
+            if (!isLodash(funcName) && !(funcName == 'isEqual' && isLodash('baseIsEqual'))) {
+              _.pull(funcDepMap[funcName], 'baseCreateCallback', 'createCallback');
+            }
+          });
+
           // remove conditional `charCodeCallback` use from `_.max` and `_.min`
           _.each(['max', 'min'], function(funcName) {
             if (!isLodash(funcName)) {
