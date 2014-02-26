@@ -4371,7 +4371,7 @@
                     return match;
                   }
                   // replace `_.isArray` checks with simpler type checks
-                  return match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index[^;]+.+\n+)?/m, function(snippet, indent, statement, vars) {
+                  match = match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index[^;]+;\n+)?/m, function(snippet, indent, statement, vars) {
                     if (vars) {
                       vars = vars
                         .replace(/\b(length *=)[^;=]+/, '$1 collection ? collection.length : 0')
@@ -4380,6 +4380,9 @@
                     return (vars || '') + indent +
                       statement.replace(/\bisArray\([^\)]+\)/, "typeof length == 'number'");
                   });
+
+                  // adjust `callback` assignment placement
+                  return match.replace(/\n+( *callback *=[^;]+;)(?=\n *var index)/, '\n$1\n');
                 });
               }
             });
