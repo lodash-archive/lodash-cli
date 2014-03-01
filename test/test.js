@@ -2030,6 +2030,8 @@
       return String(value)
         .replace(/^ *\/\/.*/gm, '')
         .replace(/\b(?:basicEach|context|forEach|forOwn)\b/g, '')
+        .replace(/\b(?:imports|options).*?=.+/g, '')
+        .replace(/\biteratorTemplate\s*&&\s*/g, '')
         .replace(/\blodash\.(createCallback\()\b/g, '$1')
         .replace(/[\s;]/g, '');
     }
