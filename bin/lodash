@@ -120,6 +120,7 @@
     'bind': ['createWrapper', 'slice'],
     'bindAll': ['baseFlatten', 'createWrapper', 'functions'],
     'bindKey': ['createWrapper', 'slice'],
+    'camelCase': ['createCompounder'],
     'capitalize': [],
     'chain': ['lodashWrapper'],
     'clone': ['baseClone', 'baseCreateCallback'],
@@ -137,7 +138,9 @@
     'defer': ['isFunction', 'slice'],
     'delay': ['isFunction', 'slice'],
     'difference': ['baseDifference', 'baseFlatten'],
+    'endsWith': [],
     'escape': ['escapeHtmlChar'],
+    'escapeRegExp': [],
     'every': ['baseEach', 'createCallback', 'isArray'],
     'filter': ['baseEach', 'createCallback', 'isArray'],
     'find': ['baseEach', 'createCallback', 'isArray'],
@@ -181,6 +184,7 @@
     'isRegExp': [],
     'isString': [],
     'isUndefined': [],
+    'kebabCase': ['createCompounder'],
     'keys': ['isArguments', 'isNative', 'isObject', 'shimKeys'],
     'last': ['createCallback', 'slice'],
     'lastIndexOf': [],
@@ -198,6 +202,9 @@
     'now': ['isNative'],
     'omit': ['baseDifference', 'baseFlatten', 'baseForIn', 'createCallback', 'slice'],
     'once': ['isFunction'],
+    'pad': ['createPad'],
+    'padLeft': ['createPad'],
+    'padRight': ['createPad'],
     'pairs': ['keys'],
     'parseInt': ['trim'],
     'partial': ['createWrapper', 'slice'],
@@ -213,6 +220,7 @@
     'reduceRight': ['createCallback', 'baseEachRight'],
     'reject': ['createCallback', 'filter'],
     'remove': ['createCallback'],
+    'repeat': [],
     'rest': ['createCallback', 'slice'],
     'result': ['isFunction'],
     'runInContext': ['defaults', 'pick'],
@@ -220,6 +228,8 @@
     'shuffle': ['baseEach', 'baseRandom'],
     'size': ['keys'],
     'slice': [],
+    'snakeCase': ['createCompounder'],
+    'startsWith': [],
     'some': ['baseEach', 'createCallback', 'isArray'],
     'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'createCallback', 'isArray'],
     'sortedIndex': ['createCallback', 'identity'],
@@ -232,6 +242,7 @@
     'trim': ['isNative', 'shimTrim'],
     'trimLeft': ['isNative', 'shimTrimLeft'],
     'trimRight': ['isNative', 'shimTrimRight'],
+    'truncate': ['isObject', 'isRegExp'],
     'unescape': ['unescapeHtmlChar'],
     'union': ['baseFlatten', 'baseUniq'],
     'uniq': ['baseUniq', 'createCallback'],
@@ -277,12 +288,15 @@
     'createAggregator': ['baseEach', 'createCallback', 'isArray'],
     'createWrapper': ['baseBind', 'baseCreateWrapper', 'getHolders', 'isFunction', 'slice'],
     'createCache': ['isNative'],
+    'createCompounder': ['deburrLetter'],
     'createIterator': ['isArguments', 'isObject', 'iteratorTemplate'],
+    'createPad': ['repeat'],
+    'deburrLetter': [],
     'escapeHtmlChar': [],
     'escapeStringChar': [],
     'getHolders': [],
     'getIndexOf': ['baseIndexOf', 'indexOf'],
-    'isNative': [],
+    'isNative': ['escapeRegExp'],
     'isNode': [],
     'iteratorTemplate': [],
     'lodashWrapper': [],
@@ -455,10 +469,21 @@
       'values'
     ],
     'Strings': [
+      'camelCase',
       'capitalize',
+      'endsWith',
+      'escapeRegExp',
+      'kebabCase',
+      'pad',
+      'padLeft',
+      'padRight',
+      'repeat',
+      'snakeCase',
+      'startsWith',
       'trim',
       'trimLeft',
-      'trimRight'
+      'trimRight',
+      'truncate'
     ],
     'Utilities': [
       'constant',
@@ -607,10 +632,13 @@
     'at',
     'bindKey',
     'capitalize',
+    'camelCase',
     'cloneDeep',
     'create',
     'createCallback',
     'curry',
+    'endsWith',
+    'escapeRegExp',
     'findIndex',
     'findKey',
     'findLast',
@@ -622,16 +650,24 @@
     'forOwn',
     'forOwnRight',
     'isPlainObject',
+    'kebabCase',
     'mapValues',
     'merge',
     'noop',
+    'pad',
+    'padLeft',
+    'padRight',
     'parseInt',
     'partialRight',
     'pull',
     'remove',
+    'repeat',
     'runInContext',
     'slice',
+    'snakeCase',
+    'startsWith',
     'transform',
+    'truncate',
     'trim',
     'trimLeft',
     'trimRight',
@@ -668,7 +704,10 @@
     'createAggregator',
     'createWrapper',
     'createCache',
+    'createCompounder',
     'createIterator',
+    'createPad',
+    'deburrLetter',
     'escapeHtmlChar',
     'escapeStringChar',
     'getHolders',
@@ -1409,8 +1448,8 @@
           templates = createMap();
 
       filePaths.forEach(function(filePath) {
-        var text = fs.readFileSync(filePath, 'utf8'),
-            precompiled = cleanupCompiled(getFunctionSource(_.template(text, null, settings), 2));
+        var string = fs.readFileSync(filePath, 'utf8'),
+            precompiled = cleanupCompiled(getFunctionSource(_.template(string, null, settings), 2));
 
         // glob uses *nix path separators even on Windows
         // https://github.com/isaacs/node-glob#windows
@@ -2033,7 +2072,7 @@
    */
   function matchFunction(source, funcName, leadingComments) {
     var result = _.reduce([
-      // match variable declarations using `createAggregator`, `createIterator` and `template`
+      // match variable declarations using `createAggregator`, `createCompounder`, `createIterator` or `template`
       '( *)var ' + funcName + ' *=.*?(?:create[A-Z][a-z]+|template)\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
       // match a function declaration
       '( *)function ' + funcName + '\\b[\\s\\S]+?\\n\\3}\\n',
@@ -4043,11 +4082,11 @@
             _.pull(funcDepMap.template, 'keys', 'values');
 
             source = replaceFunction(source, 'template', [
-              'function template(text, data, options) {',
+              'function template(string, data, options) {',
               '  var _ = lodash,',
               '      settings = _.templateSettings;',
               '',
-              "  text = String(text || '');",
+              "  string = String(string == null ? '' : string);",
               '  options = iteratorTemplate ? defaults({}, options, settings) : settings;',
               '',
               '  var index = 0,',
@@ -4060,8 +4099,8 @@
               "    (options.evaluate || reNoMatch).source + '|$'",
               "  , 'g');",
               '',
-              '  text.replace(reDelimiters, function(match, escapeValue, interpolateValue, evaluateValue, offset) {',
-              '    source += text.slice(index, offset).replace(reUnescapedString, escapeStringChar);',
+              '  string.replace(reDelimiters, function(match, escapeValue, interpolateValue, evaluateValue, offset) {',
+              '    source += string.slice(index, offset).replace(reUnescapedString, escapeStringChar);',
               '    if (escapeValue) {',
               '      source += "\' +\\n_.escape(" + escapeValue + ") +\\n\'";',
               '    }',
@@ -4723,7 +4762,7 @@
         if (isUnderscore) {
           // unexpose Lo-Dash methods for the Underscore build
           source = source.replace(getMethodAssignments(source), function(match) {
-            return _.reduce(['assign', 'create', 'callback', 'createCallback', 'isPlainObject', 'noop', 'slice', 'unzip', 'zipObject'], function(result, funcName) {
+            return _.reduce(['assign', 'create', 'callback', 'createCallback', 'escapeRegExp', 'isPlainObject', 'noop', 'slice', 'unzip', 'zipObject'], function(result, funcName) {
               if (isLodash(funcName)) {
                 return result;
               }

@@ -172,7 +172,6 @@
       'bind',
       'bindAll',
       'bindKey',
-      'createCallback',
       'compose',
       'curry',
       'debounce',
@@ -183,7 +182,10 @@
       'partial',
       'partialRight',
       'throttle',
-      'wrap'
+      'wrap',
+
+      // deprecated
+      'createCallback'
     ],
     'Objects': [
       'assign',
@@ -227,13 +229,24 @@
       'values'
     ],
     'Strings': [
+      'camelCase',
+      'capitalize',
+      'endsWith',
+      'escapeRegExp',
+      'kebabCase',
+      'pad',
+      'padLeft',
+      'padRight',
+      'repeat',
+      'snakeCase',
+      'startsWith',
       'trim',
       'trimLeft',
-      'trimRight'
+      'trimRight',
+      'truncate'
     ],
     'Utilities': [
       'constant',
-      'escape',
       'identity',
       'matches',
       'mixin',
@@ -245,11 +258,14 @@
       'random',
       'result',
       'runInContext',
+      'times',
+      'uniqueId',
+
+      // deprecated
+      'escape',
       'template',
       'templateSettings',
-      'times',
       'unescape',
-      'uniqueId'
     ]
   });
 
@@ -321,10 +337,13 @@
     'at',
     'bindKey',
     'capitalize',
+    'camelCase',
     'cloneDeep',
     'create',
     'createCallback',
     'curry',
+    'endsWith',
+    'escapeRegExp',
     'findIndex',
     'findKey',
     'findLast',
@@ -336,16 +355,24 @@
     'forOwn',
     'forOwnRight',
     'isPlainObject',
+    'kebabCase',
     'mapValues',
     'merge',
     'noop',
+    'pad',
+    'padLeft',
+    'padRight',
     'parseInt',
     'partialRight',
     'pull',
     'remove',
+    'repeat',
     'runInContext',
     'slice',
+    'snakeCase',
+    'startsWith',
     'transform',
+    'truncate',
     'trim',
     'trimLeft',
     'trimRight',
@@ -1504,7 +1531,7 @@
         var lodash = context._;
 
         _.each(lodashOnlyFuncs.concat('assign'), function(funcName) {
-          equal(lodash[funcName], undefined, '_.' + funcName + ' should not exist: ' + basename);
+          ok(funcName in lodash, '_.' + funcName + ' should not exist: ' + basename);
         });
 
         start();
