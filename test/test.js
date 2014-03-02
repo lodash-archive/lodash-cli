@@ -582,7 +582,7 @@
 
   /*--------------------------------------------------------------------------*/
 
- console.log('test.js invoked with arguments: ' + JSON.stringify(process.argv));
+  console.log('test.js invoked with arguments: ' + JSON.stringify(process.argv));
 
   QUnit.module('build command checks');
 
@@ -2029,7 +2029,7 @@
     function strip(value) {
       return String(value)
         .replace(/^ *\/\/.*/gm, '')
-        .replace(/\b(?:basicEach|context|forEach|forOwn)\b/g, '')
+        .replace(/\bcontext\b/g, '')
         .replace(/\b(?:imports|options).*?=.+/g, '')
         .replace(/\biteratorTemplate\s*&&\s*/g, '')
         .replace(/\blodash\.(createCallback\()\b/g, '$1')
@@ -2041,12 +2041,6 @@
         var command = 'underscore plus=' + funcName,
             expected = true;
 
-        if (funcName == 'createCallback') {
-          expected = !!index;
-          if (index) {
-            command += ',where';
-          }
-        }
         if (funcName != 'chain' && _.contains(categoryMap.Chaining.concat('mixin'), funcName)) {
           expected = funcName == 'tap' || !!index;
           if (index) {
