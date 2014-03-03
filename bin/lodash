@@ -1321,7 +1321,7 @@
             push.apply(iife, _.transform(depPaths, function(result, depPath, index) {
               var depName = depNames[index];
               _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
-                result.push('export ' + otherName + " from '" + depName + "';");
+                result.push('export { default as ' + otherName + " } from '" + depName + "';");
               });
             })
             .sort());
