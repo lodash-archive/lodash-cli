@@ -1531,7 +1531,7 @@
         var lodash = context._;
 
         _.each(lodashOnlyFuncs.concat('assign'), function(funcName) {
-          ok(funcName in lodash, '_.' + funcName + ' should not exist: ' + basename);
+          equal(funcName in lodash, false, '_.' + funcName + ' should not exist: ' + basename);
         });
 
         start();
@@ -1978,7 +1978,7 @@
         };
 
         build(['exports=none', 'include=none'].concat(command.split(' ')), function(data) {
-          strictEqual('outputPath' in data, false);
+          equal('outputPath' in data, false);
           equal(written, data.source);
           equal(arguments.length, 1);
 
