@@ -64,7 +64,6 @@
     'collect': 'map',
     'callback': 'createCallback',
     'detect': 'find',
-    'drop': 'rest',
     'each': 'forEach',
     'eachRight': 'forEachRight',
     'extend': 'assign',
@@ -78,7 +77,6 @@
     'object': 'zipObject',
     'select': 'filter',
     'tail': 'rest',
-    'take': 'first',
     'unique': 'uniq',
     'unzip': 'zip',
     'value': 'wrapperValueOf'
@@ -92,14 +90,14 @@
     'every': ['all'],
     'filter': ['select'],
     'find': ['detect', 'findWhere'],
-    'first': ['head', 'take'],
+    'first': ['head'],
     'forEach': ['each'],
     'forEachRight': ['eachRight'],
     'functions': ['methods'],
     'map': ['collect'],
     'reduce': ['foldl', 'inject'],
     'reduceRight': ['foldr'],
-    'rest': ['drop', 'tail'],
+    'rest': ['tail'],
     'some': ['any'],
     'uniq': ['unique'],
     'wrapperValueOf': ['value'],
@@ -138,6 +136,8 @@
     'defer': ['isFunction', 'slice'],
     'delay': ['isFunction', 'slice'],
     'difference': ['baseDifference', 'baseFlatten'],
+    'drop': ['rest'],
+    'dropWhile': ['rest'],
     'endsWith': [],
     'escape': ['escapeHtmlChar'],
     'escapeRegExp': [],
@@ -233,6 +233,8 @@
     'some': ['baseEach', 'createCallback', 'isArray'],
     'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'createCallback', 'isArray'],
     'sortedIndex': ['createCallback', 'identity'],
+    'take': ['first'],
+    'takeWhile': ['first'],
     'tap': [],
     'template': ['defaults', 'escape', 'escapeStringChar', 'keys', 'values'],
     'throttle': ['debounce', 'isFunction', 'isObject'],
@@ -348,6 +350,8 @@
     'Arrays': [
       'compact',
       'difference',
+      'drop',
+      'dropWhile',
       'findIndex',
       'findLastIndex',
       'first',
@@ -363,6 +367,8 @@
       'rest',
       'slice',
       'sortedIndex',
+      'take',
+      'takeWhile',
       'union',
       'uniq',
       'without',
@@ -637,6 +643,7 @@
     'create',
     'createCallback',
     'curry',
+    'dropWhile',
     'endsWith',
     'escapeRegExp',
     'findIndex',
@@ -666,6 +673,7 @@
     'slice',
     'snakeCase',
     'startsWith',
+    'takeWhile',
     'transform',
     'truncate',
     'trim',
@@ -2447,7 +2455,14 @@
    */
   function removeMethodAssignment(source, methodName) {
     return source.replace(getMethodAssignments(source), function(match) {
-      return match.replace(RegExp('^( *//.*\\n)* *lodash(?:\\.prototype)?\\.[$\\w]+ *= *' + methodName + ';\\n(\\n)?', 'gm'), function(match, comment, newline) {
+      var reAssignment = RegExp(
+        '^( *//.*\\n)* *' +
+        'lodash(?:\\.prototype)?\\.' +
+        '(?:[$\\w]+ *= *' + methodName + '|' + methodName + ' *= [$\\w]+);' +
+        '\\n(\\n)?'
+      , 'gm');
+
+      return match.replace(reAssignment, function(match, comment, newline) {
         return (!newline && comment) || newline || '';
       });
     });
@@ -2521,10 +2536,10 @@
     source = removeVar(source, 'clearTimeout');
     source = removeVar(source, 'setTimeout');
 
-    // replace reference in `reThis` assignment
+    // replace `reThis` reference in `support.funcDecomp` assignment
     source = source.replace(/\btest\(runInContext\)/, 'test(function() { return this; })');
 
-    // remove assignment
+    // remove `runInContext` assignment
     source = source.replace(/^(?: *\/\/.*\n)* *lodash\.runInContext *=[\s\S]+?;\n/m, '');
 
     // remove function scaffolding, leaving most of its content
@@ -3432,10 +3447,11 @@
             'isArguments': [getIsArgumentsFork, removeIsArgumentsFork]
           },
           function(funcs, funcName) {
-            var getFork = funcs[0],
+            var funcSource = _.trimLeft(matchFunction(source, funcName)),
+                getFork = funcs[0],
                 removeFork =  funcs[1];
 
-            source = source.replace(matchFunction(source, funcName).replace(RegExp('[\\s\\S]+?(function ' + funcName + ')'), '$1'), function() {
+            source = source.replace(funcSource, function() {
               var snippet = getFork(source),
                   indent = getIndent(snippet);
 
@@ -4731,7 +4747,7 @@
             .replace(/obj\s*\|\|\s*\(obj *= *\{}\);/, '')
             .replace(/var __p = '';\s*__p \+=/, 'var __p =');
 
-          // remove comments, including sourceURLs
+          // remove comments (including sourceURLs)
           snippet = snippet.replace(/\s*\/\/.*(?:\n|$)/g, '');
 
           // replace `iteratorTemplate` assignment
