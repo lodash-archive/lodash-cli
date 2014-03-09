@@ -3069,7 +3069,7 @@
       var isMinify = _.contains(options, '-m') || _.contains(options, '--minify');
 
       // flag to specify a modern build
-      var isModern = _.contains(options, 'csp') || _.contains(options, 'CSP') || _.contains(options, 'mobile') || _.contains(options, 'modern');
+      var isModern = _.contains(options, 'csp') || _.contains(options, 'CSP') || _.contains(options, 'modern');
 
       // flag to specify a modularize build
       var isModularize = _.contains(options, 'modularize');
@@ -4133,7 +4133,7 @@
             ].join('\n'));
           }
           // replace `_.isRegExp`
-          if (!(isUnderscore && isLodash('isRegExp'))) {
+          if (!isUnderscore) {
             source = replaceFunction(source, 'isRegExp', [
               'function isRegExp(value) {',
               "  return value && typeof value == 'object' && toString.call(value) == regexpClass || false;",
@@ -4835,6 +4835,7 @@
 
     // flag to specify creating a custom build
     var isCustom = !isModularize && (
+      _.contains(options, 'compat') || _.contains(options, 'mobile') ||
       isMapped || isModern || isStrict || isTemplate || isUnderscore || outputPath ||
       /\b(?:category|exclude|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
       !_.isEqual(exportsOptions, defaultExports)
