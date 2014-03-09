@@ -226,13 +226,15 @@
       'isString',
       'isUndefined',
       'keys',
+      'keysIn',
       'mapValues',
       'merge',
       'omit',
       'pairs',
       'pick',
       'transform',
-      'values'
+      'values',
+      'valuesIn'
     ],
     'Strings': [
       'camelCase',
@@ -365,6 +367,7 @@
     'forOwnRight',
     'isPlainObject',
     'kebabCase',
+    'keysIn',
     'mapValues',
     'merge',
     'noop',
@@ -388,6 +391,7 @@
     'trim',
     'trimLeft',
     'trimRight',
+    'valuesIn',
     'wrapperToString',
     'xor'
   ];
