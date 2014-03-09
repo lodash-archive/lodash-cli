@@ -200,10 +200,11 @@
     'merge': ['baseCreateCallback', 'baseMerge', 'slice'],
     'min': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
     'mixin': ['functions', 'isFunction', 'isObject', 'lodash'],
+    'negate': ['isFunction'],
     'noConflict': [],
     'noop': [],
     'now': ['isNative'],
-    'omit': ['baseDifference', 'baseFlatten', 'createCallback', 'keysIn', 'pick'],
+    'omit': ['baseDifference', 'baseFlatten', 'createCallback', 'keysIn', 'negate', 'pick'],
     'once': ['isFunction'],
     'pad': ['createPad'],
     'padLeft': ['createPad'],
@@ -221,7 +222,7 @@
     'range': [],
     'reduce': ['baseEach', 'createCallback', 'isArray'],
     'reduceRight': ['createCallback', 'baseEachRight'],
-    'reject': ['createCallback', 'filter'],
+    'reject': ['createCallback', 'filter', 'negate'],
     'remove': ['createCallback'],
     'repeat': [],
     'rest': ['createCallback', 'slice'],
@@ -435,6 +436,7 @@
       'defer',
       'delay',
       'memoize',
+      'negate',
       'once',
       'partial',
       'partialRight',
@@ -664,6 +666,7 @@
     'keysIn',
     'mapValues',
     'merge',
+    'negate',
     'noop',
     'pad',
     'padLeft',
@@ -3327,6 +3330,19 @@
             funcDepMap[funcName].push('wrapperValueOf');
           });
         }
+        if (isModern) {
+          source = removeIsFunctionFork(source);
+          source = removeIsArgumentsFork(source);
+          source = removeSupportSpliceObjects(source);
+        }
+        if (_.contains(plusFuncs, 'chain') == !isUnderscore) {
+          source = addUnderscoreChaining(source, isModularize);
+          _.pull(funcDepMap.mixin, 'isObject');
+
+          if (!isModularize) {
+            _.pull(funcDepMap.mixin, 'isFunction');
+          }
+        }
         if (isModern || (isUnderscore && _.isEmpty(plusFuncs))) {
           source = removeSupportArgsClass(source);
           source = removeSupportArgsObject(source);
@@ -3358,20 +3374,137 @@
           source = removeSupportEnumErrorProps(source);
           source = removeSupportEnumPrototypes(source);
           source = removeSupportNonEnumArgs(source);
-
-          if (!isUnderscore) {
-            source = removeIsFunctionFork(source);
-            source = removeIsArgumentsFork(source);
-            source = removeSupportSpliceObjects(source);
-          }
         }
-        if (_.contains(plusFuncs, 'chain') == !isUnderscore) {
-          source = addUnderscoreChaining(source, isModularize);
-          _.pull(funcDepMap.mixin, 'isObject');
-
-          if (!isModularize) {
-            _.pull(funcDepMap.mixin, 'isFunction');
+        if (isModern || isUnderscore) {
+          // replace `_.forEach`
+          if (!(isUnderscore && isLodash('forEach'))) {
+            source = replaceFunction(source, 'forEach', [
+              'function forEach(collection, callback, thisArg) {',
+              '  var index = -1,',
+              '      length = collection ? collection.length : 0;',
+              '',
+              "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
+              "  if (typeof length == 'number') {",
+              '    while (++index < length) {',
+              '      if (callback(collection[index], index, collection) === false) {',
+              '        break;',
+              '      }',
+              '    }',
+              '  } else {',
+              '    baseEach(collection, callback);',
+              '  }',
+              '  return collection;',
+              '}',
+            ].join('\n'));
           }
+          // replace `_.forEachRight`
+          if (!(isUnderscore && isLodash('forEachRight'))) {
+            source = replaceFunction(source, 'forEachRight', [
+              'function forEachRight(collection, callback, thisArg) {',
+              '  var length = collection ? collection.length : 0;',
+              '',
+              "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
+              "  if (typeof length == 'number') {",
+              '    while (length--) {',
+              '      if (callback(collection[length], length, collection) === false) {',
+              '        break;',
+              '      }',
+              '    }',
+              '  } else {',
+              '    baseEachRight(collection, callback);',
+              '  }',
+              '  return collection;',
+              '}',
+            ].join('\n'));
+          }
+          // replace `_.isRegExp`
+          if (!isUnderscore) {
+            source = replaceFunction(source, 'isRegExp', [
+              'function isRegExp(value) {',
+              "  return value && typeof value == 'object' && toString.call(value) == regexpClass || false;",
+              '}'
+            ].join('\n'));
+          }
+          // replace `_.keysIn`
+          if (!(isUnderscore && isLodash('keysIn'))) {
+            _.pull(funcDepMap.keysIn, 'isArguments', 'slice');
+
+            source = replaceFunction(source, 'keysIn', [
+              'function keysIn(object) {',
+              '  var result = [];',
+              '  if (!isObject(object)) {',
+              '    return result;',
+              '  }',
+              '  for (var key in object) {',
+              '    result.push(key);',
+              '  }',
+              '  return result;',
+              '}'
+            ].join('\n'));
+          }
+          // replace `_.map`
+          if (!(isUnderscore && (isLodash('map') || isLodash('pluck')))) {
+            source = replaceFunction(source, 'map', [
+              'function map(collection, callback, thisArg) {',
+              '  var index = -1,',
+              '      length = collection ? collection.length : 0;',
+              '',
+              '  callback = lodash.createCallback(callback, thisArg, 3);',
+              "  if (typeof length == 'number') {",
+              '    var result = Array(length);',
+              '    while (++index < length) {',
+              '      result[index] = callback(collection[index], index, collection);',
+              '    }',
+              '  } else {',
+              '    result = [];',
+              '    baseEach(collection, function(value, key, collection) {',
+              '      result[++index] = callback(value, key, collection);',
+              '    });',
+              '  }',
+              '  return result;',
+              '}'
+            ].join('\n'));
+          }
+
+          _.forOwn(funcDepMap, function(depNames, funcName) {
+            if (_.contains(depNames, 'isArguments') &&
+                !_.contains(['baseFlatten', 'intersection', 'xor'], funcName) &&
+                !(isUnderscore && isLodash(funcName))) {
+              _.pull(depNames, 'isArguments');
+            }
+          });
+
+          _.each(['createAggregator', 'every', 'filter', 'find', 'forEach', 'forEachRight', 'invoke', 'map', 'reduce'], function(funcName) {
+            if (!(isUnderscore && isLodash(funcName))) {
+              _.pull(funcDepMap[funcName], 'isArray');
+            }
+          });
+
+          _.each(['createAggregator', 'every', 'filter', 'find', 'invoke', 'max', 'min', 'reduce', 'some'], function(funcName) {
+            if (!(isUnderscore && (
+                  isLodash(funcName) ||
+                  (funcName == 'filter' && isLodash('where'))
+                ))) {
+              source = source.replace(matchFunction(source, funcName), function(match) {
+                if (!isUnderscore && (funcName == 'min' || funcName == 'max')) {
+                  return match;
+                }
+                // replace `_.isArray` checks with simpler type checks
+                match = match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index[^;]+;\n+)?/m, function(snippet, indent, statement, vars) {
+                  if (vars) {
+                    vars = vars
+                      .replace(/\b(length *=)[^;=]+/, '$1 collection ? collection.length : 0')
+                      .replace(RegExp('^  ' + indent, 'gm'), indent);
+                  }
+                  return (vars || '') + indent +
+                    statement.replace(/\bisArray\([^\)]+\)/, "typeof length == 'number'");
+                });
+
+                // adjust `callback` assignment placement
+                return match.replace(/\n+( *callback *=[^;]+;)(?=\n *var index)/, '\n$1\n');
+              });
+            }
+          });
         }
         if (isUnderscore) {
           // replace `lodash`
@@ -3563,6 +3696,7 @@
               '       args.push(value);',
               '     }',
               '  }',
+              '  argsLength = args.length',
               '  var array = args[0],',
               '      index = -1,',
               '      indexOf = getIndexOf(),',
@@ -4089,139 +4223,6 @@
               '}'
             ].join('\n'));
           }
-        }
-        if (isModern || isUnderscore) {
-          // replace `_.forEach`
-          if (!(isUnderscore && isLodash('forEach'))) {
-            source = replaceFunction(source, 'forEach', [
-              'function forEach(collection, callback, thisArg) {',
-              '  var index = -1,',
-              '      length = collection ? collection.length : 0;',
-              '',
-              "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
-              "  if (typeof length == 'number') {",
-              '    while (++index < length) {',
-              '      if (callback(collection[index], index, collection) === false) {',
-              '        break;',
-              '      }',
-              '    }',
-              '  } else {',
-              '    baseEach(collection, callback);',
-              '  }',
-              '  return collection;',
-              '}',
-            ].join('\n'));
-          }
-          // replace `_.forEachRight`
-          if (!(isUnderscore && isLodash('forEachRight'))) {
-            source = replaceFunction(source, 'forEachRight', [
-              'function forEachRight(collection, callback, thisArg) {',
-              '  var length = collection ? collection.length : 0;',
-              '',
-              "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
-              "  if (typeof length == 'number') {",
-              '    while (length--) {',
-              '      if (callback(collection[length], length, collection) === false) {',
-              '        break;',
-              '      }',
-              '    }',
-              '  } else {',
-              '    baseEachRight(collection, callback);',
-              '  }',
-              '  return collection;',
-              '}',
-            ].join('\n'));
-          }
-          // replace `_.isRegExp`
-          if (!isUnderscore) {
-            source = replaceFunction(source, 'isRegExp', [
-              'function isRegExp(value) {',
-              "  return value && typeof value == 'object' && toString.call(value) == regexpClass || false;",
-              '}'
-            ].join('\n'));
-          }
-          // replace `_.keysIn`
-          if (!(isUnderscore && isLodash('keysIn'))) {
-            _.pull(funcDepMap.keysIn, 'isArguments', 'slice');
-
-            source = replaceFunction(source, 'keysIn', [
-              'function keysIn(object) {',
-              '  var result = [];',
-              '  if (!isObject(object)) {',
-              '    return result;',
-              '  }',
-              '  for (var key in object) {',
-              '    result.push(key);',
-              '  }',
-              '  return result;',
-              '}'
-            ].join('\n'));
-          }
-          // replace `_.map`
-          if (!(isUnderscore && (isLodash('map') || isLodash('pluck')))) {
-            source = replaceFunction(source, 'map', [
-              'function map(collection, callback, thisArg) {',
-              '  var index = -1,',
-              '      length = collection ? collection.length : 0;',
-              '',
-              '  callback = lodash.createCallback(callback, thisArg, 3);',
-              "  if (typeof length == 'number') {",
-              '    var result = Array(length);',
-              '    while (++index < length) {',
-              '      result[index] = callback(collection[index], index, collection);',
-              '    }',
-              '  } else {',
-              '    result = [];',
-              '    baseEach(collection, function(value, key, collection) {',
-              '      result[++index] = callback(value, key, collection);',
-              '    });',
-              '  }',
-              '  return result;',
-              '}'
-            ].join('\n'));
-          }
-
-          _.forOwn(funcDepMap, function(depNames, funcName) {
-            if (_.contains(depNames, 'isArguments') &&
-                !_.contains(['baseFlatten', 'intersection', 'xor'], funcName) &&
-                !(isUnderscore && isLodash(funcName))) {
-              _.pull(depNames, 'isArguments');
-            }
-          });
-
-          _.each(['createAggregator', 'every', 'filter', 'find', 'forEach', 'forEachRight', 'invoke', 'map', 'reduce'], function(funcName) {
-            if (!(isUnderscore && isLodash(funcName))) {
-              _.pull(funcDepMap[funcName], 'isArray');
-            }
-          });
-
-          _.each(['createAggregator', 'every', 'filter', 'find', 'invoke', 'max', 'min', 'reduce', 'some'], function(funcName) {
-            if (!(isUnderscore && (
-                  isLodash(funcName) ||
-                  (funcName == 'filter' && isLodash('where'))
-                ))) {
-              source = source.replace(matchFunction(source, funcName), function(match) {
-                if (!isUnderscore && (funcName == 'min' || funcName == 'max')) {
-                  return match;
-                }
-                // replace `_.isArray` checks with simpler type checks
-                match = match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index[^;]+;\n+)?/m, function(snippet, indent, statement, vars) {
-                  if (vars) {
-                    vars = vars
-                      .replace(/\b(length *=)[^;=]+/, '$1 collection ? collection.length : 0')
-                      .replace(RegExp('^  ' + indent, 'gm'), indent);
-                  }
-                  return (vars || '') + indent +
-                    statement.replace(/\bisArray\([^\)]+\)/, "typeof length == 'number'");
-                });
-
-                // adjust `callback` assignment placement
-                return match.replace(/\n+( *callback *=[^;]+;)(?=\n *var index)/, '\n$1\n');
-              });
-            }
-          });
-        }
-        if (isUnderscore) {
           // replace references to external `lodash.createCallback` with internal `createCallback`
           if (!isLodash('createCallback')) {
             source = source.replace(/\blodash\.(createCallback\()\b/g, '$1');
