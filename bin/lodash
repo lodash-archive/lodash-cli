@@ -1052,7 +1052,7 @@
       var iife = [],
           isInternal = isPrivate(identifier),
           moduleName = isNpm ? 'lodash.' + (isInternal ? '_' : '') + identifier.toLowerCase() : identifier,
-          modulePath = isNpm ? moduleName : getPath(identifier, funcDepMap);
+          modulePath = isNpm ? moduleName : getModulePath(identifier, funcDepMap);
 
       var inlinees = [identifier];
       push.apply(inlinees, inlineMap[identifier] || []);
@@ -1180,7 +1180,7 @@
           categoryDepPaths = categoryDeps.map(function(depName) { return './' + depName; }),
           identifier = 'lodash',
           basename = identifier,
-          modulePath = getPath(identifier, funcDepMap);
+          modulePath = getModulePath(identifier, funcDepMap);
 
       var deps = getDependencies(identifier, funcDepMap, true)
         .concat(objDepMap[identifier] || empty)
@@ -1755,9 +1755,19 @@
     return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!nativeCreate)\b[\s\S]+?\n *}\(\)\);\n\1}/), 0, '');
   }
 
+  /**
+   * Resolves the path of the given module dependency. If `fromPath` is
+   * provided the resolved path will be relative to `fromPath`.
+   *
+   * @private
+   * @param {string} depName The name of the dependency.
+   * @param {string} [fromPath=''] The path to resolve the dependency relative to.
+   * @param {Object} [depMap] The dependency map used to resolve identifiers.
+   * @returns {string} Returns the dependency path.
+   */
   function getDepPath(depName, fromPath, depMap) {
     var sep = '/',
-        toPath = getPath(depName, depMap),
+        toPath = getModulePath(depName, depMap),
         relative = path.relative(fromPath || '', toPath).replace(RegExp(path.sepEscaped, 'g'), sep);
 
     if (relative.charAt(0) != '.') {
@@ -1766,8 +1776,18 @@
     return relative + sep + depName;
   }
 
-  function getDepPaths(dependencies, fromPath, depMap) {
-    return dependencies.map(function(depName) {
+  /**
+   * Resolves the paths of the given module dependencies. If `fromPath` is
+   * provided the resolved path will be relative to `fromPath`.
+   *
+   * @private
+   * @param {Array} depNames The array dependency names.
+   * @param {string} [fromPath=''] The path to resolve dependencies relative to.
+   * @param {Object} [depMap] The dependency map used to resolve identifiers.
+   * @returns {string[]} Returns the dependency paths.
+   */
+  function getDepPaths(depNames, fromPath, depMap) {
+    return _.map(depNames, function(depName) {
       return getDepPath(depName, fromPath, depMap);
     });
   }
@@ -1947,6 +1967,20 @@
   }
 
   /**
+   * Resolves the module path of the given identifier.
+   *
+   * @private
+   * @param {string} identifier The module identifier.
+   * @param {Object} [depMap] The dependency map used to resolve identifiers.
+   * @returns {string} Returns the module path.
+   */
+  function getModulePath(identifier, depMap) {
+    return topLevel[identifier]
+      ? ''
+      : (getCategory(identifier, depMap) || 'internals').toLowerCase();
+  }
+
+  /**
    * Gets the names of identifiers in `source` that belong to the given category.
    *
    * @private
@@ -1990,12 +2024,6 @@
       value = optionToValue(name, value);
       return value == null ? result : value;
     }, defaultValue);
-  }
-
-  function getPath(identifier, depMap) {
-    return topLevel[identifier]
-      ? ''
-      : (getCategory(identifier, depMap) || 'internals').toLowerCase();
   }
 
   /**
