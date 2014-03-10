@@ -3128,8 +3128,8 @@
 
       // flag to specify creating a custom build
       var isCustom = !isModularize && (
-        getOption(options, 'compat') || getOption(options, 'mobile') ||
         isMapped || isModern || isStrict || isTemplate || isUnderscore || outputPath ||
+        getOption(options, 'compat') || getOption(options, 'legacy') || getOption(options, 'mobile') ||
         /\b(?:category|exclude|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
         !_.isEqual(exportsOptions, defaultExports)
       );
