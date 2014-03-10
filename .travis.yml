@@ -8,8 +8,6 @@ env:
     - BIN="node" BUILD="compat" EXPORTS="commonjs" OPTION="" OUTPUT_PATH=false TARGET_PATH=false TEST_BUILDS=false 
   matrix:
     - BUILD="compat"
-    - BUILD="legacy"
-    - BUILD="mobile"
     - BUILD="modern"
     - BUILD="modern" EXPORTS="npm" OUTPUT_PATH="./npm/node_modules" TARGET_PATH="../../../npm/index.js"
 matrix:
@@ -17,15 +15,9 @@ matrix:
     - node_js: "0.10"
       env: BIN="narwhal" BUILD="compat"
     - node_js: "0.10"
-      env: BIN="narwhal" BUILD="legacy"
-    - node_js: "0.10"
       env: BIN="rhino"   BUILD="compat" OPTION="-require"
     - node_js: "0.10"
-      env: BIN="rhino"   BUILD="legacy" OPTION="-require"
-    - node_js: "0.10"
       env: BIN="ringo"   BUILD="compat"
-    - node_js: "0.10"
-      env: BIN="ringo"   BUILD="legacy"
     - node_js: "0.6"
       env: TEST_BUILDS=true
     - node_js: "0.10"
