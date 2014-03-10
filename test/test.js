@@ -1081,11 +1081,6 @@
       };
 
       var check = _.after(2, _.once(function() {
-        ok(_.every(sources, function(source) {
-          // remove `Function` use in `_.template` before checking the entire source
-          return !/\bFunction\(/.test(source.replace(/= *\w+\(\w+, *['"]return.+?apply.+?\)/, ''));
-        }));
-
         equal(sources[0], sources[1]);
         QUnit.start();
       }));
@@ -1097,36 +1092,48 @@
 
   /*--------------------------------------------------------------------------*/
 
+  QUnit.module('legacy modifier');
+
+  (function() {
+    asyncTest('`lodash legacy`', function() {
+      var sources = [];
+
+      var callback = function(data) {
+        sources.push(data.source.replace(reHeader, ''));
+        check();
+      };
+
+      var check = _.after(2, _.once(function() {
+        equal(sources[0], sources[1]);
+        QUnit.start();
+      }));
+
+      build(['-s', '-d', 'legacy'], callback);
+      build(['-s', '-d', 'compat'], callback);
+    });
+  }());
+
+
+  /*--------------------------------------------------------------------------*/
+
   QUnit.module('mobile modifier');
 
   (function() {
     asyncTest('`lodash mobile`', function() {
-      var start = _.after(2, _.once(QUnit.start));
+      var sources = [];
 
-      build(['-s', 'mobile'], function(data) {
-        var array = [1, 2, 3],
-            basename = path.basename(data.outputPath, '.js'),
-            context = createContext(),
-            object1 = [{ 'a': 1 }],
-            object2 = [{ 'b': 2 }],
-            object3 = [{ 'a': 1, 'b': 2 }],
-            circular1 = { 'a': 1 },
-            circular2 = { 'a': 1 };
+      var callback = function(data) {
+        sources.push(data.source.replace(reHeader, ''));
+        check();
+      };
 
-        circular1.b = circular1;
-        circular2.b = circular2;
+      var check = _.after(2, _.once(function() {
+        equal(sources[0], sources[1]);
+        QUnit.start();
+      }));
 
-        vm.runInContext(data.source, context);
-        var lodash = context._;
-
-        deepEqual(lodash.merge(object1, object2), object3, basename);
-        deepEqual(lodash.sortBy([3, 2, 1], _.identity), array, basename);
-        strictEqual(lodash.isEqual(circular1, circular2), true, basename);
-
-        var actual = lodash.cloneDeep(circular1);
-        ok(actual != circular1 && actual.b == actual, basename);
-        start();
-      });
+      build(['-s', '-d', 'mobile'], callback);
+      build(['-s', '-d', 'compat'], callback);
     });
   }());
 
@@ -1266,7 +1273,7 @@
         asyncTest('`lodash ' + mapCommand + (outputCommand ? ' ' + outputCommand : '') + '`', function() {
           var callback = _.once(function(data) {
             var basename = path.basename(data.outputPath, '.js'),
-                sources = /foo.js/.test(outputCommand) ? ['foo.js'] : ['lodash' + (outputCommand.length ? '' : '.custom') + '.js'],
+                sources = /foo.js/.test(outputCommand) ? ['foo.js'] : ['lodash' + (_.isEmpty(outputCommand) ? '.custom' : '') + '.js'],
                 sourceMap = JSON.parse(data.sourceMap),
                 sourceMapURL = (/\w+(?=\.map$)/.exec(mapCommand) || [basename])[0];
 
@@ -2174,7 +2181,7 @@
       'include=once plus=bind,Chaining',
       'category=collections,functions',
       'backbone category=utilities minus=first,last',
-      'legacy include=defer',
+      'compat include=defer',
       'mobile strict category=functions exports=amd,global plus=pick,uniq',
       'modern strict include=isArguments,isArray,isFunction,isPlainObject,keys',
       'underscore include=debounce,throttle plus=after minus=throttle'
@@ -2185,10 +2192,10 @@
       })
     );
 
-    var reNonCombinable = /\b(?:backbone|csp|legacy|mobile|modern|underscore)\b/;
+    var reNonCombinable = /\b(?:backbone|compat|csp|legacy|mobile|modern|underscore)\b/;
 
     commands.forEach(function(origCommand) {
-      _.each(['', 'mobile', 'modern', 'underscore'], function(otherCommand) {
+      _.each(['', 'modern', 'underscore'], function(otherCommand) {
         var command = (otherCommand + ' ' + origCommand).trim();
         if ((otherCommand && reNonCombinable.test(origCommand)) ||
             (otherCommand == 'underscore' && /\bcategory\b/.test(origCommand))) {
@@ -2262,7 +2269,7 @@
                 lodashFuncs
               );
 
-              if (otherNames.length) {
+              if (!_.isEmpty(otherNames)) {
                 _.pull(funcNames, category);
                 push.apply(funcNames, otherNames);
               }
