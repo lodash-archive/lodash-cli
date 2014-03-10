@@ -20,7 +20,6 @@
     "closure-compiler": "0.2.3",
     "glob": "~3.2.7",
     "lodash": "2.4.1",
-    "nopt": "~2.2.0",
     "uglify-js": "2.4.8"
   },
   "files": [

@@ -1970,6 +1970,28 @@
       .replace(/[;\s]+$/, '');
   }
 
+  /**
+   * Gets the value of a given name from the `options` array. If no value is
+   * available the `defaultValue` is returned.
+   *
+   * @private
+   * @param {Array} options The options array to inspect.
+   * @param {string} name The name of the option.
+   * @param {*} defaultValue The default option value.
+   * @returns {*} Returns the option value.
+   */
+  function getOption(options, name, defaultValue) {
+    var isArr = _.isArray(defaultValue);
+    return _.reduce(options, function(result, value) {
+      if (isArr) {
+        value = optionToArray(name, value);
+        return value.length ? value : result;
+      }
+      value = optionToValue(name, value);
+      return value == null ? result : value;
+    }, defaultValue);
+  }
+
   function getPath(identifier, depMap) {
     return topLevel[identifier]
       ? ''
@@ -2167,27 +2189,7 @@
    * @returns {Array} Returns the new converted array.
    */
   function optionToArray(name, string) {
-    return _.compact(_.isArray(string)
-      ? string
-      : _.invoke((optionToValue(name, string) || '').split(/, */), 'trim')
-    );
-  }
-
-  /**
-   * Converts a comma separated option value into an array of function names.
-   *
-   * @private
-   * @param {string} name The name of the option to inspect.
-   * @param {string} string The options string.
-   * @param {Object} [depMap] The dependency map used to resolve real names.
-   * @returns {Array} Returns the new converted array.
-   */
-  function optionToFuncsArray(name, string, depMap) {
-    depMap || (depMap = funcDependencyMap);
-    return optionToArray(name, string).map(function(identifier) {
-      // convert aliases to real function names
-      return getRealName(identifier, depMap);
-    });
+    return _.compact(_.invoke((optionToValue(name, string) || '').split(/, */), 'trim'));
   }
 
   /**
@@ -2199,7 +2201,10 @@
    * @returns {string|undefined} Returns the option value, else `undefined`.
    */
   function optionToValue(name, string) {
-    var result = (result = string.match(RegExp('^' + name + '=([\\s\\S]+)$'))) && result[1].trim();
+    var result = (result = string.match(RegExp('^' + name + '(?:=([\\s\\S]+))?$'))) && (result[1] ? result[1].trim() : true);
+    if (result === 'false') {
+      return false;
+    }
     return result || undefined;
   }
 
@@ -2725,7 +2730,7 @@
   function removeSupportUnindexedChars(source) {
     source = removeSupportProp(source, 'unindexedChars');
 
-    // remove `support.unindexedChars` from `_.at` and `baseEach`
+    // remove `support.unindexedChars` from `_.at`, `baseEach`, and `baseEachRight`
     _.each(['at', 'baseEach', 'baseEachRight'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
         return match.replace(/^( *)if *\(support\.unindexedChars\b[\s\S]+?\n\1}\n/m, '');
@@ -2768,7 +2773,7 @@
   }
 
   /**
-   * Removes a variable, of the given variable name, from `source`.
+   * Removes a variable of the given variable name from `source`.
    *
    * @private
    * @param {string} source The source to process.
@@ -2977,9 +2982,6 @@
     // use to pre-populate the build state
     var state = _.isPlainObject(options) && options;
 
-    // used to capture warnings for invalid command-line arguments
-    var warnings = [];
-
     var isExcluded = function() {
       return _.every(arguments, function(funcName) {
         return !_.contains(buildFuncs, funcName);
@@ -3007,10 +3009,10 @@
           isAMD = state.isAMD,
           isBackbone = state.isBackbone,
           isCommonJS = state.isCommonJS,
+          isCustom = false,
           isDebug = true,
           isGlobal = state.isGlobal,
-          isIIFE = state.isIIFE,
-          isMapped = state.isMapped,
+          isMapped = false,
           isModern = state.isModern,
           isModularize = true,
           isNode = state.isNode,
@@ -3027,24 +3029,6 @@
           varDepMap = state.varDepMap;
     }
     else {
-      // display help message
-      if (_.find(options, function(arg) {
-            return /^(?:-h|--help)$/.test(arg);
-          })) {
-        displayHelp();
-        return;
-      }
-
-      // display `lodash.VERSION`
-      if (_.find(options, function(arg) {
-            return /^(?:-V|--version)$/.test(arg);
-          })) {
-        console.log(_.VERSION);
-        return;
-      }
-
-      /*----------------------------------------------------------------------*/
-
       // clone dependencies to modify
       var funcDepMap = createMap(_.cloneDeep(funcDependencyMap)),
           objDepMap = createMap(_.cloneDeep(objDependencyMap)),
@@ -3054,90 +3038,82 @@
       var filePath = require.resolve('lodash/lodash.js');
 
       // used to specify a custom IIFE to wrap Lo-Dash
-      var iife = options.reduce(function(result, value) {
-        value = optionToValue('iife', value);
-        return value == null ? result : value;
-      }, null);
+      var iife = getOption(options, 'iife');
+
+      // used to match external template files to precompile
+      var templatePattern = getOption(options, 'template', '');
+
+      // used as the template settings for precompiled templates
+      var templateSettings = (function() {
+        var result = getOption(options, 'settings');
+        return result
+          ? Function('return {' + result.replace(/^\{|}$/g, '') + '}')()
+          : _.clone(_.templateSettings);
+      }());
 
       // flag to specify a Backbone build
-      var isBackbone = _.contains(options, 'backbone');
+      var isBackbone = getOption(options, 'backbone');
 
       // flag to specify only creating the debug build
-      var isDebug = _.contains(options, '-d') || _.contains(options, '--debug');
+      var isDebug = getOption(options, '-d') || getOption(options, '--debug');
 
       // flag to specify creating a source map for the minified source
-      var isMapped = _.contains(options, '-p') || _.contains(options, '--source-map');
+      var isMapped = getOption(options, '-p') || getOption(options, '--source-map');
 
       // flag to specify only creating the minified build
-      var isMinify = _.contains(options, '-m') || _.contains(options, '--minify');
+      var isMinify = getOption(options, '-m') || getOption(options, '--minify');
 
       // flag to specify a modern build
-      var isModern = _.contains(options, 'csp') || _.contains(options, 'CSP') || _.contains(options, 'modern');
+      var isModern = getOption(options, 'csp') || getOption(options, 'CSP') || getOption(options, 'modern');
 
       // flag to specify a modularize build
-      var isModularize = _.contains(options, 'modularize');
+      var isModularize = getOption(options, 'modularize');
 
       // flag to specify writing output to standard output
-      var isStdOut = _.contains(options, '-c') || _.contains(options, '--stdout');
+      var isStdOut = getOption(options, '-c') || getOption(options, '--stdout');
 
       // flag to specify skipping status updates normally logged to the console
-      var isSilent = isStdOut || _.contains(options, '-s') || _.contains(options, '--silent');
+      var isSilent = isStdOut || getOption(options, '-s') || getOption(options, '--silent');
 
-      // flag to specify `_.assign`, `_.bindAll`, and `_.defaults` are
-      // constructed using the "use strict" directive
-      var isStrict = _.contains(options, 'strict');
+      // flag to specify `_.assign`, `_.bindAll`, and `_.defaults`
+      // are constructed using the "use strict" directive
+      var isStrict = getOption(options, 'strict');
+
+      // flag to specify a template build
+      var isTemplate = !!templatePattern;
 
       // flag to specify an Underscore build
-      var isUnderscore = isBackbone || _.contains(options, 'underscore');
+      var isUnderscore = isBackbone || getOption(options, 'underscore');
 
       // used to specify the ways to export the `lodash` function
       var exportsOptions = (function() {
-        var result = options.reduce(function(result, value) {
-          value = optionToArray('exports', value).sort();
-          return value.length ? value : result;
-        }, isModularize
-          ? ['amd']
-          : defaultExports
-        );
+        var result = getOption(options, 'exports', isModularize ? ['amd'] : defaultExports);
         return isModularize ? _.first(result, 1) : result;
       }());
 
       // used to specify the AMD module ID of Lo-Dash used by precompiled templates
-      var moduleId = options.reduce(function(result, value) {
-        return optionToValue('moduleId', value) || result;
-      }, isUnderscore ? 'underscore' : null);
+      var moduleId = getOption(options, 'moduleId', isUnderscore ? 'underscore' : null);
 
       // used as the output path for the build
-      var outputPath = options.reduce(function(result, value, index) {
-        if (/^(?:-o|--output)$/.test(value)) {
-          result = options[index + 1];
-        }
-        return result;
-      }, isModularize ?  '.' + path.sep + 'modularize' :'');
+      var outputPath = _.reduce(options, function(result, value, index) {
+        return /^(?:-o|--output)$/.test(value) ? options[index + 1] : result;
+      }, isModularize ? '.' + path.sep + 'modularize' : '');
 
-      // used to match external template files to precompile
-      var templatePattern = options.reduce(function(result, value) {
-        return optionToValue('template', value) || result;
-      }, '');
-
-      // used as the template settings for precompiled templates
-      var templateSettings = options.reduce(function(result, value) {
-        value = optionToValue('settings', value);
-        return value
-          ? _.assign(result, Function('return {' + value.replace(/^\{|}$/g, '') + '}')())
-          : result;
-      }, _.clone(_.templateSettings));
+      // flag to specify creating a custom build
+      var isCustom = !isModularize && (
+        getOption(options, 'compat') || getOption(options, 'mobile') ||
+        isMapped || isModern || isStrict || isTemplate || isUnderscore || outputPath ||
+        /\b(?:category|exclude|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
+        !_.isEqual(exportsOptions, defaultExports)
+      );
 
       // flags to specify export options
       var isAMD = _.contains(exportsOptions, 'amd'),
           isCommonJS = _.contains(exportsOptions, 'commonjs'),
           isES6 = _.contains(exportsOptions, 'es6'),
           isGlobal = _.contains(exportsOptions, 'global'),
-          isNpm =  _.contains(exportsOptions, 'npm'),
+          isNpm = _.contains(exportsOptions, 'npm'),
           isNode = isNpm || _.contains(exportsOptions, 'node');
-
-      // flag to specify a template build
-      var isTemplate = !!templatePattern;
 
       // the lodash.js source
       var source = fs.readFileSync(filePath, 'utf8');
@@ -3145,23 +3121,14 @@
       /*----------------------------------------------------------------------*/
 
       // categories of functions to include in the build
-      var categoryOptions = options.reduce(function(result, value) {
-        value = optionToArray('category', value);
-        if (value.length) {
-          result = _.union(value.map(function(category) {
-            return _.capitalize(category.toLowerCase());
-          }));
-        }
-        return result;
-      }, []);
+      var categoryOptions = _.map(getOption(options, 'category', []), function(category) {
+        return _.capitalize(category.toLowerCase());
+      });
 
       // functions to include in the build
-      var includeFuncs = options.reduce(function(result, value) {
-        value = optionToFuncsArray('include', value, funcDepMap);
-        return value.length
-          ? _.union(result, value)
-          : result;
-      }, categoryOptions.slice());
+      var includeFuncs = categoryOptions.concat(_.map(getOption(options, 'include', []), function(funcName) {
+        return getRealName(funcName, funcDepMap);
+      }));
 
       // properties to include in the build
       var includeObjs = _.intersection(includeFuncs, objDependencies);
@@ -3170,20 +3137,14 @@
       var includeVars = _.intersection(includeFuncs, varDependencies);
 
       // functions to remove from the build
-      var minusFuncs = options.reduce(function(result, value) {
-        value = optionToFuncsArray('(?:exclude|minus)', value, funcDepMap);
-        return value.length
-          ? _.union(result, value)
-          : result;
-      }, []);
+      var minusFuncs = _.map(_.union(getOption(options, 'exclude', []), getOption(options, 'minus', [])), function(funcName) {
+        return getRealName(funcName, funcDepMap);
+      });
 
       // functions to add to the build
-      var plusFuncs = options.reduce(function(result, value) {
-        value = optionToFuncsArray('plus', value, funcDepMap);
-        return value.length
-          ? _.union(result, value)
-          : result;
-      }, []);
+      var plusFuncs = _.map(getOption(options, 'plus', []), function(funcName) {
+        return getRealName(funcName, funcDepMap);
+      });
 
       // expand categories to function names
       _.each([includeFuncs, minusFuncs, plusFuncs], function(funcNames) {
@@ -3212,6 +3173,9 @@
 
       /*----------------------------------------------------------------------*/
 
+      // used to capture warnings for invalid command-line arguments
+      var warnings = [];
+
       // used to detect invalid command-line arguments
       var invalidArgs = _.reject(options.slice(reNode.test(options[0]) ? 2 : 0), function(value, index, options) {
         if (/^(?:-o|--output)$/.test(options[index - 1]) ||
@@ -3220,11 +3184,8 @@
         }
         var result = _.contains([
           'backbone',
-          'compat',
-          'csp',
-          'legacy',
-          'mobile',
-          'modern',
+          'compat', 'legacy', 'mobile',
+          'modern', 'csp',
           'modularize',
           'strict',
           'underscore',
@@ -3239,8 +3200,8 @@
         ], value);
 
         if (!result && /^(?:-p|--source-map)$/.test(options[index - 1])) {
-          result = true;
           sourceMapURL = value;
+          result = true;
         }
         return result;
       });
@@ -3292,6 +3253,16 @@
           warnings,
           'For more information type: lodash --help'
         ).join('\n'));
+        return;
+      }
+      // display help message
+      if (getOption(options, '-h') || getOption(options, '--help')) {
+        displayHelp();
+        return;
+      }
+      // display `lodash.VERSION`
+      if (getOption(options, '-V') || getOption(options, '--version')) {
+        console.log(_.VERSION);
         return;
       }
 
@@ -4614,10 +4585,8 @@
           'isAMD': isAMD,
           'isBackbone': isBackbone,
           'isCommonJS': isCommonJS,
-          'isDebug': true,
           'isES6': isES6,
           'isGlobal': isGlobal,
-          'isMapped': isMapped,
           'isModern': isModern,
           'isNode': isNode,
           'isNpm': isNpm,
@@ -4822,26 +4791,17 @@
     debugSource = cleanupSource(source);
     source = debugSource;
 
-    // expand `outputPath` and create directories if needed
-    outputPath = (function() {
-      if (outputPath) {
-        var dirname = path.dirname(outputPath);
-        fs.mkdirpSync(dirname);
-        return path.join(fs.realpathSync(dirname), path.basename(outputPath));
-      }
-    }());
-
     // flag to track if `outputPath` has been used by `callback`
     var outputUsed = false;
 
-    // flag to specify creating a custom build
-    var isCustom = !isModularize && (
-      _.contains(options, 'compat') || _.contains(options, 'mobile') ||
-      isMapped || isModern || isStrict || isTemplate || isUnderscore || outputPath ||
-      /\b(?:category|exclude|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
-      !_.isEqual(exportsOptions, defaultExports)
-    );
-
+    // expand `outputPath` and create directories if needed
+    if (outputPath) {
+      outputPath = (function() {
+        var dirname = path.dirname(outputPath);
+        fs.mkdirpSync(dirname);
+        return path.join(fs.realpathSync(dirname), path.basename(outputPath));
+      }());
+    }
     // used as the basename of the output path
     var basename = 'lodash';
     if (outputPath) {
@@ -4883,7 +4843,7 @@
         'isMapped': isMapped,
         'isSilent': isSilent,
         'isTemplate': isTemplate,
-        'modes': isIIFE && ['simple', 'hybrid'],
+        'modes': isIIFE ? ['simple', 'hybrid'] : ['simple', 'advanced', 'hybrid'],
         'outputPath': outputPath,
         'sourceMapURL': sourceMapURL,
         'onComplete': function(data) {
