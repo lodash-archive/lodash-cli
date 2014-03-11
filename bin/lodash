@@ -4179,7 +4179,7 @@
               '  if (isArray(collection)) {',
               '    return slice(collection);',
               '  }',
-              "  if (collection && collection.length == 'number') {",
+              "  if (collection && typeof collection.length == 'number') {",
               '    return map(collection);',
               '  }',
               '  return values(collection);',
