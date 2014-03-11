@@ -1803,7 +1803,7 @@
   function getDependants(funcName, depMap, stack) {
     var funcNames = _.isArray(funcName) ? funcName : [funcName];
     depMap || (depMap = funcDependencyMap);
-    stack  || (stack = []);
+    stack || (stack = []);
 
     // iterate over the dependency map, adding names of functions that have `funcName` as a dependency
     return _.uniq(_.transform(depMap, function(result, depNames, otherName) {
@@ -3379,10 +3379,10 @@
             source = replaceFunction(source, 'forEach', [
               'function forEach(collection, callback, thisArg) {',
               '  var index = -1,',
-              '      length = collection ? collection.length : 0;',
+              '      length = collection ? collection.length | 0 : 0;',
               '',
               "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
-              "  if (typeof length == 'number') {",
+              '  if (length > 0) {',
               '    while (++index < length) {',
               '      if (callback(collection[index], index, collection) === false) {',
               '        break;',
@@ -3399,10 +3399,10 @@
           if (!(isUnderscore && isLodash('forEachRight'))) {
             source = replaceFunction(source, 'forEachRight', [
               'function forEachRight(collection, callback, thisArg) {',
-              '  var length = collection ? collection.length : 0;',
+              '  var length = collection ? collection.length | 0 : 0;',
               '',
               "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
-              "  if (typeof length == 'number') {",
+              '  if (length > 0) {',
               '    while (length--) {',
               '      if (callback(collection[length], length, collection) === false) {',
               '        break;',
@@ -3445,10 +3445,10 @@
             source = replaceFunction(source, 'map', [
               'function map(collection, callback, thisArg) {',
               '  var index = -1,',
-              '      length = collection ? collection.length : 0;',
+              '      length = collection ? collection.length | 0 : 0;',
               '',
               '  callback = lodash.createCallback(callback, thisArg, 3);',
-              "  if (typeof length == 'number') {",
+              '  if (length > 0) {',
               '    var result = Array(length);',
               '    while (++index < length) {',
               '      result[index] = callback(collection[index], index, collection);',
@@ -3491,11 +3491,11 @@
                 match = match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index[^;]+;\n+)?/m, function(snippet, indent, statement, vars) {
                   if (vars) {
                     vars = vars
-                      .replace(/\b(length *=)[^;=]+/, '$1 collection ? collection.length : 0')
+                      .replace(/\b(length *=)[^;=]+/, '$1 collection ? collection.length | 0 : 0')
                       .replace(RegExp('^  ' + indent, 'gm'), indent);
                   }
                   return (vars || '') + indent +
-                    statement.replace(/\bisArray\([^\)]+\)/, "typeof length == 'number'");
+                    statement.replace(/\bisArray\([^\)]+\)/, 'length > 0');
                 });
 
                 // adjust `callback` assignment placement
@@ -3571,10 +3571,10 @@
             source = replaceFunction(source, 'contains', [
               'function contains(collection, target) {',
               '  var indexOf = getIndexOf(),',
-              '      length = collection ? collection.length : 0,',
+              '      length = collection ? collection.length | 0 : 0,',
               '      result = false;',
               '',
-              "  if (length && typeof length == 'number') {",
+              '  if (length > 0) {',
               '    return indexOf(collection, target) > -1;',
               '  }',
               '  baseEach(collection, function(value) {',
@@ -3644,7 +3644,7 @@
               '  if (n == null || guard) {',
               '    return array ? array[0] : undefined;',
               '  }',
-              '  return slice(array, 0, n > 0 ? n : 0);',
+              '  return slice(array, 0, n < 0 ? 0 : n);',
               '}'
               ].join('\n'));
           }
@@ -3674,7 +3674,7 @@
               'function initial(array, n, guard) {',
               '  var length = array ? array.length : 0;',
               '  n = length - ((n == null || guard) ? 1 : n);',
-              '  return slice(array, 0, n > 0 ? n : 0);',
+              '  return slice(array, 0, n < 0 ? 0 : n);',
               '}'
             ].join('\n'));
           }
@@ -3907,9 +3907,35 @@
               '    return array ? array[length - 1] : undefined;',
               '  }',
               '  n = length - n;',
-              '  return slice(array, n > 0 ? n : 0);',
+              '  return slice(array, n < 0 ? 0 : n);',
               '}'
               ].join('\n'));
+          }
+          // replace `_.matches`
+          if (!isLodash('matches')) {
+            _.pull(funcDepMap.matches, 'baseIsEqual', 'isObject');
+
+            source = replaceFunction(source, 'matches', [
+              'function matches(source) {',
+              '  source || (source = {});',
+              '  var props = keys(source),',
+              '      propsLength = props.length;',
+              '',
+              '  return function(object) {',
+              '    var length = propsLength,',
+              '        result = true;',
+              '',
+              '    while (length--) {',
+              '      var key = props[length];',
+              '      if (!(result = hasOwnProperty.call(object, key) &&',
+              '          object[key] === source[key])) {',
+              '        break;',
+              '      }',
+              '    }',
+              '    return result;',
+              '  };',
+              '}'
+            ].join('\n'));
           }
           // replace `_.memoize`
           if (!isLodash('memoize')) {
@@ -4005,7 +4031,7 @@
               '  if (n == null || guard) {',
               '    n = 1;',
               '  } else {',
-              '    n = n > 0 ? n : 0;',
+              '    n = n < 0 ? 0 : n;',
               '  }',
               '  return slice(array, n);',
               '}'
@@ -4029,8 +4055,8 @@
             source = replaceFunction(source, 'sortBy', [
               'function sortBy(collection, callback, thisArg) {',
               '  var index = -1,',
-              '      length = collection ? collection.length : 0,',
-              "      result = Array(typeof length == 'number' ? length : 0);",
+              '      length = collection ? collection.length | 0 : 0,',
+              '      result = Array(length < 0 ? 0 : length);',
               '',
               '  callback = lodash.createCallback(callback, thisArg, 3);',
               '  baseEach(collection, function(value, key, collection) {',
@@ -4136,12 +4162,11 @@
               "    leading = 'leading' in options ? options.leading : leading;",
               "    trailing = 'trailing' in options ? options.trailing : trailing;",
               '  }',
-              '  options = {};',
-              '  options.leading = leading;',
-              '  options.maxWait = wait;',
-              '  options.trailing = trailing;',
-              '',
-              '  return debounce(func, wait, options);',
+              '  return debounce(func, wait, {',
+              "    'leading': leading,",
+              "    'maxWait': wait,",
+              "    'trailing': trailing",
+              '  });',
               '}'
             ].join('\n'));
           }
@@ -4154,7 +4179,7 @@
               '  if (isArray(collection)) {',
               '    return slice(collection);',
               '  }',
-              "  if (collection && typeof collection.length == 'number') {",
+              "  if (collection && collection.length == 'number') {",
               '    return map(collection);',
               '  }',
               '  return values(collection);',
@@ -4236,20 +4261,6 @@
           // remove `_.prototype.toString`
           if (!isModularize && !isLodash('chain')) {
             _.pull(funcDepMap.wrapperValueOf, 'wrapperToString');
-          }
-          // remove support for deep comparisons from `_.matches`
-          if (!isLodash('matches')) {
-            _.pull(funcDepMap.matches, 'baseIsEqual', 'isObject');
-
-            source = source.replace(matchFunction(source, 'matches'), function(match) {
-              return match
-                // remove unnecessary fast path
-                .replace(/^( *)(var props *=.+?),[\s\S]+?\n\1}/m, '$1$2;')
-                // remove `baseIsEqual` use
-                .replace(/\bbaseIsEqual\((.+?),\s*(.+?),\s*.+?\)/, '$1 === $2')
-                // ensure `true` is returned when comparing empty `source` objects
-                .replace(/\b(result *= *)false\b/, '$1true');
-            });
           }
           // remove `_.bindKey` support from `baseCreateWrapper` and `createWrapper`
           if (!isLodash('bindKey')) {
