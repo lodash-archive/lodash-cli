@@ -40,7 +40,7 @@
   }());
 
   /** Used to create regexes that may detect multi-line comment blocks */
-  var multilineComment = '(?:\\n */\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/)?\\n';
+  var multilineComment = '(?: */\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/\\n)?';
 
   /** Used to replace string literals with tokens */
   var stringToken = '__lodash@' + _.VERSION + '__token__';
@@ -2138,9 +2138,9 @@
       ' *var ' + funcName + ' *=.+?;\\n'
     ], function(result, reSource) {
       return result || (result = source.match(RegExp(
-        '(' + multilineComment + ')' +
-        '(' + reSource + ')'
-      ))) && result.slice(1, 3);
+        '^(' + multilineComment + ')' +
+        '('  + reSource + ')'
+      , 'm'))) && result.slice(1, 3);
     }, null);
 
     return result && (
@@ -2162,11 +2162,11 @@
    */
   function matchProp(source, propName, leadingComments) {
     return _.result(source.match(RegExp(
-      (leadingComments ? multilineComment : '\\n') +
+      '^' + (leadingComments ? multilineComment : '') +
       '(?: {2,4}var ' + propName + '\\b.+|(?: *|.*?=\\s*)lodash\\._?' + propName + '\\s*)=[\\s\\S]+?' +
       '(?:\\(function[\\s\\S]+?\\([^)]*\\)\\);\\n(?=\\n)|' +
       '[;}]\\n(?=\\n(?!\\s*\\(func)))'
-    )), 0, '');
+    , 'm')), 0, '');
   }
 
   /**
@@ -2788,14 +2788,14 @@
   function removeSupportProp(source, propName) {
     return source.replace(matchProp(source, 'support'), function(match) {
       return match.replace(RegExp(
-        multilineComment +
+        '\\n+' + multilineComment +
         // match a `try` block
-        '(?: *try\\b.+\\n)?' +
+        '(?:( *)try\\b.+\\n)?' +
         // match the `support` property assignment
-        ' *support\\.' + propName + ' *=[\\s\\S]+?;\\n' +
+        ' *support\\.' + propName + ' *=[\\s\\S]+?;' +
         // match `catch` block
-        '(?:( *).+?catch\\b[\\s\\S]+?\\n\\1}\\n)?'
-      ), '');
+        '(?:\\n\\1} *catch\\b[\\s\\S]+?\\n\\1})?'
+      , 'm'), '');
     });
   }
 
@@ -2834,9 +2834,9 @@
       function() {
         // remove a variable that is not part of a declaration list
         return source.replace(RegExp(
-          multilineComment +
+          '^' + multilineComment +
           '( *)var ' + varName + ' *(?:|= *(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1[^\\n ]+?));\\n'
-        ), '');
+        , 'm'), '');
       }
     ], function(func) {
       var result = func();
@@ -4893,8 +4893,8 @@
   if (module != require.main) {
     module.exports = build;
   }
+  // or invoked directly
   else {
-    // or invoked directly
     build(process.argv);
   }
 }());
