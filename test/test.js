@@ -120,7 +120,6 @@
       'last',
       'lastIndexOf',
       'pull',
-      'range',
       'remove',
       'rest',
       'slice',
@@ -134,7 +133,10 @@
       'without',
       'xor',
       'zip',
-      'zipObject'
+      'zipObject',
+
+      // deprecated
+      'range'
     ],
     'Chaining': [
       'chain',
