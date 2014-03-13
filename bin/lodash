@@ -132,7 +132,7 @@
     'createCallback': ['baseCreateCallback', 'matches', 'property'],
     'curry': ['createWrapper'],
     'debounce': ['isFunction', 'isObject', 'now'],
-    'defaults': ['keys'],
+    'defaults': ['assign', 'assignDefaults', 'slice'],
     'defer': ['isFunction', 'slice'],
     'delay': ['isFunction', 'slice'],
     'difference': ['baseDifference', 'baseFlatten'],
@@ -145,11 +145,11 @@
     'escapeRegExp': [],
     'every': ['baseEach', 'createCallback', 'isArray'],
     'filter': ['baseEach', 'createCallback', 'isArray'],
-    'find': ['baseEach', 'createCallback', 'isArray'],
+    'find': ['findIndex', 'findKey', 'isArray'],
     'findIndex': ['createCallback'],
     'findLastIndex': ['createCallback'],
     'findKey': ['createCallback', 'baseForOwn'],
-    'findLast': ['createCallback', 'baseEachRight'],
+    'findLast': ['findLastIndex', 'findLastKey', 'isArray'],
     'findLastKey': ['createCallback', 'baseForOwnRight'],
     'first': ['createCallback', 'slice'],
     'flatten': ['baseFlatten', 'map'],
@@ -268,6 +268,7 @@
     'zipObject': ['isArray'],
 
     // private functions
+    'assignDefaults': [],
     'baseBind': ['baseCreate', 'composeArgs', 'isObject', 'setData', 'slice'],
     'baseClone': ['assign', 'baseEach', 'baseForOwn', 'isArray', 'isObject', 'isNode', 'slice'],
     'baseCompareAscending': [],
@@ -695,6 +696,7 @@
 
   /** List of private functions */
   var privateFuncs = [
+    'assignDefaults',
     'baseBind',
     'baseClone',
     'baseCompareAscending',
@@ -3379,7 +3381,7 @@
             source = replaceFunction(source, 'forEach', [
               'function forEach(collection, callback, thisArg) {',
               '  var index = -1,',
-              '      length = collection ? collection.length | 0 : 0;',
+              '      length = (collection && collection.length) | 0;',
               '',
               "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
               '  if (length > 0) {',
@@ -3399,7 +3401,7 @@
           if (!(isUnderscore && isLodash('forEachRight'))) {
             source = replaceFunction(source, 'forEachRight', [
               'function forEachRight(collection, callback, thisArg) {',
-              '  var length = collection ? collection.length | 0 : 0;',
+              '  var length = (collection && collection.length) | 0;',
               '',
               "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
               '  if (length > 0) {',
@@ -3445,7 +3447,7 @@
             source = replaceFunction(source, 'map', [
               'function map(collection, callback, thisArg) {',
               '  var index = -1,',
-              '      length = collection ? collection.length | 0 : 0;',
+              '      length = (collection && collection.length) | 0;',
               '',
               '  callback = lodash.createCallback(callback, thisArg, 3);',
               '  if (length > 0) {',
@@ -3472,13 +3474,27 @@
             }
           });
 
-          _.each(['createAggregator', 'every', 'filter', 'find', 'forEach', 'forEachRight', 'invoke', 'map', 'reduce'], function(funcName) {
+          _.each(['createAggregator', 'every', 'filter', 'find', 'findLast', 'forEach', 'forEachRight', 'invoke', 'map', 'reduce'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
               _.pull(funcDepMap[funcName], 'isArray');
             }
           });
 
-          _.each(['createAggregator', 'every', 'filter', 'find', 'invoke', 'max', 'min', 'reduce', 'some'], function(funcName) {
+          _.each(['find', 'findLast'], function(funcName) {
+            if (!(isUnderscore && isLodash(funcName))) {
+              source = source.replace(matchFunction(source, funcName), function(match) {
+                // replace `_.isArray` checks with simpler type checks
+                return match.replace(/^( *)if *\(.*?\bisArray\([^\)]+\)/m, function(snippet, indent) {
+                  return indent + [
+                    'var length = (collection && collection.length) | 0;',
+                    snippet.replace(/\bisArray\([^\)]+\)/, 'length > 0')
+                  ].join('\n');
+                });
+              });
+            }
+          });
+
+          _.each(['createAggregator', 'every', 'filter', 'invoke', 'max', 'min', 'reduce', 'some'], function(funcName) {
             if (!(isUnderscore && (
                   isLodash(funcName) ||
                   (funcName == 'filter' && isLodash('where'))
@@ -3491,7 +3507,7 @@
                 match = match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index[^;]+;\n+)?/m, function(snippet, indent, statement, vars) {
                   if (vars) {
                     vars = vars
-                      .replace(/\b(length *=)[^;=]+/, '$1 collection ? collection.length | 0 : 0')
+                      .replace(/\b(length *=)[^;=]+/, '$1 (collection && collection.length) | 0')
                       .replace(RegExp('^  ' + indent, 'gm'), indent);
                   }
                   return (vars || '') + indent +
@@ -3499,7 +3515,7 @@
                 });
 
                 // adjust `callback` assignment placement
-                return match.replace(/\n+( *callback *=[^;]+;)(?=\n *var index)/, '\n$1\n');
+                return match.replace(/\n+( *callback *=[^;]+;)(?=\n *var )/, '\n$1\n');
               });
             }
           });
@@ -3571,7 +3587,7 @@
             source = replaceFunction(source, 'contains', [
               'function contains(collection, target) {',
               '  var indexOf = getIndexOf(),',
-              '      length = collection ? collection.length | 0 : 0,',
+              '      length = (collection && collection.length) | 0,',
               '      result = false;',
               '',
               '  if (length > 0) {',
@@ -3586,6 +3602,8 @@
           }
           // replace `_.defaults`
           if (!isLodash('defaults')) {
+            _.pull(funcDepMap.defaults, 'assign', 'assignDefaults', 'slice');
+
             source = replaceFunction(source, 'defaults', [
               'function defaults(object, source, guard) {',
               '  if (!object) {',
@@ -4508,8 +4526,8 @@
           source = source.replace(getMethodAssignments(source), function(match) {
             var unexpose = [
               'assign', 'create', 'callback', 'createCallback', 'escapeRegExp',
-              'isPlainObject', 'keysIn', 'negate', 'noop', 'slice', 'unzip',
-              'zipObject'
+              'findIndex', 'findKey', 'isPlainObject', 'keysIn', 'negate', 'noop',
+              'slice', 'unzip', 'zipObject'
             ];
 
             return _.reduce(unexpose, function(result, funcName) {
