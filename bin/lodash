@@ -3384,10 +3384,10 @@
             source = replaceFunction(source, 'forEach', [
               'function forEach(collection, callback, thisArg) {',
               '  var index = -1,',
-              '      length = (collection && collection.length) | 0;',
+              '      length = (length = collection && collection.length, length > -1 && length >>> 0);',
               '',
               "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
-              '  if (length > 0) {',
+              '  if (length) {',
               '    while (++index < length) {',
               '      if (callback(collection[index], index, collection) === false) {',
               '        break;',
@@ -3404,10 +3404,10 @@
           if (!(isUnderscore && isLodash('forEachRight'))) {
             source = replaceFunction(source, 'forEachRight', [
               'function forEachRight(collection, callback, thisArg) {',
-              '  var length = (collection && collection.length) | 0;',
+              '  var length = (length = collection && collection.length, length > -1 && length >>> 0);',
               '',
               "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
-              '  if (length > 0) {',
+              '  if (length) {',
               '    while (length--) {',
               '      if (callback(collection[length], length, collection) === false) {',
               '        break;',
@@ -3450,10 +3450,10 @@
             source = replaceFunction(source, 'map', [
               'function map(collection, callback, thisArg) {',
               '  var index = -1,',
-              '      length = (collection && collection.length) | 0;',
+              '      length = (length = collection && collection.length, length > -1 && length >>> 0);',
               '',
               '  callback = lodash.createCallback(callback, thisArg, 3);',
-              '  if (length > 0) {',
+              '  if (length) {',
               '    var result = Array(length);',
               '    while (++index < length) {',
               '      result[index] = callback(collection[index], index, collection);',
@@ -3489,8 +3489,8 @@
                 // replace `_.isArray` checks with simpler type checks
                 return match.replace(/^( *)if *\(.*?\bisArray\([^\)]+\)/m, function(snippet, indent) {
                   return indent + [
-                    'var length = (collection && collection.length) | 0;',
-                    snippet.replace(/\bisArray\([^\)]+\)/, 'length > 0')
+                    'var length = (length = collection && collection.length, length > -1 && length >>> 0);',
+                    snippet.replace(/\bisArray\([^\)]+\)/, 'length')
                   ].join('\n');
                 });
               });
@@ -3510,11 +3510,11 @@
                 match = match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index[^;]+;\n+)?/m, function(snippet, indent, statement, vars) {
                   if (vars) {
                     vars = vars
-                      .replace(/\b(length *=)[^;=]+/, '$1 (collection && collection.length) | 0')
+                      .replace(/\b(length *=)[^;=]+/, '$1 (length = collection && collection.length, length > -1 && length >>> 0)')
                       .replace(RegExp('^  ' + indent, 'gm'), indent);
                   }
                   return (vars || '') + indent +
-                    statement.replace(/\bisArray\([^\)]+\)/, 'length > 0');
+                    statement.replace(/\bisArray\([^\)]+\)/, 'length');
                 });
 
                 // adjust `callback` assignment placement
@@ -3590,10 +3590,10 @@
             source = replaceFunction(source, 'contains', [
               'function contains(collection, target) {',
               '  var indexOf = getIndexOf(),',
-              '      length = (collection && collection.length) | 0,',
+              '      length = (length = collection && collection.length, length > -1 && length >>> 0),',
               '      result = false;',
               '',
-              '  if (length > 0) {',
+              '  if (length) {',
               '    return indexOf(collection, target) > -1;',
               '  }',
               '  baseEach(collection, function(value) {',
@@ -4076,8 +4076,8 @@
             source = replaceFunction(source, 'sortBy', [
               'function sortBy(collection, callback, thisArg) {',
               '  var index = -1,',
-              '      length = (collection && collection.length) | 0,',
-              '      result = Array(length < 0 ? 0 : length);',
+              '      length = collection && collection.length,',
+              '      result = Array(length < 0 ? 0 : length >>> 0);',
               '',
               '  callback = lodash.createCallback(callback, thisArg, 3);',
               '  baseEach(collection, function(value, key, collection) {',
