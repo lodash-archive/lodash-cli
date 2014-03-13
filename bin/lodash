@@ -4032,12 +4032,12 @@
               '  if (min == null && max == null) {',
               '    max = 1;',
               '  }',
-              '  min = +min || 0;',
+              '  min |= 0;',
               '  if (max == null) {',
               '    max = min;',
               '    min = 0;',
               '  } else {',
-              '    max = +max || 0;',
+              '    max |= 0;',
               '  }',
               '  return min + floor(nativeRandom() * (max - min + 1));',
               '}'
@@ -4076,7 +4076,7 @@
             source = replaceFunction(source, 'sortBy', [
               'function sortBy(collection, callback, thisArg) {',
               '  var index = -1,',
-              '      length = collection ? collection.length | 0 : 0,',
+              '      length = (collection && collection.length) | 0,',
               '      result = Array(length < 0 ? 0 : length);',
               '',
               '  callback = lodash.createCallback(callback, thisArg, 3);',
