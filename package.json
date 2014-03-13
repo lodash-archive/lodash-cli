@@ -15,7 +15,7 @@
     "Mathias Bynens <mathias@qiwi.be> (http://mathiasbynens.be/)"
   ],
   "bugs": "https://github.com/lodash/lodash-cli/issues",
-  "repository": { "type": "git", "url": "https://github.com/lodash/lodash-cli.git" },
+  "repository": "lodash/lodash-cli",
   "dependencies": {
     "closure-compiler": "0.2.3",
     "glob": "~3.2.7",
