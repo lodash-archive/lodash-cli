@@ -2541,7 +2541,7 @@
     return source
       .replace(/\bcontext\b/g, 'root')
       .replace(/(?:\n +\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)?\n *var Array *=[\s\S]+?;\n/, '')
-      .replace(/(return *|= *)_([;)])/g, '$1lodash$2')
+      .replace(/(\breturn *|= *)_([;)])/g, '$1lodash$2')
       .replace(/^(?: *\/\/.*\n)* *var _ *= *runInContext\b.+\n+/m, '');
   }
 
@@ -3507,7 +3507,7 @@
                   return match;
                 }
                 // replace `_.isArray` checks with simpler type checks
-                match = match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index[^;]+;\n+)?/m, function(snippet, indent, statement, vars) {
+                match = match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index\b[^;]+;\n+)?/m, function(snippet, indent, statement, vars) {
                   if (vars) {
                     vars = vars
                       .replace(/\b(length *=)[^;=]+/, '$1 collection ? collection.length : 0')
@@ -4584,7 +4584,7 @@
               // assign `settings` using `template.imports`
               .replace(/= *templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings')
               // remove debug sourceURL use in `_.template`
-              .replace(/(?:\s*\/\/.*\n)* *var sourceURL[^;]+;|\+ *sourceURL/g, '');
+              .replace(/(?:\s*\/\/.*\n)* *var sourceURL\b[^;]+;|\+ *sourceURL/g, '');
           });
 
           // replace `root` with the appropriate global object for the specified `exports` option
