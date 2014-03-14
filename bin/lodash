@@ -4314,9 +4314,7 @@
           // remove support for a `step` of `0` in `_.range`
           if (!isLodash('range')) {
             source = source.replace(matchFunction(source, 'range'), function(match) {
-              return match
-                .replace(/typeof *step[^:]+:/, '')
-                .replace(/\(step.*\|\|.+?\)/, 'step')
+              return match.replace(/\bstep *== *null\b[^;]+/, '+step || 1');
             });
           }
           // remove metadata optimizations
