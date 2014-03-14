@@ -168,7 +168,7 @@
     'initial': ['createCallback', 'slice'],
     'intersection': ['cacheIndexOf', 'createCache', 'getIndexOf', 'isArguments', 'isArray'],
     'invert': ['keys'],
-    'invoke': ['baseEach', 'isArray', 'slice'],
+    'invoke': ['baseEach', 'slice'],
     'isArguments': [],
     'isArray': ['isNative'],
     'isBoolean': [],
@@ -4346,7 +4346,7 @@
           // remove conditional `charCodeCallback` use from `_.max` and `_.min`
           _.each(['max', 'min'], function(funcName) {
             if (!isLodash(funcName)) {
-              _.pull(funcDepMap[funcName], 'charAtCallback', 'isArray', 'isString');
+              _.pull(funcDepMap[funcName], 'charAtCallback', 'isArray', 'isString').push('toLength');
 
               source = source.replace(matchFunction(source, funcName), function(match) {
                 return match.replace(/=.+?isString[^:]+:\s*/g, '= ');
