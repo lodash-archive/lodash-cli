@@ -126,7 +126,7 @@
     'compact': [],
     'compose': ['isFunction'],
     'constant': [],
-    'contains': ['baseEach', 'getIndexOf', 'isArray', 'isNative', 'isString'],
+    'contains': ['baseEach', 'getIndexOf', 'isArray', 'isNative', 'isString', 'toLength'],
     'countBy': ['createAggregator'],
     'create': ['assign', 'baseCreate'],
     'createCallback': ['baseCreateCallback', 'matches', 'property'],
@@ -228,7 +228,7 @@
     'rest': ['createCallback', 'slice'],
     'result': ['isFunction'],
     'runInContext': ['defaults', 'pick'],
-    'sample': ['baseRandom', 'isString', 'shuffle', 'values'],
+    'sample': ['baseRandom', 'isString', 'shuffle', 'toLength', 'values'],
     'shuffle': ['baseEach', 'baseRandom'],
     'size': ['keys'],
     'slice': [],
@@ -276,8 +276,8 @@
     'baseCreateCallback': ['bind', 'identity', 'setData'],
     'baseCreateWrapper': ['baseCreate', 'composeArgs', 'composeArgsRight', 'isObject', 'slice', 'setData'],
     'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
-    'baseEach': ['baseForOwn', 'isString'],
-    'baseEachRight': ['baseForOwnRight', 'isString'],
+    'baseEach': ['baseForOwn', 'isString', 'toLength'],
+    'baseEachRight': ['baseForOwnRight', 'isString', 'toLength'],
     'baseFlatten': ['isArguments', 'isArray'],
     'baseFor': [],
     'baseForIn': ['baseFor', 'keysIn'],
@@ -317,6 +317,7 @@
     'shimTrim':  ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
     'shimTrimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
     'shimTrimRight': ['charsRightIndex', 'trimmedRightIndex'],
+    'toLength': [],
     'trimmedLeftIndex': [],
     'trimmedRightIndex': [],
     'unescapeHtmlChar': []
@@ -747,6 +748,7 @@
     'shimTrim',
     'shimTrimLeft',
     'shimTrimRight',
+    'toLength',
     'trimmedLeftIndex',
     'trimmedRightIndex',
     'unescapeHtmlChar'
@@ -3384,7 +3386,7 @@
             source = replaceFunction(source, 'forEach', [
               'function forEach(collection, callback, thisArg) {',
               '  var index = -1,',
-              '      length = (length = collection && collection.length, length > -1 && length >>> 0);',
+              '      length = toLength(collection && collection.length);',
               '',
               "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
               '  if (length) {',
@@ -3404,7 +3406,7 @@
           if (!(isUnderscore && isLodash('forEachRight'))) {
             source = replaceFunction(source, 'forEachRight', [
               'function forEachRight(collection, callback, thisArg) {',
-              '  var length = (length = collection && collection.length, length > -1 && length >>> 0);',
+              '  var length = toLength(collection && collection.length);',
               '',
               "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
               '  if (length) {',
@@ -3450,7 +3452,7 @@
             source = replaceFunction(source, 'map', [
               'function map(collection, callback, thisArg) {',
               '  var index = -1,',
-              '      length = (length = collection && collection.length, length > -1 && length >>> 0);',
+              '      length = toLength(collection && collection.length);',
               '',
               '  callback = lodash.createCallback(callback, thisArg, 3);',
               '  if (length) {',
@@ -3477,9 +3479,9 @@
             }
           });
 
-          _.each(['createAggregator', 'every', 'filter', 'find', 'findLast', 'forEach', 'forEachRight', 'invoke', 'map', 'reduce'], function(funcName) {
+          _.each(['createAggregator', 'every', 'filter', 'find', 'findLast', 'forEach', 'forEachRight', 'map', 'reduce', 'some'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
-              _.pull(funcDepMap[funcName], 'isArray');
+              _.pull(funcDepMap[funcName], 'isArray').push('toLength');
             }
           });
 
@@ -3489,7 +3491,7 @@
                 // replace `_.isArray` checks with simpler type checks
                 return match.replace(/^( *)if *\(.*?\bisArray\([^\)]+\)/m, function(snippet, indent) {
                   return indent + [
-                    'var length = (length = collection && collection.length, length > -1 && length >>> 0);',
+                    'var length = toLength(collection && collection.length);',
                     snippet.replace(/\bisArray\([^\)]+\)/, 'length')
                   ].join('\n');
                 });
@@ -3497,7 +3499,7 @@
             }
           });
 
-          _.each(['createAggregator', 'every', 'filter', 'invoke', 'max', 'min', 'reduce', 'some'], function(funcName) {
+          _.each(['createAggregator', 'every', 'filter', 'max', 'min', 'reduce', 'some'], function(funcName) {
             if (!(isUnderscore && (
                   isLodash(funcName) ||
                   (funcName == 'filter' && isLodash('where'))
@@ -3510,7 +3512,7 @@
                 match = match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index[^;]+;\n+)?/m, function(snippet, indent, statement, vars) {
                   if (vars) {
                     vars = vars
-                      .replace(/\b(length *=)[^;=]+/, '$1 (length = collection && collection.length, length > -1 && length >>> 0)')
+                      .replace(/\b(length *=)[^;=]+/, '$1 toLength(collection && collection.length)')
                       .replace(RegExp('^  ' + indent, 'gm'), indent);
                   }
                   return (vars || '') + indent +
@@ -3590,7 +3592,7 @@
             source = replaceFunction(source, 'contains', [
               'function contains(collection, target) {',
               '  var indexOf = getIndexOf(),',
-              '      length = (length = collection && collection.length, length > -1 && length >>> 0),',
+              '      length = toLength(collection && collection.length),',
               '      result = false;',
               '',
               '  if (length) {',
