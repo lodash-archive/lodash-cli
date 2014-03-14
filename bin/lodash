@@ -126,7 +126,7 @@
     'compact': [],
     'compose': ['isFunction'],
     'constant': [],
-    'contains': ['baseEach', 'getIndexOf', 'isArray', 'isNative', 'isString', 'toLength'],
+    'contains': ['baseEach', 'getIndexOf', 'isArray', 'isNative', 'isString'],
     'countBy': ['createAggregator'],
     'create': ['assign', 'baseCreate'],
     'createCallback': ['baseCreateCallback', 'matches', 'property'],
@@ -228,7 +228,7 @@
     'rest': ['createCallback', 'slice'],
     'result': ['isFunction'],
     'runInContext': ['defaults', 'pick'],
-    'sample': ['baseRandom', 'isString', 'shuffle', 'toLength', 'values'],
+    'sample': ['baseRandom', 'isString', 'shuffle', 'values'],
     'shuffle': ['baseEach', 'baseRandom'],
     'size': ['keys'],
     'slice': [],
@@ -276,8 +276,8 @@
     'baseCreateCallback': ['bind', 'identity', 'setData'],
     'baseCreateWrapper': ['baseCreate', 'composeArgs', 'composeArgsRight', 'isObject', 'slice', 'setData'],
     'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
-    'baseEach': ['baseForOwn', 'isString', 'toLength'],
-    'baseEachRight': ['baseForOwnRight', 'isString', 'toLength'],
+    'baseEach': ['baseForOwn', 'isString'],
+    'baseEachRight': ['baseForOwnRight', 'isString'],
     'baseFlatten': ['isArguments', 'isArray'],
     'baseFor': [],
     'baseForIn': ['baseFor', 'keysIn'],
@@ -317,7 +317,6 @@
     'shimTrim':  ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
     'shimTrimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
     'shimTrimRight': ['charsRightIndex', 'trimmedRightIndex'],
-    'toLength': [],
     'trimmedLeftIndex': [],
     'trimmedRightIndex': [],
     'unescapeHtmlChar': []
@@ -748,7 +747,6 @@
     'shimTrim',
     'shimTrimLeft',
     'shimTrimRight',
-    'toLength',
     'trimmedLeftIndex',
     'trimmedRightIndex',
     'unescapeHtmlChar'
@@ -3386,10 +3384,10 @@
             source = replaceFunction(source, 'forEach', [
               'function forEach(collection, callback, thisArg) {',
               '  var index = -1,',
-              '      length = toLength(collection && collection.length);',
+              '      length = collection ? collection.length : 0;',
               '',
               "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
-              '  if (length) {',
+              "  if (typeof length == 'number' && length > -1 && length <= maxSafeInteger) {",
               '    while (++index < length) {',
               '      if (callback(collection[index], index, collection) === false) {',
               '        break;',
@@ -3406,10 +3404,10 @@
           if (!(isUnderscore && isLodash('forEachRight'))) {
             source = replaceFunction(source, 'forEachRight', [
               'function forEachRight(collection, callback, thisArg) {',
-              '  var length = toLength(collection && collection.length);',
+              '  var length = collection ? collection.length : 0;',
               '',
               "  callback = callback && typeof thisArg == 'undefined' ? callback : baseCreateCallback(callback, thisArg, 3);",
-              '  if (length) {',
+              "  if (typeof length == 'number' && length > -1 && length <= maxSafeInteger) {",
               '    while (length--) {',
               '      if (callback(collection[length], length, collection) === false) {',
               '        break;',
@@ -3452,10 +3450,10 @@
             source = replaceFunction(source, 'map', [
               'function map(collection, callback, thisArg) {',
               '  var index = -1,',
-              '      length = toLength(collection && collection.length);',
+              '      length = collection ? collection.length : 0;',
               '',
               '  callback = lodash.createCallback(callback, thisArg, 3);',
-              '  if (length) {',
+              "  if (typeof length == 'number' && length > -1 && length <= maxSafeInteger) {",
               '    var result = Array(length);',
               '    while (++index < length) {',
               '      result[index] = callback(collection[index], index, collection);',
@@ -3481,7 +3479,7 @@
 
           _.each(['createAggregator', 'every', 'filter', 'find', 'findLast', 'forEach', 'forEachRight', 'map', 'reduce', 'some'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
-              _.pull(funcDepMap[funcName], 'isArray').push('toLength');
+              _.pull(funcDepMap[funcName], 'isArray');
             }
           });
 
@@ -3491,8 +3489,8 @@
                 // replace `_.isArray` checks with simpler type checks
                 return match.replace(/^( *)if *\(.*?\bisArray\([^\)]+\)/m, function(snippet, indent) {
                   return indent + [
-                    'var length = toLength(collection && collection.length);',
-                    snippet.replace(/\bisArray\([^\)]+\)/, 'length')
+                    'var length = collection ? collection.length : 0;',
+                    snippet.replace(/\bisArray\([^\)]+\)/, "typeof length == 'number' && length > -1 && length <= maxSafeInteger")
                   ].join('\n');
                 });
               });
@@ -3512,11 +3510,11 @@
                 match = match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index[^;]+;\n+)?/m, function(snippet, indent, statement, vars) {
                   if (vars) {
                     vars = vars
-                      .replace(/\b(length *=)[^;=]+/, '$1 toLength(collection && collection.length)')
+                      .replace(/\b(length *=)[^;=]+/, '$1 collection ? collection.length : 0')
                       .replace(RegExp('^  ' + indent, 'gm'), indent);
                   }
                   return (vars || '') + indent +
-                    statement.replace(/\bisArray\([^\)]+\)/, 'length');
+                    statement.replace(/\bisArray\([^\)]+\)/, "typeof length == 'number' && length > -1 && length <= maxSafeInteger");
                 });
 
                 // adjust `callback` assignment placement
@@ -3592,10 +3590,10 @@
             source = replaceFunction(source, 'contains', [
               'function contains(collection, target) {',
               '  var indexOf = getIndexOf(),',
-              '      length = toLength(collection && collection.length),',
+              '      length = collection ? collection.length : 0,',
               '      result = false;',
               '',
-              '  if (length) {',
+              "  if (typeof length == 'number' && length > -1 && length <= maxSafeInteger) {",
               '    return indexOf(collection, target) > -1;',
               '  }',
               '  baseEach(collection, function(value) {',
@@ -4346,7 +4344,7 @@
           // remove conditional `charCodeCallback` use from `_.max` and `_.min`
           _.each(['max', 'min'], function(funcName) {
             if (!isLodash(funcName)) {
-              _.pull(funcDepMap[funcName], 'charAtCallback', 'isArray', 'isString').push('toLength');
+              _.pull(funcDepMap[funcName], 'charAtCallback', 'isArray', 'isString');
 
               source = source.replace(matchFunction(source, funcName), function(match) {
                 return match.replace(/=.+?isString[^:]+:\s*/g, '= ');
