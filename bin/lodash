@@ -145,11 +145,11 @@
     'escapeRegExp': [],
     'every': ['baseEach', 'createCallback', 'isArray'],
     'filter': ['baseEach', 'createCallback', 'isArray'],
-    'find': ['findIndex', 'findKey', 'isArray'],
+    'find': ['findIndex', 'findKey'],
     'findIndex': ['createCallback'],
     'findLastIndex': ['createCallback'],
     'findKey': ['createCallback', 'baseForOwn'],
-    'findLast': ['findLastIndex', 'findLastKey', 'isArray'],
+    'findLast': ['findLastIndex', 'findLastKey'],
     'findLastKey': ['createCallback', 'baseForOwnRight'],
     'first': ['createCallback', 'slice'],
     'flatten': ['baseFlatten', 'map'],
@@ -3477,23 +3477,9 @@
             }
           });
 
-          _.each(['createAggregator', 'every', 'filter', 'find', 'findLast', 'forEach', 'forEachRight', 'map', 'reduce', 'some'], function(funcName) {
+          _.each(['createAggregator', 'every', 'filter', 'forEach', 'forEachRight', 'map', 'reduce', 'some'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
               _.pull(funcDepMap[funcName], 'isArray');
-            }
-          });
-
-          _.each(['find', 'findLast'], function(funcName) {
-            if (!(isUnderscore && isLodash(funcName))) {
-              source = source.replace(matchFunction(source, funcName), function(match) {
-                // replace `_.isArray` checks with simpler type checks
-                return match.replace(/^( *)if *\(.*?\bisArray\([^\)]+\)/m, function(snippet, indent) {
-                  return indent + [
-                    'var length = collection ? collection.length : 0;',
-                    snippet.replace(/\bisArray\([^\)]+\)/, "typeof length == 'number' && length > -1 && length <= maxSafeInteger")
-                  ].join('\n');
-                });
-              });
             }
           });
 
