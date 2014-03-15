@@ -145,11 +145,11 @@
     'escapeRegExp': [],
     'every': ['baseEach', 'createCallback', 'isArray'],
     'filter': ['baseEach', 'createCallback', 'isArray'],
-    'find': ['findIndex', 'findKey'],
+    'find': ['baseEach', 'createCallback', 'isArray'],
     'findIndex': ['createCallback'],
     'findLastIndex': ['createCallback'],
     'findKey': ['createCallback', 'baseForOwn'],
-    'findLast': ['findLastIndex', 'findLastKey'],
+    'findLast': ['baseEachRight', 'createCallback'],
     'findLastKey': ['createCallback', 'baseForOwnRight'],
     'first': ['createCallback', 'slice'],
     'flatten': ['baseFlatten', 'map'],
@@ -3477,13 +3477,13 @@
             }
           });
 
-          _.each(['createAggregator', 'every', 'filter', 'forEach', 'forEachRight', 'map', 'reduce', 'some'], function(funcName) {
+          _.each(['createAggregator', 'every', 'filter', 'find', 'forEach', 'forEachRight', 'map', 'reduce', 'some'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
               _.pull(funcDepMap[funcName], 'isArray');
             }
           });
 
-          _.each(['createAggregator', 'every', 'filter', 'max', 'min', 'reduce', 'some'], function(funcName) {
+          _.each(['createAggregator', 'every', 'filter', 'find', 'max', 'min', 'reduce', 'some'], function(funcName) {
             if (!(isUnderscore && (
                   isLodash(funcName) ||
                   (funcName == 'filter' && isLodash('where'))
@@ -4366,7 +4366,7 @@
               });
             });
 
-            _.each(['findKey', 'findLastKey', 'shimIsPlainObject'], function(funcName) {
+            _.each(['find', 'findLast', 'findKey', 'findLastKey', 'shimIsPlainObject'], function(funcName) {
               source = source.replace(matchFunction(source, funcName), function(match) {
                 return match.replace(/return false/, 'return breakIndicator');
               });

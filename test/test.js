@@ -2030,8 +2030,10 @@
       'difference',
       'every',
       'filter',
+      'find',
       'findIndex',
       'findKey',
+      'findLast',
       'findLastIndex',
       'findLastKey',
       'first',
@@ -2096,10 +2098,16 @@
             command += ',chain';
           }
         }
-        if (_.contains(['contains', 'every', 'findKey', 'some', 'transform'], funcName)) {
+        if (_.contains(['contains', 'every', 'find', 'findKey', 'some', 'transform'], funcName)) {
           expected = !!index;
           if (index) {
             command += ',forOwn';
+          }
+        }
+        if (funcName == 'findLast') {
+          expected = !!index;
+          if (index) {
+            command += ',forEachRight';
           }
         }
         if (funcName == 'findLastKey') {
