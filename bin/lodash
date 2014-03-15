@@ -4380,7 +4380,7 @@
               });
             });
 
-            _.each(['find', 'findKey', 'findLast', 'findLastKey', 'shimIsPlainObject'], function(funcName) {
+            _.each(['findKey', 'findLastKey', 'shimIsPlainObject'], function(funcName) {
               source = source.replace(matchFunction(source, funcName), function(match) {
                 return match.replace(/return false/, 'return breakIndicator');
               });
