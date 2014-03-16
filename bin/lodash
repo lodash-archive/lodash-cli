@@ -145,7 +145,7 @@
     'escapeRegExp': [],
     'every': ['baseEach', 'createCallback', 'isArray'],
     'filter': ['baseEach', 'createCallback', 'isArray'],
-    'find': ['baseEach', 'baseFind', 'createCallback', 'isArray'],
+    'find': ['baseEach', 'baseFind', 'createCallback', 'findIndex', 'isArray'],
     'findIndex': ['createCallback'],
     'findLastIndex': ['createCallback'],
     'findKey': ['baseFind', 'baseForOwn', 'createCallback'],
@@ -2587,7 +2587,7 @@
 
     // remove `support.argsClass` from `_.isEmpty`
     source = source.replace(matchFunction(source, 'isEmpty'), function(match) {
-      return match.replace(/\s*\(support\.argsClass\s*\?([^:]+):.+?\)\)/g, '$1');
+      return match.replace(/\s*\(support\.argsClass\s*\?([^:]+?)\s*:[\s\S]+?\)\)/g, '$1');
     });
 
     // remove `support.argsClass` from `_.isPlainObject`
@@ -3381,6 +3381,21 @@
           source = removeSupportNonEnumArgs(source);
         }
         if (isModern || isUnderscore) {
+          // replace `_.find`
+          if (!(isUnderscore && isLodash('find'))) {
+            source = replaceFunction(source, 'find', [
+              'function find(collection, predicate, thisArg) {',
+              '  var length = collection ? collection.length : 0;',
+              '',
+              "  if (typeof length == 'number' && length > -1 && length <= maxSafeInteger) {",
+              '    var index = findIndex(collection, predicate, thisArg);',
+              '    return index > -1 ? collection[index] : undefined;',
+              '  }',
+              '  predicate = lodash.createCallback(predicate, thisArg, 3);',
+              '  return baseFind(collection, predicate, baseEach);',
+              '}',
+            ].join('\n'));
+          }
           // replace `_.forEach`
           if (!(isUnderscore && isLodash('forEach'))) {
             source = replaceFunction(source, 'forEach', [
@@ -4515,8 +4530,8 @@
           source = source.replace(getMethodAssignments(source), function(match) {
             var unexpose = [
               'assign', 'create', 'callback', 'createCallback', 'escapeRegExp',
-              'findIndex', 'findKey', 'isPlainObject', 'keysIn', 'negate', 'noop',
-              'slice', 'unzip', 'zipObject'
+              'findIndex', 'isPlainObject', 'keysIn', 'negate', 'noop', 'slice',
+              'unzip', 'zipObject'
             ];
 
             return _.reduce(unexpose, function(result, funcName) {
