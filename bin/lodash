@@ -145,12 +145,12 @@
     'escapeRegExp': [],
     'every': ['baseEach', 'createCallback', 'isArray'],
     'filter': ['baseEach', 'createCallback', 'isArray'],
-    'find': ['baseEach', 'createCallback', 'isArray'],
+    'find': ['baseEach', 'baseFind', 'createCallback', 'isArray'],
     'findIndex': ['createCallback'],
     'findLastIndex': ['createCallback'],
-    'findKey': ['createCallback', 'baseForOwn'],
-    'findLast': ['baseEachRight', 'createCallback'],
-    'findLastKey': ['createCallback', 'baseForOwnRight'],
+    'findKey': ['baseFind', 'baseForOwn', 'createCallback'],
+    'findLast': ['baseEachRight', 'baseFind', 'createCallback'],
+    'findLastKey': ['baseFind', 'baseForOwnRight', 'createCallback'],
     'first': ['createCallback', 'slice'],
     'flatten': ['baseFlatten', 'map'],
     'forEach': ['baseCreateCallback', 'baseEach', 'isArray'],
@@ -278,6 +278,7 @@
     'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
     'baseEach': ['baseForOwn', 'isString'],
     'baseEachRight': ['baseForOwnRight', 'isString'],
+    'baseFind': [],
     'baseFlatten': ['isArguments', 'isArray'],
     'baseFor': [],
     'baseForIn': ['baseFor', 'keysIn'],
@@ -708,6 +709,7 @@
     'baseCreateWrapper',
     'baseDifference',
     'baseEach',
+    'baseFind',
     'baseFlatten',
     'baseFor',
     'baseForIn',
@@ -4366,7 +4368,7 @@
               });
             });
 
-            _.each(['find', 'findLast', 'findKey', 'findLastKey', 'shimIsPlainObject'], function(funcName) {
+            _.each(['baseFind', 'shimIsPlainObject'], function(funcName) {
               source = source.replace(matchFunction(source, funcName), function(match) {
                 return match.replace(/return false/, 'return breakIndicator');
               });
