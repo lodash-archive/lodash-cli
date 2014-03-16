@@ -2098,22 +2098,10 @@
             command += ',chain';
           }
         }
-        if (_.contains(['contains', 'every', 'find', 'findKey', 'some', 'transform'], funcName)) {
+        if (_.contains(['contains', 'every', 'some', 'transform'], funcName)) {
           expected = !!index;
           if (index) {
             command += ',forOwn';
-          }
-        }
-        if (funcName == 'findLast') {
-          expected = !!index;
-          if (index) {
-            command += ',forEachRight';
-          }
-        }
-        if (funcName == 'findLastKey') {
-          expected = !!index;
-          if (index) {
-            command += ',forOwnRight';
           }
         }
         if (tested[command]) {
