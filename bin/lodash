@@ -1034,7 +1034,7 @@
 
     // exclude `_.noConflict` and "Chain" functions for npm builds
     if (isNpm) {
-      identifiers = _.difference(identifiers, categoryMap.Chaining.concat('noConflict'));
+      identifiers = _.difference(identifiers, ['noConflict'], categoryMap.Chaining, categoryFluxMap.Chaining);
     }
     // remove identifiers that are to be inlined
     _.remove(identifiers, function(identifier) {
