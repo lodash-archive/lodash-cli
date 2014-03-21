@@ -16,6 +16,7 @@
   ],
   "bugs": "https://github.com/lodash/lodash-cli/issues",
   "repository": "lodash/lodash-cli",
+  "scripts": { "test": "echo \"See the repository CONTRIBUTING.md for testing instructions.\"" },
   "dependencies": {
     "closure-compiler": "0.2.3",
     "glob": "~3.2.7",

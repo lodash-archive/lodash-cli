@@ -6,7 +6,7 @@ Please make sure to [search the issue tracker](https://github.com/lodash/lodash-
 ## Tests
 
 Include updated unit tests in the `test` directory as part of your pull request.
-You can run the tests from the command line via `node test/test`, or open `test/index.html` in a web browser.
+You can run the tests from the command line via `node test/test`.
 
 ## Contributor License Agreement
 
