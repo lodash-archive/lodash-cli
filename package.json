@@ -19,7 +19,7 @@
   "scripts": { "test": "echo \"See the repository CONTRIBUTING.md for testing instructions.\"" },
   "dependencies": {
     "closure-compiler": "0.2.3",
-    "glob": "~3.2.7",
+    "glob": "~3.2.9",
     "lodash": "2.4.1",
     "uglify-js": "2.4.8"
   },
