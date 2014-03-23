@@ -2612,7 +2612,7 @@
 
     // remove `argsAreObjects` from `baseIsEqual`
     source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
-      return match.replace(/!support.\argsObject[^:]+:\s*/g, '');
+      return match.replace(/^( *)if *\(!support\.argsObject\b[\s\S]+?\n\1}\n/m, '');
     });
 
     return source;
@@ -3849,7 +3849,7 @@
               "    var hasValCtor = hasOwnProperty.call(value, 'constructor'),",
               "        hasOthCtor = hasOwnProperty.call(other, 'constructor');",
               '',
-              '    if (hasValCtor !== hasOthCtor) {',
+              '    if (hasValCtor != hasOthCtor) {',
               '      return false;',
               '    }',
               '    if (!hasValCtor) {',
