@@ -3798,8 +3798,8 @@
             _.pull(funcDepMap.baseIsEqual, 'isArguments');
 
             source = replaceFunction(source, 'isEqual', [
-              'function isEqual(a, b) {',
-              '  return baseIsEqual(a, b);',
+              'function isEqual(value, other) {',
+              '  return baseIsEqual(value, other);',
               '}'
             ].join('\n'));
 
