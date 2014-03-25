@@ -187,8 +187,8 @@
     'isString': [],
     'isUndefined': [],
     'kebabCase': ['createCompounder'],
-    'keys': ['isArguments', 'isNative', 'isObject', 'shimKeys'],
-    'keysIn': ['isArguments', 'isObject', 'slice'],
+    'keys': ['isNative', 'isObject', 'shimKeys'],
+    'keysIn': ['isArguments', 'isArray', 'isObject', 'isString'],
     'last': ['createCallback', 'slice'],
     'lastIndexOf': [],
     'lodash': ['isArray', 'lodashWrapper'],
@@ -314,7 +314,7 @@
     'lodashWrapper': [],
     'setData': ['isNative', 'noop'],
     'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
-    'shimKeys': ['keysIn'],
+    'shimKeys': ['isArray', 'isString', 'keysIn'],
     'shimTrim':  ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
     'shimTrimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
     'shimTrimRight': ['charsRightIndex', 'trimmedRightIndex'],
@@ -336,10 +336,10 @@
     'isElement': ['support'],
     'isEmpty': ['support'],
     'isPlainObject': ['support'],
-    'keys': ['support'],
     'keysIn': ['support'],
     'sample': ['support'],
     'shimIsPlainObject': ['support'],
+    'shimKeys': ['support'],
     'template': ['templateSettings'],
     'toArray': ['support']
   });
@@ -2700,16 +2700,7 @@
    * @returns {string} Returns the modified source.
    */
   function removeSupportNonEnumArgs(source) {
-    source = removeSupportProp(source, 'nonEnumArgs');
-
-    // remove `support.nonEnumArgs` from `_.keys`
-    source = source.replace(matchFunction(source, 'keys'), function(match) {
-      return match
-        .replace(/(?:\s*\|\|\s*)?\(support\.nonEnumArgs\b[\s\S]+?\)\)/, '')
-        .replace(/\s*if *\(\s*\)[^}]+}/, '');
-    });
-
-    return source;
+    return removeSupportProp(source, 'nonEnumArgs');
   }
 
   /**
@@ -2774,6 +2765,11 @@
     // remove `support.unindexedChars` from `_.sample`
     source = source.replace(matchFunction(source, 'sample'), function(match) {
       return match.replace(/\s*else if *\(support\.unindexedChars[^}]+}/, '');
+    });
+
+    // remove `support.unindexedChars` from `shimKeys`
+    source = source.replace(matchFunction(source, 'shimKeys'), function(match) {
+      return match.replace(/\s*\|\|\s*\(support\.unindexedChars\b[\s\S]+?\)\)/, '');
     });
 
     // remove `support.unindexedChars` from `_.toArray`
@@ -3370,7 +3366,7 @@
           });
 
           source = removeSupportUnindexedChars(source);
-          _.each(['at', 'baseEach', 'baseEachRight', 'sample', 'toArray'], function(funcName) {
+          _.each(['at', 'baseEach', 'baseEachRight', 'sample', 'shimKeys', 'toArray'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
               _.pull(funcDepMap[funcName], 'isString');
             }
@@ -3447,16 +3443,28 @@
           }
           // replace `_.keysIn`
           if (!(isUnderscore && isLodash('keysIn'))) {
-            _.pull(funcDepMap.keysIn, 'isArguments', 'slice');
+            _.pull(funcDepMap.keysIn, 'isArguments', 'isString');
 
             source = replaceFunction(source, 'keysIn', [
               'function keysIn(object) {',
-              '  var result = [];',
               '  if (!isObject(object)) {',
-              '    return result;',
+              '    return [];',
+              '  }',
+              '  var length = isArray(object) ? object.length : 0,',
+              '      maxIndex = length - 1,',
+              '      result = Array(length),',
+              '      skipIndexes = length > 0;',
+              '',
+              '  if (skipIndexes) {',
+              '    var index = -1;',
+              '    while (++index < length) {',
+              '      result[index] = String(index);',
+              '    }',
               '  }',
               '  for (var key in object) {',
-              '    result.push(key);',
+              '    if (!(skipIndexes && key > -1 && key <= maxIndex && key % 1 == 0)) {',
+              '      result.push(key);',
+              '    }',
               '  }',
               '  return result;',
               '}'
@@ -3920,6 +3928,50 @@
               });
             }
           }
+          // replace `_.keys` and `shimKeys`
+          if (!isLodash('keys')) {
+            _.pull(funcDepMap.shimKeys, 'isArray', 'isString');
+
+            source = replaceFunction(source, 'keys', [
+              'var keys = !nativeKeys ? shimKeys : function(object) {',
+              '  return isObject(object) ? nativeKeys(object) : [];',
+              '};'
+            ].join('\n'));
+
+            source = replaceFunction(source, 'shimKeys', [
+              'function shimKeys(object) {',
+              '  var index = -1,',
+              '      props = keysIn(object),',
+              '      length = props.length,',
+              '      result = [];',
+              '',
+              '  while (++index < length) {',
+              '    var key = props[index];',
+              '    if (hasOwnProperty.call(object, key)) {',
+              '      result.push(key);',
+              '    }',
+              '  }',
+              '  return result;',
+              '}'
+            ].join('\n'));
+          }
+          // replace `_.keysIn`
+          if (!isLodash('keysIn')) {
+            _.pull(funcDepMap.keysIn, 'isArguments', 'isArray', 'isString');
+
+            source = replaceFunction(source, 'keysIn', [
+              'function keysIn(object) {',
+              '  var result = [];',
+              '  if (!isObject(object)) {',
+              '    return result;',
+              '  }',
+              '  for (var key in object) {',
+              '    result.push(key);',
+              '  }',
+              '  return result;',
+              '}'
+            ].join('\n'));
+          }
           // replace `_.last`
           if (!isLodash('last')) {
             _.pull(funcDepMap.last, 'createCallback');
@@ -4102,7 +4154,7 @@
           }
           // replace `_.tap`
           if (!isLodash('tap')) {
-             source = replaceFunction(source, 'tap', [
+            source = replaceFunction(source, 'tap', [
               'function tap(value, interceptor) {',
               '  interceptor(value);',
               '  return value;',
