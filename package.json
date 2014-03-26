@@ -21,7 +21,7 @@
     "closure-compiler": "0.2.3",
     "glob": "~3.2.9",
     "lodash": "2.4.1",
-    "uglify-js": "2.4.8"
+    "uglify-js": "2.4.13"
   },
   "files": [
     "LICENSE.txt",
