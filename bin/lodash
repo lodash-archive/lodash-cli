@@ -27,18 +27,6 @@
       push = arrayRef.push,
       slice = arrayRef.slice;
 
-  /** Memoize regexp creation */
-  var RegExp = (function() {
-    var cache = createMap();
-    return function(pattern, flags) {
-      if (flags && /g/.test(flags)) {
-        return global.RegExp(pattern, flags);
-      }
-      var key = '/' + pattern + '/' + (flags || '');
-      return cache[key] || (cache[key] = global.RegExp(pattern, flags));
-    };
-  }());
-
   /** Used to create regexes that may detect multi-line comment blocks */
   var multilineComment = '(?: */\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/\\n)?';
 
