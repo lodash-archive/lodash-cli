@@ -2703,6 +2703,24 @@
   }
 
   /**
+   * Removes all `support.nonEnumStrings` references from `source`.
+   *
+   * @private
+   * @param {string} source The source to process.
+   * @returns {string} Returns the modified source.
+   */
+  function removeSupportNonEnumStrings(source) {
+    source = removeSupportProp(source, 'nonEnumStrings');
+
+    // remove `support.nonEnumStrings` from `shimKeys`
+    source = source.replace(matchFunction(source, 'shimKeys'), function(match) {
+      return match.replace(/\s*\|\|\s*\(support\.nonEnumStrings\b[\s\S]+?\)\)/, '');
+    });
+
+    return source;
+  }
+
+  /**
    * Removes all `support.ownLast` references from `source`.
    *
    * @private
@@ -2752,12 +2770,7 @@
 
     // remove `support.unindexedChars` from `_.sample`
     source = source.replace(matchFunction(source, 'sample'), function(match) {
-      return match.replace(/\s*else if *\(support\.unindexedChars[^}]+}/, '');
-    });
-
-    // remove `support.unindexedChars` from `shimKeys`
-    source = source.replace(matchFunction(source, 'shimKeys'), function(match) {
-      return match.replace(/\s*\|\|\s*\(support\.unindexedChars\b[\s\S]+?\)\)/, '');
+      return match.replace(/\s*else if *\(support\.unindexedChars\b[^}]+}/, '');
     });
 
     // remove `support.unindexedChars` from `_.toArray`
@@ -3335,7 +3348,11 @@
         if (isModern || (isUnderscore && _.isEmpty(plusFuncs))) {
           source = removeSupportArgsClass(source);
           source = removeSupportArgsObject(source);
+          source = removeSupportEnumErrorProps(source);
+          source = removeSupportEnumPrototypes(source);
+          source = removeSupportNonEnumArgs(source);
           source = removeSupportNonEnumShadows(source);
+          source = removeSupportNonEnumStrings(source);
           source = removeSupportOwnLast(source);
 
           _.forOwn(objDepMap, function(depNames, funcName) {
@@ -3359,10 +3376,6 @@
               _.pull(funcDepMap[funcName], 'isString');
             }
           });
-
-          source = removeSupportEnumErrorProps(source);
-          source = removeSupportEnumPrototypes(source);
-          source = removeSupportNonEnumArgs(source);
         }
         if (isModern || isUnderscore) {
           // replace `_.find`
@@ -4729,9 +4742,6 @@
         if (isExcluded('clone', 'isElement', 'isEqual', 'isPlainObject')) {
           source = removeSupportNodeClass(source);
         }
-        if (isExcluded('keysIn')) {
-          source = removeSupportNonEnumShadows(source);
-        }
         if (isExcluded('isArguments')) {
           source = replaceSupportProp(source, 'argsClass', 'true');
         }
@@ -4744,8 +4754,12 @@
         if (isExcluded('isPlainObject')) {
           source = removeSupportOwnLast(source);
         }
-        if (isExcluded('keys')) {
+        if (isExcluded('keysIn')) {
           source = removeSupportNonEnumArgs(source);
+          source = removeSupportNonEnumShadows(source);
+        }
+        if (isExcluded('keysIn', 'shimKeys')) {
+          source = removeSupportNonEnumStrings(source);
         }
         if (isExcluded('lodashWrapper')) {
           source = removeChaining(source);
@@ -4808,16 +4822,18 @@
               .replace(/\bctor *=.+\s+/, '')
               .replace(/^ *ctor\.prototype.+\s+.+\n/m, '')
               .replace(/(?:,\n)? *props *=[^;=]+/, '')
-              .replace(/^ *for *\((?=key)/, '$&var ')
           }
           if (!/\.nonEnumArgs *=(?! *(?:false|true))/.test(body)) {
-            modified = modified.replace(/^ *for *\(.+? arguments.+\n/m, '');
+            modified = modified.replace(/\s*for *\(var argsKey\b[^}]+}/, '');
+          }
+          if (!/\.nonEnumStrings *=(?! *(?:false|true))/.test(body)) {
+            modified = modified.replace(/\s*for *\(var strKey\b[^}]+}/, '');
           }
           // cleanup the empty var statement
           modified = modified.replace(/^ *var;\n/m, '');
 
           // if no setup then remove IIFE
-          return /^\s*$/.test(modified)
+          return modified == false
             ? body.replace(RegExp('^' + indent, 'gm'), indent.slice(0, -2))
             : match.replace(setup, modified);
         });
