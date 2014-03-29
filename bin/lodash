@@ -2059,6 +2059,14 @@
     var indentA = isShallow ? ' {2}' : ' {2,4}',
         indentB = isShallow ? ' {6}' : ' {6,8}';
 
+    source = removeStrings(removeComments(source));
+
+    // remove all functions except `runInContext`
+    source = source
+      .replace(/^( *)function (?!runInContext)[\s\S]+?\{\n[\s\S]+?\n\1}\n/gm, '')
+      .replace(/^( *)(?:var )?[$\w]+ *=.*?(?:create[A-Z][a-z]+|template)\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '')
+      .replace(/^( *)(?:var )?[$\w]+ *= *function\b[\s\S]+?\{\n[\s\S]+?\n\1};\n/gm, '');
+
     var result = _.reduce([
       // match a varaible at the start of a declaration list
       indentA + 'var ([$\\w]+) *=.+?,\\n(?= *[$\\w]+ *=)',
@@ -2068,17 +2076,13 @@
       '(' + indentA + ')var ([$\\w]+) *(?:|= *(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1[^\\n ]+?));\\n'
     ], function(result, reSource) {
       source = source.replace(RegExp('^' + reSource, 'gm'), function(match, indent, varName) {
-        if (typeof varName == 'number') {
-          varName = indent;
-        }
-        result.push(varName);
+        result.push(typeof varName == 'number' ? indent : varName);
         return '';
       });
       return result;
     }, []);
 
-    // remove duplicates and function names
-    return _.difference(_.uniq(result), allFuncs).sort();
+    return _.uniq(result).sort();
   }
 
   /**
@@ -2123,12 +2127,12 @@
    */
   function matchFunction(source, funcName, leadingComments) {
     var result = _.reduce([
-      // match variable declarations using `createAggregator`, `createCompounder`, or `template`
-      '( *)var ' + funcName + ' *=.*?(?:create[A-Z][a-z]+|template)\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
       // match a function declaration
       '( *)function ' + funcName + '\\b[\\s\\S]+?\\n\\3}\\n',
+      // match variable declarations using `createAggregator`, `createCompounder`, or `template`
+      '( *)var ' + funcName + ' *=.*?(?:create[A-Z][a-z]+|template)\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
       // match a variable declaration with function expression
-      '( *)var ' + funcName + ' *=.*?function\\(.+?\{\\n[\\s\\S]+?\\n\\3}(?:\\(\\)\\))?;\\n',
+      '( *)var ' + funcName + ' *=.*?function\\b[\\s\\S]+?\{\\n[\\s\\S]+?\\n\\3}(?:\\(\\)\\))?;\\n',
       // match a simple variable declaration
       ' *var ' + funcName + ' *=.+?;\\n'
     ], function(result, reSource) {
@@ -2159,7 +2163,7 @@
     return _.result(source.match(RegExp(
       '^' + (leadingComments ? multilineComment : '') +
       '(?: {2,4}var ' + propName + '\\b.+|(?: *|.*?=\\s*)lodash\\._?' + propName + '\\s*)=[\\s\\S]+?' +
-      '(?:\\(function[\\s\\S]+?\\([^)]*\\)\\);\\n(?=\\n)|' +
+      '(?:\\(function\\b[\\s\\S]+?\\([^)]*\\)\\);\\n(?=\\n)|' +
       '[;}]\\n(?=\\n(?!\\s*\\(func)))'
     , 'm')), 0, '');
   }
@@ -2191,7 +2195,7 @@
     if (varName != 'freeGlobal' && _.contains(complexVars, varName)) {
       reSources = [
         indentA + 'var '  + varName + ' *=[\\s\\S]+?' +
-        '(?:\\(function[\\s\\S]+?\\([^)]*\\)\\);\\n(?=\\n)|' +
+        '(?:\\(function\\b[\\s\\S]+?\\([^)]*\\)\\);\\n(?=\\n)|' +
         '[;}]\\n(?=\\n(?!\\s*\\(func)))'
       ];
     }
@@ -2816,7 +2820,7 @@
     if (_.contains(complexVars, varName)) {
       source = source.replace(RegExp(
         '^( *var ' + varName + ') *=[\\s\\S]+?' +
-        '(?:\\(function[\\s\\S]+?\\([^)]*\\)\\);(?=\\n\\n)|' +
+        '(?:\\(function\\b[\\s\\S]+?\\([^)]*\\)\\);(?=\\n\\n)|' +
         '[;}](?=\\n\\n(?!\\s*\\(func)))'
       , 'm'), '$1 = null;')
     }
@@ -4859,7 +4863,7 @@
       (function() {
         var isShallow = isExcluded('runInContext'),
             useMap = createMap(),
-            snippet = removeStrings(removeComments(source)),
+            snippet = cleanupSource(removeStrings(removeComments(source))),
             varNames = _.difference(getVars(snippet, isShallow), includeFuncs, includeObjs, includeVars);
 
         while (varNames.length) {
