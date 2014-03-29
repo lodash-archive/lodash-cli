@@ -3306,10 +3306,13 @@
         source = setUseStrictOption(source, isStrict);
 
         if (isModularize || !isUnderscore) {
-          _.pull(funcDepMap.createWrapper, 'getHolders');
+          // remove `_` placeholder support
+          _.each(['baseCreateWrapper', 'createWrapper'], function(funcName) {
+            _.pull(funcDepMap[funcName], 'getHolders');
 
-          source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
-            return match.replace(/\bgetHolders\([^)]+\)/g, '[]');
+            source = source.replace(matchFunction(source, funcName), function(match) {
+              return match.replace(/\bgetHolders\([^)]+\)/g, '[]');
+            });
           });
         }
         if (isModularize) {
