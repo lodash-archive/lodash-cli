@@ -4370,7 +4370,9 @@
 
             _.each(['baseCreateWrapper', 'createWrapper'], function(funcName) {
               source = source.replace(matchFunction(source, funcName), function(match) {
-                return match.replace(/^( *)if *\((isPartialRight|partialRightArgs)\b[\s\S]+?\n\1}\n/gm, '');
+                return match
+                  .replace(/,\s*partialRightHolders\b(?: *=.+?(?=[,;]))?/g, '')
+                  .replace(/^( *)if *\((isPartialRight|partialRightArgs)\b[\s\S]+?\n\1}\n/gm, '');
               });
             });
           }
