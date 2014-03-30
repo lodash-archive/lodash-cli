@@ -334,10 +334,14 @@
 
   /** Used to track variable dependencies of identifiers */
   var varDependencyMap = createMap({
+    'after': ['root'],
     'baseCreate': ['root'],
     'createCache': ['root'],
+    'createPad': ['root'],
     'isFinite': ['root'],
+    'pad': ['root'],
     'parseInt': ['root'],
+    'repeat': ['root'],
     'support': ['root'],
     'template': ['reInterpolate'],
     'templateSettings': ['reEscape', 'reEvaluate', 'reInterpolate']
