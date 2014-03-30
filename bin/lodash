@@ -3135,7 +3135,9 @@
 
       // used as the output path for the build
       var outputPath = _.reduce(options, function(result, value, index) {
-        return /^(?:-o|--output)$/.test(value) ? options[index + 1] : result;
+        return /^(?:-o|--output)$/.test(value)
+          ? path.normalize(options[index + 1])
+          : result;
       }, isModularize ? '.' + path.sep + 'modularize' : '');
 
       // flag to specify creating a custom build
