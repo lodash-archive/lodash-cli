@@ -971,7 +971,7 @@
             context = createContext(),
             source = data.source;
 
-        ok(!/^null/.test(source));
+        equal(_.startsWith(source, 'null'), false, basename);
 
         context._ = _;
         vm.runInContext(source, context);
@@ -994,6 +994,8 @@
         vm.runInContext(data.source, context);
 
         equal(_.templates.c({ 'name': 'fred' }), 'hello fred', basename);
+
+        delete _.templates;
         start();
       });
     });
@@ -1009,6 +1011,8 @@
         vm.runInContext(data.source, context);
 
         equal(_.templates.e({ 'value': '1' }), 'function  () {\n;\n  return 1 ;\n} ;', basename);
+
+        delete _.templates;
         start();
       });
     });
