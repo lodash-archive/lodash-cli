@@ -1393,7 +1393,7 @@
         pattern = state.templatePattern,
         settings = state.templateSettings;
 
-    pattern || (pattern = path.join(cwd, '*.jst'));
+    pattern = path.normalize(pattern || path.join(cwd, '*.jst'));
 
     var hr = '  /*--------------------------------------------------------------------------*/';
 

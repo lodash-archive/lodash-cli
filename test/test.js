@@ -983,6 +983,21 @@
       });
     });
 
+    asyncTest('should normalize template file path patterns', function() {
+      var start = _.after(2, _.once(QUnit.start));
+
+      build(['-s', 'template=' + templatePath + path.sep + path.sep + 'c.jst'], function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            context = createContext();
+
+        context._ = _;
+        vm.runInContext(data.source, context);
+
+        equal(_.templates.c({ 'name': 'fred' }), 'hello fred', basename);
+        start();
+      });
+    });
+
     asyncTest('should not modify whitespace in templates', function() {
       var start = _.after(2, _.once(QUnit.start));
 
