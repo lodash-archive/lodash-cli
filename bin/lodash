@@ -17,15 +17,8 @@
   /** The current working directory */
   var cwd = process.cwd();
 
-  /** Used for array and object method references */
-  var arrayRef = Array.prototype,
-      objectRef = Object.prototype;
-
   /** Native method shortcuts */
-  var create = Object.create,
-      hasOwnProperty = objectRef.hasOwnProperty,
-      push = arrayRef.push,
-      slice = arrayRef.slice;
+  var push = Array.prototype.push;
 
   /** Used to create regexes that may detect multi-line comment blocks */
   var multilineComment = '(?: */\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/\\n)?';
@@ -1030,9 +1023,7 @@
     }
     // remove identifiers that are to be inlined
     _.remove(identifiers, function(identifier) {
-      return _.some(inlineMap, function(inlinees) {
-        return _.contains(inlinees, identifier);
-      });
+      return _.some(inlineMap, _.partial(_.contains, _, identifier, 0));
     });
 
     var categories = _.uniq(_.compact(identifiers.map(function(identifier) {
@@ -1056,17 +1047,9 @@
       var inlinees = [identifier];
       push.apply(inlinees, inlineMap[identifier] || []);
 
-      var inlineFuncs = _.filter(inlinees, function(inlinee) {
-        return _.contains(allFuncs, inlinee);
-      });
-
-      var inlineObjs = _.filter(inlinees, function(inlinee) {
-        return _.contains(includeObjs, inlinee);
-      });
-
-      var inlineVars = _.filter(inlinees, function(inlinee) {
-        return _.contains(includeVars, inlinee);
-      });
+      var inlineFuncs = _.intersection(allFuncs, inlinees),
+          inlineObjs = _.intersection(includeObjs, inlinees),
+          inlineVars = _.intersection(includeVars, inlinees);
 
       var depNames = _.difference(_.reduce(inlinees, function(result, identifier) {
         return _.union(result,
@@ -1616,7 +1599,7 @@
    * @returns {Object} Returns the new object.
    */
   function createMap(properties) {
-    return _.assign(create(null), properties);
+    return _.assign(Object.create(null), properties);
   }
 
   /**
@@ -1720,11 +1703,8 @@
    * @returns {Array} Returns an array of aliases.
    */
   function getAliases(funcName, depMap) {
-    var aliases = hasOwnProperty.call(realToAliasMap, funcName) && realToAliasMap[funcName];
-    depMap || (depMap = funcDependencyMap);
-    return _.reject(aliases, function(funcName) {
-      return hasOwnProperty.call(depMap, funcName);
-    });
+    var aliases = _.has(realToAliasMap, funcName) && realToAliasMap[funcName];
+    return _.reject(aliases, _.partial(_.has, depMap || funcDependencyMap));
   }
 
   /**
@@ -1737,9 +1717,7 @@
    */
   function getCategory(identifier, depMap) {
     identifier = getRealName(identifier, depMap);
-    return _.findKey(categoryMap, function(identifiers) {
-      return _.contains(identifiers, identifier);
-    }) || '';
+    return _.findKey(categoryMap, _.partial(_.contains, _, identifier, 0)) || '';
   }
 
   /**
@@ -1833,7 +1811,7 @@
 
     var depNames = _.isArray(funcName)
       ? funcName
-      : (hasOwnProperty.call(depMap, funcName) && depMap[funcName]);
+      : (_.has(depMap, funcName) && depMap[funcName]);
 
     if (!_.size(depNames)) {
       return [];
@@ -2034,8 +2012,8 @@
    */
   function getRealName(funcName, depMap) {
     return (
-      !hasOwnProperty.call(depMap || funcDependencyMap, funcName) &&
-      hasOwnProperty.call(aliasToRealMap, funcName) &&
+      !_.has(depMap || funcDependencyMap, funcName) &&
+      _.has(aliasToRealMap, funcName) &&
       aliasToRealMap[funcName]
     ) || funcName;
   }
@@ -3242,7 +3220,7 @@
 
         if (!result && /^(?:-p|--source-map)$/.test(options[index - 1])) {
           sourceMapURL = value;
-          result = true;
+          return true;
         }
         return result;
       });
@@ -4544,9 +4522,7 @@
                   push.apply(result, depNames || []);
                 });
 
-                push.apply(validDeps, _.filter(depNames, function(depName) {
-                  return _.contains(allDeps, depName);
-                }));
+                push.apply(validDeps, _.filter(depNames, _.partial(_.contains, allDeps, _, 0)));
 
                 var otherNames = _.transform(validDeps, function(result, depName) {
                   push.apply(result, getDependencies(funcDepMap[depName], funcDepMap));
