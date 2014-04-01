@@ -2145,7 +2145,7 @@
     return _.result(source.match(RegExp(
       '^' + (leadingComments ? multilineComment : '') +
       '(?: {2,4}var ' + propName + '\\b.+|(?: *|.*?=\\s*)lodash\\._?' + propName + '\\s*)=[\\s\\S]+?' +
-      '(?:\\(function\\b[\\s\\S]+?\\([^)]*\\)\\);\\n(?=\\n)|' +
+      '(?:\\(function\\b[\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
       '[;}]\\n(?=\\n(?!\\s*\\(func)))'
     , 'm')), 0, '');
   }
@@ -2177,7 +2177,7 @@
     if (varName != 'freeGlobal' && _.contains(complexVars, varName)) {
       reSources = [
         indentA + 'var '  + varName + ' *=[\\s\\S]+?' +
-        '(?:\\(function\\b[\\s\\S]+?\\([^)]*\\)\\);\\n(?=\\n)|' +
+        '(?:\\(function\\b[\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
         '[;}]\\n(?=\\n(?!\\s*\\(func)))'
       ];
     }
@@ -2802,7 +2802,7 @@
     if (_.contains(complexVars, varName)) {
       source = source.replace(RegExp(
         '^( *var ' + varName + ') *=[\\s\\S]+?' +
-        '(?:\\(function\\b[\\s\\S]+?\\([^)]*\\)\\);(?=\\n\\n)|' +
+        '(?:\\(function\\b[\\s\\S]+?\\}\\([^)]*\\)\\);(?=\\n\\n)|' +
         '[;}](?=\\n\\n(?!\\s*\\(func)))'
       , 'm'), '$1 = null;')
     }
@@ -3341,7 +3341,6 @@
           source = removeSupportArgsObject(source);
           source = removeSupportEnumErrorProps(source);
           source = removeSupportEnumPrototypes(source);
-          source = removeSupportNonEnumArgs(source);
           source = removeSupportNonEnumShadows(source);
           source = removeSupportNonEnumStrings(source);
           source = removeSupportOwnLast(source);
@@ -3435,15 +3434,20 @@
           }
           // replace `_.keysIn`
           if (!(isUnderscore && isLodash('keysIn'))) {
-            _.pull(funcDepMap.keysIn, 'isArguments', 'isString');
+            _.pull(funcDepMap.keysIn, 'isString');
 
             source = replaceFunction(source, 'keysIn', [
               'function keysIn(object) {',
               '  if (!isObject(object)) {',
               '    return [];',
               '  }',
+              '  var keyIndex,',
+              '      length = object.length;',
+              '',
+              "  length = (typeof length == 'number' && length > 0 &&",
+              '    (isArray(object) || (support.nonEnumArgs && isArguments(object))) && length) >>> 0;',
+              '',
               '  var index = -1,',
-              '      length = isArray(object) ? object.length : 0,',
               '      maxIndex = length - 1,',
               '      result = Array(length),',
               '      skipIndexes = length > 0;',
@@ -3452,7 +3456,7 @@
               '    result[index] = String(index);',
               '  }',
               '  for (var key in object) {',
-              '    if (!(skipIndexes && key > -1 && key <= maxIndex && key % 1 == 0)) {',
+              '    if (!(skipIndexes && (keyIndex = +key, keyIndex > -1 && keyIndex <= maxIndex && keyIndex % 1 == 0))) {',
               '      result.push(key);',
               '    }',
               '  }',
@@ -3525,6 +3529,8 @@
           });
         }
         if (isUnderscore) {
+          source = removeSupportNonEnumArgs(source);
+
           // replace `lodash`
           if (!isLodash('lodash')) {
             _.pull(funcDepMap.lodash, 'isArray');
@@ -4744,10 +4750,10 @@
           source = removeSupportOwnLast(source);
         }
         if (isExcluded('keysIn')) {
-          source = removeSupportNonEnumArgs(source);
           source = removeSupportNonEnumShadows(source);
         }
         if (isExcluded('keysIn', 'shimKeys')) {
+          source = removeSupportNonEnumArgs(source);
           source = removeSupportNonEnumStrings(source);
         }
         if (isExcluded('lodashWrapper')) {
@@ -4798,7 +4804,7 @@
 
       // remove code used to resolve unneeded `support` properties
       source = source.replace(matchProp(source, 'support'), function(match) {
-        return match.replace(/^ *\(function\b[\s\S]+?\n(( *)var ctor *=[\s\S]+?(?:\n *for.+)+\n)([\s\S]+?)}\(1\)\);\n/m, function(match, setup, indent, body) {
+        return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var ctor *=[\s\S]+?(?:\n *for.+)+\n)([\s\S]+?)}\(0, *0\)\);\n/m, function(match, setup, indent, body) {
           var modified = setup;
 
           if (!/\.spliceObjects *=(?! *(?:false|true))/.test(body)) {
