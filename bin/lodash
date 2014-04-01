@@ -295,7 +295,7 @@
     'lodashWrapper': [],
     'setData': ['isNative', 'noop'],
     'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
-    'shimKeys': ['isArray', 'isString', 'keysIn'],
+    'shimKeys': ['isArguments', 'isArray', 'isString', 'keysIn'],
     'shimTrim':  ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
     'shimTrimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
     'shimTrimRight': ['charsRightIndex', 'trimmedRightIndex'],
@@ -3347,6 +3347,7 @@
 
           _.forOwn(objDepMap, function(depNames, funcName) {
             if (!(isUnderscore && isLodash(funcName)) &&
+                !(isModern && _.contains(['keysIn', 'shimKeys'], funcName)) &&
                 !_.contains(['baseCreateCallback', 'isElement', 'lodash', 'wrapperValueOf'], funcName)) {
               _.pull(depNames, 'support');
             }
@@ -3490,8 +3491,9 @@
 
           _.forOwn(funcDepMap, function(depNames, funcName) {
             if (_.contains(depNames, 'isArguments') &&
-                !_.contains(['baseFlatten', 'intersection', 'xor'], funcName) &&
-                !(isUnderscore && isLodash(funcName))) {
+                !(isUnderscore && isLodash(funcName)) &&
+                !(isModern && _.contains(['keysIn', 'shimKeys'], funcName)) &&
+                !_.contains(['baseFlatten', 'intersection', 'xor'], funcName)) {
               _.pull(depNames, 'isArguments');
             }
           });
