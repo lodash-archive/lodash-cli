@@ -4809,21 +4809,21 @@
         return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var ctor *=[\s\S]+?(?:\n *for.+)+\n)([\s\S]+?)}\(0, *0\)\);\n/m, function(match, setup, indent, body) {
           var modified = setup;
 
-          if (!/\.spliceObjects *=(?! *(?:false|true))/.test(body)) {
+          if (!/\.spliceObjects *= *(?!false|true)/.test(body)) {
             modified = modified.replace(/^ *object *=.+\n/m, '');
           }
-          if (!/\.enumPrototypes *=(?! *(?:false|true))/.test(body) &&
-              !/\.nonEnumShadows *=(?! *(?:false|true))/.test(body) &&
-              !/\.ownLast *=(?! *(?:false|true))/.test(body)) {
+          if (!/\.enumPrototypes *= *(?!false|true)/.test(body) &&
+              !/\.nonEnumShadows *= *(?!false|true)/.test(body) &&
+              !/\.ownLast *= *(?!false|true)/.test(body)) {
             modified = modified
               .replace(/\bctor *=.+\s+/, '')
               .replace(/^ *ctor\.prototype.+\s+.+\n/m, '')
               .replace(/(?:,\n)? *props *=[^;=]+/, '')
           }
-          if (!/\.nonEnumArgs *=(?! *(?:false|true))/.test(body)) {
+          if (!/\.nonEnumArgs *= *(?!false|true)/.test(body)) {
             modified = modified.replace(/\s*for *\(var argsKey\b[^}]+}/, '');
           }
-          if (!/\.nonEnumStrings *=(?! *(?:false|true))/.test(body)) {
+          if (!/\.nonEnumStrings *= *(?!false|true)/.test(body)) {
             modified = modified.replace(/\s*for *\(var strKey\b[^}]+}/, '');
           }
           // cleanup the empty var statement
