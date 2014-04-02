@@ -1783,9 +1783,8 @@
 
     // iterate over the dependency map, adding names of functions that have `funcName` as a dependency
     return _.uniq(_.transform(depMap, function(result, depNames, otherName) {
-      if (!_.contains(stack, otherName) && _.some(funcNames, function(funcName) {
-            return _.contains(depNames, funcName);
-          })) {
+      if (!_.contains(stack, otherName) &&
+          _.some(funcNames, _.partial(_.contains, depNames, _, 0))) {
         stack.push(otherName);
         result.push(otherName);
         push.apply(result, getDependants(otherName, depMap, stack));
@@ -2999,9 +2998,7 @@
     var state = _.isPlainObject(options) && options;
 
     var isExcluded = function() {
-      return _.every(arguments, function(funcName) {
-        return !_.contains(buildFuncs, funcName);
-      });
+      return _.every(arguments, _.negate(_.partial(_.contains, buildFuncs, _, 0)));
     };
 
     var isLodash = function(funcName) {
