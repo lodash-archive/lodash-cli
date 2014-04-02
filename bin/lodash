@@ -312,7 +312,6 @@
     'baseEach': ['support'],
     'baseEachRight': ['support'],
     'baseIsEqual': ['support'],
-    'bind': ['support'],
     'isArguments': ['support'],
     'isElement': ['support'],
     'isEmpty': ['support'],
@@ -3345,19 +3344,19 @@
           source = removeSupportNonEnumStrings(source);
           source = removeSupportOwnLast(source);
 
-          _.forOwn(objDepMap, function(depNames, funcName) {
-            if (!(isUnderscore && isLodash(funcName)) &&
-                !(isModern && _.contains(['keysIn', 'shimKeys'], funcName)) &&
-                !_.contains(['baseCreateCallback', 'isElement', 'lodash', 'wrapperValueOf'], funcName)) {
-              _.pull(depNames, 'support');
+          _.each([
+            'at', 'baseClone', 'baseEach', 'baseEachRight', 'baseIsEqual', 'isArguments',
+            'isEmpty', 'isPlainObject', 'sample','shimIsPlainObject', 'toArray'
+          ], function(funcName) {
+            if (!(isUnderscore && isLodash(funcName))) {
+              _.pull(objDepMap[funcName], 'support');
             }
           });
 
           source = removeSupportNodeClass(source);
-          _.forOwn(funcDepMap, function(depNames, funcName) {
-            if (_.contains(depNames, 'isNode') &&
-                !(isUnderscore && isLodash(funcName))) {
-              _.pull(depNames, 'isNode');
+          _.each(['baseClone', 'baseIsEqual', 'isElement', 'shimIsPlainObject'], function(funcName) {
+            if (!(isUnderscore && isLodash(funcName))) {
+              _.pull(funcDepMap[funcName], 'isNode');
             }
           });
 
@@ -3489,12 +3488,9 @@
             ].join('\n'));
           }
 
-          _.forOwn(funcDepMap, function(depNames, funcName) {
-            if (_.contains(depNames, 'isArguments') &&
-                !(isUnderscore && isLodash(funcName)) &&
-                !(isModern && _.contains(['keysIn', 'shimKeys'], funcName)) &&
-                !_.contains(['baseFlatten', 'intersection', 'xor'], funcName)) {
-              _.pull(depNames, 'isArguments');
+          _.each(['isPlainObject', 'shimIsPlainObject'], function(funcName) {
+            if (!(isUnderscore && isLodash(funcName))) {
+              _.pull(funcDepMap[funcName], 'isArguments');
             }
           });
 
@@ -3781,6 +3777,7 @@
           // replace `_.isEmpty`
           if (!isLodash('isEmpty')) {
             funcDepMap.isEmpty = ['isArray', 'isString'];
+            _.pull(objDepMap.isEmpty, 'support');
 
             source = replaceFunction(source, 'isEmpty', [
               'function isEmpty(value) {',
@@ -3801,7 +3798,8 @@
           }
           // replace `_.isEqual`
           if (!isLodash('baseIsEqual') && !isLodash('isEqual')) {
-            _.pull(funcDepMap.baseIsEqual, 'isArguments');
+            _.pull(funcDepMap.baseIsEqual, 'isArguments', 'isNode');
+            _.pull(objDepMap.baseIsEqual, 'support');
 
             source = replaceFunction(source, 'isEqual', [
               'function isEqual(value, other) {',
@@ -4247,6 +4245,7 @@
           // replace `_.toArray`
           if (!isLodash('toArray')) {
             _.pull(funcDepMap.toArray, 'isString').push('isArray', 'map');
+            _.pull(objDepMap.toArray, 'support');
 
             source = replaceFunction(source, 'toArray', [
               'function toArray(collection) {',
