@@ -743,10 +743,10 @@
           vm.runInContext(data.source, context);
 
           var actual = _.templates.a(object.a);
-          equal(actual.replace(/[\r\n]+/g, ''), '<ul><li>fred</li><li>barney</li><li>pebbles</li></ul>', basename);
+          strictEqual(actual.replace(/[\r\n]+/g, ''), '<ul><li>fred</li><li>barney</li><li>pebbles</li></ul>', basename);
 
-          equal(_.templates.b(object.b), 'hello fred!', basename);
-          equal(_.templates.c(object.c), 'hello es6', basename);
+          strictEqual(_.templates.b(object.b), 'hello fred!', basename);
+          strictEqual(_.templates.c(object.c), 'hello es6', basename);
           deepEqual(_.difference(['a', 'b', 'c', 'd', 'e'], _.keys(_.templates)), [], basename);
 
           delete _.templates;
@@ -779,7 +779,7 @@
           context.define.amd = {};
           vm.runInContext(data.source, context);
 
-          equal(actualId, expectedId, basename);
+          strictEqual(actualId, expectedId, basename);
 
           delete _.templates;
           start();
@@ -802,8 +802,8 @@
           context.define.amd = {};
           vm.runInContext(data.source, context);
 
-          equal(actualId, expectedId, basename);
-          equal(_.templates.f({ 'name': 'mustache' }), 'hallå mustache!', basename);
+          strictEqual(actualId, expectedId, basename);
+          strictEqual(_.templates.f({ 'name': 'mustache' }), 'hallå mustache!', basename);
 
           delete _.templates;
           start();
@@ -840,12 +840,12 @@
           context._ = _;
           vm.runInContext(data.source, context);
 
-          equal(_.templates.b({ 'name': 'fred' }), 'hello fred!', basename);
-          equal(_.templates.c({ 'name': 'barney' }), 'hello barney', basename);
-          equal(_.templates.c.c({ 'name': 'pebbles' }), 'hello pebbles!', basename);
+          strictEqual(_.templates.b({ 'name': 'fred' }), 'hello fred!', basename);
+          strictEqual(_.templates.c({ 'name': 'barney' }), 'hello barney', basename);
+          strictEqual(_.templates.c.c({ 'name': 'pebbles' }), 'hello pebbles!', basename);
 
           if (!isWindows) {
-            equal(_.templates.c['\'"']({ 'name': 'quotes' }), 'hello quotes', basename);
+            strictEqual(_.templates.c['\'"']({ 'name': 'quotes' }), 'hello quotes', basename);
           }
           delete _.templates;
           start();
@@ -911,7 +911,7 @@
               strictEqual(context._, undefined, basename);
           }
           if (templates) {
-            equal(templates.c({ 'name': 'fred' }), 'hello fred', basename);
+            strictEqual(templates.c({ 'name': 'fred' }), 'hello fred', basename);
           }
           delete _.templates;
           start();
@@ -954,8 +954,8 @@
               actual = templates.d({ 'name': 'fred & barney' });
 
           ok(_.contains(basename, 'lodash.templates'), basename);
-          equal(actualId, expectedId, basename);
-          equal(actual, '<span>hello fred &amp; barney!</span>', basename);
+          strictEqual(actualId, expectedId, basename);
+          strictEqual(actual, '<span>hello fred &amp; barney!</span>', basename);
 
           delete _.templates;
           start();
@@ -971,12 +971,12 @@
             context = createContext(),
             source = data.source;
 
-        equal(_.startsWith(source, 'null'), false, basename);
+        strictEqual(_.startsWith(source, 'null'), false, basename);
 
         context._ = _;
         vm.runInContext(source, context);
 
-        equal(_.templates.c({ 'name': 'fred' }), 'hello fred', basename);
+        strictEqual(_.templates.c({ 'name': 'fred' }), 'hello fred', basename);
 
         delete _.templates;
         start();
@@ -993,7 +993,7 @@
         context._ = _;
         vm.runInContext(data.source, context);
 
-        equal(_.templates.c({ 'name': 'fred' }), 'hello fred', basename);
+        strictEqual(_.templates.c({ 'name': 'fred' }), 'hello fred', basename);
 
         delete _.templates;
         start();
@@ -1010,7 +1010,7 @@
         context._ = _;
         vm.runInContext(data.source, context);
 
-        equal(_.templates.e({ 'value': '1' }), 'function  () {\n;\n  return 1 ;\n} ;', basename);
+        strictEqual(_.templates.e({ 'value': '1' }), 'function  () {\n;\n  return 1 ;\n} ;', basename);
 
         delete _.templates;
         start();
@@ -1028,7 +1028,7 @@
     asyncTest('debug only', function() {
       var start = _.once(QUnit.start);
       build(['-d', '-s'], function(data) {
-        equal(path.basename(data.outputPath, '.js'), 'lodash');
+        strictEqual(path.basename(data.outputPath, '.js'), 'lodash');
         start();
       });
     });
@@ -1036,7 +1036,7 @@
     asyncTest('debug custom', function() {
       var start = _.once(QUnit.start);
       build(['-d', '-s', 'backbone'], function(data) {
-        equal(path.basename(data.outputPath, '.js'), 'lodash.custom');
+        strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
 
         var comment = _.result(data.source.match(reLicense), 0, '');
         ok(_.contains(comment, 'Custom Build'));
@@ -1047,7 +1047,7 @@
     asyncTest('minified only', function() {
       var start = _.once(QUnit.start);
       build(['-m', '-s'], function(data) {
-        equal(path.basename(data.outputPath, '.js'), 'lodash.min');
+        strictEqual(path.basename(data.outputPath, '.js'), 'lodash.min');
         start();
       });
     });
@@ -1055,7 +1055,7 @@
     asyncTest('minified custom', function() {
       var start = _.once(QUnit.start);
       build(['-m', '-s', 'backbone'], function(data) {
-        equal(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
+        strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
 
         var comment = _.result(data.source.match(reLicense), 0, '');
         ok(_.contains(comment, 'Custom Build'));
@@ -1073,7 +1073,7 @@
       var sources = [];
 
       var check = _.after(2, _.once(function() {
-        equal(sources[0], sources[1]);
+        strictEqual(sources[0], sources[1]);
         QUnit.start();
       }));
 
@@ -1102,7 +1102,7 @@
       };
 
       var check = _.after(2, _.once(function() {
-        equal(sources[0], sources[1]);
+        strictEqual(sources[0], sources[1]);
         QUnit.start();
       }));
 
@@ -1125,7 +1125,7 @@
       };
 
       var check = _.after(2, _.once(function() {
-        equal(sources[0], sources[1]);
+        strictEqual(sources[0], sources[1]);
         QUnit.start();
       }));
 
@@ -1148,7 +1148,7 @@
       };
 
       var check = _.after(2, _.once(function() {
-        equal(sources[0], sources[1]);
+        strictEqual(sources[0], sources[1]);
         QUnit.start();
       }));
 
@@ -1219,8 +1219,8 @@
             lodash = {};
             lodash[funcName] = require(modulePath);
 
-            equal(fs.existsSync(path.join(outputPath, 'index.js')), false, 'should not create an index.js file');
-            equal(reLicense.test(fs.readFileSync(require.resolve(modulePath), 'utf-8')), false, funcName + ' module should not preserve the copyright header');
+            strictEqual(fs.existsSync(path.join(outputPath, 'index.js')), false, 'should not create an index.js file');
+            strictEqual(reLicense.test(fs.readFileSync(require.resolve(modulePath), 'utf-8')), false, funcName + ' module should not preserve the copyright header');
             testMethod(lodash, funcName);
           }
           start();
@@ -1298,7 +1298,7 @@
                 sourceMapURL = (/\w+(?=\.map$)/.exec(mapCommand) || [basename])[0];
 
             ok(RegExp('\\n//# sourceMappingURL=' + sourceMapURL + '.map$').test(data.source), basename);
-            equal(sourceMap.file, basename + '.js', basename);
+            strictEqual(sourceMap.file, basename + '.js', basename);
             deepEqual(sourceMap.sources, sources, basename);
 
             process.chdir(cwd);
@@ -1389,7 +1389,7 @@
           }, { 'bar': 1 }, 1)
         };
 
-        equal(object.fn(), 2, '_.bind: ' + basename);
+        strictEqual(object.fn(), 2, '_.bind: ' + basename);
 
         var array = [{ 'a': 1, 'b': 2 }, { 'a': 2, 'b': 2 }];
 
@@ -1397,7 +1397,7 @@
           return this.a;
         }, { 'a': 'A' });
 
-        equal(actual, 'a', '_.clone should ignore `callback` and `thisArg`: ' + basename);
+        strictEqual(actual, 'a', '_.clone should ignore `callback` and `thisArg`: ' + basename);
         strictEqual(lodash.clone(array, true)[0], array[0], '_.clone should ignore `deep`: ' + basename);
 
         strictEqual(lodash.contains({ 'a': 1, 'b': 2 }, 1), true, '_.contains should work with objects: ' + basename);
@@ -1431,7 +1431,7 @@
           return 'a' in value;
         });
 
-        equal(actual, _.first(array), '_.find: ' + basename);
+        strictEqual(actual, _.first(array), '_.find: ' + basename);
 
         var last;
         actual = lodash.forEach(array, function(value) {
@@ -1439,7 +1439,7 @@
           return false;
         });
 
-        equal(last, _.last(array), '_.forEach should not exit early: ' + basename);
+        strictEqual(last, _.last(array), '_.forEach should not exit early: ' + basename);
 
         var callback = function(value, index) {
           actual = this[index];
@@ -1447,10 +1447,10 @@
 
         actual = undefined;
         lodash.forEach([1], callback, [2]);
-        equal(actual, 2, '_.forEach supports the `thisArg` argument when iterating arrays: ' + basename);
+        strictEqual(actual, 2, '_.forEach supports the `thisArg` argument when iterating arrays: ' + basename);
 
         lodash.forEach({ 'a': 1 }, callback, { 'a': 2 });
-        equal(actual, 2, '_.forEach supports the `thisArg` argument when iterating objects: ' + basename);
+        strictEqual(actual, 2, '_.forEach supports the `thisArg` argument when iterating objects: ' + basename);
 
         array = [{ 'a': [1, 2] }, { 'a': [3] }];
         actual = lodash.flatten(array, function(value, index) {
@@ -1464,10 +1464,10 @@
         deepEqual(actual, [['a'], ['b']], '_.flatten should perform a deep flatten when used as `callback` for _.map: ' + basename);
 
         object = { 'length': 0, 'splice': Array.prototype.splice };
-        equal(lodash.isEmpty(object), false, '_.isEmpty should return `false` for jQuery/MooTools DOM query collections: ' + basename);
+        strictEqual(lodash.isEmpty(object), false, '_.isEmpty should return `false` for jQuery/MooTools DOM query collections: ' + basename);
 
         object = { 'a': 1, 'b': 2, 'c': 3 };
-        equal(lodash.isEqual(object, { 'a': 1, 'b': 0, 'c': 3 }), false, '_.isEqual: ' + basename);
+        strictEqual(lodash.isEqual(object, { 'a': 1, 'b': 0, 'c': 3 }), false, '_.isEqual: ' + basename);
 
         actual = lodash.isEqual('a', 'b', function(a, b) {
           return this[a] == this[b];
@@ -1475,8 +1475,8 @@
 
         strictEqual(actual, false, '_.isEqual should ignore `callback` and `thisArg`: ' + basename);
 
-        equal(lodash.max('abc'), -Infinity, '_.max should return `-Infinity` for strings: ' + basename);
-        equal(lodash.min('abc'), Infinity, '_.min should return `Infinity` for strings: ' + basename);
+        strictEqual(lodash.max('abc'), -Infinity, '_.max should return `-Infinity` for strings: ' + basename);
+        strictEqual(lodash.min('abc'), Infinity, '_.min should return `Infinity` for strings: ' + basename);
 
         array = [[2, 3, 1], [5, 6, 4], [8, 9, 7]];
         deepEqual(_.map(array, lodash.max), [3, 6, 9], '_.max should work when used as `callback` for _.map: ' + basename);
@@ -1484,7 +1484,7 @@
 
         object = {};
         lodash.mixin(object, { 'a': function(a) { return a[0]; } });
-        equal('a' in object, false, '_.mixin should not accept a destination object: ' + basename);
+        strictEqual('a' in object, false, '_.mixin should not accept a destination object: ' + basename);
 
         // avoid comparing objects created by `lodash` methods with `deepEqual`
         // because QUnit has problems comparing objects from different realms
@@ -1511,9 +1511,9 @@
         actual = lodash.tap([], function(value) { value.push(this); }, 'a');
         deepEqual(actual, [undefined], '_.tap should ignore `thisArg`: ' + basename);
 
-        equal(lodash.template('${a}', object), '${a}', '_.template should ignore ES6 delimiters: ' + basename);
-        equal('support' in lodash, false, '_.support should not exist: ' + basename);
-        equal('imports' in lodash.templateSettings, false, '_.templateSettings should not have an "imports" property: ' + basename);
+        strictEqual(lodash.template('${a}', object), '${a}', '_.template should ignore ES6 delimiters: ' + basename);
+        strictEqual('support' in lodash, false, '_.support should not exist: ' + basename);
+        strictEqual('imports' in lodash.templateSettings, false, '_.templateSettings should not have an "imports" property: ' + basename);
 
         array = [[2, 1, 2], [1, 2, 1]];
         actual = _.map(array, lodash.uniq);
@@ -1559,7 +1559,7 @@
         context.define.amd = {};
         vm.runInContext(data.source, context);
 
-        equal(actualId, 'underscore', basename);
+        strictEqual(actualId, 'underscore', basename);
         ok(_.isFunction(context._), basename);
         start();
       });
@@ -1576,7 +1576,7 @@
         var lodash = context._;
 
         _.each(lodashOnlyFuncs.concat('assign'), function(funcName) {
-          equal(funcName in lodash, false, '_.' + funcName + ' should not exist: ' + basename);
+          strictEqual(funcName in lodash, false, '_.' + funcName + ' should not exist: ' + basename);
         });
 
         start();
@@ -1593,7 +1593,7 @@
         vm.runInContext(data.source, context);
         var lodash = context._;
 
-        equal(lodash.partial(_.identity, 2)(), 2, '_.partial: ' + basename);
+        strictEqual(lodash.partial(_.identity, 2)(), 2, '_.partial: ' + basename);
         start();
       });
     });
@@ -1658,8 +1658,8 @@
 
           var wrapped = lodash(1);
           strictEqual(wrapped.identity(), 1, '_(...) wrapped values are not chainable by default: ' + basename);
-          equal(String(wrapped) === '1', false, '_#toString should not be implemented: ' + basename);
-          equal(Number(wrapped) === 1 , false, '_#valueOf should not be implemented: ' + basename);
+          strictEqual(String(wrapped) === '1', false, '_#toString should not be implemented: ' + basename);
+          strictEqual(Number(wrapped) === 1 , false, '_#valueOf should not be implemented: ' + basename);
 
           wrapped.chain();
           ok(wrapped.has('x') instanceof lodash, '_#has returns wrapped values when chaining: ' + basename);
@@ -1704,7 +1704,7 @@
           }, array);
 
           deepEqual(actual, ['0'], basename);
-          equal('runInContext' in lodash, false, basename);
+          strictEqual('runInContext' in lodash, false, basename);
           start();
         });
       });
@@ -1719,7 +1719,7 @@
           vm.runInContext(data.source, context);
           var lodash = context._;
 
-          equal(lodash([1]) instanceof lodash, false, basename);
+          strictEqual(lodash([1]) instanceof lodash, false, basename);
           deepEqual(_.keys(lodash.prototype), [], basename);
           start();
         });
@@ -1913,8 +1913,8 @@
           var lodash = context._;
 
           lodash.mixin({ 'x': _.noop });
-          equal(lodash.x, _.noop, basename);
-          equal(typeof lodash.prototype.x, 'function', basename);
+          strictEqual(lodash.x, _.noop, basename);
+          strictEqual(typeof lodash.prototype.x, 'function', basename);
           start();
         });
       });
@@ -1950,7 +1950,7 @@
           context.define.amd = {};
           vm.runInContext(data.source, context);
 
-          equal(actualId, expectedId, basename);
+          strictEqual(actualId, expectedId, basename);
           ok(_.isFunction(context._), basename);
           start();
         });
@@ -1993,7 +1993,7 @@
 
         build(['-s'].concat(command.split(' ')), function(data) {
           var basename = path.basename(data.outputPath, '.js');
-          equal(basename, expected + (counter++ ? '.min' : ''), command);
+          strictEqual(basename, expected + (counter++ ? '.min' : ''), command);
           start();
         });
       });
@@ -2023,9 +2023,9 @@
         };
 
         build(['exports=none', 'include=none'].concat(command.split(' ')), function(data) {
-          equal('outputPath' in data, false);
-          equal(written, data.source);
-          equal(arguments.length, 1);
+          strictEqual('outputPath' in data, false);
+          strictEqual(written, data.source);
+          strictEqual(arguments.length, 1);
 
           process.stdout.write = write;
           start();
@@ -2149,13 +2149,13 @@
                 return false;
               });
 
-              equal(result.length, 1, basename);
+              strictEqual(result.length, 1, basename);
             }
             if (!/\.min$/.test(basename)) {
               var srcFnValue = strip(func),
                   bldFnValue = strip(_[funcName]);
 
-              equal(srcFnValue === bldFnValue, expected, '\n' + srcFnValue + '\n' + bldFnValue);
+              strictEqual(srcFnValue === bldFnValue, expected, '\n' + srcFnValue + '\n' + bldFnValue);
             }
             testMethod(lodash, funcName, basename);
             start();
