@@ -1650,9 +1650,10 @@
               context = createContext();
 
           vm.runInContext(data.source, context);
-          var lodash = context._;
 
-          var array = ['abc'];
+          var lodash = context._,
+              array = ['abc'];
+
           ok(lodash.chain(array).first().first() instanceof lodash, '_.chain: ' + basename);
           ok(lodash(array).chain().first().first() instanceof lodash, '_#chain: ' + basename);
 
@@ -1739,7 +1740,7 @@
             object = { 'x': 1 };
 
         var callback = lodash.createCallback('x');
-        strictEqual(callback(object), false, basename);
+        strictEqual(callback(object), object, basename);
 
         callback = lodash.createCallback(object);
         strictEqual(callback(object), true, basename);

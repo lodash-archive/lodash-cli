@@ -4459,21 +4459,18 @@
         if (_.contains(minusFuncs, 'pluck') && _.contains(minusFuncs, 'where')) {
           source = replaceFunction(source, 'createCallback', 'var createCallback = baseCreateCallback;');
         }
-        // remove "_.pluck" style callback support from `_.createCallback`
-        else if (_.contains(minusFuncs, 'pluck')) {
-          _.pull(funcDepMap.createCallback, 'property');
+        // remove "_.pluck" or "_.where" style callback support from `_.createCallback`
+        else {
+          _.each(['pluck', 'where'], function(funcName) {
+            if (_.contains(minusFuncs, funcName)) {
+              _.pull(funcDepMap.createCallback, funcName);
+              funcDepMap.createCallback.push('identity');
 
-          source = source.replace(matchFunction(source, 'createCallback'), function(match) {
-            return match.replace(/(return\b).+?property[^:]+:\s*/m, '$1 ');
-          });
-        }
-        // remove "_.where" style callback support from `_.createCallback`
-        else if (_.contains(minusFuncs, 'where')) {
-          _.pull(funcDepMap.createCallback, 'matches');
-          funcDepMap.createCallback.push('identity');
-
-          source = source.replace(matchFunction(source, 'createCallback'), function(match) {
-            return match.replace(/\bmatches\(.+?\)/m, 'identity');
+              source = source.replace(matchFunction(source, 'createCallback'), function(match) {
+                var otherName = funcName == 'pluck' ? 'property' : 'matches';
+                return match.replace(RegExp('\\b' + otherName + '\\([^)]+\\)', 'm'), 'identity');
+              });
+            }
           });
         }
         // add function names explicitly
