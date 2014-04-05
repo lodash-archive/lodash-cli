@@ -642,7 +642,7 @@
       '-s strict underscore'
     ];
 
-    commands.forEach(function(command) {
+    _.each(commands, function(command) {
       asyncTest('`lodash ' + command +'` is valid', function() {
         var start = _.after(2, _.once(function() {
           ok(true, 'should be valid');
@@ -661,7 +661,7 @@
       'modern template=./*.jst'
     ];
 
-    commands.forEach(function(command) {
+    _.each(commands, function(command) {
       asyncTest('`lodash ' + command +'` is invalid', function() {
         process.stdout.write = _.once(function(string) {
           ok(reHelp.test(string));
@@ -720,7 +720,7 @@
       'template=' + '*.jst'
     ];
 
-    commands.forEach(function(command) {
+    _.each(commands, function(command) {
       asyncTest('`lodash ' + command +'`', function() {
         var start = _.after(2, _.once(function() {
           process.chdir(cwd);
@@ -760,7 +760,7 @@
       'moduleId=underscore'
     ];
 
-    commands.forEach(function(command) {
+    _.each(commands, function(command) {
       var expectedId = /underscore/.test(command) ? 'underscore' : 'lodash';
 
       asyncTest('`lodash exports=amd' + (command ? ' ' + command + '`' : '` using the default `moduleId`'), function() {
@@ -803,7 +803,7 @@
           vm.runInContext(data.source, context);
 
           strictEqual(actualId, expectedId, basename);
-          strictEqual(_.templates.f({ 'name': 'mustache' }), 'hallå mustache!', basename);
+          strictEqual(_.templates.f({ 'name': 'mustache' }), 'hall\xE5 mustache!', basename);
 
           delete _.templates;
           start();
@@ -816,7 +816,7 @@
       'template=' + path.join('**', '*.jst')
     ];
 
-    commands.forEach(function(command, index) {
+    _.each(commands, function(command, index) {
       asyncTest('recursive path `' + command + '`', function() {
         var start = _.after(2, _.once(function() {
           if (!isWindows) {
@@ -861,7 +861,7 @@
       'exports=none'
     ];
 
-    exportsCommands.forEach(function(command, index) {
+    _.each(exportsCommands, function(command, index) {
       asyncTest('should work with `' + command +'`', function() {
         var start = _.after(2, _.once(QUnit.start));
 
@@ -924,7 +924,7 @@
       'moduleId=none'
     ];
 
-    idCommands.forEach(function(command, index) {
+    _.each(idCommands, function(command, index) {
       var expectedId = /underscore/.test(command) ? 'underscore' : '';
 
       asyncTest('should work with `' + command + '`', function() {
@@ -1196,7 +1196,7 @@
       'template'
     ];
 
-    funcNames.forEach(function(funcName) {
+    _.each(funcNames, function(funcName) {
       asyncTest('`lodash modularize modern include=' + funcName + ' exports=node`', function() {
         var start = _.once(function() {
           process.chdir(cwd);
@@ -1233,7 +1233,7 @@
       'exports=node'
     ];
 
-    commands.forEach(function(command, index) {
+    _.each(commands, function(command, index) {
       asyncTest('module aliases', function() {
         var start = _.once(function() {
           process.chdir(cwd);
@@ -1288,8 +1288,8 @@
       '-m -o bar.js'
     ];
 
-    mapCommands.forEach(function(mapCommand) {
-      outputCommands.forEach(function(outputCommand) {
+    _.each(mapCommands, function(mapCommand) {
+      _.each(outputCommands, function(outputCommand) {
         asyncTest('`lodash ' + mapCommand + (outputCommand ? ' ' + outputCommand : '') + '`', function() {
           var callback = _.once(function(data) {
             var basename = path.basename(data.outputPath, '.js'),
@@ -1332,7 +1332,7 @@
       'strict'
     ];
 
-    modes.forEach(function(strictMode, index) {
+    _.each(modes, function(strictMode, index) {
       asyncTest(strictMode + ' should ' + (index ? 'error': 'silently fail') + ' attempting to overwrite read-only properties', function() {
         var commands = ['-s', 'include=bindAll,defaults,extend'],
             start = _.after(2, _.once(QUnit.start));
@@ -1603,7 +1603,7 @@
       'plus=cloneDeep'
     ];
 
-    commands.forEach(function(command, index) {
+    _.each(commands, function(command, index) {
       asyncTest('`lodash underscore ' + command +'`', function() {
         var start = _.after(2, _.once(QUnit.start));
 
@@ -1641,7 +1641,7 @@
       'modern plus=chain'
     ];
 
-    commands.forEach(function(command) {
+    _.each(commands, function(command) {
       asyncTest('`lodash ' + command +'`', function() {
         var start = _.after(2, _.once(QUnit.start));
 
@@ -1686,7 +1686,7 @@
       'minus'
     ];
 
-    commands.forEach(function(command) {
+    _.each(commands, function(command) {
       asyncTest('`lodash ' + command + '=runInContext`', function() {
         var start = _.after(2, _.once(QUnit.start));
 
@@ -1803,7 +1803,7 @@
       'exports=none'
     ];
 
-    commands.forEach(function(command, index) {
+    _.each(commands, function(command, index) {
       var exportType = command.split('=')[1];
 
       asyncTest('`lodash ' + command +'`', function() {
@@ -1865,7 +1865,7 @@
       'iife=define(function(){return (function(){%output%;return _}())});'
     ];
 
-    commands.forEach(function(command) {
+    _.each(commands, function(command) {
       asyncTest('`lodash ' + command +'`', function() {
         var start = _.after(2, _.once(QUnit.start));
 
@@ -1901,7 +1901,7 @@
       'include=mixin,value'
     ];
 
-    commands.forEach(function(command, index) {
+    _.each(commands, function(command, index) {
       asyncTest('`lodash ' + command +'`', function() {
         var start = _.after(2, _.once(QUnit.start));
 
@@ -1931,7 +1931,7 @@
       'moduleId=lodash exports=amd'
     ];
 
-    commands.forEach(function(command, index) {
+    _.each(commands, function(command, index) {
       var expectedId = /underscore/.test(command) ? 'underscore' : 'lodash';
 
       asyncTest('`lodash ' + command +'`', function() {
@@ -1975,7 +1975,7 @@
       '-o name_with_keywords_like_category_include_exclude_plus_minus.js'
     ];
 
-    commands.forEach(function(command) {
+    _.each(commands, function(command) {
       asyncTest('`lodash ' + command +'`', function() {
         var counter = 0,
             dirs = _.contains(command, 'c.js'),
@@ -2013,7 +2013,7 @@
       '--stdout',
     ];
 
-    commands.forEach(function(command, index) {
+    _.each(commands, function(command, index) {
       asyncTest('`lodash ' + command +'`', function() {
         var written,
             start = _.once(QUnit.start);
@@ -2202,7 +2202,7 @@
 
     var reNonCombinable = /\b(?:backbone|compat|csp|legacy|mobile|modern|underscore)\b/;
 
-    commands.forEach(function(origCommand) {
+    _.each(commands, function(origCommand) {
       _.each(['', 'modern', 'underscore'], function(otherCommand) {
         var command = (otherCommand + ' ' + origCommand).trim();
         if ((otherCommand && reNonCombinable.test(origCommand)) ||
@@ -2264,7 +2264,7 @@
             }
 
             // expand categories to function names
-            funcNames.slice().forEach(function(category) {
+            _.each(funcNames.slice(), function(category) {
               var otherNames = _.filter(categoryMap[category], function(key) {
                 var type = typeof _[key];
                 return type == 'function' || type == 'undefined';
@@ -2293,9 +2293,7 @@
               _.pull(funcNames, 'zipObject');
             }
             var lodash = context._ || {};
-            funcNames.forEach(function(funcName) {
-              testMethod(lodash, funcName, basename);
-            });
+            _.each(funcNames, _.partial(testMethod, lodash, _, basename));
 
             start();
           });
