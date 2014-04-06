@@ -880,13 +880,12 @@
       match = removeMixinCalls(match);
 
       // insert `mixin(...)` before `_.VERSION`
-      return match.replace(/(?:\n *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)?\n( *)lodash\.VERSION\b/, function(match, indent) {
-        return [
-          '',
+      return match.replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)?( *)lodash\.VERSION\b/m, function(match, indent) {
+        return indent + [
           '// add functions to `lodash.prototype`',
           'mixin(assign({}, lodash));',
-          match
-        ].join('\n' + indent);
+        ].join('\n' + indent) +
+        '\n\n' + match
       });
     });
 
@@ -931,7 +930,7 @@
     source = source.replace(/^ *lodash\.prototype\.(?:toString|valueOf) *=.+\n/gm, '');
 
     // remove `lodash.prototype` batch method assignments
-    source = source.replace(/(?:\s*\/\/.*)*\n( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+/g, '');
+    source = source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+\n/gm, '');
 
     return source;
   }
@@ -1727,7 +1726,7 @@
    * @returns {string} Returns the fork.
    */
   function getBaseCreateFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!nativeCreate)\b[\s\S]+?\n *}\(\)\);\n\1}/), 0, '');
+    return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\((?:!nativeCreate)\b[\s\S]+?\n *}\(\)\);\n\1}\n/m), 0, '');
   }
 
   /**
@@ -1869,7 +1868,7 @@
    * @returns {string} Returns the copyright/license header.
    */
   function getHeader(source) {
-    return _.result(/^(?:\s*\/\/.*|\s*\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)*\n/.exec(source), 0, '');
+    return _.result(/^(?:\s*\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\s*\/\/.*)*\n/.exec(source), 0, '');
   }
 
   /**
@@ -1891,7 +1890,7 @@
    * @returns {string} Returns the fork.
    */
   function getIsArgumentsFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n *};\n\1}/), 0, '');
+    return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n *};\n\1}\n/m), 0, '');
   }
 
   /**
@@ -1915,7 +1914,7 @@
    * @returns {string} Returns the fork.
    */
   function getIsElementFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(!support\.dom\b[\s\S]+?\n *};\n\1}/), 0, '');
+    return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!support\.dom\b[\s\S]+?\n *};\n\1}\n/m), 0, '');
   }
 
   /**
@@ -1926,7 +1925,7 @@
    * @returns {string} Returns the fork.
    */
   function getIsFunctionFork(source) {
-    return _.result(source.match(/(?:\s*\/\/.*)*\n( *)if *\(isFunction\(\/x\/[\s\S]+?\n *};\n\1}/), 0, '');
+    return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(isFunction\(\/x\/[\s\S]+?\n *};\n\1}\n/m), 0, '');
   }
 
   /**
@@ -1937,7 +1936,7 @@
    * @returns {string} Returns the method assignments snippet.
    */
   function getMethodAssignments(source) {
-    return _.result(source.match(/\n\n(?:\s*\/\/.*)*\s*lodash\.[$\w]+\s*=[\s\S]+lodash\.[$\w]+\s=.+/), 0, '');
+    return _.result(source.match(/\n\n(?: *\/\/.*\n)* *lodash\.[$\w]+\s*=[\s\S]+lodash\.[$\w]+\s=.+/), 0, '');
   }
 
   /**
@@ -2252,9 +2251,9 @@
 
     // remove all `lodash.prototype` additions
     source = source
-      .replace(/(?:\s*\/\/.*)*\n( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+/g, '')
-      .replace(/(?:\s*\/\/.*)*\n( *)baseEach\(\['[\s\S]+?\n\1}.+/g, '')
-      .replace(/(?:\s*\/\/.*)*\n *lodash\.prototype\.[\s\S]+?;/g, '');
+      .replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+\n/gm, '')
+      .replace(/^(?: *\/\/.*\n)*( *)baseEach\(\['[\s\S]+?\n\1}.+\n/gm, '')
+      .replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.[\s\S]+?;\n/gm, '');
 
     // replace `lodash` with a simpler version
     source = replaceFunction(source, 'lodash', [
@@ -2292,9 +2291,9 @@
     _.each(['baseBind', 'baseCreateCallback', 'baseCreateWrapper', 'createWrapper'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
         return match
-          .replace(/(?:\s*\/\/.*)*\n( *)var data *=[\s\S]+?\n\1}/, '')
-          .replace(/(?:\s*\/\/.*)*\n( *)if *\(data\b[\s\S]+?\n\1}/, '')
-          .replace(/(?:\s*\/\/.*)*\n.+?setData.+/, '')
+          .replace(/^(?: *\/\/.*\n)*( *)var data *=[\s\S]+?\n\1}\n/m, '')
+          .replace(/^(?: *\/\/.*\n)*( *)if *\(data\b[\s\S]+?\n\1}\n/m, '')
+          .replace(/^(?: *\/\/.*\n)*.+?setData.+\n/m, '')
           .replace(/^ *(?=data *=[^=])/m, '$&var ')
       });
     });
@@ -2461,7 +2460,7 @@
    * @returns {string} Returns the modified source.
    */
   function removeMixinCalls(source) {
-    return source.replace(/(?:\s*\/\/.*)*\n( *)mixin\((?:.+?|[\s\S]+?\1(?:}.+?)?)\);/g, '');
+    return source.replace(/^(?: *\/\/.*\n)*( *)mixin\((?:.+?|[\s\S]+?\1(?:}.+?)?)\);\n/gm, '');
   }
 
   /**
@@ -2508,13 +2507,13 @@
     // remove function scaffolding, leaving most of its content
     source = source.replace(matchFunction(source, 'runInContext', true), function(match) {
       match = replaceIndent(match, 2, 1);
-      return match.replace(/^[\s\S]+?function runInContext\b[\s\S]+?context *= *context.+| *return lodash\b[\s\S]+$/g, '');
+      return match.replace(/^[\s\S]+?function runInContext\b[\s\S]+?context *= *context.+\s+| *return lodash\b[\s\S]+$/g, '');
     });
 
     // cleanup adjusted source
     return source
       .replace(/\bcontext\b/g, 'root')
-      .replace(/(?:\n +\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/)?\n *var Array *=[\s\S]+?;\n/, '')
+      .replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)? *var Array *=[\s\S]+?;\n/m, '')
       .replace(/(\breturn *|= *)_([;)])/g, '$1lodash$2')
       .replace(/^(?: *\/\/.*\n)* *var _ *= *runInContext\b.+\n+/m, '');
   }
@@ -2528,7 +2527,7 @@
    * @returns {string} Returns the modified source.
    */
   function removeSpliceObjectsFix(source) {
-    return source.replace(/(?:\s*\/\/.*)*\n( *)if *\(!support\.spliceObjects\b[\s\S]+?(?:\{\s*}|\n\1})/, '');
+    return source.replace(/^(?: *\/\/.*\n)*( *)if *\(!support\.spliceObjects\b[\s\S]+?(?:\{\s*}|\n\1})\n/m, '');
   }
 
   /**
@@ -2716,7 +2715,7 @@
 
     // remove `support.ownLast` from `shimIsPlainObject`
     source = source.replace(matchFunction(source, 'shimIsPlainObject'), function(match) {
-      return match.replace(/(?:\s*\/\/.*)*\n( *)if *\(support\.ownLast\b[\s\S]+?\n\1}/, '');
+      return match.replace(/^(?: *\/\/.*\n)*( *)if *\(support\.ownLast\b[\s\S]+?\n\1}\n/m, '');
     });
 
     return source;
@@ -4634,7 +4633,7 @@
               // assign `settings` using `template.imports`
               .replace(/= *templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings')
               // remove debug sourceURL use in `_.template`
-              .replace(/(?:\s*\/\/.*\n)* *var sourceURL\b[^;]+;|\+ *sourceURL/g, '');
+              .replace(/^(?: *\/\/.*\n)* *var sourceURL\b[^;]+;\n|\+ *sourceURL/gm, '');
           });
 
           // replace `root` with the appropriate global object for the specified `exports` option
