@@ -969,7 +969,7 @@
             context = createContext(),
             source = data.source;
 
-        strictEqual(_.startsWith(source, 'null'), false, basename);
+        ok(!_.startsWith(source, 'null'), basename);
 
         context._ = _;
         vm.runInContext(source, context);
@@ -1184,16 +1184,18 @@
   (function() {
     var outputPath = path.join(__dirname, 'a');
 
-    var setup = function() {
-      process.chdir(__dirname);
-      fs.rmrfSync(outputPath);
-    };
+    var reLicense = /@license\b/;
 
     var funcNames = [
       'lodash',
       'mixin',
       'template'
     ];
+
+    function setup() {
+      process.chdir(__dirname);
+      fs.rmrfSync(outputPath);
+    }
 
     _.each(funcNames, function(funcName) {
       asyncTest('`lodash modularize modern include=' + funcName + ' exports=node`', function() {
@@ -1205,7 +1207,6 @@
         setup();
 
         build(['modularize', 'modern', 'include=' + funcName, 'exports=node', '-o', outputPath], function(data) {
-          var reLicense = /@license/;
           emptyObject(require.cache);
 
           if (funcName == 'lodash') {
@@ -1218,8 +1219,8 @@
             lodash = {};
             lodash[funcName] = require(modulePath);
 
-            strictEqual(fs.existsSync(path.join(outputPath, 'index.js')), false, 'should not create an index.js file');
-            strictEqual(reLicense.test(fs.readFileSync(require.resolve(modulePath), 'utf-8')), false, funcName + ' module should not preserve the copyright header');
+            ok(!fs.existsSync(path.join(outputPath, 'index.js')), 'should not create an index.js file');
+            ok(!reLicense.test(fs.readFileSync(require.resolve(modulePath), 'utf-8')), funcName + ' module should not preserve the copyright header');
             testMethod(lodash, funcName);
           }
           start();
@@ -1486,7 +1487,7 @@
 
         object = {};
         lodash.mixin(object, { 'a': _.noop });
-        strictEqual('a' in object, false, '_.mixin should not accept a destination object: ' + basename);
+        ok(!('a' in object), '_.mixin should not accept a destination object: ' + basename);
 
         // avoid comparing objects created by `lodash` methods with `deepEqual`
         // because QUnit has problems comparing objects from different realms
@@ -1514,8 +1515,8 @@
         deepEqual(actual, [undefined], '_.tap should ignore `thisArg`: ' + basename);
 
         strictEqual(lodash.template('${a}', object), '${a}', '_.template should ignore ES6 delimiters: ' + basename);
-        strictEqual('support' in lodash, false, '_.support should not exist: ' + basename);
-        strictEqual('imports' in lodash.templateSettings, false, '_.templateSettings should not have an "imports" property: ' + basename);
+        ok(!('support' in lodash), '_.support should not exist: ' + basename);
+        ok(!('imports' in lodash.templateSettings), '_.templateSettings should not have an "imports" property: ' + basename);
 
         array = [[2, 1, 2], [1, 2, 1]];
         actual = _.map(array, lodash.uniq);
@@ -1580,7 +1581,7 @@
         var lodash = context._;
 
         _.each(lodashOnlyFuncs.concat('assign'), function(funcName) {
-          strictEqual(funcName in lodash, false, '_.' + funcName + ' should not exist: ' + basename);
+          ok(!(funcName in lodash), '_.' + funcName + ' should not exist: ' + basename);
         });
 
         start();
@@ -1665,8 +1666,8 @@
 
           var wrapped = lodash(1);
           strictEqual(wrapped.identity(), 1, '_(...) wrapped values are not chainable by default: ' + basename);
-          strictEqual(String(wrapped) === '1', false, '_#toString should not be implemented: ' + basename);
-          strictEqual(Number(wrapped) === 1 , false, '_#valueOf should not be implemented: ' + basename);
+          ok(String(wrapped) !== '1', '_#toString should not be implemented: ' + basename);
+          ok(Number(wrapped) !== 1 , '_#valueOf should not be implemented: ' + basename);
 
           wrapped.chain();
           ok(wrapped.has('x') instanceof lodash, '_#has returns wrapped values when chaining: ' + basename);
@@ -1711,7 +1712,7 @@
           }, array);
 
           deepEqual(actual, ['0'], basename);
-          strictEqual('runInContext' in lodash, false, basename);
+          ok(!('runInContext' in lodash), basename);
 
           start();
         });
@@ -1727,7 +1728,7 @@
           vm.runInContext(data.source, context);
 
           var lodash = context._;
-          strictEqual(lodash([1]) instanceof lodash, false, basename);
+          ok(!(lodash([1]) instanceof lodash), basename);
           deepEqual(_.keys(lodash.prototype), [], basename);
 
           start();
@@ -2039,7 +2040,7 @@
         };
 
         build(['exports=none', 'include=none'].concat(command.split(' ')), function(data) {
-          strictEqual('outputPath' in data, false);
+          ok(!('outputPath' in data));
           strictEqual(written, data.source);
           strictEqual(arguments.length, 1);
 
@@ -2220,11 +2221,12 @@
 
     _.each(commands, function(origCommand) {
       _.each(['', 'modern', 'underscore'], function(otherCommand) {
-        var command = _.trim(otherCommand + ' ' + origCommand);
         if ((otherCommand && reNonCombinable.test(origCommand)) ||
             (otherCommand == 'underscore' && /\bcategory\b/.test(origCommand))) {
           return;
         }
+        var command = _.trim(otherCommand + ' ' + origCommand);
+
         asyncTest('`lodash ' + command +'`', function() {
           var start = _.after(2, _.once(QUnit.start));
 
