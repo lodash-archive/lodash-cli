@@ -4456,6 +4456,7 @@
         }
         // alias `baseCreateCallback` as `createCallback`
         if (_.contains(minusFuncs, 'pluck') && _.contains(minusFuncs, 'where')) {
+          _.pull(funcDepMap.createCallback, 'matches', 'property');
           source = replaceFunction(source, 'createCallback', 'var createCallback = baseCreateCallback;');
         }
         // remove "_.pluck" or "_.where" style callback support from `_.createCallback`
@@ -4466,7 +4467,8 @@
               funcDepMap.createCallback.push('identity');
 
               source = source.replace(matchFunction(source, 'createCallback'), function(match) {
-                var otherName = funcName == 'pluck' ? 'property' : 'matches';
+                var otherName = funcName == 'where' ? 'matches' : 'property';
+                _.pull(funcDepMap.createCallback, otherName);
                 return match.replace(RegExp('\\b' + otherName + '\\([^)]+\\)', 'm'), 'identity');
               });
             }
