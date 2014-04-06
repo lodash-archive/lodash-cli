@@ -1206,7 +1206,7 @@
 
         setup();
 
-        build(['modularize', 'modern', 'include=' + funcName, 'exports=node', '-o', outputPath], function(data) {
+        build(['modularize', 'modern', 'include=' + funcName, 'exports=node', '-o', outputPath], function() {
           emptyObject(require.cache);
 
           if (funcName == 'lodash') {
@@ -1242,7 +1242,7 @@
 
         setup();
 
-        build(['modularize', 'modern', command, '-o', outputPath], function(data) {
+        build(['modularize', 'modern', command, '-o', outputPath], function() {
           emptyObject(require.cache);
           var lodash = require(outputPath);
 
@@ -1266,6 +1266,30 @@
 
           start();
         });
+      });
+    });
+
+    asyncTest('`lodash modularize include=createCallback minus=pluck,where`', function() {
+      var start = _.once(function() {
+        process.chdir(cwd);
+        QUnit.start();
+      });
+
+      setup();
+
+      build(['modularize', 'include=createCallback', 'minus=pluck,where', 'exports=node', '-o', outputPath], function() {
+        emptyObject(require.cache);
+
+        var lodash = require(outputPath),
+            callback = lodash.createCallback('x'),
+            object = { 'x': 1 };
+
+        strictEqual(callback(object), object, basename);
+
+        callback = lodash.createCallback(object);
+        strictEqual(callback(object), object, basename);
+
+        start();
       });
     });
   }());
@@ -1746,9 +1770,9 @@
         vm.runInContext(data.source, context);
 
         var lodash = context._,
+            callback = lodash.createCallback('x'),
             object = { 'x': 1 };
 
-        var callback = lodash.createCallback('x');
         strictEqual(callback(object), object, basename);
 
         callback = lodash.createCallback(object);
@@ -1768,9 +1792,9 @@
         vm.runInContext(data.source, context);
 
         var lodash = context._,
+            callback = lodash.createCallback('x'),
             object = { 'x': 1 };
 
-        var callback = lodash.createCallback('x');
         strictEqual(callback(object), 1, basename);
 
         callback = lodash.createCallback(object);
@@ -1790,9 +1814,9 @@
         vm.runInContext(data.source, context);
 
         var lodash = context._,
+            callback = lodash.createCallback('x'),
             object = { 'x': 1 };
 
-        var callback = lodash.createCallback('x');
         strictEqual(callback(object), object, basename);
 
         callback = lodash.createCallback(object);
