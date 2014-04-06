@@ -42,7 +42,7 @@
   var push = Array.prototype.push;
 
   /** The time limit for the tests to run (milliseconds) */
-  var timeLimit = process.argv.reduce(function(result, value, index) {
+  var timeLimit = _.reduce(process.argv, function(result, value, index) {
     if (/--time-limit/.test(value)) {
       return parseInt(process.argv[index + 1].replace(/(\d+h)?(\d+m)?(\d+s)?/, function(match, h, m, s) {
         return ((parseInt(h) || 0) * 3600000) +
@@ -401,9 +401,7 @@
   ];
 
   /** List of all functions */
-  var allFuncs = _.functions(_).filter(function(funcName) {
-    return !/^_/.test(funcName);
-  });
+  var allFuncs = _.filter(_.functions(_), _.negate(_.bind(RegExp.prototype.test, /^_/)));
 
   /** List of all Lo-Dash functions */
   var lodashFuncs = allFuncs.slice();
@@ -480,7 +478,7 @@
    * @returns {Array} Returns a new array of expanded function names.
    */
   function expandFuncNames(funcNames) {
-    return funcNames.reduce(function(result, funcName) {
+    return _.reduce(funcNames, function(result, funcName) {
       var realName = getRealName(funcName);
       result.push(realName);
       push.apply(result, getAliases(realName));
@@ -1036,10 +1034,10 @@
     asyncTest('debug custom', function() {
       var start = _.once(QUnit.start);
       build(['-d', '-s', 'backbone'], function(data) {
-        strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
-
         var comment = _.result(data.source.match(reLicense), 0, '');
         ok(_.contains(comment, 'Custom Build'));
+        strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
+
         start();
       });
     });
@@ -1055,10 +1053,10 @@
     asyncTest('minified custom', function() {
       var start = _.once(QUnit.start);
       build(['-m', '-s', 'backbone'], function(data) {
-        strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
-
         var comment = _.result(data.source.match(reLicense), 0, '');
         ok(_.contains(comment, 'Custom Build'));
+        strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
+
         start();
       });
     });
@@ -1170,9 +1168,10 @@
             context = createContext();
 
         vm.runInContext(data.source, context);
-        var lodash = context._;
 
+        var lodash = context._;
         strictEqual(lodash.isPlainObject(Object.create(null)), true, basename);
+
         start();
       });
     });
@@ -1345,6 +1344,7 @@
               context = createContext();
 
           vm.runInContext(data.source, context);
+
           var lodash = context._;
 
           var actual = _.every([
@@ -1362,6 +1362,7 @@
           });
 
           ok(actual, basename);
+
           start();
         });
       });
@@ -1381,6 +1382,7 @@
             context = createContext();
 
         vm.runInContext(data.source, context);
+
         var lodash = context._;
 
         var object = {
@@ -1470,7 +1472,7 @@
         strictEqual(lodash.isEqual(object, { 'a': 1, 'b': 0, 'c': 3 }), false, '_.isEqual: ' + basename);
 
         actual = lodash.isEqual('a', 'b', function(a, b) {
-          return this[a] == this[b];
+          return this[a] === this[b];
         }, { 'a': 1, 'b': 1 });
 
         strictEqual(actual, false, '_.isEqual should ignore `callback` and `thisArg`: ' + basename);
@@ -1483,16 +1485,16 @@
         deepEqual(_.map(array, lodash.min), [1, 4, 7], '_.min should work when used as `callback` for _.map: ' + basename);
 
         object = {};
-        lodash.mixin(object, { 'a': function(a) { return a[0]; } });
+        lodash.mixin(object, { 'a': _.noop });
         strictEqual('a' in object, false, '_.mixin should not accept a destination object: ' + basename);
 
         // avoid comparing objects created by `lodash` methods with `deepEqual`
         // because QUnit has problems comparing objects from different realms
         object = { 'a': 1, 'b': 2, 'c': 3 };
-        actual = lodash.omit(object, function(value) { return value == 3; });
+        actual = lodash.omit(object, function(value) { return value === 3; });
         deepEqual(_.keys(actual).sort(), ['a', 'b', 'c'], '_.omit should not accept a `callback`: ' + basename);
 
-        actual = lodash.pick(object, function(value) { return value != 3; });
+        actual = lodash.pick(object, function(value) { return value !== 3; });
         deepEqual(_.keys(actual), [], '_.pick should not accept a `callback`: ' + basename);
 
         actual = lodash.omit({ '0': 'a' }, 0);
@@ -1561,6 +1563,7 @@
 
         strictEqual(actualId, 'underscore', basename);
         ok(_.isFunction(context._), basename);
+
         start();
       });
     });
@@ -1573,6 +1576,7 @@
             context = createContext();
 
         vm.runInContext(data.source, context);
+
         var lodash = context._;
 
         _.each(lodashOnlyFuncs.concat('assign'), function(funcName) {
@@ -1591,9 +1595,10 @@
             context = createContext();
 
         vm.runInContext(data.source, context);
-        var lodash = context._;
 
+        var lodash = context._;
         strictEqual(lodash.partial(_.identity, 2)(), 2, '_.partial: ' + basename);
+
         start();
       });
     });
@@ -1613,6 +1618,7 @@
               context = createContext();
 
           vm.runInContext(data.source, context, true);
+
           var lodash = context._;
 
           _.each(index ? ['clone','cloneDeep'] : ['clone'], function(funcName) {
@@ -1706,6 +1712,7 @@
 
           deepEqual(actual, ['0'], basename);
           strictEqual('runInContext' in lodash, false, basename);
+
           start();
         });
       });
@@ -1718,10 +1725,11 @@
               context = createContext();
 
           vm.runInContext(data.source, context);
-          var lodash = context._;
 
+          var lodash = context._;
           strictEqual(lodash([1]) instanceof lodash, false, basename);
           deepEqual(_.keys(lodash.prototype), [], basename);
+
           start();
         });
       });
@@ -1744,6 +1752,7 @@
 
         callback = lodash.createCallback(object);
         strictEqual(callback(object), true, basename);
+
         start();
       });
     });
@@ -1765,6 +1774,7 @@
 
         callback = lodash.createCallback(object);
         strictEqual(callback(object), object, basename);
+
         start();
       });
     });
@@ -1786,6 +1796,7 @@
 
         callback = lodash.createCallback(object);
         strictEqual(callback(object), object, basename);
+
         start();
       });
     });
@@ -1885,6 +1896,7 @@
           }
           var lodash = context.lodash || {};
           ok(_.isString(lodash.VERSION), basename);
+
           start();
         });
       });
@@ -1911,11 +1923,13 @@
               context = createContext();
 
           vm.runInContext(data.source, context);
-          var lodash = context._;
 
+          var lodash = context._;
           lodash.mixin({ 'x': _.noop });
+
           strictEqual(lodash.x, _.noop, basename);
           strictEqual(typeof lodash.prototype.x, 'function', basename);
+
           start();
         });
       });
@@ -1953,6 +1967,7 @@
 
           strictEqual(actualId, expectedId, basename);
           ok(_.isFunction(context._), basename);
+
           start();
         });
       });
@@ -2107,7 +2122,7 @@
         .replace(/[\s;]/g, '');
     }
 
-    funcNames.forEach(function(funcName) {
+    _.each(funcNames, function(funcName) {
       _.times(2, function(index) {
         var command = 'underscore plus=' + funcName,
             expected = true;
@@ -2159,6 +2174,7 @@
               strictEqual(srcFnValue === bldFnValue, expected, '\n' + srcFnValue + '\n' + bldFnValue);
             }
             testMethod(lodash, funcName, basename);
+
             start();
           });
         });
@@ -2194,18 +2210,17 @@
       'mobile strict category=functions exports=amd,global plus=pick,uniq',
       'modern strict include=isArguments,isArray,isFunction,isPlainObject,keys',
       'underscore include=debounce,throttle plus=after minus=throttle'
-    ]
-    .concat(
-      allFuncs.map(function(funcName) {
-        return 'include=' + funcName;
-      })
-    );
+    ];
+
+    push.apply(commands, _.map(allFuncs, function(funcName) {
+      return 'include=' + funcName;
+    }));
 
     var reNonCombinable = /\b(?:backbone|compat|csp|legacy|mobile|modern|underscore)\b/;
 
     _.each(commands, function(origCommand) {
       _.each(['', 'modern', 'underscore'], function(otherCommand) {
-        var command = (otherCommand + ' ' + origCommand).trim();
+        var command = _.trim(otherCommand + ' ' + origCommand);
         if ((otherCommand && reNonCombinable.test(origCommand)) ||
             (otherCommand == 'underscore' && /\bcategory\b/.test(origCommand))) {
           return;
@@ -2232,9 +2247,8 @@
             }
             if (/\bcategory=/.test(command)) {
               var categories = command.match(/\bcategory=(\S*)/)[1].split(/, */);
-              funcNames = (funcNames || []).concat(categories.map(function(category) {
-                return _.capitalize(category.toLowerCase());
-              }));
+              funcNames || (funcNames = []);
+              push.apply(funcNames, _.map(categories, _.compose(_.capitalize, _.partial(_.result, _, 'toLowerCase'))));
             }
             // add function names required by Backbone and Underscore builds
             if (/\bbackbone\b/.test(command) && !funcNames) {
@@ -2253,7 +2267,7 @@
             }
             if (/\bplus=/.test(command)) {
               var otherNames = command.match(/\bplus=(\S*)/)[1].split(/, */);
-              funcNames = funcNames.concat(expandFuncNames(otherNames));
+              push.apply(funcNames, expandFuncNames(otherNames));
             }
             if (/\bminus=/.test(command)) {
               otherNames = command.match(/\bminus=(\S*)/)[1].split(/, */);
