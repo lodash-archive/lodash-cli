@@ -742,17 +742,13 @@
   ];
 
   /** List of all property dependencies */
-  var objDependencies = _.uniq(_.transform(objDependencyMap, function(result, objNames) {
-    push.apply(result, objNames);
-  }, []));
+  var objDependencies = _.uniq(_.transform(objDependencyMap, _.bind(push.apply, push), []));
 
   /** List of all variable dependencies */
-  var varDependencies = _.uniq(_.transform(varDependencyMap, function(result, varNames) {
-    push.apply(result, varNames);
-  }, []));
+  var varDependencies = _.uniq(_.transform(varDependencyMap, _.bind(push.apply, push), []));
 
   /** List of all functions */
-  var allFuncs = _.difference(_.keys(funcDependencyMap), objDependencies, varDependencies).filter(function(key) {
+  var allFuncs = _.filter(_.difference(_.keys(funcDependencyMap), objDependencies, varDependencies), function(key) {
     var type = typeof _[key];
     return type == 'function' || type == 'undefined';
   });
@@ -878,11 +874,9 @@
         ]
     ).join('\n'));
 
-    // move `mixin(...)`
+    // move `mixin(...)` before `_.VERSION`
     source = source.replace(getMethodAssignments(source), function(match) {
       match = removeMixinCalls(match);
-
-      // insert `mixin(...)` before `_.VERSION`
       return match.replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)?( *)lodash\.VERSION\b/m, function(match, indent) {
         return indent + [
           '// add functions to `lodash.prototype`',
@@ -1027,11 +1021,8 @@
       return _.some(inlineMap, _.partial(_.contains, _, identifier, 0));
     });
 
-    var categories = _.uniq(_.compact(identifiers.map(function(identifier) {
-      return getCategory(identifier, funcDepMap);
-    }))).sort();
-
-    // remove `lodash` from `identifiers` because it's built separately
+    // remove `lodash` from `identifiers` after `categories` is resolved because it's built separately
+    var categories = _.uniq(_.compact(_.map(identifiers, _.partial(getCategory, _, funcDepMap)))).sort();
     _.pull(identifiers, 'lodash');
 
     // prepare state
@@ -1039,7 +1030,7 @@
     state.plusFuncs = state.minusFuncs = empty;
 
     // create modules for each identifier
-    identifiers.forEach(function(identifier) {
+    _.each(identifiers, function(identifier) {
       var iife = [],
           isInternal = isPrivate(identifier),
           moduleName = isNpm ? 'lodash.' + (isInternal ? '_' : '') + identifier.toLowerCase() : identifier,
@@ -1061,7 +1052,7 @@
       }, []), inlinees).sort();
 
       var depPaths = isNpm
-        ? depNames.map(function(depName) { return 'lodash.' + (isPrivate(depName) ? '_' : '') + depName.toLowerCase(); })
+        ? _.map(depNames, function(depName) { return 'lodash.' + (isPrivate(depName) ? '_' : '') + depName.toLowerCase(); })
         : getDepPaths(depNames, modulePath, funcDepMap);
 
       if (isAMD) {
@@ -1159,7 +1150,7 @@
         return;
       }
       var categoryDeps = _.invoke(categories, 'toLowerCase'),
-          categoryDepPaths = categoryDeps.map(function(depName) { return './' + depName; }),
+          categoryDepPaths = _.map(categoryDeps, function(depName) { return './' + depName; }),
           identifier = 'lodash',
           basename = identifier,
           modulePath = getModulePath(identifier, funcDepMap);
@@ -1295,7 +1286,7 @@
 
     // create category modules
     if (!isNpm) {
-      categories.forEach(function(category) {
+      _.each(categories, function(category) {
         var depNames = _.intersection(_.union(categoryMap[category], categoryFluxMap[category]), identifiers).sort(),
             depPaths = getDepPaths(depNames, null, funcDepMap),
             iife = [];
@@ -1449,7 +1440,7 @@
           insertAt = source.length,
           templates = createMap();
 
-      filePaths.forEach(function(filePath) {
+      _.each(filePaths, function(filePath) {
         var string = fs.readFileSync(filePath, 'utf8'),
             precompiled = cleanupCompiled(getFunctionSource(_.template(string, null, settings), 2));
 
@@ -1459,12 +1450,12 @@
             props = clipped.split('/');
 
         // create namespace objects
-        props.reduce(function(object, key) {
+        _.reduce(props, function(object, key) {
           return object[key] || (object[key] = createMap());
         }, templates);
 
         // escape namespace property names
-        props = props.map(function(key) {
+        props = _.map(props, function(key) {
           return "['" + key.replace(/['\n\r\t]/g, '\\$&') + "']";
         });
 
@@ -1764,9 +1755,7 @@
    * @returns {string[]} Returns the dependency paths.
    */
   function getDepPaths(depNames, fromPath, depMap) {
-    return _.map(depNames, function(depName) {
-      return getDepPath(depName, fromPath, depMap);
-    });
+    return _.map(depNames, _.partial(getDepPath, _, fromPath, depMap));
   }
 
   /**
@@ -3146,14 +3135,10 @@
       /*----------------------------------------------------------------------*/
 
       // categories of functions to include in the build
-      var categoryOptions = _.map(getOption(options, 'category', []), function(category) {
-        return _.capitalize(category.toLowerCase());
-      });
+      var categoryOptions = _.map(getOption(options, 'category', []), _.compose(_.capitalize, _.partial(_.result, _, 'toLowerCase')));
 
       // functions to include in the build
-      var includeFuncs = categoryOptions.concat(_.map(getOption(options, 'include', []), function(funcName) {
-        return getRealName(funcName, funcDepMap);
-      }));
+      var includeFuncs = categoryOptions.concat(_.map(getOption(options, 'include', []), _.partial(getRealName, _, funcDepMap)));
 
       // properties to include in the build
       var includeObjs = _.intersection(includeFuncs, objDependencies);
@@ -3162,21 +3147,17 @@
       var includeVars = _.intersection(includeFuncs, varDependencies);
 
       // functions to remove from the build
-      var minusFuncs = _.map(_.union(getOption(options, 'exclude', []), getOption(options, 'minus', [])), function(funcName) {
-        return getRealName(funcName, funcDepMap);
-      });
+      var minusFuncs = _.map(_.union(getOption(options, 'exclude', []), getOption(options, 'minus', [])), _.partial(getRealName, _, funcDepMap));
 
       // functions to add to the build
-      var plusFuncs = _.map(getOption(options, 'plus', []), function(funcName) {
-        return getRealName(funcName, funcDepMap);
-      });
+      var plusFuncs = _.map(getOption(options, 'plus', []), _.partial(getRealName, _, funcDepMap));
 
       // expand categories to function names
       _.each([includeFuncs, minusFuncs, plusFuncs], function(funcNames) {
         var categories = _.intersection(funcNames, allCategories);
 
-        categories.forEach(function(category) {
-          var otherFuncs = getNamesByCategory(category).filter(function(key) {
+        _.each(categories, function(category) {
+          var otherFuncs = _.filter(getNamesByCategory(category), function(key) {
             var type = typeof _[key];
             return type == 'function' || type == 'undefined';
           });
@@ -4781,7 +4762,7 @@
       }
 
       // remove functions from the build
-      allFuncs.forEach(function(funcName) {
+      _.each(allFuncs, function(funcName) {
         if (!_.contains(buildFuncs, funcName) &&
             !(funcName == 'lodash' && !isModularize)) {
           source = removeFunction(source, funcName);
