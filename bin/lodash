@@ -29,8 +29,8 @@
   /** Used to detect the JSDoc `@type` tag of "Function" */
   var reFuncTag = /^ *\* *@type +Function\b/im;
 
-  /** Used to detect if a source snippet is a function */
-  var reFuncSource = /\b(?:function(?:\s+[$\w]+)?|create[A-Z][a-z]+|template)\(/;
+  /** Used to detect if a string is a function snippet */
+  var reFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|create[A-Z][a-z]+|template)\(/;
 
   /** Used to detect the Node.js executable in command-line arguments */
   var reNode = RegExp('(?:^|' + path.sepEscaped + ')node(?:\\.exe)?$', 'i');
@@ -2089,6 +2089,21 @@
   }
 
   /**
+   * Checks if `source` is a function snippet.
+   *
+   * @private
+   * @param {string} source The source to inspect.
+   * @returns {boolean} Returns `true` for a function snippet, else `false`.
+   */
+  function isFunctionSnippet(source) {
+    var header = getHeader(source);
+    if (header && reFuncTag.test(header)) {
+      return true;
+    }
+    return reFuncSnippet.test(source.replace(header, ''));
+  }
+
+  /**
    * Checks if `funcName` is a private function.
    *
    * @private
@@ -2142,11 +2157,11 @@
       return result || (result = source.match(RegExp(
         '^(' + multilineComment + ')' +
         '('  + reSource + ')'
-      , 'm'))) && result.slice(1, 3);
+      , 'm')));
     }, null);
 
-    if (result && (reFuncTag.test(result[0]) || reFuncSource.test(result[1]))) {
-      return (leadingComments ? result[0] : '') + result[1];
+    if (result && isFunctionSnippet(result[0])) {
+      return (leadingComments ? result[1] : '') + result[2];
     }
     return '';
   }
@@ -2876,7 +2891,7 @@
     }
     return source.replace(snippet, function(match) {
       var header = checkFuncTag ? getHeader(match) : '';
-      if (header && !(reFuncTag.test(header) || reFuncSource.test(snippet.replace(header, '')))) {
+      if (header && !isFunctionSnippet(snippet)) {
         header = header.replace(/^( *)\* *(?:@(?:category|param|returns)\b|\/)/m, function(match, indent) {
           return indent + '* @type Function\n' + match;
         });
