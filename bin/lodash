@@ -1024,15 +1024,12 @@
       return _.some(inlineMap, _.partial(_.contains, _, identifier, 0));
     });
 
-    // remove `lodash` from `identifiers` because it's built separately
-    _.pull(identifiers, 'lodash');
-
     // prepare state
     state.isAMD = state.isCommonJS = state.isNode = state.isNpm = false;
     state.plusFuncs = state.minusFuncs = empty;
 
-    // create modules for each identifier
-    _.each(identifiers, function(identifier) {
+    // create modules for each identifier, except `lodash` because it's built separately
+    _.each(_.without(identifiers, 'lodash'), function(identifier) {
       var categories = getCategories(identifier, funcDepMap);
       if (_.isEmpty(categories)) {
         categories.push(null);
@@ -1301,7 +1298,7 @@
       var categories = _.uniq(_.compact(_.flatten(_.map(identifiers, _.partial(getCategories, _, funcDepMap)))));
 
       _.each(categories, function(category) {
-        var depNames = _.intersection(getNamesByCategory(category), identifiers).sort(),
+        var depNames = _.intersection(getNamesByCategory(category), _.without(identifiers, 'lodash')).sort(),
             depPaths = getDepPaths(depNames, null, funcDepMap),
             iife = [];
 
