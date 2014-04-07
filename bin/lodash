@@ -64,6 +64,7 @@
     'object': 'zipObject',
     'select': 'filter',
     'tail': 'rest',
+    'toJSON': 'wrapperValueOf',
     'unique': 'uniq',
     'unzip': 'zip',
     'value': 'wrapperValueOf'
@@ -87,7 +88,7 @@
     'rest': ['tail'],
     'some': ['any'],
     'uniq': ['unique'],
-    'wrapperValueOf': ['value'],
+    'wrapperValueOf': ['toJSON', 'value'],
     'zip': ['unzip'],
     'zipObject': ['object']
   });
@@ -926,8 +927,8 @@
       ].join('\n' + indent);
     });
 
-    // remove `lodash.prototype.toString` and `lodash.prototype.valueOf` assignments
-    source = source.replace(/^ *lodash\.prototype\.(?:toString|valueOf) *=.+\n/gm, '');
+    // remove `lodash.prototype` methods assignments for `toJSON`, `toString`, and `valueOf`
+    source = source.replace(/^ *lodash\.prototype\.(?:toJSON|toString|valueOf) *=.+\n/gm, '');
 
     // remove `lodash.prototype` batch method assignments
     source = source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+\n/gm, '');

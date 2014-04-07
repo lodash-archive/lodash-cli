@@ -73,6 +73,7 @@
     'object': 'zipObject',
     'select': 'filter',
     'tail': 'rest',
+    'toJSON': 'wrapperValueOf',
     'unique': 'uniq',
     'unzip': 'zip',
     'value': 'wrapperValueOf'
@@ -96,7 +97,7 @@
     'rest': ['tail'],
     'some': ['any'],
     'uniq': ['unique'],
-    'wrapperValueOf': ['value'],
+    'wrapperValueOf': ['toJSON', 'value'],
     'zip': ['unzip'],
     'zipObject': ['object']
   });
@@ -1692,6 +1693,7 @@
 
           var wrapped = lodash(1);
           strictEqual(wrapped.identity(), 1, '_(...) wrapped values are not chainable by default: ' + basename);
+          ok(JSON.stringify(wrapped) !== '1' , '_#toJSON should not be implemented: ' + basename);
           ok(String(wrapped) !== '1', '_#toString should not be implemented: ' + basename);
           ok(Number(wrapped) !== 1 , '_#valueOf should not be implemented: ' + basename);
 
