@@ -26,8 +26,11 @@
   /** Used to replace string literals with tokens */
   var stringToken = '__lodash@' + _.VERSION + '__token__';
 
-  /** Used to detect the JSDoc `@type` tag of functions */
+  /** Used to detect the JSDoc `@type` tag of "Function" */
   var reFuncTag = /^ *\* *@type +Function\b/im;
+
+  /** Used to detect if a source snippet is a function */
+  var reFuncSource = /\b(?:function(?:\s+[$\w]+)?|create[A-Z][a-z]+|template)\(/;
 
   /** Used to detect the Node.js executable in command-line arguments */
   var reNode = RegExp('(?:^|' + path.sepEscaped + ')node(?:\\.exe)?$', 'i');
@@ -2144,8 +2147,7 @@
       , 'm'))) && result.slice(1, 3);
     }, null);
 
-    if (result && (reFuncTag.test(result[0]) ||
-        /(?:function(?:\s+[$\w]+)?\b|create[A-Z][a-z]+|template)\(/.test(result[1]))) {
+    if (result && (reFuncTag.test(result[0]) || reFuncSource.test(result[1]))) {
       return (leadingComments ? result[0] : '') + result[1];
     }
     return '';
@@ -2876,7 +2878,7 @@
     }
     return source.replace(snippet, function(match) {
       var header = checkFuncTag ? getHeader(match) : '';
-      if (header && !reFuncTag.test(header)) {
+      if (header && !(reFuncTag.test(header) || reFuncSource.test(snippet.replace(header, '')))) {
         header = header.replace(/^( *)\* *(?:@(?:category|param|returns)\b|\/)/m, function(match, indent) {
           return indent + '* @type Function\n' + match;
         });
