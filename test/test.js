@@ -1280,14 +1280,16 @@
       build(['modularize', 'include=createCallback', 'minus=pluck,where', 'exports=node', '-o', outputPath], function() {
         emptyObject(require.cache);
 
-        var lodash = require(outputPath),
+        var modulePath = path.join(outputPath, 'utilities'),
+            utilities = require(modulePath),
+            lodash = { 'createCallback': utilities.createCallback },
             callback = lodash.createCallback('x'),
             object = { 'x': 1 };
 
-        strictEqual(callback(object), object, basename);
+        strictEqual(callback(object), object);
 
         callback = lodash.createCallback(object);
-        strictEqual(callback(object), object, basename);
+        strictEqual(callback(object), object);
 
         start();
       });
