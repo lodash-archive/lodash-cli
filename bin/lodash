@@ -3404,6 +3404,8 @@
         if (isModern || isUnderscore) {
           // replace `_.find`
           if (!(isUnderscore && isLodash('find'))) {
+            _.pull(funcDepMap.find, 'isArray');
+
             source = replaceFunction(source, 'find', [
               'function find(collection, predicate, thisArg) {',
               '  var length = collection ? collection.length : 0;',
@@ -3419,6 +3421,8 @@
           }
           // replace `_.forEach`
           if (!(isUnderscore && isLodash('forEach'))) {
+            _.pull(funcDepMap.forEach, 'isArray');
+
             source = replaceFunction(source, 'forEach', [
               'function forEach(collection, callback, thisArg) {',
               '  var index = -1,',
@@ -3440,6 +3444,8 @@
           }
           // replace `_.forEachRight`
           if (!(isUnderscore && isLodash('forEachRight'))) {
+            _.pull(funcDepMap.forEachRight, 'isArray');
+
             source = replaceFunction(source, 'forEachRight', [
               'function forEachRight(collection, callback, thisArg) {',
               '  var length = collection ? collection.length : 0;',
@@ -3499,6 +3505,8 @@
           }
           // replace `_.map`
           if (!(isUnderscore && (isLodash('map') || isLodash('pluck')))) {
+            _.pull(funcDepMap.map, 'isArray');
+
             source = replaceFunction(source, 'map', [
               'function map(collection, callback, thisArg) {',
               '  var index = -1,',
@@ -3527,13 +3535,13 @@
             }
           });
 
-          _.each(['createAggregator', 'every', 'filter', 'find', 'forEach', 'forEachRight', 'map', 'reduce', 'some'], function(funcName) {
+          _.each(['createAggregator', 'every', 'filter', 'reduce', 'some'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
               _.pull(funcDepMap[funcName], 'isArray');
             }
           });
 
-          _.each(['createAggregator', 'every', 'filter', 'find', 'max', 'min', 'reduce', 'some'], function(funcName) {
+          _.each(['createAggregator', 'every', 'filter', 'max', 'min', 'reduce', 'some'], function(funcName) {
             if (!(isUnderscore && (
                   isLodash(funcName) ||
                   (funcName == 'filter' && isLodash('where'))
