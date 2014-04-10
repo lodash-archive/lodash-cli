@@ -114,7 +114,7 @@
     'compact': [],
     'compose': ['isFunction'],
     'constant': [],
-    'contains': ['baseEach', 'getIndexOf', 'isArray', 'isNative', 'isString'],
+    'contains': ['getIndexOf', 'isArray', 'isNative', 'isString', 'keys'],
     'countBy': ['createAggregator'],
     'create': ['assign', 'baseCreate'],
     'createCallback': ['baseCreateCallback', 'matches', 'property'],
@@ -3635,17 +3635,21 @@
 
             source = replaceFunction(source, 'contains', [
               'function contains(collection, target) {',
-              '  var indexOf = getIndexOf(),',
-              '      length = collection ? collection.length : 0,',
-              '      result = false;',
-              '',
+              '  var length = collection ? collection.length : 0;',
               "  if (typeof length == 'number' && length > -1 && length <= maxSafeInteger) {",
+              '    var indexOf = getIndexOf();',
               '    return indexOf(collection, target) > -1;',
               '  }',
-              '  baseEach(collection, function(value) {',
-              '    return !(result = value === target);',
-              '  });',
-              '  return result;',
+              '  var props = keys(collection);',
+              '  length = props.length;',
+              '',
+              '  while (length--) {',
+              '    var value = collection[props[length]];',
+              '    if (value === target) {',
+              '      return true;',
+              '    }',
+              '  }',
+              '  return false;',
               '}'
             ].join('\n'));
           }
@@ -4464,6 +4468,10 @@
               ].join('\n');
             });
 
+            source = source.replace(matchFunction(source, 'some'), function(match) {
+              return match.replace(/!\(result *= *(.+?)\);/, '(result = $1) && breakIndicator;');
+            });
+
             source = source.replace(matchFunction(source, 'transform'), function(match) {
               return match.replace(/return callback[^)]+\)/, '$& === false && breakIndicator');
             });
@@ -4483,12 +4491,6 @@
             _.each(['baseFind', 'shimIsPlainObject'], function(funcName) {
               source = source.replace(matchFunction(source, funcName), function(match) {
                 return match.replace(/return false/, 'return breakIndicator');
-              });
-            });
-
-            _.each(['contains', 'some'], function(funcName) {
-              source = source.replace(matchFunction(source, funcName), function(match) {
-                return match.replace(/!\(result *= *(.+?)\);/, '(result = $1) && breakIndicator;');
               });
             });
           }
