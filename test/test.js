@@ -2090,7 +2090,6 @@
       'clone',
       'contains',
       'defaults',
-      'defer',
       'difference',
       'every',
       'filter',
@@ -2162,7 +2161,7 @@
             command += ',chain';
           }
         }
-        if (_.contains(['contains', 'every', 'some', 'transform'], funcName)) {
+        if (_.contains(['every', 'some', 'transform'], funcName)) {
           expected = !!index;
           if (index) {
             command += ',forOwn';
