@@ -3550,7 +3550,7 @@
                 if (!isUnderscore && (funcName == 'min' || funcName == 'max')) {
                   return match;
                 }
-                // replace `_.isArray` checks with simpler type checks
+                // replace `_.isArray` checks with array-like checks
                 match = match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index\b[^;]+;\n+)?/m, function(snippet, indent, statement, vars) {
                   if (vars) {
                     vars = vars
@@ -4063,6 +4063,9 @@
           if (!isLodash('memoize')) {
              source = replaceFunction(source, 'memoize', [
                 'function memoize(func, resolver) {',
+                '  if (!isFunction(func)) {',
+                '    throw new TypeError;',
+                '  }',
                 '  var cache = {};',
                 '  return function() {',
                 "    var key = resolver ? resolver.apply(this, arguments) : '_' + arguments[0];",
