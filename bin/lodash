@@ -3552,7 +3552,7 @@
                 });
 
                 // adjust `callback` assignment placement
-                return match.replace(/\n+( *callback *=[^;]+;)(?=\n *var )/, '\n$1\n');
+                return match.replace(/\n+ *callback *=[^;]+;(?=\n *var )/, '$&\n');
               });
             }
           });
@@ -4469,7 +4469,7 @@
               return match.replace(/return callback[^)]+\)/, '$& === false && breakIndicator');
             });
 
-            _.each(['baseEach', 'baseEachRight', 'baseFor', 'baseForRight', 'forEach', 'forEachRight'], function(funcName) {
+            _.each(['arrayEach', 'arrayEachRight', 'baseEach', 'baseEachRight', 'baseFor', 'baseForRight'], function(funcName) {
               source = source.replace(matchFunction(source, funcName), function(match) {
                 return match.replace(/=== *false/g, '=== breakIndicator');
               });
