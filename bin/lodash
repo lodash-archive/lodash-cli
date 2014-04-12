@@ -258,7 +258,7 @@
     // private functions
     'arrayEach': [],
     'arrayEachRight': [],
-    'arayMap': [],
+    'arrayMap': [],
     'assignDefaults': [],
     'baseBind': ['baseCreate', 'composeArgs', 'isObject', 'setData', 'slice'],
     'baseClone': ['assign', 'baseEach', 'baseForOwn', 'isArray', 'isObject', 'isNode', 'slice'],
