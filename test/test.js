@@ -277,7 +277,7 @@
       'escape',
       'template',
       'templateSettings',
-      'unescape',
+      'unescape'
     ]
   });
 
