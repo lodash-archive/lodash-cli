@@ -1085,11 +1085,10 @@
       }
     }, createMap());
 
-    // exclude `_.noConflict` and "Chain" functions for npm builds
+    // exclude `_.noConflict` and "Chain" functions when exporting for npm
     if (isNpm) {
       identifiers = _.difference(identifiers, ['noConflict'], categoryMap.Chaining, categoryFluxMap.Chaining);
     }
-
     // prepare state
     state.isAMD = state.isCommonJS = state.isNode = state.isNpm = false;
     state.plusFuncs = state.minusFuncs = empty;
