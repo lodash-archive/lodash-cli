@@ -114,7 +114,7 @@
     'compact': [],
     'compose': ['isFunction'],
     'constant': [],
-    'contains': ['getIndexOf', 'isArray', 'isNative', 'isString', 'keys'],
+    'contains': ['getIndexOf', 'isArray', 'isNative', 'isString', 'values'],
     'countBy': ['createAggregator'],
     'create': ['assign', 'baseCreate'],
     'createCallback': ['baseCreateCallback', 'matches', 'property'],
@@ -3625,21 +3625,13 @@
 
             source = replaceFunction(source, 'contains', [
               'function contains(collection, target) {',
-              '  var length = collection ? collection.length : 0;',
-              "  if (typeof length == 'number' && length > -1 && length <= maxSafeInteger) {",
-              '    var indexOf = getIndexOf();',
-              '    return indexOf(collection, target) > -1;',
-              '  }',
-              '  var props = keys(collection);',
-              '  length = props.length;',
+              '  var indexOf = getIndexOf(),',
+              '      length = collection ? collection.length : 0;',
               '',
-              '  while (length--) {',
-              '    var value = collection[props[length]];',
-              '    if (value === target) {',
-              '      return true;',
-              '    }',
+              "  if (!(typeof length == 'number' && length > -1 && length <= maxSafeInteger)) {",
+              '    collection = values(collection);',
               '  }',
-              '  return false;',
+              '  return indexOf(collection, target) > -1;',
               '}'
             ].join('\n'));
           }
