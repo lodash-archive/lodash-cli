@@ -635,6 +635,76 @@
     'whitespace'
   ];
 
+  /** List of functions to inline */
+  var inlineableFuncs = [
+    'after',
+    'arrayEach',
+    'arrayEachRight',
+    'arrayMap',
+    'assignDefaults',
+    'baseCompareAscending',
+    'baseCreate',
+    'baseRandom',
+    'cacheIndexOf',
+    'capitalize',
+    'charAtCallback',
+    'charsLeftIndex',
+    'charsRightIndex',
+    'compareAscending',
+    'compareMultipleAscending',
+    'compose',
+    'composeArgs',
+    'composeArgsRight',
+    'constant',
+    'createCache',
+    'createCompounder',
+    'createPad',
+    'deburrLetter',
+    'defer',
+    'delay',
+    'escape',
+    'escapeHtmlChar',
+    'escapeRegExp',
+    'escapeStringChar',
+    'getHolders',
+    'getIndexOf',
+    'has',
+    'identity',
+    'isArguments',
+    'isArray',
+    'isBoolean',
+    'isDate',
+    'isElement',
+    'isFinite',
+    'isFunction',
+    'isNative',
+    'isNaN',
+    'isNode',
+    'isNull',
+    'isNumber',
+    'isObject',
+    'isRegExp',
+    'isString',
+    'isUndefined',
+    'memoize',
+    'negate',
+    'noop',
+    'now',
+    'once',
+    'parseInt',
+    'result',
+    'setData',
+    'shimTrim',
+    'shimTrimLeft',
+    'shimTrimRight',
+    'slice',
+    'trimmedLeftIndex',
+    'trimmedRightIndex',
+    'unescape',
+    'unescapeHtmlChar',
+    'uniqueId'
+  ];
+
   /** List of Lo-Dash only functions */
   var lodashOnlyFuncs = [
     'at',
@@ -1060,7 +1130,17 @@
             objDepMap[identifier],
             varDepMap[identifier]
           );
-        }, []), inlinees).sort();
+        }, []), inlinees);
+
+        if (isNpm) {
+          // inline additional functions
+          _.each(_.remove(depNames, _.partial(_.contains, inlineableFuncs, _, 0)), function(identifier) {
+            depNames = _.union(depNames, objDepMap[identifier]);
+            inlineFuncs = _.union(inlineFuncs, [identifier], getDependencies(identifier, funcDepMap));
+            inlineVars = _.union(inlineVars, varDepMap[identifier]);
+          });
+        }
+        depNames.sort();
 
         var depPaths = isNpm
           ? _.map(depNames, function(depName) { return 'lodash.' + (isPrivate(depName) ? '_' : '') + depName.toLowerCase(); })
