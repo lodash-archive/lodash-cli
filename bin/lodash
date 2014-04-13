@@ -1089,10 +1089,6 @@
     if (isNpm) {
       identifiers = _.difference(identifiers, ['noConflict'], categoryMap.Chaining, categoryFluxMap.Chaining);
     }
-    // remove identifiers that are to be inlined
-    _.remove(identifiers, function(identifier) {
-      return _.some(inlineMap, _.partial(_.contains, _, identifier, 0));
-    });
 
     // prepare state
     state.isAMD = state.isCommonJS = state.isNode = state.isNpm = false;
@@ -1125,7 +1121,7 @@
           );
         }, []), inlinees);
 
-        // deep inline additional dependencies when exporting for `npm`
+        // deep inline additional dependencies when exporting for npm
         if (isNpm) {
           _.each(_.remove(depNames, _.partial(_.contains, inlineableFuncs, _, 0)), function(identifier) {
             depNames = _.union(depNames, objDepMap[identifier]);
