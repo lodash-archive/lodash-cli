@@ -635,7 +635,7 @@
     'whitespace'
   ];
 
-  /** List of functions to inline */
+  /** List of functions to deep inline */
   var inlineableFuncs = [
     'after',
     'arrayEach',
@@ -1051,27 +1051,20 @@
     };
 
     var getInlinees = function(identifier, stack) {
+      var privateDeps = _.filter(funcDepMap[identifier], isPrivate);
       stack || (stack = []);
-      return _.reduce(_.filter(funcDepMap[identifier], isPrivate), function(inlinees, funcName) {
-        var funcDependants = _.transform(funcDepMap, function(result, depNames, otherName) {
-          if (_.contains(depNames, funcName)) {
-            result.push(otherName);
-          }
-        }, []);
 
-        // inline functions with only one dependent or all dependents are inlined
-        if (_.size(funcDependants) === 1 || _.isEmpty(_.difference(funcDependants, stack))) {
+      return _.reduce(privateDeps, function(inlinees, funcName) {
+        var dependants = getDependants(funcName, funcDepMap, true);
+
+        // inline functions with only one dependent or all dependants are inlined
+        if (_.size(dependants) == 1 || _.isEmpty(_.difference(dependants, stack))) {
           inlinees.push(funcName);
 
-          // inline object and variable dependencies if all dependents are inlined
+          // inline object and variable dependencies if all dependants are inlined
           _.each([objDepMap, varDepMap], function(depMap) {
             _.each(depMap[funcName], function(depName) {
-              var dependants = _.transform(depMap, function(result, depNames, otherName) {
-                if (_.contains(depNames, depName)) {
-                  result.push(otherName);
-                }
-              }, []);
-
+              var dependants = getDependants(depName, depMap, true);
               if (_.isEmpty(_.difference(dependants, inlinees))) {
                 inlinees.push(depName);
               }
@@ -1132,8 +1125,8 @@
           );
         }, []), inlinees);
 
+        // deep inline additional dependencies when exporting for `npm`
         if (isNpm) {
-          // inline additional functions
           _.each(_.remove(depNames, _.partial(_.contains, inlineableFuncs, _, 0)), function(identifier) {
             depNames = _.union(depNames, objDepMap[identifier]);
             inlineFuncs = _.union(inlineFuncs, [identifier], getDependencies(identifier, funcDepMap));
@@ -1872,10 +1865,11 @@
    * @private
    * @param {string} funcName A function name or array of function names.
    * @param {Object} [depMap] The dependency map used to look up dependants.
+   * @param {boolean} [isShallow=false] A flag to specify getting only the immediate dependants.
    * @param- {Array} [stackA=[]] Internally used track queried function names.
    * @returns {Array} Returns an array of function dependants.
    */
-  function getDependants(funcName, depMap, stack) {
+  function getDependants(funcName, depMap, isShallow, stack) {
     var funcNames = _.isArray(funcName) ? funcName : [funcName];
     depMap || (depMap = funcDependencyMap);
     stack || (stack = []);
@@ -1884,9 +1878,11 @@
     return _.uniq(_.transform(depMap, function(result, depNames, otherName) {
       if (!_.contains(stack, otherName) &&
           _.some(funcNames, _.partial(_.contains, depNames, _, 0))) {
-        stack.push(otherName);
         result.push(otherName);
-        push.apply(result, getDependants(otherName, depMap, stack));
+        if (!isShallow) {
+          stack.push(otherName);
+          push.apply(result, getDependants(otherName, depMap, isShallow, stack));
+        }
       }
     }, []));
   }
@@ -1899,16 +1895,13 @@
    * @private
    * @param {string|string[]} funcName A function name or array of dependencies to query.
    * @param {Object} [depMap] The dependency map used to look up dependants.
-   * @param {boolean} [isShallow=false] A flag to indicate getting only the immediate dependencies.
+   * @param {boolean} [isShallow=false] A flag to specify getting only the immediate dependencies.
    * @param- {Array} [stackA=[]] Internally used track queried function names.
    * @returns {Array} Returns an array of function dependencies.
    */
   function getDependencies(funcName, depMap, isShallow, stack) {
+    var depNames = _.isArray(funcName) ? funcName : depMap[funcName];
     depMap || (depMap = funcDependencyMap);
-
-    var depNames = _.isArray(funcName)
-      ? funcName
-      : (_.has(depMap, funcName) && depMap[funcName]);
 
     if (!_.size(depNames)) {
       return [];
@@ -2141,7 +2134,7 @@
    *
    * @private
    * @param {string} source The source to process.
-   * @param {boolean} [isShallow=false] A flag to indicate looking for varaibles one closure deep.
+   * @param {boolean} [isShallow=false] A flag to specify looking for varaibles one closure deep.
    * @returns {Array} Returns a new array of variable names.
    */
   function getVars(source, isShallow) {
@@ -2206,7 +2199,7 @@
    * @private
    * @param {string} source The source to process.
    * @param {string} varName The name of the variable.
-   * @param {boolean} [isShallow=false] A flag to indicate looking for varaibles one closure deep.
+   * @param {boolean} [isShallow=false] A flag to specify looking for varaibles one closure deep.
    * @returns {boolean} Returns `true` if the variable is used, else `false`.
    */
   function isVarUsed(source, varName, isShallow) {
@@ -2226,7 +2219,7 @@
    * @private
    * @param {string} source The source to inspect.
    * @param {string} funcName The name of the function to match.
-   * @param {boolean} [leadingComments] A flag to indicate including leading comments.
+   * @param {boolean} [leadingComments] A flag to specify including leading comments.
    * @returns {string} Returns the matched function snippet.
    */
   function matchFunction(source, funcName, leadingComments) {
@@ -2259,7 +2252,7 @@
    * @private
    * @param {string} source The source to inspect.
    * @param {string} propName The name of the property to match.
-   * @param {boolean} [leadingComments] A flag to indicate including leading comments.
+   * @param {boolean} [leadingComments] A flag to specify including leading comments.
    * @returns {string} Returns the matched property snippet.
    */
   function matchProp(source, propName, leadingComments) {
@@ -2278,7 +2271,7 @@
    * @private
    * @param {string} source The source to inspect.
    * @param {string} varName The name of the variable to match.
-   * @param {boolean} [isShallow=false] A flag to indicate looking for varaibles one closure deep.
+   * @param {boolean} [isShallow=false] A flag to specify looking for varaibles one closure deep.
    * @returns {string} Returns the matched variable snippet.
    */
   function matchVar(source, varName, isShallow) {
