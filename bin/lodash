@@ -1054,26 +1054,26 @@
       var privateDeps = _.filter(funcDepMap[identifier], isPrivate);
       stack || (stack = []);
 
-      return _.reduce(privateDeps, function(inlinees, funcName) {
+      return _.reduce(privateDeps, function(result, funcName) {
         var dependants = getDependants(funcName, funcDepMap, true);
 
         // inline functions with only one dependent or all dependants are inlined
         if (_.size(dependants) == 1 || _.isEmpty(_.difference(dependants, stack))) {
-          inlinees.push(funcName);
+          result.push(funcName);
 
           // inline object and variable dependencies if all dependants are inlined
           _.each([objDepMap, varDepMap], function(depMap) {
             _.each(depMap[funcName], function(depName) {
               var dependants = getDependants(depName, depMap, true);
-              if (_.isEmpty(_.difference(dependants, inlinees))) {
-                inlinees.push(depName);
+              if (_.isEmpty(_.difference(dependants, result))) {
+                result.push(depName);
               }
             });
           });
 
-          push.apply(inlinees, getInlinees(funcName, inlinees));
+          push.apply(result, getInlinees(funcName, result));
         }
-        return inlinees;
+        return result;
       }, []);
     };
 
@@ -1122,9 +1122,16 @@
 
         // deep inline additional dependencies when exporting for npm
         if (isNpm) {
-          _.each(_.remove(depNames, _.partial(_.contains, inlineableFuncs, _, 0)), function(identifier) {
-            depNames = _.union(depNames, objDepMap[identifier]);
-            inlineFuncs = _.union(inlineFuncs, [identifier], getDependencies(identifier, funcDepMap));
+          _.each(_.intersection(depNames, inlineableFuncs), function(identifier) {
+            var deps = getDependencies(identifier, funcDepMap);
+            deps.push(identifier);
+
+            var inlineDeps = _.intersection(deps, inlineableFuncs);
+            deps = _.difference(deps, inlineDeps);
+            depNames = _.difference(depNames, inlineDeps);
+            depNames = _.union(depNames, deps, objDepMap[identifier]);
+
+            inlineFuncs = _.union(inlineFuncs, inlineDeps);
             inlineVars = _.union(inlineVars, varDepMap[identifier]);
           });
         }
@@ -2446,17 +2453,13 @@
   function removeGetIndexOf(source) {
     source = removeFunction(source, 'getIndexOf');
 
-    // replace all `getIndexOf` calls with `baseIndexOf`
     _.each(['baseDifference', 'baseUniq', 'contains', 'intersection'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
-        return match.replace(/\bgetIndexOf\(\)/g, 'baseIndexOf');
-      });
-    });
-
-    // simplify `isLarge` assignments
-    _.each(['baseDifference', 'baseUniq', 'intersection'], function(funcName) {
-      source = source.replace(matchFunction(source, funcName), function(match) {
-        return match.replace(/ *&& *indexOf *=== *baseIndexOf\b/g, '');
+        return match
+          // replace all `getIndexOf` calls with `baseIndexOf`
+          .replace(/\bgetIndexOf\(\)/g, 'baseIndexOf')
+          // simplify `isLarge` assignments
+          .replace(/ *&& *indexOf *=== *baseIndexOf\b/g, '')
       });
     });
 
@@ -4548,10 +4551,8 @@
           }
         }
         if (isModularize) {
-          _.forOwn(funcDepMap, function(depNames, funcName) {
-            if (_.contains(depNames, 'getIndexOf')) {
-              _.pull(depNames, 'getIndexOf').push('baseIndexOf');
-            }
+          _.each(['baseDifference', 'baseUniq', 'contains', 'intersection'], function(funcName) {
+            _.pull(funcDepMap[funcName], 'getIndexOf').push('baseIndexOf');
           });
         }
         // alias `baseCreateCallback` as `createCallback`
