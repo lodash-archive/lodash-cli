@@ -282,7 +282,7 @@
     'baseRandom': [],
     'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
     'baseValues': [],
-    'cacheIndexOf': ['baseIndexOf'],
+    'cacheIndexOf': [],
     'charAtCallback': [],
     'charsLeftIndex': [],
     'charsRightIndex': [],
