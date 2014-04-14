@@ -667,7 +667,6 @@
     'escapeRegExp',
     'escapeStringChar',
     'getHolders',
-    'getIndexOf',
     'has',
     'identity',
     'isArguments',
@@ -1128,6 +1127,7 @@
 
             var inlineDeps = _.intersection(deps, inlineableFuncs);
             deps = _.difference(deps, inlineDeps);
+
             depNames = _.difference(depNames, inlineDeps);
             depNames = _.union(depNames, deps, objDepMap[identifier]);
 
