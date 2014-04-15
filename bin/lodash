@@ -234,7 +234,7 @@
     'throttle': ['debounce', 'isFunction', 'isObject'],
     'times': ['baseCreateCallback'],
     'toArray': ['isString', 'slice', 'values'],
-    'transform': ['baseCreate', 'baseEach', 'baseForOwn', 'createCallback', 'isArray'],
+    'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'createCallback', 'isArray'],
     'trim': ['isNative', 'shimTrim'],
     'trimLeft': ['isNative', 'shimTrimLeft'],
     'trimRight': ['isNative', 'shimTrimRight'],
@@ -261,7 +261,7 @@
     'arrayMap': [],
     'assignDefaults': [],
     'baseBind': ['baseCreate', 'composeArgs', 'isObject', 'setData', 'slice'],
-    'baseClone': ['assign', 'baseEach', 'baseForOwn', 'isArray', 'isObject', 'isNode', 'slice'],
+    'baseClone': ['arrayEach', 'assign', 'baseForOwn', 'isArray', 'isObject', 'isNode', 'slice'],
     'baseCompareAscending': [],
     'baseCreate': ['isNative', 'isObject', 'noop'],
     'baseCreateCallback': ['bind', 'identity', 'setData'],
@@ -278,7 +278,7 @@
     'baseForRight': [],
     'baseIndexOf': [],
     'baseIsEqual': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
-    'baseMerge': ['baseEach', 'baseForOwn', 'isArray', 'isPlainObject'],
+    'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isPlainObject'],
     'baseRandom': [],
     'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
     'baseValues': [],
@@ -966,10 +966,10 @@
     });
 
     // replace wrapper `Array` method assignments
-    source = source.replace(/^(?:(?: *\/\/.*\n)*(?: *if *\(.+\n)?( *)baseEach\(\['[\s\S]+?\n\1}\);(?:\n *})?\n+)+/m, function(match, indent) {
+    source = source.replace(/^(?:(?: *\/\/.*\n)*(?: *if *\(.+\n)?( *)arrayEach\(\['[\s\S]+?\n\1}\);(?:\n *})?\n+)+/m, function(match, indent) {
       return indent + [
         '// add `Array` mutator functions to the wrapper',
-        "baseEach(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
+        "arrayEach(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
         '  var func = arrayRef[methodName];',
         '  lodash.prototype[methodName] = function() {',
         '    var value = this.__wrapped__;',
@@ -985,7 +985,7 @@
         '});',
         '',
         '// add `Array` accessor functions to the wrapper',
-        "baseEach(['concat', 'join', 'slice'], function(methodName) {",
+        "arrayEach(['concat', 'join', 'slice'], function(methodName) {",
         '  var func = arrayRef[methodName];',
         '  lodash.prototype[methodName] = function() {',
         '    var value = this.__wrapped__,',
@@ -2371,7 +2371,7 @@
     // remove all `lodash.prototype` additions
     source = source
       .replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+\n/gm, '')
-      .replace(/^(?: *\/\/.*\n)*( *)baseEach\(\['[\s\S]+?\n\1}.+\n/gm, '')
+      .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['[\s\S]+?\n\1}.+\n/gm, '')
       .replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.[\s\S]+?;\n/gm, '');
 
     // replace `lodash` with a simpler version
@@ -3421,12 +3421,12 @@
             delete varDepMap.root;
           }
           objDepMap.lodash = ['support', 'templateSettings'];
-          funcDepMap.lodash.push('assign', 'baseEach', 'baseForOwn', 'mixin');
+          funcDepMap.lodash.push('arrayEach', 'assign', 'baseForOwn', 'mixin');
           _.pull(funcDepMap.mixin, 'lodash');
         }
         else {
           funcDepMap.chain.push('wrapperChain');
-          funcDepMap.wrapperValueOf.push('assign', 'baseEach', 'baseForOwn', 'mixin', 'wrapperChain', 'wrapperToString');
+          funcDepMap.wrapperValueOf.push('arrayEach', 'assign', 'baseForOwn', 'mixin', 'wrapperChain', 'wrapperToString');
           objDepMap.wrapperValueOf = ['support'];
 
           _.each(['chain', 'lodashWrapper', 'tap', 'wrapperChain', 'wrapperToString'], function(funcName) {
