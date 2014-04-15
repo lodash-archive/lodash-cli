@@ -63,7 +63,6 @@
     'each': 'forEach',
     'eachRight': 'forEachRight',
     'extend': 'assign',
-    'findWhere': 'find',
     'foldl': 'reduce',
     'foldr': 'reduceRight',
     'head': 'first',
@@ -86,7 +85,6 @@
     'createCallback': ['callback'],
     'every': ['all'],
     'filter': ['select'],
-    'find': ['detect', 'findWhere'],
     'first': ['head'],
     'forEach': ['each'],
     'forEachRight': ['eachRight'],
@@ -1553,10 +1551,6 @@
 
         var collection = [{ 'a': { 'b': 1, 'c': 2 } }];
         deepEqual(lodash.where(collection, { 'a': { 'b': 1 } }), [], '_.where performs shallow comparisons: ' + basename);
-
-        collection = [{ 'a': 1 }, { 'a': 1 }];
-        deepEqual(lodash.findWhere(collection, { 'a': 1 }), collection[0], '_.findWhere: ' + basename);
-        strictEqual(lodash.findWhere(collection, { 'b': 1 }), undefined, '_.findWhere should return `undefined` if no match is found: ' + basename);
 
         expected = [[['fred', 30, true]], [['barney', 40, false]]];
         actual = lodash.zip(lodash.zip(['fred', 'barney'], [30, 40], [true, false]));
