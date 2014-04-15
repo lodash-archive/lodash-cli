@@ -402,7 +402,7 @@
   ];
 
   /** List of all functions */
-  var allFuncs = _.filter(_.functions(_), _.negate(_.bind(RegExp.prototype.test, /^_/)));
+  var allFuncs = _.reject(_.functions(_), _.bind(RegExp.prototype.test, /^_/));
 
   /** List of all Lo-Dash functions */
   var lodashFuncs = allFuncs.slice();
