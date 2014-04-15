@@ -245,7 +245,7 @@
     'uniqueId': [],
     'values': ['baseValues', 'keys'],
     'valuesIn': ['baseValues', 'keysIn'],
-    'where': ['filter'],
+    'where': ['filter', 'isObject'],
     'without': ['baseDifference', 'slice'],
     'wrap': ['createWrapper'],
     'wrapperChain': [],
@@ -3601,10 +3601,7 @@
           });
 
           _.each(['createAggregator', 'every', 'filter', 'max', 'min', 'reduce', 'some'], function(funcName) {
-            if (!(isUnderscore && (
-                  isLodash(funcName) ||
-                  (funcName == 'filter' && isLodash('where'))
-                ))) {
+            if (!(isUnderscore && isLodash(funcName))) {
               source = source.replace(matchFunction(source, funcName), function(match) {
                 if (!isUnderscore && (funcName == 'min' || funcName == 'max')) {
                   return match;
