@@ -4115,7 +4115,7 @@
           if (!isLodash('memoize')) {
              source = replaceFunction(source, 'memoize', [
                 'function memoize(func, resolver) {',
-                '  if (!isFunction(func)) {',
+                '  if (!isFunction(func) || (resolver && !isFunction(resolver))) {',
                 '    throw new TypeError;',
                 '  }',
                 '  var cache = {};',
