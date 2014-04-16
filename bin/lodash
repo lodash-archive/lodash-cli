@@ -162,7 +162,7 @@
     'isBoolean': [],
     'isDate': [],
     'isElement': ['isNode', 'isPlainObject'],
-    'isEmpty': ['baseForOwn', 'isArguments', 'isFunction'],
+    'isEmpty': ['baseForOwn', 'isArguments', 'isArray', 'isFunction', 'isString'],
     'isEqual': ['baseCreateCallback', 'baseIsEqual'],
     'isFinite': [],
     'isFunction': [],
@@ -324,7 +324,6 @@
     'baseIsEqual': ['support'],
     'isArguments': ['support'],
     'isElement': ['support'],
-    'isEmpty': ['support'],
     'isPlainObject': ['support'],
     'keysIn': ['support'],
     'sample': ['support'],
@@ -2672,11 +2671,6 @@
       return match.replace(/!support\.argsClass/g, '!isArguments(arguments)');
     });
 
-    // remove `support.argsClass` from `_.isEmpty`
-    source = source.replace(matchFunction(source, 'isEmpty'), function(match) {
-      return match.replace(/\s*\(support\.argsClass\s*\?([^:]+?)\s*:[\s\S]+?\)\)/g, '$1');
-    });
-
     // remove `support.argsClass` from `_.isPlainObject`
     _.each(['shimIsPlainObject', 'isPlainObject'], function(funcName) {
       source = source.replace(matchFunction(source, funcName), function(match) {
@@ -3457,8 +3451,8 @@
           source = removeSupportOwnLast(source);
 
           _.each([
-            'at', 'baseClone', 'baseEach', 'baseEachRight', 'baseIsEqual', 'isArguments',
-            'isEmpty', 'isPlainObject', 'sample','shimIsPlainObject', 'toArray'
+            'at', 'baseClone', 'baseEach', 'baseEachRight', 'baseIsEqual',
+            'isArguments', 'isPlainObject', 'sample','shimIsPlainObject', 'toArray'
           ], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
               _.pull(objDepMap[funcName], 'support');
@@ -3589,7 +3583,7 @@
             ].join('\n'));
           }
 
-          _.each(['baseIsEqual', 'isEmpty', 'isPlainObject', 'shimIsPlainObject'], function(funcName) {
+          _.each(['baseIsEqual', 'isPlainObject', 'shimIsPlainObject'], function(funcName) {
             if (!(isUnderscore && isLodash(funcName))) {
               _.pull(funcDepMap[funcName], 'isArguments');
             }
@@ -3873,16 +3867,17 @@
           }
           // replace `_.isEmpty`
           if (!isLodash('isEmpty')) {
-            funcDepMap.isEmpty = ['isArray', 'isString'];
-            _.pull(objDepMap.isEmpty, 'support');
+            _.pull(funcDepMap.isEmpty, 'baseForOwn', 'isFunction');
 
             source = replaceFunction(source, 'isEmpty', [
               'function isEmpty(value) {',
               '  if (!value) {',
               '    return true;',
               '  }',
-              '  if (isArray(value) || isString(value)) {',
-              '    return !value.length;',
+              '  var length = value.length;',
+              '  if (length > -1 && length <= maxSafeInteger &&',
+              '      (isArray(value) || isString(value) || isArguments(value))) {',
+              '    return !length;',
               '  }',
               '  for (var key in value) {',
               '    if (hasOwnProperty.call(value, key)) {',
