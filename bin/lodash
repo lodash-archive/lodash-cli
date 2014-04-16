@@ -122,7 +122,7 @@
     'defaults': ['assign', 'assignDefaults', 'slice'],
     'defer': ['isFunction', 'slice'],
     'delay': ['isFunction', 'slice'],
-    'difference': ['baseDifference', 'baseFlatten'],
+    'difference': ['baseDifference', 'baseFlatten', 'isArguments', 'isArray'],
     'drop': ['rest'],
     'dropRight': ['initial'],
     'dropRightWhile': ['initial'],
