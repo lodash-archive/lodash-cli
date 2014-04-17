@@ -235,9 +235,9 @@
     'times': ['baseCreateCallback'],
     'toArray': ['isString', 'slice', 'values'],
     'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'createCallback', 'isArray'],
-    'trim': ['isNative', 'shimTrim'],
-    'trimLeft': ['isNative', 'shimTrimLeft'],
-    'trimRight': ['isNative', 'shimTrimRight'],
+    'trim': ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
+    'trimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
+    'trimRight': ['charsRightIndex', 'trimmedRightIndex'],
     'truncate': ['isObject', 'isRegExp'],
     'unescape': ['unescapeHtmlChar'],
     'union': ['baseFlatten', 'baseUniq'],
@@ -306,9 +306,6 @@
     'setData': ['isNative', 'noop'],
     'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
     'shimKeys': ['isArguments', 'isArray', 'isString', 'keysIn'],
-    'shimTrim':  ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
-    'shimTrimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
-    'shimTrimRight': ['charsRightIndex', 'trimmedRightIndex'],
     'trimmedLeftIndex': [],
     'trimmedRightIndex': [],
     'unescapeHtmlChar': []
@@ -693,9 +690,6 @@
     'parseInt',
     'result',
     'setData',
-    'shimTrim',
-    'shimTrimLeft',
-    'shimTrimRight',
     'slice',
     'trimmedLeftIndex',
     'trimmedRightIndex',
@@ -812,9 +806,6 @@
     'setData',
     'shimIsPlainObject',
     'shimKeys',
-    'shimTrim',
-    'shimTrimLeft',
-    'shimTrimRight',
     'trimmedLeftIndex',
     'trimmedRightIndex',
     'unescapeHtmlChar'
@@ -1143,7 +1134,7 @@
 
         if (isAMD) {
           iife.push(
-            'define([' + (_.isEmpty(depPaths) ? '' :  "'" + depPaths.join("', '") + "'") + '], function(' + depNames.join(', ') + ') {',
+            'define([' + (_.isEmpty(depPaths) ? '' : "'" + depPaths.join("', '") + "'") + '], function(' + depNames.join(', ') + ') {',
             '%output%',
             '  return ' + identifier + ';',
             '});'
