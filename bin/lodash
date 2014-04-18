@@ -4100,7 +4100,7 @@
              source = replaceFunction(source, 'memoize', [
                 'function memoize(func, resolver) {',
                 '  if (!isFunction(func) || (resolver && !isFunction(resolver))) {',
-                '    throw new TypeError;',
+                '    throw new TypeError(funcErrorText);',
                 '  }',
                 '  var cache = {};',
                 '  return function() {',
@@ -4315,7 +4315,7 @@
               '      trailing = true;',
               '',
               '  if (!isFunction(func)) {',
-              '    throw new TypeError;',
+              '    throw new TypeError(funcErrorText);',
               '  }',
               '  if (options === false) {',
               '    leading = false;',
