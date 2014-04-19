@@ -203,7 +203,7 @@
     'partial': ['createWrapper', 'slice'],
     'partialRight': ['createWrapper', 'slice'],
     'partition': ['createAggregator'],
-    'pick': ['baseFlatten', 'baseForIn', 'createCallback', 'isObject', 'slice'],
+    'pick': ['baseFlatten', 'baseForIn', 'createCallback', 'isObject'],
     'pluck': ['map', 'property'],
     'property': [],
     'pull': [],
@@ -261,12 +261,12 @@
     'arrayEachRight': [],
     'arrayMap': [],
     'assignDefaults': [],
-    'baseBind': ['baseCreate', 'composeArgs', 'isObject', 'setData', 'slice'],
+    'baseBind': ['baseCreate', 'composeArgs', 'isObject', 'setData'],
     'baseClone': ['arrayEach', 'assign', 'baseForOwn', 'isArray', 'isObject', 'isNode', 'slice'],
     'baseCompareAscending': [],
-    'baseCreate': ['isNative', 'isObject', 'noop'],
+    'baseCreate': ['isNative', 'isObject'],
     'baseCreateCallback': ['bind', 'identity', 'setData'],
-    'baseCreateWrapper': ['baseCreate', 'composeArgs', 'composeArgsRight', 'isObject', 'slice', 'setData'],
+    'baseCreateWrapper': ['baseCreate', 'composeArgs', 'composeArgsRight', 'isObject', 'setData'],
     'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
     'baseEach': ['baseForOwn', 'isString'],
     'baseEachRight': ['baseForOwnRight', 'isString'],
@@ -3407,15 +3407,22 @@
             });
             delete varDepMap.root;
           }
-          objDepMap.lodash = ['support', 'templateSettings'];
-          funcDepMap.lodash.push('arrayEach', 'assign', 'baseForOwn', 'mixin');
+          funcDepMap.lodash.push('arrayEach', 'assign', 'mixin');
+          objDepMap.lodash = ['support'];
+
+          if (!isUnderscore) {
+            funcDepMap.lodash.push('baseForOwn');
+          }
           _.pull(funcDepMap.mixin, 'lodash');
         }
         else {
           funcDepMap.chain.push('wrapperChain');
-          funcDepMap.wrapperValueOf.push('arrayEach', 'assign', 'baseForOwn', 'mixin', 'wrapperChain', 'wrapperToString');
+          funcDepMap.wrapperValueOf.push('arrayEach', 'assign', 'mixin', 'wrapperChain');
           objDepMap.wrapperValueOf = ['support'];
 
+          if (!isUnderscore) {
+            funcDepMap.wrapperValueOf.push('baseForOwn', 'wrapperToString');
+          }
           _.each(['chain', 'lodashWrapper', 'tap', 'wrapperChain', 'wrapperToString'], function(funcName) {
             funcDepMap[funcName].push('wrapperValueOf');
           });
@@ -3630,6 +3637,8 @@
           }
           // replace `_.assign`
           if (!isLodash('assign')) {
+            _.pull(funcDepMap.assign, 'baseCreateCallback', 'keys');
+
             source = replaceFunction(source, 'assign', [
               'function assign(object, source, guard) {',
               '  if (!object) {',
@@ -3665,7 +3674,7 @@
           }
           // replace `_.clone`
           if (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep')) {
-            _.pull(funcDepMap.clone, 'baseClone').push('assign', 'isArray', 'isObject', 'slice');
+            _.pull(funcDepMap.clone, 'baseClone', 'baseCreateCallback').push('assign', 'isArray', 'isObject', 'slice');
 
             source = replaceFunction(source, 'clone', [
               'function clone(value) {',
@@ -4118,7 +4127,7 @@
           }
           // replace `_.omit`
           if (!isLodash('omit')) {
-            _.pull(funcDepMap.omit, 'createCallback');
+            _.pull(funcDepMap.omit, 'createCallback', 'negate');
 
             source = replaceFunction(source, 'omit', [
               'function omit(object) {',
@@ -4171,6 +4180,8 @@
           }
           // replace `_.random`
           if (!isLodash('random')) {
+            _.pull(funcDepMap.random, 'baseRandom');
+
             source = replaceFunction(source, 'random', [
               'function random(min, max) {',
               '  if (min == null && max == null) {',
@@ -4253,6 +4264,7 @@
           // replace `_.template`
           if (!isLodash('template')) {
             _.pull(funcDepMap.template, 'keys', 'values');
+            _.pull(varDepMap.template, 'reInterpolate');
 
             source = replaceFunction(source, 'template', [
               'function template(string, data, options) {',
@@ -4466,6 +4478,7 @@
           }
           // remove metadata optimizations
           source = removeEsOptimization(source);
+          _.pull(funcDepMap.createWrapper, 'slice');
           _.pull(objDepMap.baseCreateCallback, 'support');
 
           _.each(['baseBind', 'baseCreateCallback', 'baseCreateWrapper'], function(funcName) {
