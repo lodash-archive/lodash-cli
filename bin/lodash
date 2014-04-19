@@ -1349,14 +1349,11 @@
 
         // add `_.support` and `_.templateSettings`
         source = source.replace(/^ *(return +|.*?exports.*?=\s*)lodash;$/m, function(match) {
-          var prelude = '';
-          if (_.contains(deps, 'support')) {
-            prelude += '  lodash.support = support;\n';
-          }
-          if (_.contains(deps, 'templateSettings')) {
-            prelude += '  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;\n';
-          }
-          return prelude + match;
+          return [
+            '  lodash.support = support;',
+            '  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;',
+            match
+          ].join('\n');
         });
 
         if (!isAMD) {
@@ -4965,6 +4962,25 @@
           }
         }
       }());
+
+      // warn of unused dependencies
+      if (isModularize) {
+        _.each(buildFuncs, function(funcName) {
+          var depNames = _.union(
+            getDependencies(funcName, funcDepMap, true),
+            objDepMap[funcName],
+            varDepMap[funcName]
+          );
+
+          var unusedDeps = _.reject(depNames, function(depName) {
+            return RegExp('\\b' + depName + '\\b').test(source);
+          });
+
+          if (!_.isEmpty(unusedDeps)) {
+            console.warn('`' + funcName + '` has unused dependencies: ' + JSON.stringify(unusedDeps));
+          }
+        });
+      }
     }
 
     /*------------------------------------------------------------------------*/
