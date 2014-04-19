@@ -3520,7 +3520,7 @@
           if (!isUnderscore) {
             source = replaceFunction(source, 'isRegExp', [
               'function isRegExp(value) {',
-              "  return value && typeof value == 'object' && toString.call(value) == regexpClass || false;",
+              "  return (value && typeof value == 'object' && toString.call(value) == regexpClass) || false;",
               '}'
             ].join('\n'));
           }
@@ -3859,7 +3859,7 @@
 
             source = replaceFunction(source, 'isElement', [
               'function isElement(value) {',
-              '  return value && value.nodeType === 1 || false;',
+              '  return (value && value.nodeType === 1) || false;',
               '}'
             ].join('\n'));
           }
@@ -3873,7 +3873,7 @@
               '    return true;',
               '  }',
               '  var length = value.length;',
-              '  if (length > -1 && length <= maxSafeInteger &&',
+              '  if ((length > -1 && length <= maxSafeInteger) &&',
               '      (isArray(value) || isString(value) || isArguments(value))) {',
               '    return !length;',
               '  }',
