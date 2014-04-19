@@ -1349,11 +1349,12 @@
 
         // add `_.support` and `_.templateSettings`
         source = source.replace(/^ *(return +|.*?exports.*?=\s*)lodash;$/m, function(match) {
-          return [
-            '  lodash.support = support;',
-            '  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;',
-            match
-          ].join('\n');
+          var result = ['  lodash.support = support;'];
+          if (_.contains(identifiers, 'templateSettings')) {
+            result.push('  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;');
+          }
+          result.push(match);
+          return result.join('\n');
         });
 
         if (!isAMD) {
@@ -3420,12 +3421,14 @@
           funcDepMap.wrapperValueOf.push('arrayEach', 'assign', 'mixin', 'wrapperChain');
           objDepMap.wrapperValueOf = ['support'];
 
-          if (!isUnderscore) {
-            funcDepMap.wrapperValueOf.push('baseForOwn', 'wrapperToString');
-          }
-          _.each(['chain', 'lodashWrapper', 'tap', 'wrapperChain', 'wrapperToString'], function(funcName) {
+          _.each(['chain', 'lodashWrapper', 'tap', 'wrapperChain'], function(funcName) {
             funcDepMap[funcName].push('wrapperValueOf');
           });
+
+          if (!isUnderscore || isLodash('chain')) {
+            funcDepMap.wrapperToString.push('wrapperValueOf');
+            funcDepMap.wrapperValueOf.push('baseForOwn', 'wrapperToString');
+          }
         }
         if (isModern) {
           source = removeIsFunctionFork(source);
