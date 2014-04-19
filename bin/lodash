@@ -3365,7 +3365,7 @@
       });
 
       if (!_.isEmpty(warnings)) {
-        console.log([''].concat(
+        console.warn([''].concat(
           warnings,
           'For more information type: lodash --help'
         ).join('\n'));
@@ -4979,18 +4979,17 @@
       // warn of unused dependencies
       if (isModularize) {
         _.each(buildFuncs, function(funcName) {
-          var depNames = _.union(
-            getDependencies(funcName, funcDepMap, true),
-            objDepMap[funcName],
-            varDepMap[funcName]
-          );
+          var depNames = getDependencies(funcName, funcDepMap, true);
 
+          if (funcName != 'lodash') {
+            depNames = _.union(depNames, objDepMap[funcName], varDepMap[funcName]);
+          }
           var unusedDeps = _.reject(depNames, function(depName) {
             return RegExp('\\b' + depName + '\\b').test(source);
           });
 
           if (!_.isEmpty(unusedDeps)) {
-            console.warn('`' + funcName + '` has unused dependencies: ' + JSON.stringify(unusedDeps));
+            console.warn('Warning: `' + funcName + '` has unused dependencies: ' + unusedDeps.join(', '));
           }
         });
       }
