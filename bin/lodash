@@ -4870,7 +4870,6 @@
           });
         }
       }
-
       // remove functions from the build
       _.each(allFuncs, function(funcName) {
         if (!_.contains(buildFuncs, funcName) &&
@@ -4936,11 +4935,11 @@
         });
       });
 
+      // remove unneeded variable dependencies
       if (!_.contains(includeVars, 'root')) {
         source = removeVar(source, 'freeGlobal');
       }
       if (isModularize) {
-        // remove unneeded variable dependencies
         _.each(varDependencies, function(varName) {
           if (!_.contains(includeFuncs, varName) &&
               !_.contains(includeObjs, varName) &&
@@ -4949,13 +4948,13 @@
           }
         });
       }
-      // remove unused variables
       (function() {
         var isShallow = isExcluded('runInContext'),
             useMap = createMap(),
             snippet = cleanupSource(removeStrings(removeComments(source))),
             varNames = _.difference(getVars(snippet, isShallow), includeFuncs, includeObjs, includeVars);
 
+        // remove unused variables
         while (varNames.length) {
           varNames = _.sortBy(varNames, function(varName) {
             var result = isVarUsed(snippet, varName, isShallow);
@@ -4974,10 +4973,10 @@
             }
           }
         }
-      }());
-
-      // warn of unused dependencies
-      if (isModularize) {
+        if (!isModularize) {
+          return;
+        }
+        // warn of unused dependencies
         _.each(buildFuncs, function(funcName) {
           var depNames = getDependencies(funcName, funcDepMap, true);
 
@@ -4985,14 +4984,14 @@
             depNames = _.union(depNames, objDepMap[funcName], varDepMap[funcName]);
           }
           var unusedDeps = _.reject(depNames, function(depName) {
-            return RegExp('\\b' + depName + '\\b').test(source);
+            return RegExp('\\b' + depName + '\\b').test(snippet);
           });
 
           if (!_.isEmpty(unusedDeps)) {
             console.warn('Warning: `' + funcName + '` has unused dependencies: ' + unusedDeps.join(', '));
           }
         });
-      }
+      }());
     }
 
     /*------------------------------------------------------------------------*/
