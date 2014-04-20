@@ -634,7 +634,7 @@
 
   (function() {
     var reHelp = /lodash --help/,
-        write = process.stdout.write;
+        write = process.stderr.write;
 
     var commands = [
       'node.EXE build -s modern',
@@ -662,9 +662,10 @@
 
     _.each(commands, function(command) {
       asyncTest('`lodash ' + command +'` is invalid', function() {
-        process.stdout.write = _.once(function(string) {
+        process.stderr.write = _.once(function(string) {
           ok(reHelp.test(string));
-          process.stdout.write = write;
+
+          process.stderr.write = write;
           QUnit.start();
         });
 
