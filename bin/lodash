@@ -4981,17 +4981,18 @@
         }
         // warn of unused dependencies
         _.each(buildFuncs, function(funcName) {
-          var depNames = getDependencies(funcName, funcDepMap, true);
+          var depNames = _.union(getDependencies(funcName, funcDepMap, true), varDepMap[funcName]);
 
           if (funcName != 'lodash') {
-            depNames = _.union(depNames, objDepMap[funcName], varDepMap[funcName]);
+            depNames = _.union(depNames, objDepMap[funcName]);
           }
           var unusedDeps = _.reject(depNames, function(depName) {
             return RegExp('\\b' + depName + '\\b').test(snippet);
           });
 
           if (!_.isEmpty(unusedDeps)) {
-            console.warn('Warning: `' + funcName + '` has unused dependencies: ' + unusedDeps.join(', '));
+            var plural = _.size(unusedDeps) > 1;
+            console.warn('Warning: `' + funcName + '` has ' + (plural ? '' : 'an ') + 'unused dependenc' + (plural ? 'ies' : 'y') + ': ' + unusedDeps.join(', '));
           }
         });
       }());
