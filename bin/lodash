@@ -2944,7 +2944,8 @@
    *
    * @private
    * @param {string} source The source to process.
-   * @param {string} varName The name of the function to replace.
+   * @param {string} funcName The name of the function to replace.
+   * @param {string} funcValue The replacement value.
    * @returns {string} Returns the modified source.
    */
   function replaceFunction(source, funcName, funcValue) {
@@ -2965,6 +2966,29 @@
         .replace(RegExp('^' + getIndent(funcValue), 'gm'), getIndent(snippet))
         .trimRight() + '\n';
     });
+  }
+
+  /**
+   * Replaces the IIFE that wraps `source` with `iife`. If the `%output%` token
+   * is present in `iife` it will be replaced with the unwrapped `source`.
+   *
+   * @private
+   * @param {string} source The source to process.
+   * @param {string} iife The replacement IIFE.
+   * @returns {string} Returns the modified source.
+   */
+  function replaceIIFE(source, iife) {
+    var token = '%output%',
+        header = getHeader(source),
+        index = iife.indexOf(token);
+
+    if (index < 0) {
+      return header + iife;
+    }
+    return header +
+      iife.slice(0, index) +
+      source.replace(/^[\s\S]+?\(function[^{]+\{\n+|\s*}\.call\(this\)\)[;\s]*$/g, '\n') +
+      iife.slice(index + token.length);
   }
 
   /**
@@ -3007,6 +3031,7 @@
    * @private
    * @param {string} source The source to inspect.
    * @param {string} varName The name of the variable to replace.
+   * @param {string} varValue The replacement value.
    * @returns {string} Returns the modified source.
    */
   function replaceVar(source, varName, varValue) {
@@ -5005,18 +5030,7 @@
 
     // customize Lo-Dash's IIFE
     if (isIIFE) {
-      source = (function() {
-        var token = '%output%',
-            header = getHeader(source),
-            index = iife.indexOf(token);
-
-        return header + (index < 0
-          ? iife
-          : iife.slice(0, index) +
-            source.replace(/^[\s\S]+?\(function[^{]+\{\n+|\s*}\.call\(this\)\)[;\s]*$/g, '\n') +
-            iife.slice(index + token.length)
-        );
-      }());
+      source = replaceIIFE(source, iife);
     }
 
     /*------------------------------------------------------------------------*/
