@@ -1,4 +1,4 @@
-# Lo-Dash command-line interface v1.3.1
+# Lo-Dash command-line interface v1.3.2
 
 Custom builds make it easy to create lightweight versions of Lo-Dash containing only the features you need. To top it off, we handle all function dependency & alias mapping for you.
 
