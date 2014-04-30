@@ -298,7 +298,7 @@ var funcDependencyMap = createMap({
   'deburrLetter': [],
   'escapeHtmlChar': [],
   'escapeStringChar': [],
-  'getHolders': [],
+  'getHolders': ['lodash'],
   'getIndexOf': ['baseIndexOf', 'indexOf'],
   'isNative': ['escapeRegExp'],
   'isNode': [],
@@ -3429,6 +3429,15 @@ function build(options, callback) {
           funcDepMap.lodash.push('baseForOwn');
         }
         _.pull(funcDepMap.mixin, 'lodash');
+
+        // remove `_` placeholder support
+        _.each(['baseCreateWrapper', 'createWrapper'], function(funcName) {
+          _.pull(funcDepMap[funcName], 'getHolders');
+
+          source = source.replace(matchFunction(source, funcName), function(match) {
+            return match.replace(/\bgetHolders\([^)]+\)/g, '[]');
+          });
+        });
       }
       else {
         funcDepMap.chain.push('wrapperChain');
