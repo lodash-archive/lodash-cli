@@ -1333,7 +1333,7 @@ function buildModule(state, callback) {
             '          options = source;',
             '        }',
             '        source = object;',
-            '        object = lodash;',
+            '        object = this;',
             '      }',
             '      return func(object, source, options);'
           );

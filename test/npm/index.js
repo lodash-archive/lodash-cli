@@ -44,7 +44,7 @@ mixin = (function(func) {
         options = source;
       }
       source = object;
-      object = lodash;
+      object = this;
     }
     return func(object, source, options);
   };
