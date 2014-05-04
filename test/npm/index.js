@@ -156,6 +156,7 @@ lodash.pick = require('lodash.pick');
 lodash.pluck = require('lodash.pluck');
 lodash.property = require('lodash.property');
 lodash.pull = require('lodash.pull');
+lodash.pullAt = require('lodash.pullat');
 lodash.random = require('lodash.random');
 lodash.range = require('lodash.range');
 lodash.reduce = require('lodash.reduce');
