@@ -1171,7 +1171,7 @@ function buildModule(state, callback) {
             _.reduce(depPaths, function(result, depPath, index) {
               var depName = depNames[index];
               return result + (result ? ';\n' : '') +
-                '  import ' + depName + " from '" + depPath + "'";
+                'import ' + depName + " from '" + depPath + "'";
             }, '') + ';',
             '%output%',
             'export default ' + identifier + ';'
@@ -1181,7 +1181,7 @@ function buildModule(state, callback) {
           iife.push(
             _.reduce(depPaths, function(result, depPath, index) {
               var depName = depNames[index];
-              return result + (result ? ',\n      ' : '  var ') +
+              return result + (result ? ',\n    ' : 'var ') +
                 depName + " = require('" + depPath + "')" +
                 (isCommonJS ? '.' + depName : '');
             }, '') + ';',
@@ -1223,11 +1223,12 @@ function buildModule(state, callback) {
           fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE.txt'), _.template(licenseTemplate, templateData), 'utf-8');
           fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate, _.defaults({ 'description': markdownDesc }, templateData)), 'utf-8');
         }
-        source = replaceIIFE(source, iife.join('\n'));
-        source = removeLicenseTag(source);
         if (!isAMD) {
           source = trimIndent(source);
         }
+        source = removeLicenseTag(source);
+        source = replaceIIFE(source, iife.join('\n'));
+
         data.source = source;
         buildCallback(data);
       });
@@ -1275,9 +1276,11 @@ function buildModule(state, callback) {
           depArgs = depNames.join(', '),
           depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath, funcDepMap));
 
-      var settingsProps = '  lodash.support = support;';
+      var indent = isAMD ? '  ' : '',
+          settingsProps = indent + 'lodash.support = support;';
+
       if (_.contains(identifiers, 'templateSettings')) {
-        settingsProps += '\n  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;';
+        settingsProps += '\n' + indent + '(lodash.templateSettings = utilities.templateSettings).imports._ = lodash;';
       }
       if (isAMD) {
         iife.push(
@@ -1293,7 +1296,7 @@ function buildModule(state, callback) {
           _.reduce(depPaths, function(result, depPath, index) {
             var depName = depNames[index];
             return result + (result ? ';\n' : '') +
-              '  import ' + depName + " from '" + depPath + "'";
+              'import ' + depName + " from '" + depPath + "'";
           }, '') + ';',
           '%output%',
           settingsProps,
@@ -1304,7 +1307,7 @@ function buildModule(state, callback) {
         iife.push(
           _.reduce(depPaths, function(result, depPath, index) {
             var depName = depNames[index];
-            return result + (result ? ',\n      ' : '  var ') +
+            return result + (result ? ',\n    ' : 'var ') +
               depName + " = require('" + depPath + "')" +
               (isCommonJS && !_.contains(categoryDepPaths, depPath) ? '.' + depName : '');
           }, '') + ';',
@@ -1366,10 +1369,11 @@ function buildModule(state, callback) {
         return match + code.join('\n');
       });
 
-      source = replaceIIFE(source, iife.join('\n'));
       if (!isAMD) {
         source = trimIndent(source);
       }
+      source = replaceIIFE(source, iife.join('\n'));
+
       data.source = source;
       buildCallback(data);
     });
@@ -1445,11 +1449,12 @@ function buildModule(state, callback) {
             );
           }
         }
-        source = replaceIIFE(source, iife.join('\n'));
-        source = removeLicenseTag(source);
         if (!isAMD) {
           source = trimIndent(source);
         }
+        source = removeLicenseTag(source);
+        source = replaceIIFE(source, iife.join('\n'));
+
         data.source = source;
         buildCallback(data);
       });
