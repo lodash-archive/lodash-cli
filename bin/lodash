@@ -966,7 +966,7 @@ function addUnderscoreChaining(source, isModularize) {
   });
 
   // replace wrapper `Array` method assignments
-  source = source.replace(/^(?:(?: *\/\/.*\n)*(?: *if *\(.+\n)?( *)arrayEach\(\['[\s\S]+?\n\1}\);(?:\n *})?\n+)+/m, function(match, indent) {
+  source = source.replace(/^(?:(?: *\/\/.*\n)*( *)(?:if *\([^{]+\{\n\1( *))?arrayEach\(\['[\s\S]+?\n\1\2}\);(?:\n\1})?\n+)+/m, function(match, indent) {
     return indent + [
       '// add `Array` mutator functions to the wrapper',
       "arrayEach(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
@@ -1963,7 +1963,7 @@ function getFunctionSource(func, indent) {
 
   indent || (indent = '');
   if (typeof indent == 'number') {
-    indent = Array(indent + 1).join(' ');
+    indent = _.repeat(' ', indent);
   }
   // remove any existing indent
   if (srcIndent) {
