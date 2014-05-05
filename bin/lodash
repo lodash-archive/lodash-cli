@@ -1458,10 +1458,10 @@ function buildModule(state, callback) {
 
   if (!isSilent) {
     // warn of removed dependencies
-    _.forOwn(removedDeps, function(removed, identifier) {
-      if (!_.isEmpty(removed)) {
-        var plural = _.size(removed) > 1;
-        console.warn('Warning: Removed ' + (plural ? '' : 'an ') + 'unused dependenc' + (plural ? 'ies' : 'y') + ' from `' + identifier + '`: ' + removed.join(', '));
+    _.forOwn(removedDeps, function(depNames, identifier) {
+      if (!_.isEmpty(depNames)) {
+        var plural = _.size(depNames) > 1;
+        console.warn('Warning: Removed ' + (plural ? '' : 'an ') + 'unused dependenc' + (plural ? 'ies' : 'y') + ' from `' + identifier + '`: ' + depNames.join(', '));
       }
     });
   }
