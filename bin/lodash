@@ -1028,6 +1028,7 @@ function buildModule(state, callback) {
       isES6 = state.isES6,
       isNode = state.isNode,
       isNpm = state.isNpm,
+      isSilent = state.isSilent,
       isUnderscore = state.isUnderscore,
       objDepMap = state.objDepMap,
       outputPath = state.outputPath,
@@ -1050,31 +1051,33 @@ function buildModule(state, callback) {
     defaultBuildCallback(data);
   };
 
-  var getInlinees = function(identifier, stack) {
+  var getInlinees = function(identifier, result) {
     var privateDeps = _.filter(funcDepMap[identifier], isPrivate);
-    stack || (stack = []);
+    result || (result = []);
 
-    return _.reduce(privateDeps, function(result, funcName) {
+    _.each(privateDeps, function(funcName) {
       var dependants = getDependants(funcName, funcDepMap, true);
 
-      // inline functions with only one dependent or all dependants are inlined
-      if (_.size(dependants) == 1 || _.isEmpty(_.difference(dependants, stack))) {
-        result.push(funcName);
-
-        // inline object and variable dependencies if all dependants are inlined
-        _.each([objDepMap, varDepMap], function(depMap) {
-          _.each(depMap[funcName], function(depName) {
-            var dependants = getDependants(depName, depMap, true);
-            if (_.isEmpty(_.difference(dependants, result))) {
-              result.push(depName);
-            }
-          });
-        });
-
-        push.apply(result, getInlinees(funcName, result));
+      // only inline functions if they have one dependent or all dependants are inlined
+      if (!(_.size(dependants) == 1 || _.isEmpty(_.difference(dependants, result)))) {
+        return;
       }
-      return result;
-    }, []);
+      result.push(funcName);
+
+      // inline object and variable dependencies if all dependants are inlined
+      _.each([objDepMap, varDepMap], function(depMap, index) {
+        _.each(depMap[funcName], function(depName) {
+          var dependants = getDependants(depName, depMap, true);
+          if (_.isEmpty(_.difference(dependants, result))) {
+            result.push(depName);
+          }
+        });
+      });
+
+      getInlinees(funcName, result);
+    });
+
+    return result;
   };
 
   var getUnusedDeps = function(source, depNames) {
@@ -1096,10 +1099,6 @@ function buildModule(state, callback) {
   if (isNpm) {
     identifiers = _.difference(identifiers, ['noConflict'], categoryMap.Chaining, categoryFluxMap.Chaining);
   }
-  // prepare state
-  state.isAMD = state.isCommonJS = state.isNode = state.isNpm = false;
-  state.plusFuncs = state.minusFuncs = empty;
-
   // create modules for each identifier, except `lodash` because it's built separately
   _.each(_.without(identifiers, 'lodash'), function(identifier) {
     var categories = getCategories(identifier, funcDepMap);
@@ -1132,30 +1131,21 @@ function buildModule(state, callback) {
           var deps = getDependencies(identifier, funcDepMap);
           deps.push(identifier);
 
-          var inlineDeps = _.intersection(deps, inlineableFuncs);
-          deps = _.difference(deps, inlineDeps);
-
-          depNames = _.difference(depNames, inlineDeps);
-          depNames = _.union(depNames, deps, objDepMap[identifier]);
-
-          inlineFuncs = _.union(inlineFuncs, inlineDeps);
+          inlineFuncs = _.union(inlineFuncs, _.intersection(deps, inlineableFuncs));
           inlineVars = _.union(inlineVars, varDepMap[identifier]);
+
+          deps = _.difference(deps, inlineFuncs);
+          depNames = _.difference(depNames, inlineFuncs);
+          depNames = _.union(depNames, deps, objDepMap[identifier]);
         });
       }
       depNames.sort();
 
-      state.buildFuncs = state.includeFuncs = state.includeObjs = state.includeVars = empty;
       state.outputPath = path.join(outputPath, modulePath, (isNpm ? 'index' : identifier) + '.js');
+      state.buildFuncs = state.includeFuncs = inlineFuncs;
+      state.includeObjs = inlineObjs;
+      state.includeVars = inlineVars;
 
-      if (!_.isEmpty(inlineFuncs)) {
-        state.buildFuncs = state.includeFuncs = inlineFuncs;
-      }
-      if (!_.isEmpty(inlineObjs)) {
-        state.includeObjs = inlineObjs;
-      }
-      if (!_.isEmpty(inlineVars)) {
-        state.includeVars = inlineVars;
-      }
       build(state, function(data) {
         var iife = [],
             source = data.source,
@@ -1277,6 +1267,7 @@ function buildModule(state, callback) {
           source = data.source,
           unusedDeps = getUnusedDeps(source, deps);
 
+      unusedDeps = _.difference(unusedDeps, objDepMap[identifier]);
       deps = _.difference(deps, unusedDeps);
       removedDeps[identifier] = unusedDeps;
 
@@ -1284,10 +1275,15 @@ function buildModule(state, callback) {
           depArgs = depNames.join(', '),
           depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath, funcDepMap));
 
+      var settingsProps = '  lodash.support = support;';
+      if (_.contains(identifiers, 'templateSettings')) {
+        settingsProps += '\n  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;';
+      }
       if (isAMD) {
         iife.push(
           'define([' + (_.isEmpty(depPaths) ? '' : "'" + depPaths.join("', '") + "'") + '], function(' + depArgs + ') {',
           '%output%',
+          settingsProps,
           '  return lodash;',
           '});'
         );
@@ -1300,6 +1296,7 @@ function buildModule(state, callback) {
               '  import ' + depName + " from '" + depPath + "'";
           }, '') + ';',
           '%output%',
+          settingsProps,
           'export default ' + identifier + ';'
         );
       }
@@ -1312,6 +1309,7 @@ function buildModule(state, callback) {
               (isCommonJS && !_.contains(categoryDepPaths, depPath) ? '.' + depName : '');
           }, '') + ';',
           '%output%',
+          settingsProps,
           (isCommonJS ? 'exports._' : 'module.exports') + ' = ' + identifier + ';'
         );
       }
@@ -1366,16 +1364,6 @@ function buildModule(state, callback) {
           ''
         );
         return match + code.join('\n');
-      });
-
-      // add `_.support` and `_.templateSettings`
-      source = source.replace(/^ *(return +|.*?exports.*?=\s*)lodash;$/m, function(match) {
-        var result = ['  lodash.support = support;'];
-        if (_.contains(identifiers, 'templateSettings')) {
-          result.push('  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;');
-        }
-        result.push(match);
-        return result.join('\n');
       });
 
       source = replaceIIFE(source, iife.join('\n'));
@@ -1468,14 +1456,15 @@ function buildModule(state, callback) {
     });
   }());
 
-  // warn of removed dependencies
-  _.forOwn(removedDeps, function(removed, identifier) {
-    if (!_.isEmpty(removed)) {
-      var plural = _.size(removed) > 1;
-      console.warn('Warning: Removed ' + (plural ? '' : 'an ') + 'unused dependenc' + (plural ? 'ies' : 'y') + ' from `' + identifier + '`: ' + removed.join(', '));
-    }
-  });
-
+  if (!isSilent) {
+    // warn of removed dependencies
+    _.forOwn(removedDeps, function(removed, identifier) {
+      if (!_.isEmpty(removed)) {
+        var plural = _.size(removed) > 1;
+        console.warn('Warning: Removed ' + (plural ? '' : 'an ') + 'unused dependenc' + (plural ? 'ies' : 'y') + ' from `' + identifier + '`: ' + removed.join(', '));
+      }
+    });
+  }
   if (callback) {
     callback({ 'outputPath': fs.realpathSync(outputPath) });
   }
@@ -3190,25 +3179,14 @@ function build(options, callback) {
         includeFuncs = state.includeFuncs,
         includeObjs = state.includeObjs,
         includeVars = state.includeVars,
-        isAMD = state.isAMD,
-        isBackbone = state.isBackbone,
-        isCommonJS = state.isCommonJS,
-        isCustom = false,
         isDebug = true,
-        isGlobal = state.isGlobal,
-        isMapped = false,
-        isModern = state.isModern,
         isModularize = true,
-        isNode = state.isNode,
         isStdOut = state.isStdOut,
-        isSilent = true,
         isStrict = state.isStrict,
-        isUnderscore = state.isUnderscore,
-        minusFuncs = state.minusFuncs,
+        minusFuncs = [],
         objDepMap = state.objDepMap,
-        options = state.options,
         outputPath = state.outputPath,
-        plusFuncs = state.plusFuncs,
+        plusFuncs = [],
         source = state.source,
         varDepMap = state.varDepMap;
   }
@@ -3240,6 +3218,9 @@ function build(options, callback) {
 
     // flag to specify only creating the debug build
     var isDebug = getOption(options, '-d') || getOption(options, '--debug');
+
+    // flag to indicate that a custom IIFE was specified
+    var isIIFE = typeof iife == 'string';
 
     // flag to specify creating a source map for the minified source
     var isMapped = getOption(options, '-p') || getOption(options, '--source-map');
@@ -4858,22 +4839,19 @@ function build(options, callback) {
         'includeObjs': includeObjs,
         'includeVars': includeVars,
         'isAMD': isAMD,
-        'isBackbone': isBackbone,
         'isCommonJS': isCommonJS,
         'isES6': isES6,
-        'isGlobal': isGlobal,
         'isModern': isModern,
         'isNode': isNode,
         'isNpm': isNpm,
+        'isSilent': isSilent,
         'isStdOut': isStdOut,
         'isStrict': isStrict,
         'isUnderscore': isUnderscore,
         'lodash': lodash,
-        'minusFuncs': minusFuncs,
         'objDepMap': objDepMap,
         'options': options,
         'outputPath': outputPath,
-        'plusFuncs': plusFuncs,
         'source': source,
         'varDepMap': varDepMap
       }, callback);
@@ -5040,11 +5018,6 @@ function build(options, callback) {
       }
     }());
   }
-
-  /*--------------------------------------------------------------------------*/
-
-  // flag to indicate that a custom IIFE was specified
-  var isIIFE = typeof iife == 'string';
 
   // customize Lo-Dash's IIFE
   if (isIIFE) {
