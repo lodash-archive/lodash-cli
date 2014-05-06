@@ -1264,58 +1264,8 @@ function buildModule(state, callback) {
     state.outputPath = path.join(outputPath, modulePath, basename + '.js');
 
     build(state, function(data) {
-      var iife = [],
-          source = data.source,
-          unusedDeps = getUnusedDeps(source, deps);
+      var source = data.source;
 
-      unusedDeps = _.difference(unusedDeps, objDepMap[identifier]);
-      deps = _.difference(deps, unusedDeps);
-      removedDeps[identifier] = unusedDeps;
-
-      var depNames = categoryDeps.concat(deps),
-          depArgs = depNames.join(', '),
-          depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath, funcDepMap));
-
-      var indent = isAMD ? '  ' : '',
-          settingsProps = indent + 'lodash.support = support;';
-
-      if (_.contains(identifiers, 'templateSettings')) {
-        settingsProps += '\n' + indent + '(lodash.templateSettings = utilities.templateSettings).imports._ = lodash;';
-      }
-      if (isAMD) {
-        iife.push(
-          'define([' + (_.isEmpty(depPaths) ? '' : "'" + depPaths.join("', '") + "'") + '], function(' + depArgs + ') {',
-          '%output%',
-          settingsProps,
-          '  return lodash;',
-          '});'
-        );
-      }
-      else if (isES6) {
-        iife.push(
-          _.reduce(depPaths, function(result, depPath, index) {
-            var depName = depNames[index];
-            return result + (result ? ';\n' : '') +
-              'import ' + depName + " from '" + depPath + "'";
-          }, '') + ';',
-          '%output%',
-          settingsProps,
-          'export default ' + identifier + ';'
-        );
-      }
-      else {
-        iife.push(
-          _.reduce(depPaths, function(result, depPath, index) {
-            var depName = depNames[index];
-            return result + (result ? ',\n    ' : 'var ') +
-              depName + " = require('" + depPath + "')" +
-              (isCommonJS && !_.contains(categoryDepPaths, depPath) ? '.' + depName : '');
-          }, '') + ';',
-          '%output%',
-          settingsProps,
-          (isCommonJS ? 'exports._' : 'module.exports') + ' = ' + identifier + ';'
-        );
-      }
       // remove unneeded method and alias assignments
       _.each(_.difference(allFuncs, buildFuncs), function(funcName) {
         source = removeMethodAssignment(source, funcName);
@@ -1328,6 +1278,20 @@ function buildModule(state, callback) {
         }
         var category = _.first(getCategories(identifier, funcDepMap));
         return prelude + (category ? category.toLowerCase() + '.' : '') + identifier;
+      });
+
+      // add `lodash.support` and `lodash.templateSettings` assignment
+      source = source.replace(/^ *lodash\.VERSION\b.+\n/m, function(match) {
+        var code = [
+          '',
+          '  lodash.support = support;'
+        ];
+
+        if (_.contains(identifiers, 'templateSettings')) {
+          code.push('  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;');
+        }
+        code.push('');
+        return match + code.join('\n');
       });
 
       // wrap `_.mixin`
@@ -1369,6 +1333,46 @@ function buildModule(state, callback) {
         return match + code.join('\n');
       });
 
+      var unusedDeps = getUnusedDeps(source, deps);
+      deps = _.difference(deps, unusedDeps);
+      removedDeps[identifier] = unusedDeps;
+
+      var iife = [],
+          depNames = categoryDeps.concat(deps),
+          depArgs = depNames.join(', '),
+          depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath, funcDepMap));
+
+      if (isAMD) {
+        iife.push(
+          'define([' + (_.isEmpty(depPaths) ? '' : "'" + depPaths.join("', '") + "'") + '], function(' + depArgs + ') {',
+          '%output%',
+          '  return lodash;',
+          '});'
+        );
+      }
+      else if (isES6) {
+        iife.push(
+          _.reduce(depPaths, function(result, depPath, index) {
+            var depName = depNames[index];
+            return result + (result ? ';\n' : '') +
+              'import ' + depName + " from '" + depPath + "'";
+          }, '') + ';',
+          '%output%',
+          'export default ' + identifier + ';'
+        );
+      }
+      else {
+        iife.push(
+          _.reduce(depPaths, function(result, depPath, index) {
+            var depName = depNames[index];
+            return result + (result ? ',\n    ' : 'var ') +
+              depName + " = require('" + depPath + "')" +
+              (isCommonJS && !_.contains(categoryDepPaths, depPath) ? '.' + depName : '');
+          }, '') + ';',
+          '%output%',
+          (isCommonJS ? 'exports._' : 'module.exports') + ' = ' + identifier + ';'
+        );
+      }
       if (!isAMD) {
         source = trimIndent(source);
       }
