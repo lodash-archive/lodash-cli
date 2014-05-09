@@ -146,7 +146,7 @@ var funcDependencyMap = createMap({
   'forInRight': ['baseCreateCallback', 'baseForRight', 'keysIn'],
   'forOwn': ['baseForOwn', 'baseCreateCallback'],
   'forOwnRight': ['baseCreateCallback', 'baseForRight', 'keys'],
-  'functions': ['baseForIn', 'isFunction'],
+  'functions': ['baseFunctions', 'keysIn'],
   'groupBy': ['createAggregator'],
   'has': [],
   'identity': [],
@@ -187,7 +187,7 @@ var funcDependencyMap = createMap({
   'memoize': ['isFunction'],
   'merge': ['baseCreateCallback', 'baseMerge', 'slice'],
   'min': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
-  'mixin': ['functions', 'isFunction', 'isObject', 'lodash'],
+  'mixin': ['baseFunctions', 'isFunction', 'isObject', 'keys', 'lodash'],
   'negate': ['isFunction'],
   'noConflict': [],
   'noop': [],
@@ -278,6 +278,7 @@ var funcDependencyMap = createMap({
   'baseForOwn': ['baseFor', 'keys'],
   'baseForOwnRight': ['baseForRight', 'keys'],
   'baseForRight': [],
+  'baseFunctions': ['isFunction'],
   'baseIndexOf': [],
   'baseIsEqual': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isPlainObject'],
@@ -646,6 +647,7 @@ var inlineableFuncs = [
   'baseAt',
   'baseCompareAscending',
   'baseCreate',
+  'baseFunctions',
   'baseRandom',
   'cacheIndexOf',
   'capitalize',
@@ -785,6 +787,7 @@ var privateFuncs = [
   'baseForOwn',
   'baseForOwnRight',
   'baseForRight',
+  'baseFunctions',
   'baseIndexOf',
   'baseIsEqual',
   'baseMerge',
@@ -3487,7 +3490,7 @@ function build(options, callback) {
       }
       if (_.contains(plusFuncs, 'chain') == !isUnderscore) {
         source = addUnderscoreChaining(source, isModularize);
-        _.pull(funcDepMap.mixin, 'isObject');
+        _.pull(funcDepMap.mixin, 'baseFunctions', 'isObject', 'keys').push('functions');
 
         if (!isModularize) {
           _.pull(funcDepMap.mixin, 'isFunction');
