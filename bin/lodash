@@ -3451,11 +3451,11 @@ function build(options, callback) {
           });
           delete varDepMap.root;
         }
-        funcDepMap.lodash.push('arrayEach', 'assign', 'baseFunctions', 'keys', 'mixin');
+        funcDepMap.lodash.push('arrayEach', 'assign', 'mixin');
         objDepMap.lodash = ['support'];
 
         if (!isUnderscore) {
-          funcDepMap.lodash.push('baseForOwn');
+          funcDepMap.lodash.push('baseForOwn', 'baseFunctions', 'keys');
         }
         _.pull(funcDepMap.mixin, 'lodash');
 
