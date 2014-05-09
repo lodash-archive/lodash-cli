@@ -1274,29 +1274,6 @@ function buildModule(state, callback) {
         source = removeMethodAssignment(source, funcName);
       });
 
-      // add category namespaces to each lodash function assignment
-      source = source.replace(/(lodash(?:\.prototype)?\.[$\w]+\s*=\s*)([$\w]+)/g, function(match, prelude, identifier) {
-        if (_.contains(deps, identifier)) {
-          return match;
-        }
-        var category = _.first(getCategories(identifier, funcDepMap));
-        return prelude + (category ? category.toLowerCase() + '.' : '') + identifier;
-      });
-
-      // add `lodash.support` and `lodash.templateSettings` assignment
-      source = source.replace(/^ *lodash\.VERSION\b.+\n/m, function(match) {
-        var code = [
-          '',
-          '  lodash.support = support;'
-        ];
-
-        if (_.contains(identifiers, 'templateSettings')) {
-          code.push('  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;');
-        }
-        code.push('');
-        return match + code.join('\n');
-      });
-
       // wrap `_.mixin`
       source = source.replace(/^ *lodashWrapper\.prototype\s*=[^;]+;\n/m, function(match) {
         var code = [
@@ -1316,9 +1293,8 @@ function buildModule(state, callback) {
           );
         } else {
           code.push(
-            '    var functions = objects.functions;',
             '    return function(object, source, options) {',
-            '      if (!source || (!options && !functions(source).length)) {',
+            '      if (!source || (!options && !baseFunctions(source, keys).length)) {',
             '        if (options == null) {',
             '          options = source;',
             '        }',
@@ -1334,6 +1310,29 @@ function buildModule(state, callback) {
           ''
         );
         return match + code.join('\n');
+      });
+
+      // add `lodash.support` and `lodash.templateSettings` assignment
+      source = source.replace(/^ *lodash\.VERSION\b.+\n/m, function(match) {
+        var code = [
+          '',
+          '  lodash.support = support;'
+        ];
+
+        if (_.contains(identifiers, 'templateSettings')) {
+          code.push('  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;');
+        }
+        code.push('');
+        return match + code.join('\n');
+      });
+
+      // add category namespaces to each lodash function assignment
+      source = source.replace(/(lodash(?:\.prototype)?\.[$\w]+\s*=\s*)([$\w]+)/g, function(match, prelude, identifier) {
+        if (_.contains(deps, identifier)) {
+          return match;
+        }
+        var category = _.first(getCategories(identifier, funcDepMap));
+        return prelude + (category ? category.toLowerCase() + '.' : '') + identifier;
       });
 
       var unusedDeps = getUnusedDeps(source, deps);
@@ -3452,7 +3451,7 @@ function build(options, callback) {
           });
           delete varDepMap.root;
         }
-        funcDepMap.lodash.push('arrayEach', 'assign', 'mixin');
+        funcDepMap.lodash.push('arrayEach', 'assign', 'baseFunctions', 'keys', 'mixin');
         objDepMap.lodash = ['support'];
 
         if (!isUnderscore) {
