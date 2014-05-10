@@ -118,7 +118,7 @@ var funcDependencyMap = createMap({
   'createCallback': ['baseCreateCallback', 'matches', 'property'],
   'curry': ['createWrapper'],
   'debounce': ['isFunction', 'isObject', 'now'],
-  'defaults': ['assign', 'assignDefaults', 'slice'],
+  'defaults': ['assignDefaults', 'createAssigner'],
   'defer': ['isFunction', 'slice'],
   'delay': ['isFunction', 'slice'],
   'difference': ['baseDifference', 'baseFlatten', 'isArguments', 'isArray'],
@@ -231,7 +231,7 @@ var funcDependencyMap = createMap({
   'takeRightWhile': ['last'],
   'takeWhile': ['first'],
   'tap': [],
-  'template': ['defaults', 'escape', 'escapeStringChar', 'keys', 'values'],
+  'template': ['defaultsOwn', 'escape', 'escapeStringChar', 'keys', 'values'],
   'throttle': ['debounce', 'isFunction', 'isObject'],
   'times': ['baseCreateCallback'],
   'toArray': ['isString', 'slice', 'values'],
@@ -261,6 +261,7 @@ var funcDependencyMap = createMap({
   'arrayEachRight': [],
   'arrayMap': [],
   'assignDefaults': [],
+  'assignDefaultsOwn': [],
   'baseAt': [],
   'baseBind': ['baseCreate', 'composeArgs', 'isObject', 'setData'],
   'baseClone': ['arrayEach', 'assign', 'baseForOwn', 'isArray', 'isObject', 'isNode', 'slice'],
@@ -294,11 +295,13 @@ var funcDependencyMap = createMap({
   'composeArgs': [],
   'composeArgsRight': [],
   'createAggregator': ['baseEach', 'createCallback', 'isArray'],
+  'createAssigner': ['assign', 'slice'],
   'createWrapper': ['baseBind', 'baseCreateWrapper', 'getHolders', 'isFunction', 'slice'],
   'createCache': ['isNative'],
   'createCompounder': ['deburrLetter'],
   'createPad': ['repeat'],
   'deburrLetter': [],
+  'defaultsOwn': ['createAssigner', 'assignDefaultsOwn'],
   'escapeHtmlChar': [],
   'escapeStringChar': [],
   'getHolders': ['lodash'],
@@ -644,6 +647,7 @@ var inlineableFuncs = [
   'arrayEachRight',
   'arrayMap',
   'assignDefaults',
+  'assignDefaultsOwn',
   'baseAt',
   'baseCompareAscending',
   'baseCreate',
@@ -771,6 +775,7 @@ var privateFuncs = [
   'arrayEachRight',
   'arrayMap',
   'assignDefaults',
+  'assignDefaultsOwn',
   'baseAt',
   'baseBind',
   'baseClone',
@@ -803,11 +808,13 @@ var privateFuncs = [
   'composeArgs',
   'composeArgsRight',
   'createAggregator',
+  'createAssigner',
   'createWrapper',
   'createCache',
   'createCompounder',
   'createPad',
   'deburrLetter',
+  'defaultsOwn',
   'escapeHtmlChar',
   'escapeStringChar',
   'getHolders',
@@ -3759,7 +3766,7 @@ function build(options, callback) {
         }
         // replace `_.defaults`
         if (!isLodash('defaults')) {
-          _.pull(funcDepMap.defaults, 'assign', 'assignDefaults', 'slice');
+          _.pull(funcDepMap.defaults, 'assign', 'assignDefaultsOwn', 'createAssigner', 'slice');
 
           source = replaceFunction(source, 'defaults', [
             'function defaults(object, source, guard) {',
