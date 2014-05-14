@@ -231,7 +231,7 @@ var funcDependencyMap = createMap({
   'takeRightWhile': ['last'],
   'takeWhile': ['first'],
   'tap': [],
-  'template': ['assign', 'assignOwnDefaults', 'escape', 'escapeStringChar', 'keys', 'values'],
+  'template': ['assign', 'assignOwnDefaults', 'compileFunction', 'escape', 'escapeStringChar', 'keys', 'values'],
   'throttle': ['debounce', 'isFunction', 'isObject'],
   'times': ['baseCreateCallback'],
   'toArray': ['isString', 'slice', 'values'],
@@ -292,6 +292,7 @@ var funcDependencyMap = createMap({
   'charsRightIndex': [],
   'compareAscending': ['baseCompareAscending'],
   'compareMultipleAscending': ['baseCompareAscending'],
+  'compileFunction': [],
   'composeArgs': [],
   'composeArgsRight': [],
   'createAggregator': ['baseEach', 'createCallback', 'isArray'],
@@ -658,6 +659,7 @@ var inlineableFuncs = [
   'charsRightIndex',
   'compareAscending',
   'compareMultipleAscending',
+  'compileFunction',
   'compose',
   'composeArgs',
   'composeArgsRight',
@@ -803,6 +805,7 @@ var privateFuncs = [
   'charsRightIndex',
   'compareAscending',
   'compareMultipleAscending',
+  'compileFunction',
   'composeArgs',
   'composeArgsRight',
   'createAggregator',
@@ -2238,12 +2241,12 @@ function isPrivate(funcName) {
  * @returns {boolean} Returns `true` if the variable is used, else `false`.
  */
 function isVarUsed(source, varName, isShallow) {
-  var match = matchVar(source, varName, isShallow);
-  if (!match) {
+  var snippet = matchVar(source, varName, isShallow);
+  if (!snippet) {
     return false;
   }
   // remove the variable assignment from the source
-  source = source.replace(match, '');
+  source = source.replace(snippet, '');
   return RegExp('[^.$"\'\\w]' + varName + '\\b(?!\\s*=)').test(source);
 }
 
@@ -2463,14 +2466,13 @@ function removeEsOptimization(source) {
  * @returns {string} Returns the modified source.
  */
 function removeFunction(source, funcName) {
-  var snippet;
-
   // defer to specialized removal functions
   if (funcName == 'runInContext') {
     return removeRunInContext(source, funcName);
   }
   // remove function
-  if ((snippet = matchFunction(source, funcName, true))) {
+  var snippet = matchFunction(source, funcName, true);
+  if (snippet) {
     source = source.replace(snippet, '');
   }
   return source;
@@ -4326,7 +4328,7 @@ function build(options, callback) {
         }
         // replace `_.template`
         if (!isLodash('template')) {
-          _.pull(funcDepMap.template, 'assign', 'assignOwnDefaults', 'keys', 'values').push('defaults');
+          _.pull(funcDepMap.template, 'keys', 'values');
           _.pull(varDepMap.template, 'reInterpolate');
 
           source = replaceFunction(source, 'template', [
@@ -4335,7 +4337,7 @@ function build(options, callback) {
             '      settings = _.templateSettings;',
             '',
             "  string = String(string == null ? '' : string);",
-            '  options = defaults({}, options, settings);',
+            '  options = assign({}, options, settings, assignOwnDefaults);',
             '',
             '  var index = 0,',
             '      source = "__p += \'",',
@@ -4372,17 +4374,8 @@ function build(options, callback) {
             '    source +',
             "    'return __p\\n}';",
             '',
-            '  try {',
-            "    var result = Function('_', 'return ' + source)(_);",
-            '  } catch(e) {',
-            '    e.source = source;',
-            '    throw e;',
-            '  }',
-            '  if (data) {',
-            '    return result(data);',
-            '  }',
-            '  result.source = source;',
-            '  return result;',
+            "  var result = compileFunction(source, ['_'], [_]);",
+            '  return data ? result(data) : result;',
             '}'
           ].join('\n'));
         }
@@ -4797,11 +4790,13 @@ function build(options, callback) {
               .replace(/(_ *= *)lodash\b/, '$1templateSettings.imports._')
               .replace(/= *_\.templateSettings(?=[,;])/, '$& || templateSettings');
           }
-          return match
-            // assign `settings` using `template.imports`
-            .replace(/= *templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings')
-            // remove debug sourceURL use in `_.template`
-            .replace(/^(?: *\/\/.*\n)* *var sourceURL\b[^;]+;\n|\+ *sourceURL/gm, '');
+          // assign `settings` using `template.imports`
+          match = match.replace(/= *templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings');
+
+          // remove `sourceURL` from `_.template`
+          match = match.replace(/^(?: *\/\/.*\n)*(?= *var sourceURL\b)/m, '');
+          match = removeVar(match, 'sourceURL');
+          return replaceVar(match, 'result', 'compileFunction(source, importsKeys, importsValues)');
         });
 
         // replace `root` with the appropriate global object for the specified `exports` option
