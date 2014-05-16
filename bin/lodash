@@ -4328,7 +4328,7 @@ function build(options, callback) {
         }
         // replace `_.template`
         if (!isLodash('template')) {
-          _.pull(funcDepMap.template, 'keys', 'values');
+          _.pull(funcDepMap.template, 'assign', 'assignOwnDefaults', 'keys', 'values').push('defaults');
           _.pull(varDepMap.template, 'reInterpolate');
 
           source = replaceFunction(source, 'template', [
@@ -4337,7 +4337,7 @@ function build(options, callback) {
             '      settings = _.templateSettings;',
             '',
             "  string = String(string == null ? '' : string);",
-            '  options = assign({}, options, settings, assignOwnDefaults);',
+            '  options = defaults({}, options, settings);',
             '',
             '  var index = 0,',
             '      source = "__p += \'",',
