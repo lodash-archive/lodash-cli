@@ -1,21 +1,17 @@
 var functions = require('lodash.functions'),
-    forEach = require('lodash.foreach'),
-    forOwn = require('lodash.forown'),
     isArray = require('lodash.isarray'),
     lodashWrapper = require('lodash._lodashwrapper'),
     mixin = require('lodash.mixin'),
     support = require('lodash.support'),
     templateSettings = require('lodash.templatesettings');
 
-/** Used for `Array` method references */
-var arrayRef = [];
-
 /** Used for native method references */
-var objectProto = Object.prototype;
+var arrayProto = Array.prototype,
+    objectProto = Object.prototype;
 
 /** Native method shortcuts */
 var hasOwnProperty = objectProto.hasOwnProperty,
-    push = arrayRef.push;
+    push = arrayProto.push;
 
 /**
  * Creates a `lodash` object which wraps the given value to enable method
