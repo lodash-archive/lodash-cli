@@ -99,10 +99,10 @@ var funcDependencyMap = createMap({
 
   // public functions
   'after': ['isFunction'],
-  'assign': ['baseCreateCallback', 'keys'],
+  'assign': ['baseAssign', 'createAssigner'],
   'at': ['baseAt', 'baseFlatten', 'isString'],
   'bind': ['createWrapper', 'slice'],
-  'bindAll': ['baseFlatten', 'createWrapper', 'functions'],
+  'bindAll': ['baseBindAll', 'baseFlatten', 'functions'],
   'bindKey': ['createWrapper', 'slice'],
   'camelCase': ['createCompounder'],
   'capitalize': [],
@@ -114,7 +114,7 @@ var funcDependencyMap = createMap({
   'constant': [],
   'contains': ['getIndexOf', 'isArray', 'isNative', 'isString', 'values'],
   'countBy': ['createAggregator'],
-  'create': ['assign', 'baseCreate'],
+  'create': ['baseAssign', 'baseCreate'],
   'createCallback': ['baseCreateCallback', 'matches', 'property'],
   'curry': ['createWrapper'],
   'debounce': ['isFunction', 'isObject', 'now'],
@@ -155,7 +155,7 @@ var funcDependencyMap = createMap({
   'initial': ['createCallback', 'slice'],
   'intersection': ['cacheIndexOf', 'createCache', 'getIndexOf', 'isArguments', 'isArray'],
   'invert': ['keys'],
-  'invoke': ['baseEach', 'slice'],
+  'invoke': ['baseInvoke', 'slice'],
   'isArguments': [],
   'isArray': ['isNative'],
   'isBoolean': [],
@@ -185,14 +185,14 @@ var funcDependencyMap = createMap({
   'matches': ['baseIsEqual', 'isObject', 'keys'],
   'max': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
   'memoize': ['isFunction'],
-  'merge': ['baseCreateCallback', 'baseMerge', 'slice'],
+  'merge': ['baseMerge', 'createAssigner'],
   'min': ['baseEach', 'charAtCallback', 'createCallback', 'isArray', 'isString'],
   'mixin': ['baseFunctions', 'isFunction', 'isObject', 'keys', 'lodash'],
   'negate': ['isFunction'],
   'noConflict': [],
   'noop': [],
   'now': ['isNative'],
-  'omit': ['baseDifference', 'baseFlatten', 'createCallback', 'keysIn', 'negate', 'pick'],
+  'omit': ['baseDifference', 'baseFlatten', 'basePick', 'createCallback', 'isObject', 'keysIn', 'negate'],
   'once': ['isFunction'],
   'pad': ['createPad'],
   'padLeft': ['createPad'],
@@ -202,11 +202,11 @@ var funcDependencyMap = createMap({
   'partial': ['createWrapper', 'slice'],
   'partialRight': ['createWrapper', 'slice'],
   'partition': ['createAggregator'],
-  'pick': ['baseFlatten', 'baseForIn', 'createCallback', 'isObject'],
+  'pick': ['baseFlatten', 'basePick', 'createCallback', 'isObject'],
   'pluck': ['map', 'property'],
   'property': [],
   'pull': [],
-  'pullAt': ['baseAt', 'baseCompareAscending', 'baseFlatten'],
+  'pullAt': ['baseFlatten', 'basePullAt'],
   'random': ['baseRandom'],
   'range': [],
   'reduce': ['baseEach', 'createCallback', 'isArray'],
@@ -263,8 +263,10 @@ var funcDependencyMap = createMap({
   'assignDefaults': [],
   'assignOwnDefaults': [],
   'baseAt': [],
+  'baseAssign': ['keys'],
   'baseBind': ['baseCreate', 'composeArgs', 'isObject', 'setData'],
-  'baseClone': ['arrayEach', 'assign', 'baseForOwn', 'isArray', 'isObject', 'isNode', 'slice'],
+  'baseBindAll': ['createWrapper'],
+  'baseClone': ['arrayEach', 'baseAssign', 'baseForOwn', 'isArray', 'isObject', 'isNode', 'slice'],
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
   'baseCreateCallback': ['bind', 'identity', 'setData'],
@@ -281,8 +283,11 @@ var funcDependencyMap = createMap({
   'baseForRight': [],
   'baseFunctions': ['isFunction'],
   'baseIndexOf': [],
+  'baseInvoke': ['baseEach'],
   'baseIsEqual': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isPlainObject'],
+  'basePick': ['baseForIn'],
+  'basePullAt': ['baseAt', 'baseCompareAscending'],
   'baseRandom': [],
   'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseValues': [],
@@ -296,6 +301,7 @@ var funcDependencyMap = createMap({
   'composeArgs': [],
   'composeArgsRight': [],
   'createAggregator': ['baseEach', 'createCallback', 'isArray'],
+  'createAssigner': ['baseCreateCallback'],
   'createWrapper': ['baseBind', 'baseCreateWrapper', 'getHolders', 'isFunction', 'slice'],
   'createCache': ['isNative'],
   'createCompounder': ['deburrLetter'],
@@ -776,8 +782,10 @@ var privateFuncs = [
   'arrayMap',
   'assignDefaults',
   'assignOwnDefaults',
+  'baseAssign',
   'baseAt',
   'baseBind',
+  'baseBindAll',
   'baseClone',
   'baseCompareAscending',
   'baseCreate',
@@ -794,8 +802,11 @@ var privateFuncs = [
   'baseForRight',
   'baseFunctions',
   'baseIndexOf',
+  'baseInvoke',
   'baseIsEqual',
   'baseMerge',
+  'basePick',
+  'basePullAt',
   'baseRandom',
   'baseUniq',
   'baseValues',
@@ -809,6 +820,7 @@ var privateFuncs = [
   'composeArgs',
   'composeArgsRight',
   'createAggregator',
+  'createAssigner',
   'createWrapper',
   'createCache',
   'createCompounder',
@@ -968,7 +980,7 @@ function addUnderscoreChaining(source, isModularize) {
     return match.replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)?( *)lodash\.VERSION\b/m, function(match, indent) {
       return indent + [
         '// add functions to `lodash.prototype`',
-        'mixin(assign({}, lodash));',
+        'mixin(baseAssign({}, lodash));',
       ].join('\n' + indent) +
       '\n\n' + match
     });
@@ -3456,7 +3468,7 @@ function build(options, callback) {
           });
           delete varDepMap.root;
         }
-        funcDepMap.lodash.push('arrayEach', 'assign', 'mixin');
+        funcDepMap.lodash.push('arrayEach', 'baseAssign', 'mixin');
         objDepMap.lodash = ['support'];
 
         if (!isUnderscore) {
@@ -3475,7 +3487,7 @@ function build(options, callback) {
       }
       else {
         funcDepMap.chain.push('wrapperChain');
-        funcDepMap.wrapperValueOf.push('arrayEach', 'assign', 'mixin', 'wrapperChain');
+        funcDepMap.wrapperValueOf.push('arrayEach', 'baseAssign', 'mixin', 'wrapperChain');
         objDepMap.wrapperValueOf = ['support'];
 
         _.each(['chain', 'lodashWrapper', 'tap', 'wrapperChain'], function(funcName) {
@@ -3699,23 +3711,23 @@ function build(options, callback) {
         }
         // replace `_.assign`
         if (!isLodash('assign')) {
-          _.pull(funcDepMap.assign, 'baseCreateCallback', 'keys');
+          _.pull(funcDepMap.assign, 'baseAssign', 'createAssigner');
 
           source = replaceFunction(source, 'assign', [
-            'function assign(object, source, guard) {',
+            'function assign(object) {',
             '  if (!object) {',
             '    return object;',
             '  }',
             '  var args = arguments,',
-            '      argsIndex = 0,',
-            '      argsLength = args.length,',
-            '      type = typeof guard;',
+            '      index = 0,',
+            '      length = args.length,',
+            '      type = typeof args[2];',
             '',
-            "  if ((type == 'number' || type == 'string') && args[3] && args[3][guard] === source) {",
-            '    argsLength = 2;',
+            "  if ((type == 'number' || type == 'string') && args[3] && args[3][args[2]] === args[1]) {",
+            '    length = 2;',
             '  }',
-            '  while (++argsIndex < argsLength) {',
-            '    source = args[argsIndex];',
+            '  while (++index < length) {',
+            '    var source = args[index];',
             '    for (var key in source) {',
             '      object[key] = source[key];',
             '    }',
@@ -3767,20 +3779,20 @@ function build(options, callback) {
           _.pull(funcDepMap.defaults, 'assign', 'assignDefaults', 'slice');
 
           source = replaceFunction(source, 'defaults', [
-            'function defaults(object, source, guard) {',
+            'function defaults(object) {',
             '  if (!object) {',
             '    return object;',
             '  }',
             '  var args = arguments,',
-            '      argsIndex = 0,',
-            '      argsLength = args.length,',
-            '      type = typeof guard;',
+            '      index = 0,',
+            '      length = args.length,',
+            '      type = typeof args[2];',
             '',
-            "  if ((type == 'number' || type == 'string') && args[3] && args[3][guard] === source) {",
-            '    argsLength = 2;',
+            "  if ((type == 'number' || type == 'string') && args[3] && args[3][args[2]] === args[1]) {",
+            '    length = 2;',
             '  }',
-            '  while (++argsIndex < argsLength) {',
-            '    source = args[argsIndex];',
+            '  while (++index < length) {',
+            '    var source = args[index];',
             '    for (var key in source) {',
             "      if (typeof object[key] == 'undefined') {",
             '        object[key] = source[key];',
@@ -4196,13 +4208,16 @@ function build(options, callback) {
 
           source = replaceFunction(source, 'omit', [
             'function omit(object) {',
+            '  if (!isObject(object)) {',
+            '    return {};',
+            '  }',
             '  var omitProps = baseFlatten(arguments, true, false, 1),',
             '      length = omitProps.length;',
             '',
             '  while (length--) {',
             '    omitProps[length] = String(omitProps[length]);',
             '  }',
-            '  return pick(object, baseDifference(keysIn(object), omitProps));',
+            '  return basePick(object, baseDifference(keysIn(object), omitProps));',
             '}'
           ].join('\n'));
         }
@@ -4224,22 +4239,13 @@ function build(options, callback) {
         }
         // replace `_.pick`
         if (!isLodash('pick')) {
-          _.pull(funcDepMap.pick, 'baseForIn', 'createCallback', 'isObject');
+          _.pull(funcDepMap.pick, 'createCallback');
 
           source = replaceFunction(source, 'pick', [
             'function pick(object) {',
-            '  var index = -1,',
-            '      props = baseFlatten(arguments, true, false, 1),',
-            '      length = props.length,',
-            '      result = {};',
-            '',
-            '  while (++index < length) {',
-            '    var key = props[index];',
-            '    if (key in object) {',
-            '      result[key] = object[key];',
-            '    }',
-            '  }',
-            '  return result;',
+            '  return isObject(object)',
+            '    ? basePick(object, baseFlatten(arguments, true, false, 1))',
+            '    : {};',
             '}'
           ].join('\n'));
         }
