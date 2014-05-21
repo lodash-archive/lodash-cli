@@ -2283,11 +2283,14 @@ function matchFunction(source, funcName, leadingComments) {
     // match a simple variable declaration
     ' *var ' + funcName + ' *=.+?;\\n'
   ], function(result, reSource) {
-    return result || (result = source.match(RegExp(
+    if (result) {
+      return result;
+    }
+    return source.match(RegExp(
       '^(' + multilineComment + ')' +
       '('  + reSource + ')'
-    , 'm')));
-  }, null);
+    , 'm'));
+  }, '');
 
   if (result && isFunctionSnippet(result[0])) {
     return (leadingComments ? result[1] : '') + result[2];
@@ -2346,10 +2349,13 @@ function matchVar(source, varName, isShallow) {
     ];
   }
   return _.reduce(reSources, function(result, reSource) {
-    return result || (result = source.match(RegExp(
+    if (result) {
+      return result;
+    }
+    return _.result(source.match(RegExp(
       '^' + reSource
-    , 'm'))) && result[0];
-  }, null) || '';
+    , 'm')), 0, '');
+  }, '');
 }
 
 /**
@@ -2373,7 +2379,11 @@ function optionToArray(name, string) {
  * @returns {string|undefined} Returns the option value, else `undefined`.
  */
 function optionToValue(name, string) {
-  var result = (result = string.match(RegExp('^' + name + '(?:=([\\s\\S]+))?$'))) && (result[1] ? result[1].trim() : true);
+  var result = string.match(RegExp('^' + name + '(?:=([\\s\\S]+))?$'));
+  if (result) {
+    result = _.result(result, 0);
+    result = result ? _.trim(result) : true;
+  }
   if (result === 'false') {
     return false;
   }
@@ -4063,7 +4073,8 @@ function build(options, callback) {
             '',
             '    if (result) {',
             '      while (size--) {',
-            '        if (!(result = baseIsEqual(value[size], other[size], stackA, stackB))) {',
+            '        result = baseIsEqual(value[size], other[size], stackA, stackB);',
+            '        if (!result) {',
             '          break;',
             '        }',
             '      }',
@@ -4073,14 +4084,16 @@ function build(options, callback) {
             '    baseForIn(other, function(othValue, key, other) {',
             '      if (hasOwnProperty.call(other, key)) {',
             '        size++;',
-            '        return (result = hasOwnProperty.call(value, key) && baseIsEqual(value[key], othValue, stackA, stackB));',
+            '        result = hasOwnProperty.call(value, key) && baseIsEqual(value[key], othValue, stackA, stackB);',
+            '        return result;',
             '      }',
             '    });',
             '',
             '    if (result) {',
             '      baseForIn(value, function(valValue, key, value) {',
             '        if (hasOwnProperty.call(value, key)) {',
-            '          return (result = --size > -1);',
+            '          result = --size > -1;',
+            '          return result;',
             '        }',
             '      });',
             '    }',
@@ -4173,15 +4186,13 @@ function build(options, callback) {
             '    if (length && !object) {',
             '      return false;',
             '    }',
-            '    var result = true;',
             '    while (length--) {',
             '      var key = props[length];',
-            '      if (!(result = hasOwnProperty.call(object, key) &&',
-            '          object[key] === source[key])) {',
-            '        break;',
+            '      if (!(hasOwnProperty.call(object, key) && object[key] === source[key])) {',
+            '        return false',
             '      }',
             '    }',
-            '    return result;',
+            '    return true;',
             '  };',
             '}'
           ].join('\n'));
@@ -4592,28 +4603,28 @@ function build(options, callback) {
           });
 
           source = source.replace(matchFunction(source, 'some'), function(match) {
-            return match.replace(/!\(result *= *(.+?)\);/, '(result = $1) && breakIndicator;');
+            return match.replace(/^(( *)result *=[\s\S]+?;\n\2return *)!result\b/m, '$1result && breakIndicator');
           });
 
           source = source.replace(matchFunction(source, 'transform'), function(match) {
-            return match.replace(/return callback[^)]+\)/, '$& === false && breakIndicator');
+            return match.replace(/\breturn +callback[^)]+\)/, '$& === false && breakIndicator');
           });
 
           _.each(['arrayEach', 'arrayEachRight', 'baseEach', 'baseEachRight', 'baseFor', 'baseForRight'], function(funcName) {
             source = source.replace(matchFunction(source, funcName), function(match) {
-              return match.replace(/=== *false/g, '=== breakIndicator');
+              return match.replace(/=== *false\b/g, '=== breakIndicator');
             });
           });
 
           _.each(['baseIsEqual', 'every'], function(funcName) {
             source = source.replace(matchFunction(source, funcName), function(match) {
-              return match.replace(/\(result *= *(.+?)\);/g, '!(result = $1) && breakIndicator;');
+              return match.replace(/^( *)result *=[\s\S]+?;\n\1return +result\b/gm, '$& || breakIndicator');
             });
           });
 
           _.each(['baseFind', 'shimIsPlainObject'], function(funcName) {
             source = source.replace(matchFunction(source, funcName), function(match) {
-              return match.replace(/return false/, 'return breakIndicator');
+              return match.replace(/\breturn +false\b/, 'return breakIndicator');
             });
           });
         }
