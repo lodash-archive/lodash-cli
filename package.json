@@ -18,8 +18,8 @@
   "repository": "lodash/lodash-cli",
   "scripts": { "test": "echo \"See the repository CONTRIBUTING.md for testing instructions.\"" },
   "dependencies": {
-    "closure-compiler": "0.2.5",
-    "glob": "3.2.9",
+    "closure-compiler": "0.2.6",
+    "glob": "~3.2.11",
     "lodash": "2.4.1",
     "uglify-js": "2.4.13"
   },
