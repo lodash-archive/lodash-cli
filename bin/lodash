@@ -2381,7 +2381,7 @@ function optionToArray(name, string) {
 function optionToValue(name, string) {
   var result = string.match(RegExp('^' + name + '(?:=([\\s\\S]+))?$'));
   if (result) {
-    result = _.result(result, 0);
+    result = _.result(result, 1);
     result = result ? _.trim(result) : true;
   }
   if (result === 'false') {
