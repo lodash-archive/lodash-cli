@@ -235,7 +235,7 @@ var funcDependencyMap = createMap({
   'throttle': ['debounce', 'isFunction', 'isObject'],
   'times': ['baseCreateCallback'],
   'toArray': ['isString', 'slice', 'values'],
-  'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'createCallback', 'isArray', 'isObject'],
+  'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'createCallback', 'isArrayLike', 'isObject'],
   'trim': ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
   'trimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
   'trimRight': ['charsRightIndex', 'trimmedRightIndex'],
@@ -266,7 +266,7 @@ var funcDependencyMap = createMap({
   'baseAssign': ['keys'],
   'baseBind': ['baseCreate', 'composeArgs', 'isObject', 'setData'],
   'baseBindAll': ['createWrapper'],
-  'baseClone': ['arrayEach', 'baseAssign', 'baseForOwn', 'isArray', 'isObject', 'isNode', 'slice'],
+  'baseClone': ['arrayEach', 'baseAssign', 'baseForOwn', 'isArray', 'isFunction', 'isObject', 'isNode', 'slice'],
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
   'baseCreateCallback': ['bind', 'identity', 'setData'],
@@ -285,7 +285,7 @@ var funcDependencyMap = createMap({
   'baseIndexOf': [],
   'baseInvoke': ['baseEach'],
   'baseIsEqual': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
-  'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isPlainObject'],
+  'baseMerge': ['arrayEach', 'baseForOwn', 'isArrayLike', 'isPlainObject'],
   'basePick': ['baseForIn'],
   'basePullAt': ['baseAt', 'baseCompareAscending'],
   'baseRandom': [],
@@ -311,6 +311,7 @@ var funcDependencyMap = createMap({
   'escapeStringChar': [],
   'getHolders': ['lodash'],
   'getIndexOf': ['baseIndexOf', 'indexOf'],
+  'isArrayLike': [],
   'isNative': ['escapeRegExp'],
   'isNode': [],
   'lodashWrapper': [],
@@ -634,9 +635,9 @@ var defaultExports = [
 
 /** List of variables with complex assignments */
 var complexVars = [
+  'arrayLikeClasses',
   'cloneableClasses',
   'contextProps',
-  'ctorByClass',
   'defineProperty',
   'freeGlobal',
   'nonEnumProps',
@@ -830,6 +831,7 @@ var privateFuncs = [
   'escapeStringChar',
   'getHolders',
   'getIndexOf',
+  'isArrayLike',
   'isNative',
   'isNode',
   'lodashWrapper',
@@ -3630,9 +3632,9 @@ function build(options, callback) {
             '    (isArray(object) || (support.nonEnumArgs && isArguments(object))) && length) >>> 0;',
             '',
             '  var keyIndex,',
-            '      ctor = object.constructor,',
+            '      Ctor = object.constructor,',
             '      index = -1,',
-            '      isProto = ctor && object === ctor.prototype,',
+            '      isProto = Ctor && object === Ctor.prototype,',
             '      maxIndex = length - 1,',
             '      result = Array(length),',
             '      skipIndexes = length > 0;',
@@ -4023,7 +4025,7 @@ function build(options, callback) {
             '    case stringClass:',
             '      return value == String(other);',
             '  }',
-            '  var isArr = valClass == arrayClass;',
+            '  var isArr = arrayLikeClasses[valClass];',
             '  if (!isArr) {',
             '    if (valClass != objectClass) {',
             '      return false;',
@@ -4982,7 +4984,7 @@ function build(options, callback) {
 
     // remove code used to resolve unneeded `support` properties
     source = source.replace(matchProp(source, 'support'), function(match) {
-      return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var ctor *=[\s\S]+?(?:\n *for.+)+\n)([\s\S]+?)}\(0, *0\)\);\n/m, function(match, setup, indent, body) {
+      return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var Ctor *=[\s\S]+?(?:\n *for.+)+\n)([\s\S]+?)}\(0, *0\)\);\n/m, function(match, setup, indent, body) {
         var modified = setup;
 
         if (!/\.spliceObjects *= *(?!false|true)/.test(body)) {
@@ -4993,7 +4995,7 @@ function build(options, callback) {
             !/\.ownLast *= *(?!false|true)/.test(body)) {
           modified = modified
             .replace(/\bctor *=.+\s+/, '')
-            .replace(/^ *ctor\.prototype.+\s+.+\n/m, '')
+            .replace(/^ *Ctor\.prototype.+\s+.+\n/m, '')
             .replace(/(?:,\n)? *props *=[^;=]+/, '')
         }
         if (!/\.nonEnumArgs *= *(?!false|true)/.test(body)) {
