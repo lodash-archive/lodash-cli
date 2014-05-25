@@ -646,77 +646,6 @@ var complexVars = [
   'whitespace'
 ];
 
-/** List of functions to deep inline */
-var inlineableFuncs = [
-  'after',
-  'arrayEach',
-  'arrayEachRight',
-  'arrayMap',
-  'assignDefaults',
-  'assignOwnDefaults',
-  'baseAt',
-  'baseCompareAscending',
-  'baseCreate',
-  'baseFunctions',
-  'baseRandom',
-  'cacheIndexOf',
-  'capitalize',
-  'charAtCallback',
-  'charsLeftIndex',
-  'charsRightIndex',
-  'compareAscending',
-  'compareMultipleAscending',
-  'compileFunction',
-  'compose',
-  'composeArgs',
-  'composeArgsRight',
-  'constant',
-  'createCache',
-  'createCompounder',
-  'createPad',
-  'deburrLetter',
-  'defer',
-  'delay',
-  'escape',
-  'escapeHtmlChar',
-  'escapeRegExp',
-  'escapeStringChar',
-  'getHolders',
-  'has',
-  'identity',
-  'isArguments',
-  'isArray',
-  'isBoolean',
-  'isDate',
-  'isElement',
-  'isError',
-  'isFinite',
-  'isFunction',
-  'isNative',
-  'isNaN',
-  'isNode',
-  'isNull',
-  'isNumber',
-  'isObject',
-  'isRegExp',
-  'isString',
-  'isUndefined',
-  'memoize',
-  'negate',
-  'noop',
-  'now',
-  'once',
-  'parseInt',
-  'result',
-  'setData',
-  'slice',
-  'trimmedLeftIndex',
-  'trimmedRightIndex',
-  'unescape',
-  'unescapeHtmlChar',
-  'uniqueId'
-];
-
 /** List of Lo-Dash only functions */
 var lodashOnlyFuncs = [
   'at',
@@ -1148,20 +1077,6 @@ function buildModule(state, callback) {
         );
       }, []), inlinees);
 
-      // deep inline additional dependencies when exporting for npm
-      if (isNpm) {
-        _.each(_.intersection(depNames, inlineableFuncs), function(identifier) {
-          var deps = getDependencies(identifier, funcDepMap);
-          deps.push(identifier);
-
-          inlineFuncs = _.union(inlineFuncs, _.intersection(deps, inlineableFuncs));
-          inlineVars = _.union(inlineVars, varDepMap[identifier]);
-
-          deps = _.difference(deps, inlineFuncs);
-          depNames = _.difference(depNames, inlineFuncs);
-          depNames = _.union(depNames, deps, objDepMap[identifier]);
-        });
-      }
       depNames.sort();
 
       state.outputPath = path.join(outputPath, modulePath, (isNpm ? 'index' : identifier) + '.js');
@@ -4836,7 +4751,7 @@ function build(options, callback) {
     /*------------------------------------------------------------------------*/
 
     // set the AMD module id
-    if (isAMD && !isModularize && !isTemplate && moduleId && moduleId != 'none') {
+    if (isAMD && !isModularize && !isTemplate && moduleId != null && moduleId != 'none') {
       source = source.replace(/^ *define\((?=function)/m, "$&'" + moduleId + "', ");
     }
     // customize Lo-Dash's export bootstrap
