@@ -285,7 +285,7 @@ var funcDependencyMap = createMap({
   'baseIndexOf': [],
   'baseInvoke': ['baseEach'],
   'baseIsEqual': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
-  'baseMerge': ['arrayEach', 'baseForOwn', 'isArrayLike', 'isPlainObject'],
+  'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isArrayLike', 'isPlainObject'],
   'basePick': ['baseForIn'],
   'basePullAt': ['baseAt', 'baseCompareAscending'],
   'baseRandom': [],
