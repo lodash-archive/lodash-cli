@@ -13,6 +13,15 @@ var _ = require('lodash/lodash.js'),
 var fs = util.fs,
     path = util.path;
 
+/** The unit testing framework */
+var QUnit = (
+  global.addEventListener = Function.prototype,
+  global.QUnit = require('qunitjs'),
+  require('qunit-extras').runInContext(global),
+  delete global.addEventListener,
+  global.QUnit
+);
+
 /** Used to avoid `noglobal` false positives caused by `errno` leaked in Node.js */
 global.errno = true;
 
@@ -27,15 +36,6 @@ var relativePrefix = '.' + path.sep;
 
 /** Used to match the copyright header in builds */
 var reHeader = /^\/\**[\s\S]+?\*\/\n/;
-
-/** The unit testing framework */
-var QUnit = (
-  global.addEventListener = Function.prototype,
-  global.QUnit = require('../vendor/qunit/qunit/qunit.js'),
-  require('../vendor/qunit-extras/qunit-extras.js').runInContext(global),
-  delete global.addEventListener,
-  global.QUnit
-);
 
 /** Shortcut used to push arrays of values to an array */
 var push = Array.prototype.push;
