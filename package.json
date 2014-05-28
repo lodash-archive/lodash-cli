@@ -23,6 +23,10 @@
     "lodash": "2.4.1",
     "uglify-js": "2.4.13"
   },
+  "devDependencies": {
+    "qunit-extras": "~1.2.0",
+    "qunitjs": "~1.11.0"
+  },
   "files": [
     "LICENSE.txt",
     "bin/lodash",
