@@ -4909,7 +4909,7 @@ function build(options, callback) {
             !/\.nonEnumShadows *= *(?!false|true)/.test(body) &&
             !/\.ownLast *= *(?!false|true)/.test(body)) {
           modified = modified
-            .replace(/\bctor *=.+\s+/, '')
+            .replace(/\bCtor *=.+\s+/, '')
             .replace(/^ *Ctor\.prototype.+\s+.+\n/m, '')
             .replace(/(?:,\n)? *props *=[^;=]+/, '')
         }
