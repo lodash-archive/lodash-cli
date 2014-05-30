@@ -239,7 +239,7 @@ var funcDependencyMap = createMap({
   'trim': ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
   'trimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
   'trimRight': ['charsRightIndex', 'trimmedRightIndex'],
-  'truncate': ['isObject', 'isRegExp'],
+  'trunc': ['isObject', 'isRegExp'],
   'unescape': ['unescapeHtmlChar'],
   'union': ['baseFlatten', 'baseUniq'],
   'uniq': ['baseUniq', 'createCallback'],
@@ -513,7 +513,7 @@ var categoryMap = createMap({
     'trim',
     'trimLeft',
     'trimRight',
-    'truncate'
+    'trunc'
   ],
   'Utilities': [
     'constant',
@@ -696,7 +696,7 @@ var lodashOnlyFuncs = [
   'takeRightWhile',
   'takeWhile',
   'transform',
-  'truncate',
+  'trunc',
   'trim',
   'trimLeft',
   'trimRight',

@@ -254,7 +254,7 @@ var categoryMap = createMap({
     'trim',
     'trimLeft',
     'trimRight',
-    'truncate'
+    'trunc'
   ],
   'Utilities': [
     'constant',
@@ -393,7 +393,7 @@ var lodashOnlyFuncs = [
   'takeRightWhile',
   'takeWhile',
   'transform',
-  'truncate',
+  'trunc',
   'trim',
   'trimLeft',
   'trimRight',
