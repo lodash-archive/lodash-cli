@@ -13,8 +13,6 @@ env:
 matrix:
   include:
     - node_js: "0.10"
-      env: BIN="narwhal" BUILD="compat"
-    - node_js: "0.10"
       env: BIN="rhino"   BUILD="compat" OPTION="-require"
     - node_js: "0.10"
       env: BIN="ringo"   BUILD="compat"
@@ -31,8 +29,6 @@ before_install:
   - "git clone --depth=10 --branch=master git://github.com/lodash/lodash.git ./node_modules/lodash"
   - "[ $OUTPUT_PATH != false ] || OUTPUT_PATH=\"./$EXPORTS/$BUILD\""
   - "[ $TARGET_PATH != false ] || TARGET_PATH=\"../../../$EXPORTS/$BUILD/index.js\""
-  - "[ $BIN != 'narwhal' ] || (wget http://lodash.com/_travis/narwhal-0.3.2.zip && sudo unzip narwhal-0.3.2 -d /opt/ && rm narwhal-0.3.2.zip)"
-  - "[ $BIN != 'narwhal' ] || (sudo ln -s /opt/narwhal-0.3.2/bin/narwhal /usr/local/bin/narwhal && sudo chmod +x /usr/local/bin/narwhal)"
   - "[ $BIN != 'rhino' ] || (sudo mkdir /opt/rhino-1.7R5 && sudo wget -O /opt/rhino-1.7R5/js.jar http://lodash.com/_travis/rhino-1.7R5.jar)"
   - "[ $BIN != 'rhino' ] || (echo -e '#!/bin/sh\\njava -jar /opt/rhino-1.7R5/js.jar $@' | sudo tee /usr/local/bin/rhino && sudo chmod +x /usr/local/bin/rhino)"
   - "[ $BIN != 'ringo' ] || (wget http://lodash.com/_travis/ringojs-0.9.zip && sudo unzip ringojs-0.9 -d /opt && rm ringojs-0.9.zip)"
