@@ -266,7 +266,7 @@ var funcDependencyMap = createMap({
   'baseAssign': ['keys'],
   'baseBind': ['baseCreate', 'composeArgs', 'isObject', 'setData'],
   'baseBindAll': ['createWrapper'],
-  'baseClone': ['arrayEach', 'baseAssign', 'baseForOwn', 'isArray', 'isFunction', 'isObject', 'isNode', 'slice'],
+  'baseClone': ['arrayEach', 'baseAssign', 'baseForOwn', 'cloneBuffer', 'isArray', 'isFunction', 'isObject', 'isNode', 'slice'],
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
   'baseCreateCallback': ['bind', 'identity', 'setData'],
@@ -295,6 +295,7 @@ var funcDependencyMap = createMap({
   'charAtCallback': [],
   'charsLeftIndex': [],
   'charsRightIndex': [],
+  'cloneBuffer': ['identity', 'isNative'],
   'compareAscending': ['baseCompareAscending'],
   'compareMultipleAscending': ['baseCompareAscending'],
   'compileFunction': [],
@@ -346,6 +347,7 @@ var objDependencyMap = createMap({
 var varDependencyMap = createMap({
   'after': ['root'],
   'baseCreate': ['root'],
+  'cloneBuffer': ['root'],
   'createCache': ['root'],
   'createPad': ['root'],
   'isFinite': ['root'],
@@ -744,6 +746,7 @@ var privateFuncs = [
   'charAtCallback',
   'charsLeftIndex',
   'charsRightIndex',
+  'cloneBuffer',
   'compareAscending',
   'compareMultipleAscending',
   'compileFunction',
@@ -1788,7 +1791,18 @@ function getCategories(identifier, depMap) {
  * @returns {string} Returns the fork.
  */
 function getBaseCreateFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\((?:!nativeCreate)\b[\s\S]+?\n *}\(\)\);\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!nativeCreate\b[\s\S]+?\n\1}\n/m), 0, '');
+}
+
+/**
+ * Gets the `cloneBuffer` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to inspect.
+ * @returns {string} Returns the fork.
+ */
+function getCloneBufferFork(source) {
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!bufferSlice\b[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -1951,7 +1965,7 @@ function getIndent(func) {
  * @returns {string} Returns the fork.
  */
 function getIsArgumentsFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n *};\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -1975,7 +1989,7 @@ function getIsArrayFork(source) {
  * @returns {string} Returns the fork.
  */
 function getIsElementFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!support\.dom\b[\s\S]+?\n *};\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!support\.dom\b[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -1986,7 +2000,7 @@ function getIsElementFork(source) {
  * @returns {string} Returns the fork.
  */
 function getIsFunctionFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(isFunction\(\/x\/[\s\S]+?\n *};\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(isFunction\(\/x\/[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -2357,6 +2371,17 @@ function removeChaining(source) {
   ].join('\n'));
 
   return source;
+}
+
+/**
+ * Removes the `cloneBuffer` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to process.
+ * @returns {string} Returns the modified source.
+ */
+function removeCloneBufferFork(source) {
+  return source.replace(getCloneBufferFork(source), '');
 }
 
 /**
@@ -4878,6 +4903,7 @@ function build(options, callback) {
     // remove forks of removed functions
     _.forOwn({
       'baseCreate': removeBaseCreateFork,
+      'cloneBuffer': removeCloneBufferFork,
       'isArguments': removeIsArgumentsFork,
       'isArray': removeIsArrayFork,
       'isElement': removeIsElementFork,
