@@ -335,6 +335,7 @@ var objDependencyMap = createMap({
   'isArguments': ['support'],
   'isElement': ['support'],
   'isPlainObject': ['support'],
+  'keys': ['support'],
   'keysIn': ['support'],
   'sample': ['support'],
   'shimIsPlainObject': ['support'],
@@ -2734,9 +2735,7 @@ function removeSupportEnumPrototypes(source) {
 
   // remove `support.enumPrototypes` from `_.keys`
   source = source.replace(matchFunction(source, 'keys'), function(match) {
-    return match
-      .replace(/\(support\.enumPrototypes[^)]+\)(?:\s*\|\|\s*)?/, '')
-      .replace(/\s*if *\(\s*\)[^}]+}/, '');
+    return match.replace(/\s*\|\|\s*\(support\.enumPrototypes\b[\s\S]+?\)/, '');
   });
 
   return source;
@@ -3474,8 +3473,8 @@ function build(options, callback) {
         source = removeSupportOwnLast(source);
 
         _.each([
-          'at', 'baseClone', 'baseEach', 'baseEachRight', 'baseIsEqual',
-          'isArguments', 'isPlainObject', 'sample','shimIsPlainObject', 'toArray'
+          'at', 'baseClone', 'baseEach', 'baseEachRight', 'baseIsEqual', 'isArguments',
+          'isPlainObject', 'keys', 'sample','shimIsPlainObject', 'toArray'
         ], function(funcName) {
           if (!(isUnderscore && isLodash(funcName))) {
             _.pull(objDepMap[funcName], 'support');
@@ -4056,7 +4055,10 @@ function build(options, callback) {
         // replace `_.keys` and `shimKeys`
         if (!isLodash('keys')) {
           _.pull(funcDepMap.shimKeys, 'isArguments', 'isArray', 'isString');
-          _.pull(objDepMap.shimKeys, 'support');
+
+          _.each(['keys', 'shimKeys'], function(funcName) {
+            _.pull(objDepMap[funcName], 'support');
+          });
 
           source = replaceFunction(source, 'keys', [
             'var keys = !nativeKeys ? shimKeys : function(object) {',
