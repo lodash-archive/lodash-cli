@@ -347,6 +347,7 @@ var objDependencyMap = createMap({
 /** Used to track variable dependencies of identifiers */
 var varDependencyMap = createMap({
   'after': ['root'],
+  'baseClone': ['root'],
   'baseCreate': ['root'],
   'cloneBuffer': ['root'],
   'createCache': ['root'],
