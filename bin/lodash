@@ -269,7 +269,7 @@ var funcDependencyMap = createMap({
   'baseClone': ['arrayEach', 'baseAssign', 'baseForOwn', 'cloneBuffer', 'isArray', 'isFunction', 'isObject', 'isNode', 'slice'],
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
-  'baseCreateCallback': ['bind', 'identity', 'setData'],
+  'baseCreateCallback': ['bind', 'identity', 'isNative', 'setData'],
   'baseCreateWrapper': ['baseCreate', 'composeArgs', 'composeArgsRight', 'isObject', 'setData'],
   'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseEach': ['baseForOwn', 'isString'],
