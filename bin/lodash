@@ -2673,29 +2673,16 @@ function removeSupportArgsClass(source) {
     return match.replace(/!support\.argsClass/g, '!isArguments(arguments)');
   });
 
+  // remove `support.argsClass` from `baseIsEqual`
+  source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
+    return match.replace(/^( *)if *\(!support\.argsClass\b[\s\S]+?\n\1}\n/m, '');
+  });
+
   // remove `support.argsClass` from `baseClone` and `_.isPlainObject`
   _.each(['baseClone', 'shimIsPlainObject', 'isPlainObject'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match.replace(/\s*\|\|\s*\(!support\.argsClass\b[\s\S]+?\)\)/, '');
     });
-  });
-
-  return source;
-}
-
-/**
- * Removes all `support.argsObject` references from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeSupportArgsObject(source) {
-  source = removeSupportProp(source, 'argsObject');
-
-  // remove `support.argsObject` from `baseIsEqual`
-  source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
-    return match.replace(/^( *)if *\(!support\.argsObject\b[\s\S]+?\n\1}\n/m, '');
   });
 
   return source;
@@ -3467,7 +3454,6 @@ function build(options, callback) {
       }
       if (isModern || (isUnderscore && _.isEmpty(plusFuncs))) {
         source = removeSupportArgsClass(source);
-        source = removeSupportArgsObject(source);
         source = removeSupportEnumErrorProps(source);
         source = removeSupportEnumPrototypes(source);
         source = removeSupportNonEnumShadows(source);
@@ -4860,7 +4846,7 @@ function build(options, callback) {
       if (isExcluded('isArguments')) {
         source = replaceSupportProp(source, 'argsClass', 'true');
       }
-      if (isExcluded('isArguments', 'isEmpty', 'isPlainObject')) {
+      if (isExcluded('baseClone', 'baseIsEqual', 'isArguments', 'isPlainObject')) {
         source = removeSupportArgsClass(source);
       }
       if (isExcluded('isElement')) {
