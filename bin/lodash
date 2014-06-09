@@ -4483,8 +4483,11 @@ function build(options, callback) {
         // remove metadata optimizations
         source = removeEsOptimization(source);
         _.pull(funcDepMap.createWrapper, 'slice');
-        _.pull(funcDepMap.support, 'isNative');
         _.pull(objDepMap.baseCreateCallback, 'support');
+
+        _.each(['baseCreateCallback', 'support'], function(identifier) {
+          _.pull(funcDepMap[identifier], 'isNative');
+        });
 
         _.each(['baseBind', 'baseCreateCallback', 'baseCreateWrapper'], function(funcName) {
           _.pull(funcDepMap[funcName], 'setData');
