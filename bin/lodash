@@ -1794,7 +1794,7 @@ function getCategories(identifier, depMap) {
  * @returns {string} Returns the fork.
  */
 function getBaseCreateFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!nativeCreate\b[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!nativeCreate\b[\s\S]+?\n\1  baseCreate *=[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -1805,7 +1805,7 @@ function getBaseCreateFork(source) {
  * @returns {string} Returns the fork.
  */
 function getCloneBufferFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!bufferSlice\b[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!bufferSlice\b[\s\S]+?\n\1  cloneBuffer *=[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -1968,7 +1968,7 @@ function getIndent(func) {
  * @returns {string} Returns the fork.
  */
 function getIsArgumentsFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n\1  isArguments *=[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -1992,7 +1992,7 @@ function getIsArrayFork(source) {
  * @returns {string} Returns the fork.
  */
 function getIsElementFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!support\.dom\b[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!support\.dom\b[\s\S]+?\n\1  isElement *=[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -2003,7 +2003,7 @@ function getIsElementFork(source) {
  * @returns {string} Returns the fork.
  */
 function getIsFunctionFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(isFunction\(\/x\/[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(isFunction\(\/x\/[\s\S]+?\n\1  isFunction *=[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
