@@ -284,7 +284,7 @@ var funcDependencyMap = createMap({
   'baseFunctions': ['isFunction'],
   'baseIndexOf': [],
   'baseInvoke': ['baseEach'],
-  'baseIsEqual': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
+  'baseIsEqual': ['isArguments', 'isFunction', 'isNode', 'keys'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isArrayLike', 'isPlainObject'],
   'basePick': ['baseForIn'],
   'basePullAt': ['baseAt', 'baseCompareAscending'],
@@ -2673,8 +2673,8 @@ function removeSupportArgsClass(source) {
     return match.replace(/!support\.argsClass/g, '!isArguments(arguments)');
   });
 
-  // remove `support.argsClass` from `_.isPlainObject`
-  _.each(['shimIsPlainObject', 'isPlainObject'], function(funcName) {
+  // remove `support.argsClass` from `baseClone` and `_.isPlainObject`
+  _.each(['baseClone', 'shimIsPlainObject', 'isPlainObject'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match.replace(/\s*\|\|\s*\(!support\.argsClass\b[\s\S]+?\)\)/, '');
     });
@@ -2693,7 +2693,7 @@ function removeSupportArgsClass(source) {
 function removeSupportArgsObject(source) {
   source = removeSupportProp(source, 'argsObject');
 
-  // remove `argsAreObjects` from `baseIsEqual`
+  // remove `support.argsObject` from `baseIsEqual`
   source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
     return match.replace(/^( *)if *\(!support\.argsObject\b[\s\S]+?\n\1}\n/m, '');
   });
@@ -4004,19 +4004,16 @@ function build(options, callback) {
             '      return stackB[length] == other;',
             '    }',
             '  }',
-            '  var result = true,',
-            '      size = 0;',
-            '',
             '  stackA.push(value);',
             '  stackB.push(other);',
             '',
             '  if (isArr) {',
-            '    size = other.length;',
-            '    result = size == value.length;',
+            '    length = value.length;',
+            '    var result = length == other.length;',
             '',
             '    if (result) {',
-            '      while (size--) {',
-            '        result = baseIsEqual(value[size], other[size], stackA, stackB);',
+            '      while (length--) {',
+            '        result = baseIsEqual(value[length], other[length], stackA, stackB);',
             '        if (!result) {',
             '          break;',
             '        }',
@@ -4024,25 +4021,23 @@ function build(options, callback) {
             '    }',
             '  }',
             '  else {',
-            '    baseForIn(other, function(othValue, key, other) {',
-            '      if (hasOwnProperty.call(other, key)) {',
-            '        size++;',
-            '        result = hasOwnProperty.call(value, key) && baseIsEqual(value[key], othValue, stackA, stackB);',
-            '        return result;',
-            '      }',
-            '    });',
+            '    var props = keys(value);',
+            '    length = props.length;',
+            '    result = length == keys(other).length;',
             '',
             '    if (result) {',
-            '      baseForIn(value, function(valValue, key, value) {',
-            '        if (hasOwnProperty.call(value, key)) {',
-            '          result = --size > -1;',
-            '          return result;',
+            '      while (length--) {',
+            '        var key = props[length];',
+            '        result = hasOwnProperty.call(other, key) && baseIsEqual(value[key], other[key], stackA, stackB);',
+            '        if (!result) {',
+            '          break;',
             '        }',
-            '      });',
+            '      }',
             '    }',
             '  }',
             '  stackA.pop();',
             '  stackB.pop();',
+            '',
             '  return result;',
             '}'
           ].join('\n'));
