@@ -266,7 +266,7 @@ var funcDependencyMap = createMap({
   'baseAssign': ['keys'],
   'baseBind': ['baseCreate', 'composeArgs', 'isObject', 'setData'],
   'baseBindAll': ['createWrapper'],
-  'baseClone': ['arrayEach', 'baseAssign', 'baseForOwn', 'cloneBuffer', 'isArray', 'isFunction', 'isObject', 'isNode', 'slice'],
+  'baseClone': ['arrayEach', 'baseAssign', 'baseForOwn', 'cloneBuffer', 'isArguments', 'isArray', 'isFunction', 'isObject', 'isNode', 'slice'],
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
   'baseCreateCallback': ['bind', 'identity', 'isNative', 'setData'],
@@ -3453,7 +3453,6 @@ function build(options, callback) {
         }
       }
       if (isModern || (isUnderscore && _.isEmpty(plusFuncs))) {
-        source = removeSupportArgsClass(source);
         source = removeSupportEnumErrorProps(source);
         source = removeSupportEnumPrototypes(source);
         source = removeSupportNonEnumShadows(source);
@@ -3466,6 +3465,13 @@ function build(options, callback) {
         ], function(funcName) {
           if (!(isUnderscore && isLodash(funcName))) {
             _.pull(objDepMap[funcName], 'support');
+          }
+        });
+
+        source = removeSupportArgsClass(source);
+        _.each(['baseClone', 'baseIsEqual', 'isPlainObject', 'shimIsPlainObject'], function(funcName) {
+          if (!(isUnderscore && isLodash(funcName))) {
+            _.pull(funcDepMap[funcName], 'isArguments');
           }
         });
 
@@ -3601,12 +3607,6 @@ function build(options, callback) {
             '}'
           ].join('\n'));
         }
-
-        _.each(['baseIsEqual', 'isPlainObject', 'shimIsPlainObject'], function(funcName) {
-          if (!(isUnderscore && isLodash(funcName))) {
-            _.pull(funcDepMap[funcName], 'isArguments');
-          }
-        });
 
         _.each(['createAggregator', 'every', 'filter', 'reduce', 'some'], function(funcName) {
           if (!(isUnderscore && isLodash(funcName))) {
