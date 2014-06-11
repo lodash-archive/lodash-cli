@@ -3443,6 +3443,13 @@ function build(options, callback) {
         source = removeIsFunctionFork(source);
         source = removeIsArgumentsFork(source);
         source = removeSupportSpliceObjects(source);
+
+        // simplify `baseClone`
+        _.pull(varDepMap.baseClone, 'root');
+
+        source = source.replace(matchFunction(source, 'baseClone'), function(match) {
+          return match.replace(/^(?: *\/\/.*\n)*( *)if *\(Ctor instanceof Ctor[\s\S]+?\n\1}\n/m, '');
+        });
       }
       if (_.contains(plusFuncs, 'chain') == !isUnderscore) {
         source = addUnderscoreChaining(source, isModularize);
