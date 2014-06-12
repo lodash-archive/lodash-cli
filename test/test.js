@@ -102,6 +102,7 @@ var realToAliasMap = createMap({
 /** Used to track the category of identifiers */
 var categoryMap = createMap({
   'Arrays': [
+    'chunk',
     'compact',
     'difference',
     'drop',
@@ -347,8 +348,9 @@ var backboneDependencies = [
 var lodashOnlyFuncs = [
   'at',
   'bindKey',
-  'capitalize',
   'camelCase',
+  'capitalize',
+  'chunk',
   'cloneDeep',
   'create',
   'createCallback',

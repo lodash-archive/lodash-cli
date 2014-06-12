@@ -107,6 +107,7 @@ var funcDependencyMap = createMap({
   'camelCase': ['createCompounder'],
   'capitalize': [],
   'chain': ['lodashWrapper'],
+  'chunk': ['slice'],
   'clone': ['baseClone', 'baseCreateCallback'],
   'cloneDeep': ['baseClone', 'baseCreateCallback'],
   'compact': [],
@@ -364,6 +365,7 @@ var varDependencyMap = createMap({
 /** Used to track the category of identifiers */
 var categoryMap = createMap({
   'Arrays': [
+    'chunk',
     'compact',
     'difference',
     'drop',
@@ -655,8 +657,9 @@ var complexVars = [
 var lodashOnlyFuncs = [
   'at',
   'bindKey',
-  'capitalize',
   'camelCase',
+  'capitalize',
+  'chunk',
   'cloneDeep',
   'create',
   'createCallback',

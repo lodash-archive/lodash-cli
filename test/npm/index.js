@@ -55,6 +55,7 @@ lodash.bindAll = require('lodash.bindall');
 lodash.bindKey = require('lodash.bindkey');
 lodash.camelCase = require('lodash.camelcase');
 lodash.capitalize = require('lodash.capitalize');
+lodash.chunk = require('lodash.chunk');
 lodash.clone = require('lodash.clone');
 lodash.cloneDeep = require('lodash.clonedeep');
 lodash.compact = require('lodash.compact');
