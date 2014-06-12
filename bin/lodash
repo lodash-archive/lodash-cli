@@ -193,7 +193,7 @@ var funcDependencyMap = createMap({
   'noConflict': [],
   'noop': [],
   'now': ['isNative'],
-  'omit': ['baseDifference', 'baseFlatten', 'basePick', 'createCallback', 'isObject', 'keysIn', 'negate'],
+  'omit': ['baseDifference', 'baseFlatten', 'basePick', 'arrayMap', 'createCallback', 'isObject', 'keysIn', 'negate'],
   'once': ['isFunction'],
   'pad': ['createPad'],
   'padLeft': ['createPad'],
@@ -4163,13 +4163,8 @@ function build(options, callback) {
             '  if (!isObject(object)) {',
             '    return {};',
             '  }',
-            '  var omitProps = baseFlatten(arguments, true, false, 1),',
-            '      length = omitProps.length;',
-            '',
-            '  while (length--) {',
-            '    omitProps[length] = String(omitProps[length]);',
-            '  }',
-            '  return basePick(object, baseDifference(keysIn(object), omitProps));',
+            '  var omitProps = baseFlatten(arguments, true, false, 1);',
+            '  return basePick(object, baseDifference(keysIn(object), arrayMap(omitProps, String)));',
             '}'
           ].join('\n'));
         }
