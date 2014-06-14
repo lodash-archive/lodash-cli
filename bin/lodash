@@ -4125,7 +4125,7 @@ function build(options, callback) {
             '    }',
             '    while (length--) {',
             '      var key = props[length];',
-            '      if (!(hasOwnProperty.call(object, key) && object[key] === source[key])) {',
+            '      if (!(object[key] === source[key] && hasOwnProperty.call(object, key))) {',
             '        return false',
             '      }',
             '    }',
