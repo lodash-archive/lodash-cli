@@ -257,7 +257,7 @@ var funcDependencyMap = createMap({
   'wrapperToString': [],
   'wrapperValueOf': [],
   'xor': ['baseDifference', 'baseUniq', 'isArguments', 'isArray'],
-  'zip': ['max', 'pluck'],
+  'zip': ['isArray', 'max', 'pluck'],
   'zipObject': ['isArray'],
 
   // private functions
@@ -4421,8 +4421,8 @@ function build(options, callback) {
           source = replaceFunction(source, 'zip', [
             'function zip() {',
             '  var index = -1,',
-            "      length = max(pluck(arguments, 'length')),",
-            '      result = Array(length < 0 ? 0 : length);',
+            "      length = isArray(length = max(arguments, 'length')) && length.length || 0,",
+            '      result = Array(length);',
             '',
             '  while (++index < length) {',
             '    result[index] = pluck(arguments, index);',
