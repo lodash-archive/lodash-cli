@@ -25,6 +25,9 @@ var multilineComment = '(?: */\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/\\n)?';
 /** Used to replace string literals with tokens */
 var stringToken = '__lodash@' + _.VERSION + '__token__';
 
+/** Used to determine if a variable search should be deep */
+var reDeepVars = /\bfunction runInContext\b/;
+
 /** Used to detect the JSDoc `@type` tag of "Function" */
 var reFuncTag = /^ *\* *@type +Function\b/im;
 
@@ -2121,13 +2124,9 @@ function getSetDataFork(source) {
  *
  * @private
  * @param {string} source The source to process.
- * @param {boolean} [isShallow=false] A flag to specify looking for varaibles one closure deep.
  * @returns {Array} Returns a new array of variable names.
  */
-function getVars(source, isShallow) {
-  var indentA = isShallow ? ' {2}' : ' {2,4}',
-      indentB = isShallow ? ' {6}' : ' {6,8}';
-
+function getVars(source) {
   source = removeStrings(removeComments(source));
 
   // remove all functions except `runInContext`
@@ -2135,6 +2134,10 @@ function getVars(source, isShallow) {
     .replace(/^( *)function (?!runInContext)[\s\S]+?\{\n[\s\S]+?\n\1}\n/gm, '')
     .replace(/^( *)(?:var )?[$\w]+ *=.*?(?:create[A-Z][a-z]+|template)\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '')
     .replace(/^( *)(?:var )?[$\w]+ *= *function\b[\s\S]+?\{\n[\s\S]+?\n\1};\n/gm, '');
+
+  var isDeep = reDeepVars.test(source),
+      indentA = isDeep ? ' {2,4}' : ' {2}',
+      indentB = isDeep ? ' {6,8}' : ' {6}';
 
   var result = _.reduce([
     // match a varaible at the start of a declaration list
@@ -2186,11 +2189,10 @@ function isPrivate(funcName) {
  * @private
  * @param {string} source The source to process.
  * @param {string} varName The name of the variable.
- * @param {boolean} [isShallow=false] A flag to specify looking for varaibles one closure deep.
  * @returns {boolean} Returns `true` if the variable is used, else `false`.
  */
-function isVarUsed(source, varName, isShallow) {
-  var snippet = matchVar(source, varName, isShallow);
+function isVarUsed(source, varName) {
+  var snippet = matchVar(source, varName);
   if (!snippet) {
     return false;
   }
@@ -2261,12 +2263,13 @@ function matchProp(source, propName, leadingComments) {
  * @private
  * @param {string} source The source to inspect.
  * @param {string} varName The name of the variable to match.
- * @param {boolean} [isShallow=false] A flag to specify looking for varaibles one closure deep.
+ * @param {boolean} [leadingComments] A flag to specify including leading comments.
  * @returns {string} Returns the matched variable snippet.
  */
-function matchVar(source, varName, isShallow) {
-  var indentA = isShallow ? ' {2}' : ' {2,4}',
-      indentB = isShallow ? ' {6}' : ' {6,8}';
+function matchVar(source, varName, leadingComments) {
+  var isDeep = reDeepVars.test(source),
+      indentA = isDeep ? ' {2,4}' : ' {2}',
+      indentB = isDeep ? ' {6,8}' : ' {6}';
 
   var reSources = [
     // match a varaible at the start of a declaration list
@@ -2278,11 +2281,9 @@ function matchVar(source, varName, isShallow) {
   ];
 
   // match complex variable assignments
-  if (varName != 'freeGlobal' && _.contains(complexVars, varName)) {
+  if (_.contains(complexVars, varName)) {
     reSources = [
-      indentA + 'var '  + varName + ' *=[\\s\\S]+?' +
-      '(?:\\(function\\b[\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
-      '[;}]\\n(?=\\n(?!\\s*\\(func)))'
+      '(' + indentA + ')var ' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\1(?:function\\b|var\\s|/[/*])))'
     ];
   }
   return _.reduce(reSources, function(result, reSource) {
@@ -2290,7 +2291,8 @@ function matchVar(source, varName, isShallow) {
       return result;
     }
     return _.result(source.match(RegExp(
-      '^' + reSource
+      '^' + (leadingComments ? multilineComment : '') +
+      reSource
     , 'm')), 0, '');
   }, '');
 }
@@ -2895,30 +2897,26 @@ function removeSupportProp(source, propName) {
  * @returns {string} Returns the modified source.
  */
 function removeVar(source, varName) {
-  // simplify complex variable assignments
-  if (_.contains(complexVars, varName)) {
-    source = source.replace(RegExp(
-      '^( *var ' + varName + ') *=[\\s\\S]+?' +
-      '(?:\\(function\\b[\\s\\S]+?\\}\\([^)]*\\)\\);(?=\\n\\n)|' +
-      '[;}](?=\\n\\n(?!\\s*\\(func)))'
-    , 'm'), '$1 = null;')
-  }
-
   _.some([
-    function() {
+    function(source) {
+      return _.contains(complexVars, varName)
+        ? source.replace(matchVar(source, varName, true), '')
+        : source;
+    },
+    function(source) {
       return removeFunction(source, varName);
     },
-    function() {
+    function(source) {
       // remove a varaible at the start of a declaration list
       return source.replace(RegExp('(var +)' + varName + ' *=.+?,\\n *'), '$1');
     },
-    function() {
+    function(source) {
       // remove a variable declaration in a declaration list
       return source.replace(RegExp(
         '( *(?:var +)?[$\\w]+ *=.+?),\\n *' + varName + ' *=.+?([,;])(?=\\n)'
       ), '$1$2');
     },
-    function() {
+    function(source) {
       // remove a variable that is not part of a declaration list
       return source.replace(RegExp(
         '^' + multilineComment +
@@ -2926,7 +2924,7 @@ function removeVar(source, varName) {
       , 'm'), '');
     }
   ], function(func) {
-    var result = func();
+    var result = func(source);
     if (result !== source) {
       source = result;
       return true;
@@ -4441,7 +4439,7 @@ function build(options, callback) {
         if (!isLodash('escape')) {
           _.each(['htmlEscapes', 'htmlUnescapes', 'reEscapedHtml'], function(varName) {
             source = source.replace(matchVar(source, varName), function(match) {
-              return match.replace('#39', '#x27');
+              return match.replace(/#39/g, '#x27');
             });
           });
         }
@@ -4962,15 +4960,14 @@ function build(options, callback) {
       });
     }
     (function() {
-      var isShallow = isExcluded('runInContext'),
-          useMap = createMap(),
+      var useMap = createMap(),
           snippet = cleanupSource(removeStrings(removeComments(source))),
-          varNames = _.difference(getVars(snippet, isShallow), includeFuncs, includeObjs, includeVars);
+          varNames = _.without(_.difference(getVars(snippet), includeFuncs, includeObjs, includeVars), 'freeGlobal');
 
       // remove unused variables
       while (varNames.length) {
         varNames = _.sortBy(varNames, function(varName) {
-          var result = isVarUsed(snippet, varName, isShallow);
+          var result = isVarUsed(snippet, varName);
           useMap[varName] = result;
           return result;
         });
