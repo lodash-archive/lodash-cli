@@ -3666,7 +3666,7 @@ function build(options, callback) {
 
           source = replaceFunction(source, 'assign', [
             'function assign(object) {',
-            '  if (!object) {',
+            '  if (object == null) {',
             '    return object;',
             '  }',
             '  var args = arguments,',
@@ -3731,7 +3731,7 @@ function build(options, callback) {
 
           source = replaceFunction(source, 'defaults', [
             'function defaults(object) {',
-            '  if (!object) {',
+            '  if (object == null) {',
             '    return object;',
             '  }',
             '  var args = arguments,',
