@@ -96,7 +96,7 @@ var realToAliasMap = createMap({
 
 /** Used to track function dependencies */
 var funcDependencyMap = createMap({
-  // properties
+  // objects
   'support': ['isNative'],
   'templateSettings': ['escape'],
 
@@ -180,7 +180,7 @@ var funcDependencyMap = createMap({
   'isUndefined': [],
   'kebabCase': ['createCompounder'],
   'keys': ['isNative', 'isObject', 'shimKeys'],
-  'keysIn': ['isArguments', 'isArray', 'isObject', 'isString'],
+  'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isObject', 'isString'],
   'last': ['createCallback', 'slice'],
   'lastIndexOf': [],
   'lodash': ['isArray', 'lodashWrapper'],
@@ -3561,7 +3561,7 @@ function build(options, callback) {
         }
         // replace `_.keysIn`
         if (!(isUnderscore && isLodash('keysIn'))) {
-          _.pull(funcDepMap.keysIn, 'isString');
+          _.pull(funcDepMap.keysIn, 'arrayEach', 'isString');
 
           source = replaceFunction(source, 'keysIn', [
             'function keysIn(object) {',
