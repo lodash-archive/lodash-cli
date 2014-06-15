@@ -1,6 +1,6 @@
 {
   "name": "lodash-cli",
-  "version": "2.5.0-pre",
+  "version": "3.0.0-pre",
   "description": "The Lo-Dash command-line interface.",
   "homepage": "http://lodash.com/custom-builds",
   "license": "MIT",
@@ -20,7 +20,7 @@
   "dependencies": {
     "closure-compiler": "0.2.6",
     "glob": "~3.2.11",
-    "lodash": "2.5.0-pre",
+    "lodash": "3.0.0-pre",
     "uglify-js": "2.4.13"
   },
   "devDependencies": {

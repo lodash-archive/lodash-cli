@@ -1,4 +1,4 @@
-# lodash-cli v2.5.0-pre
+# lodash-cli v3.0.0-pre
 
 The [Lo-Dash](http://lodash.com/) command-line interface for creating custom builds & precompiling templates.
 
@@ -18,7 +18,7 @@ lodash -h
 
 ## Support
 
-lodash-cli has been tested in at least Node.js 0.6.21~0.10.28.
+lodash-cli has been tested in at least Node.js 0.8.26~0.10.28.
 
 **Note:** Node.js 0.10.8-0.10.11 [have](https://github.com/joyent/node/issues/5622) [bugs](https://github.com/joyent/node/issues/5688) preventing minified builds.
 

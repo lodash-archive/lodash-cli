@@ -1,6 +1,5 @@
 language: node_js
 node_js:
-  - "0.6"
   - "0.8"
   - "0.10"
 env:
@@ -16,8 +15,6 @@ matrix:
       env: BIN="rhino"   BUILD="compat" OPTION="-require"
     - node_js: "0.10"
       env: BIN="ringo"   BUILD="compat"
-    - node_js: "0.6"
-      env: TEST_BUILDS=true
     - node_js: "0.10"
       env: TEST_BUILDS=true
 git:
