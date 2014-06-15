@@ -1374,19 +1374,16 @@ function buildModule(state, callback) {
 
           if (isES6) {
             push.apply(iife,
-              _.map(exportNames, function(exportName) {
-                var depName = getRealName(exportName, funcDepMap),
-                    depPath = depPaths[_.indexOf(depNames, depName)];
-
-                return 'import ' + exportName + " from '" + depPath + "';";
+              _.map(depNames, function(depName, index) {
+                return 'import ' + depName + " from '" + depPaths[index] + "';";
               })
             );
 
             iife.push(
               '',
-              'export {',
+              'export default {',
               _.map(exportNames, function(exportName) {
-                return '  ' + exportName;
+                return "  '" + exportName + "': " + getRealName(exportName, funcDepMap);
               })
               .join(',\n'),
               '};'
