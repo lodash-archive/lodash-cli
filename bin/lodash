@@ -1350,17 +1350,20 @@ function buildModule(state, callback) {
         var depNames = _.intersection(getNamesByCategory(category), _.without(identifiers, 'lodash')).sort(),
             depPaths = getDepPaths(depNames, null, funcDepMap);
 
+        var exportNames = _.transform(depNames, function(result, depName) {
+          result.push(depName);
+          push.apply(result, getAliases(depName, funcDepMap));
+        })
+        .sort();
+
         if (isAMD) {
           iife.push(
             "define(['" + depPaths.join("', '") + "'], function(" + depNames.join(', ') + ') {',
             '%output%',
             '  return {',
-            _.transform(depNames, function(result, depName) {
-              _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
-                result.push( "    '" + otherName + "': " + depName);
-              });
+            _.map(exportNames, function(exportName) {
+              return "    '" + exportName + "': " + getRealName(exportName, funcDepMap);
             })
-            .sort()
             .join(',\n'),
             '  };',
             '});'
@@ -1370,33 +1373,44 @@ function buildModule(state, callback) {
           iife.push('%output%');
 
           if (isES6) {
-            push.apply(iife, _.transform(depPaths, function(result, depPath, index) {
-              var depName = depNames[index];
-              _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
-                result.push('export { default as ' + otherName + " } from '" + depPath + "';");
-              });
-            })
-            .sort());
+            push.apply(iife,
+              _.map(exportNames, function(exportName) {
+                var depName = getRealName(exportName, funcDepMap),
+                    depPath = depPaths[_.indexOf(depNames, depName)];
+
+                return 'import ' + exportName + " from '" + depPath + "';";
+              })
+            );
+
+            iife.push(
+              '',
+              'export {',
+              _.map(exportNames, function(exportName) {
+                return '  ' + exportName;
+              })
+              .join(',\n'),
+              '};'
+            );
           }
           else if (isCommonJS) {
-            push.apply(iife, _.transform(depPaths, function(result, depPath, index) {
-              var depName = depNames[index];
-              _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
-                result.push('exports.' + otherName + " = require('" + depPath + "')." + depName + ';');
-              });
-            })
-            .sort());
+            push.apply(iife,
+              _.map(exportNames, function(exportName) {
+                var depName = getRealName(exportName, funcDepMap),
+                    depPath = depPaths[_.indexOf(depNames, depName)];
+
+                return 'exports.' + exportName + " = require('" + depPath + "')." + depName + ';';
+              })
+            );
           }
           else {
             iife.push(
               'module.exports = {',
-              _.transform(depPaths, function(result, depPath, index) {
-                var depName = depNames[index];
-                _.each(getAliases(depName, funcDepMap).concat(depName), function(otherName) {
-                  result.push("  '" + otherName + "': require('" + depPath + "')");
-                });
+              _.map(exportNames, function(exportName) {
+                var depName = getRealName(exportName, funcDepMap),
+                    depPath = depPaths[_.indexOf(depNames, depName)];
+
+                return "  '" + exportName + "': require('" + depPath + "')";
               })
-              .sort()
               .join(',\n'),
               '};'
             );
@@ -2120,7 +2134,8 @@ function getSetDataFork(source) {
 }
 
 /**
- * Creates a sorted array of all variables defined outside of Lo-Dash functions.
+ * Creates an array variables names from all variables defined outside of
+ * Lo-Dash functions.
  *
  * @private
  * @param {string} source The source to process.
@@ -2154,7 +2169,7 @@ function getVars(source) {
     return result;
   }, []);
 
-  return _.uniq(result).sort();
+  return _.uniq(result);
 }
 
 /**
