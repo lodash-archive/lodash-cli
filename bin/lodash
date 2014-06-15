@@ -3403,7 +3403,7 @@ function build(options, callback) {
       source = setUseStrictOption(source, isStrict);
 
       if (isModularize) {
-        if (!isCommonJS) {
+        if (!(isCommonJS || isES6)) {
           _.forOwn(varDepMap, function(depNames) {
             _.pull(depNames, 'root');
           });
