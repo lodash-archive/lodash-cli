@@ -21,7 +21,7 @@
     "closure-compiler": "0.2.6",
     "glob": "~3.2.11",
     "lodash": "3.0.0-pre",
-    "uglify-js": "2.4.13"
+    "uglify-js": "2.4.14"
   },
   "devDependencies": {
     "qunit-extras": "~1.2.0",
