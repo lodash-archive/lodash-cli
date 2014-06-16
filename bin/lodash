@@ -5025,7 +5025,7 @@ function build(options, callback) {
   if (outputPath) {
     basename = outputPath;
   } else if (isTemplate) {
-    basename += '.template' + (moduleId ? 's' : '');
+    basename += '.templates';
   } else if (isCustom) {
     basename += '.custom';
   }

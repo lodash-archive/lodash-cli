@@ -745,6 +745,8 @@ QUnit.module('template builds');
         context._ = _;
         vm.runInContext(data.source, context);
 
+        ok(_.contains(basename, 'lodash.templates'), basename);
+
         var actual = _.templates.a(object.a);
         strictEqual(actual.replace(/[\r\n]+/g, ''), '<ul><li>fred</li><li>barney</li><li>pebbles</li></ul>', basename);
 
@@ -956,7 +958,6 @@ QUnit.module('template builds');
         var templates = context.module.exports || { 'd': function() { return ''; } },
             actual = templates.d({ 'name': 'fred & barney' });
 
-        ok(_.contains(basename, 'lodash.templates'), basename);
         strictEqual(actualId, expectedId, basename);
         strictEqual(actual, '<span>hello fred &amp; barney!</span>', basename);
 
