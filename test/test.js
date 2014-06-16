@@ -1509,6 +1509,7 @@ QUnit.module('underscore modifier');
       }, { 'a': 1, 'b': 1 });
 
       strictEqual(actual, false, '_.isEqual should ignore `callback` and `thisArg`: ' + basename);
+      deepEqual(lodash.keys('abc'), [], '_.keys should return an empty array for string primitives: ' + basename);
 
       strictEqual(lodash.max('abc'), -Infinity, '_.max should return `-Infinity` for strings: ' + basename);
       strictEqual(lodash.min('abc'), Infinity, '_.min should return `Infinity` for strings: ' + basename);

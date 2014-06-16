@@ -179,8 +179,8 @@ var funcDependencyMap = createMap({
   'isString': [],
   'isUndefined': [],
   'kebabCase': ['createCompounder'],
-  'keys': ['isNative', 'isObject', 'shimKeys'],
-  'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isObject', 'isString'],
+  'keys': ['isNative', 'shimKeys'],
+  'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isString'],
   'last': ['createCallback', 'slice'],
   'lastIndexOf': [],
   'lodash': ['isArray', 'lodashWrapper'],
@@ -3577,9 +3577,8 @@ function build(options, callback) {
 
           source = replaceFunction(source, 'keysIn', [
             'function keysIn(object) {',
-            '  if (!isObject(object)) {',
-            '    return [];',
-            '  }',
+            '  object = Object(object);',
+            '',
             '  var length = object.length;',
             "  length = (typeof length == 'number' && length > 0 &&",
             '    (isArray(object) || (support.nonEnumArgs && isArguments(object))) && length) >>> 0;',
@@ -4057,6 +4056,7 @@ function build(options, callback) {
         }
         // replace `_.keys` and `shimKeys`
         if (!isLodash('keys')) {
+          funcDepMap.keys.push('isObject');
           _.pull(funcDepMap.shimKeys, 'isArguments', 'isArray', 'isString');
 
           _.each(['keys', 'shimKeys'], function(funcName) {
@@ -4088,7 +4088,7 @@ function build(options, callback) {
         }
         // replace `_.keysIn`
         if (!isLodash('keysIn')) {
-          _.pull(funcDepMap.keysIn, 'isArguments', 'isArray', 'isString');
+          _.pull(funcDepMap.keysIn, 'isArguments', 'isArray', 'isString').push('isObject');
           _.pull(objDepMap.keysIn, 'support');
 
           source = replaceFunction(source, 'keysIn', [
