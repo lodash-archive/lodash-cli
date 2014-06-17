@@ -4411,7 +4411,7 @@ function build(options, callback) {
         // replace `isDeep` with `!isDeep` in `_.flatten`
         if (!isLodash('flatten')) {
           source = source.replace(matchFunction(source, 'flatten'), function(match) {
-            return source.replace(/(, *)isDeep\b/, '$1!isDeep');
+            return match.replace(/\b(baseFlatten\([^)]+?)isDeep\b/, '$1!isDeep');
           });
         }
         // remove `_.prototype.toString`
