@@ -4661,8 +4661,8 @@ function build(options, callback) {
         // unexpose Lo-Dash methods for the Underscore build
         source = source.replace(getMethodAssignments(source), function(match) {
           var unexpose = [
-            'assign', 'callback', 'create', 'escapeRegExp', 'findIndex',
-            'isPlainObject', 'keysIn', 'negate', 'noop', 'slice', 'unzip', 'zipObject'
+            'assign', 'create', 'escapeRegExp', 'findIndex', 'isPlainObject',
+            'keysIn', 'negate', 'noop', 'slice', 'unzip', 'zipObject'
           ];
 
           return _.reduce(unexpose, function(result, funcName) {
