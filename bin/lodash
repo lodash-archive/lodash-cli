@@ -141,7 +141,7 @@ var funcDependencyMap = createMap({
   'findLastKey': ['baseFind', 'baseForOwnRight', 'callback'],
   'findWhere': ['find', 'matches'],
   'first': ['callback', 'slice'],
-  'flatten': ['baseFlatten', 'map'],
+  'flatten': ['baseFlatten'],
   'forEach': ['arrayEach', 'baseCallback', 'baseEach', 'isArray'],
   'forEachRight': ['arrayEachRight', 'baseCallback', 'baseEachRight', 'isArray'],
   'forIn': ['baseCallback', 'baseFor', 'keysIn'],
