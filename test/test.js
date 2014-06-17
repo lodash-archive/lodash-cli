@@ -57,7 +57,6 @@ var aliasToRealMap = createMap({
   'all': 'every',
   'any': 'some',
   'collect': 'map',
-  'callback': 'createCallback',
   'detect': 'find',
   'each': 'forEach',
   'eachRight': 'forEachRight',
@@ -81,7 +80,6 @@ var aliasToRealMap = createMap({
 var realToAliasMap = createMap({
   'assign': ['extend'],
   'contains': ['include'],
-  'createCallback': ['callback'],
   'every': ['all'],
   'filter': ['select'],
   'first': ['head'],
@@ -194,7 +192,7 @@ var categoryMap = createMap({
     'wrap',
 
     // deprecated
-    'createCallback'
+    'callback'
   ],
   'Objects': [
     'assign',
@@ -353,7 +351,6 @@ var lodashOnlyFuncs = [
   'chunk',
   'cloneDeep',
   'create',
-  'createCallback',
   'curry',
   'dropRight',
   'dropRightWhile',
@@ -1275,7 +1272,7 @@ QUnit.module('modularize modifier');
     });
   });
 
-  asyncTest('`lodash modularize include=createCallback minus=pluck,where`', function() {
+  asyncTest('`lodash modularize include=callback minus=pluck,where`', function() {
     var start = _.once(function() {
       process.chdir(cwd);
       QUnit.start();
@@ -1283,18 +1280,18 @@ QUnit.module('modularize modifier');
 
     setup();
 
-    build(['modularize', 'include=createCallback', 'minus=pluck,where', 'exports=node', '-o', outputPath], function() {
+    build(['modularize', 'include=callback', 'minus=pluck,where', 'exports=node', '-o', outputPath], function() {
       emptyObject(require.cache);
 
       var modulePath = path.join(outputPath, 'utilities'),
           utilities = require(modulePath),
-          lodash = { 'createCallback': utilities.createCallback },
-          callback = lodash.createCallback('x'),
+          lodash = { 'callback': utilities.callback },
+          callback = lodash.callback('x'),
           object = { 'x': 1 };
 
       strictEqual(callback(object), object);
 
-      callback = lodash.createCallback(object);
+      callback = lodash.callback(object);
       strictEqual(callback(object), object);
 
       start();
@@ -1771,12 +1768,12 @@ QUnit.module('exclude command');
       vm.runInContext(data.source, context);
 
       var lodash = context._,
-          callback = lodash.createCallback('x'),
+          callback = lodash.callback('x'),
           object = { 'x': 1 };
 
       strictEqual(callback(object), object, basename);
 
-      callback = lodash.createCallback(object);
+      callback = lodash.callback(object);
       strictEqual(callback(object), true, basename);
 
       start();
@@ -1793,12 +1790,12 @@ QUnit.module('exclude command');
       vm.runInContext(data.source, context);
 
       var lodash = context._,
-          callback = lodash.createCallback('x'),
+          callback = lodash.callback('x'),
           object = { 'x': 1 };
 
       strictEqual(callback(object), 1, basename);
 
-      callback = lodash.createCallback(object);
+      callback = lodash.callback(object);
       strictEqual(callback(object), object, basename);
 
       start();
@@ -1815,12 +1812,12 @@ QUnit.module('exclude command');
       vm.runInContext(data.source, context);
 
       var lodash = context._,
-          callback = lodash.createCallback('x'),
+          callback = lodash.callback('x'),
           object = { 'x': 1 };
 
       strictEqual(callback(object), object, basename);
 
-      callback = lodash.createCallback(object);
+      callback = lodash.callback(object);
       strictEqual(callback(object), object, basename);
 
       start();
@@ -2143,7 +2140,7 @@ QUnit.module('underscore builds with lodash methods');
     return String(value)
       .replace(/^ *\/\/.*/gm, '')
       .replace(/\bcontext\b/g, '')
-      .replace(/\blodash\.(createCallback\()\b/g, '$1')
+      .replace(/\blodash\.(callback\()\b/g, '$1')
       .replace(/[\s;]/g, '');
   }
 
