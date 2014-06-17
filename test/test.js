@@ -82,6 +82,7 @@ var realToAliasMap = createMap({
   'contains': ['include'],
   'every': ['all'],
   'filter': ['select'],
+  'find': ['detect'],
   'first': ['head'],
   'forEach': ['each'],
   'forEachRight': ['eachRight'],
@@ -131,10 +132,7 @@ var categoryMap = createMap({
     'without',
     'xor',
     'zip',
-    'zipObject',
-
-    // deprecated
-    'range'
+    'zipObject'
   ],
   'Chaining': [
     'chain',
@@ -152,6 +150,7 @@ var categoryMap = createMap({
     'filter',
     'find',
     'findLast',
+    'findWhere',
     'forEach',
     'forEachRight',
     'groupBy',
@@ -189,10 +188,7 @@ var categoryMap = createMap({
     'partial',
     'partialRight',
     'throttle',
-    'wrap',
-
-    // deprecated
-    'callback'
+    'wrap'
   ],
   'Objects': [
     'assign',
@@ -242,6 +238,7 @@ var categoryMap = createMap({
     'camelCase',
     'capitalize',
     'endsWith',
+    'escape',
     'escapeRegExp',
     'kebabCase',
     'pad',
@@ -250,12 +247,16 @@ var categoryMap = createMap({
     'repeat',
     'snakeCase',
     'startsWith',
+    'template',
+    'templateSettings',
     'trim',
     'trimLeft',
     'trimRight',
-    'trunc'
+    'trunc',
+    'unescape'
   ],
   'Utilities': [
+    'callback',
     'constant',
     'identity',
     'matches',
@@ -266,16 +267,11 @@ var categoryMap = createMap({
     'parseInt',
     'property',
     'random',
+    'range',
     'result',
     'runInContext',
     'times',
-    'uniqueId',
-
-    // deprecated
-    'escape',
-    'template',
-    'templateSettings',
-    'unescape'
+    'uniqueId'
   ]
 });
 

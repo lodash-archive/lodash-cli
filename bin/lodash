@@ -397,10 +397,7 @@ var categoryMap = createMap({
     'without',
     'xor',
     'zip',
-    'zipObject',
-
-    // deprecated
-    'range'
+    'zipObject'
   ],
   'Chaining': [
     'chain',
@@ -456,10 +453,7 @@ var categoryMap = createMap({
     'partial',
     'partialRight',
     'throttle',
-    'wrap',
-
-    // deprecated
-    'callback'
+    'wrap'
   ],
   'Objects': [
     'assign',
@@ -509,6 +503,7 @@ var categoryMap = createMap({
     'camelCase',
     'capitalize',
     'endsWith',
+    'escape',
     'escapeRegExp',
     'kebabCase',
     'pad',
@@ -517,12 +512,16 @@ var categoryMap = createMap({
     'repeat',
     'snakeCase',
     'startsWith',
+    'template',
+    'templateSettings',
     'trim',
     'trimLeft',
     'trimRight',
-    'trunc'
+    'trunc',
+    'unescape'
   ],
   'Utilities': [
+    'callback',
     'constant',
     'identity',
     'matches',
@@ -533,32 +532,13 @@ var categoryMap = createMap({
     'parseInt',
     'property',
     'random',
+    'range',
     'result',
     'runInContext',
     'times',
-    'uniqueId',
-
-    // deprecated
-    'escape',
-    'template',
-    'templateSettings',
-    'unescape',
+    'uniqueId'
   ]
 });
-
-/** Used to track identifiers that are changing categories in the next major version bump */
-var categoryFluxMap = {
-  'Strings': [
-    'escape',
-    'template',
-    'templateSettings',
-    'unescape'
-  ],
-  'Utilities': [
-    'callback',
-    'range'
-  ]
-};
 
 /* Used to enforce dependencies at the top level */
 var topLevel = createMap({
@@ -1058,7 +1038,7 @@ function buildModule(state, callback) {
 
   // exclude `_.noConflict` and "Chain" functions when exporting for npm
   if (isNpm) {
-    identifiers = _.difference(identifiers, ['noConflict'], categoryMap.Chaining, categoryFluxMap.Chaining);
+    identifiers = _.difference(identifiers, ['noConflict'], categoryMap.Chaining);
   }
   // create modules for each identifier, except `lodash` because it's built separately
   _.each(_.without(identifiers, 'lodash'), function(identifier) {
@@ -1790,12 +1770,10 @@ function getCategories(identifier, depMap) {
   var result = [];
   identifier = getRealName(identifier, depMap);
 
-  _.each([categoryMap, categoryFluxMap], function(catMap) {
-    _.forOwn(catMap, function(identifiers, category) {
-      if (_.contains(identifiers, identifier)) {
-        result.push(category);
-      }
-    });
+  _.forOwn(categoryMap, function(identifiers, category) {
+    if (_.contains(identifiers, identifier)) {
+      result.push(category);
+    }
   });
   return result;
 }
@@ -2062,7 +2040,7 @@ function getModulePath(identifier, category, depMap) {
  * @returns {Array} Returns a new array of names.
  */
 function getNamesByCategory(category) {
-  return _.union(categoryMap[category], categoryFluxMap[category]);
+  return categoryMap[category];
 }
 
 /**
