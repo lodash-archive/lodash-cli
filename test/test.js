@@ -1214,7 +1214,7 @@ QUnit.module('modularize modifier');
           ok(reLicense.test(fs.readFileSync(require.resolve(outputPath), 'utf-8')), 'lodash module should preserve the copyright header');
         }
         else {
-          var modulePath = path.join(outputPath, 'utilities', funcName);
+          var modulePath = path.join(outputPath, funcName == 'mixin' ? 'utilities' : 'strings', funcName);
           lodash = {};
           lodash[funcName] = require(modulePath);
 

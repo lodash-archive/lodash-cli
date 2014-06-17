@@ -1244,7 +1244,7 @@ function buildModule(state, callback) {
         ];
 
         if (_.contains(identifiers, 'templateSettings')) {
-          code.push('  (lodash.templateSettings = utilities.templateSettings).imports._ = lodash;');
+          code.push('  (lodash.templateSettings = strings.templateSettings).imports._ = lodash;');
         }
         code.push('');
         return match + code.join('\n');
