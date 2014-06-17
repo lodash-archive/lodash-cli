@@ -3802,24 +3802,6 @@ function build(options, callback) {
             '}'
             ].join('\n'));
         }
-        // replace `_.flatten`
-        if (!isLodash('flatten')) {
-          _.pull(funcDepMap.flatten, 'map');
-
-          source = replaceFunction(source, 'flatten', [
-            'function flatten(array, isShallow, guard) {',
-            '  var length = array ? array.length : 0;',
-            '  if (!length) {',
-            '    return [];',
-            '  }',
-            '  var type = typeof isShallow;',
-            "  if ((type == 'number' || type == 'string') && guard && guard[isShallow] === array) {",
-            '    isShallow = false;',
-            '  }',
-            '  return baseFlatten(array, isShallow);',
-            '}'
-          ].join('\n'));
-        }
         // replace `_.initial`
         if (!isLodash('initial')) {
           _.pull(funcDepMap.initial, 'createCallback');
@@ -4173,7 +4155,7 @@ function build(options, callback) {
             '  if (!isObject(object)) {',
             '    return {};',
             '  }',
-            '  var omitProps = baseFlatten(arguments, true, false, 1);',
+            '  var omitProps = baseFlatten(arguments, false, false, 1);',
             '  return basePick(object, baseDifference(keysIn(object), arrayMap(omitProps, String)));',
             '}'
           ].join('\n'));
@@ -4201,7 +4183,7 @@ function build(options, callback) {
           source = replaceFunction(source, 'pick', [
             'function pick(object) {',
             '  return isObject(object)',
-            '    ? basePick(object, baseFlatten(arguments, true, false, 1))',
+            '    ? basePick(object, baseFlatten(arguments, false, false, 1))',
             '    : {};',
             '}'
           ].join('\n'));
@@ -4447,12 +4429,18 @@ function build(options, callback) {
         if (!isLodash('createCallback')) {
           source = source.replace(/\blodash\.(createCallback\()\b/g, '$1');
         }
-        // replace decimal NCRs in `htmlEscapes` with hexadecimal NCRs
+        // replace decimal NCRs with hexadecimal NCRs in `htmlEscapes`
         if (!isLodash('escape')) {
           _.each(['htmlEscapes', 'htmlUnescapes', 'reEscapedHtml'], function(varName) {
             source = source.replace(matchVar(source, varName), function(match) {
               return match.replace(/#39/g, '#x27');
             });
+          });
+        }
+        // replace `isDeep` with `!isDeep` in `_.flatten`
+        if (!isLodash('flatten')) {
+          source = source.replace(matchFunction(source, 'flatten'), function(match) {
+            return source.replace(/(, *)isDeep\b/, '$1!isDeep');
           });
         }
         // remove `_.prototype.toString`

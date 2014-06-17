@@ -1487,15 +1487,10 @@ QUnit.module('underscore modifier');
       lodash.forEach({ 'a': 1 }, callback, { 'a': 2 });
       strictEqual(actual, 2, '_.forEach supports the `thisArg` argument when iterating objects: ' + basename);
 
-      array = [{ 'a': [1, 2] }, { 'a': [3] }];
-      actual = lodash.flatten(array, function(value, index) {
-        return this[index].a;
-      }, array);
+      array = [[[['a']]], [[['b']]]];
+      deepEqual(lodash.flatten(array), ['a', 'b'], '_.flatten should perform a deep flatten by default: ' + basename);
 
-      deepEqual(actual, array, '_.flatten should should ignore `callback` and `thisArg`: ' + basename);
-      deepEqual(lodash.flatten(array, 'a'), array, '_.flatten should should ignore string `callback` values: ' + basename);
-
-      actual = _.map([[[['a']]], [[['b']]]], lodash.flatten);
+      actual = _.map(array, lodash.flatten);
       deepEqual(actual, [['a'], ['b']], '_.flatten should perform a deep flatten when used as `callback` for _.map: ' + basename);
 
       object = { 'length': 0, 'splice': Array.prototype.splice };
