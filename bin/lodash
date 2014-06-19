@@ -3764,6 +3764,11 @@ function build(options, callback) {
             '}'
           ].join('\n'));
         }
+        // replace `_.drop`
+        if (!isLodash('drop')) {
+          funcDepMap.drop = ['rest'];
+          source = replaceFunction(source, 'drop', 'var drop = rest;');
+        }
         // replace `_.first`
         if (!isLodash('first')) {
           funcDepMap.first.push('slice');
@@ -3775,7 +3780,7 @@ function build(options, callback) {
             '  }',
             '  return slice(array, 0, n < 0 ? 0 : n);',
             '}'
-            ].join('\n'));
+          ].join('\n'));
         }
         // replace `_.initial`
         if (!isLodash('initial')) {
@@ -4232,6 +4237,11 @@ function build(options, callback) {
             '  return result;',
             '}'
           ].join('\n'));
+        }
+        // replace `_.take`
+        if (!isLodash('take')) {
+          funcDepMap.take = ['first'];
+          source = replaceFunction(source, 'take', 'var take = first;');
         }
         // replace `_.tap`
         if (!isLodash('tap')) {
