@@ -108,7 +108,7 @@ var funcDependencyMap = createMap({
   'callback': ['baseCallback', 'matches', 'property'],
   'camelCase': ['createCompounder'],
   'capitalize': [],
-  'chain': ['lodashWrapper'],
+  'chain': ['lodash'],
   'chunk': ['slice'],
   'clone': ['baseCallback', 'baseClone'],
   'cloneDeep': ['baseCallback', 'baseClone'],
