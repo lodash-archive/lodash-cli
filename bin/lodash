@@ -32,7 +32,7 @@ var reDeepVars = /\bfunction runInContext\b/;
 var reFuncTag = /^ *\* *@type +Function\b/im;
 
 /** Used to detect if a string is a function snippet */
-var reFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|create[A-Z][a-z]+|template)\(/;
+var reFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|create[A-Z][a-z]+)\(/;
 
 /** Used to detect the Node.js executable in command-line arguments */
 var reNode = RegExp('(?:^|' + path.sepEscaped + ')node(?:\\.exe)?$', 'i');
@@ -1146,9 +1146,9 @@ function buildModule(state, callback) {
             }, {})
           };
 
-          fs.writeFileSync(path.join(outputPath, modulePath, 'package.json'), _.template(packageTemplate, templateData), 'utf-8');
-          fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE.txt'), _.template(licenseTemplate, templateData), 'utf-8');
-          fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate, _.defaults({ 'description': markdownDesc }, templateData)), 'utf-8');
+          fs.writeFileSync(path.join(outputPath, modulePath, 'package.json'), _.template(packageTemplate)(templateData), 'utf-8');
+          fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE.txt'), _.template(licenseTemplate)(templateData), 'utf-8');
+          fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate, _.defaults({ 'description': markdownDesc })(templateData)), 'utf-8');
         }
         if (!isAMD) {
           source = trimIndent(source);
@@ -1501,7 +1501,7 @@ function buildTemplate(state) {
 
     _.each(filePaths, function(filePath) {
       var string = fs.readFileSync(filePath, 'utf8'),
-          precompiled = cleanupCompiled(getFunctionSource(_.template(string, null, settings), 2));
+          precompiled = cleanupCompiled(getFunctionSource(_.template(string, settings), 2));
 
       // glob uses *nix path separators even on Windows
       // https://github.com/isaacs/node-glob#windows
@@ -2119,7 +2119,7 @@ function getVars(source) {
   // remove all functions except `runInContext`
   source = source
     .replace(/^( *)function (?!runInContext)[\s\S]+?\{\n[\s\S]+?\n\1}\n/gm, '')
-    .replace(/^( *)(?:var )?[$\w]+ *=.*?(?:create[A-Z][a-z]+|template)\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '')
+    .replace(/^( *)(?:var )?[$\w]+ *=.*?create[A-Z][a-z]+\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '')
     .replace(/^( *)(?:var )?[$\w]+ *= *function\b[\s\S]+?\{\n[\s\S]+?\n\1};\n/gm, '');
 
   var isDeep = reDeepVars.test(source),
@@ -2202,8 +2202,8 @@ function matchFunction(source, funcName, leadingComments) {
   var result = _.reduce([
     // match a function declaration
     '( *)function ' + funcName + '\\b[\\s\\S]+?\\n\\3}\\n',
-    // match variable declarations using `createAggregator`, `createCompounder`, or `template`
-    '( *)var ' + funcName + ' *=.*?(?:create[A-Z][a-z]+|template)\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
+    // match variable declarations using `createAggregator`, or `createCompounder`
+    '( *)var ' + funcName + ' *=.*?create[A-Z][a-z]+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
     // match a variable declaration with function expression
     '( *)var ' + funcName + ' *=.*?function\\b[\\s\\S]+?\{\\n[\\s\\S]+?\\n\\3}(?:\\(\\)\\))?;\\n',
     // match a simple variable declaration
@@ -4726,7 +4726,7 @@ function build(options, callback) {
           // remove `sourceURL` from `_.template`
           match = match.replace(/^(?: *\/\/.*\n)*(?= *var sourceURL\b)/m, '');
           match = removeVar(match, 'sourceURL');
-          return replaceVar(match, 'result', 'compileFunction(source, importsKeys, importsValues)');
+          return match.replace(/, *sourceURL(?=\))/, '');
         });
 
         // replace `root` with the appropriate global object for the specified `exports` option
