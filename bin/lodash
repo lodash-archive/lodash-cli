@@ -103,7 +103,7 @@ var funcDependencyMap = createMap({
   'assign': ['baseAssign', 'createAssigner'],
   'at': ['baseAt', 'baseFlatten', 'isString'],
   'bind': ['createWrapper', 'slice'],
-  'bindAll': ['baseBindAll', 'baseFlatten', 'functions'],
+  'bindAll': ['baseBindAll', 'baseFlatten', 'baseFunctions', 'keysIn'],
   'bindKey': ['createWrapper', 'slice'],
   'callback': ['baseCallback', 'matches', 'property'],
   'camelCase': ['createCompounder'],
