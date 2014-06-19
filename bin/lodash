@@ -3209,7 +3209,7 @@ function build(options, callback) {
     // used to specify the ways to export the `lodash` function
     var exportsOptions = (function() {
       var result = getOption(options, 'exports', isModularize ? ['amd'] : defaultExports);
-      return isModularize ? _.first(result, 1) : result;
+      return isModularize ? _.take(result, 1) : result;
     }());
 
     // used to specify the AMD module ID of Lo-Dash used by precompiled templates
