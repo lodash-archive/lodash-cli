@@ -124,10 +124,10 @@ var funcDependencyMap = createMap({
   'defer': ['isFunction', 'slice'],
   'delay': ['isFunction', 'slice'],
   'difference': ['baseDifference', 'baseFlatten', 'isArguments', 'isArray'],
-  'drop': ['rest'],
-  'dropRight': ['initial'],
-  'dropRightWhile': ['initial'],
-  'dropWhile': ['rest'],
+  'drop': ['slice'],
+  'dropRight': ['slice'],
+  'dropRightWhile': ['callback', 'slice'],
+  'dropWhile': ['callback', 'slice'],
   'endsWith': [],
   'escape': ['escapeHtmlChar'],
   'escapeRegExp': [],
@@ -140,7 +140,7 @@ var funcDependencyMap = createMap({
   'findLast': ['baseEachRight', 'baseFind', 'callback'],
   'findLastKey': ['baseFind', 'baseForOwnRight', 'callback'],
   'findWhere': ['find', 'matches'],
-  'first': ['callback', 'slice'],
+  'first': [],
   'flatten': ['baseFlatten'],
   'forEach': ['arrayEach', 'baseCallback', 'baseEach', 'isArray'],
   'forEachRight': ['arrayEachRight', 'baseCallback', 'baseEachRight', 'isArray'],
@@ -154,7 +154,7 @@ var funcDependencyMap = createMap({
   'identity': [],
   'indexBy': ['createAggregator'],
   'indexOf': ['baseIndexOf', 'sortedIndex'],
-  'initial': ['callback', 'slice'],
+  'initial': ['slice'],
   'intersection': ['cacheIndexOf', 'createCache', 'getIndexOf', 'isArguments', 'isArray'],
   'invert': ['keys'],
   'invoke': ['baseInvoke', 'slice'],
@@ -179,7 +179,7 @@ var funcDependencyMap = createMap({
   'kebabCase': ['createCompounder'],
   'keys': ['isNative', 'shimKeys'],
   'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isString'],
-  'last': ['callback', 'slice'],
+  'last': [],
   'lastIndexOf': [],
   'lodash': ['isArray', 'lodashWrapper'],
   'map': ['arrayMap', 'baseEach', 'callback', 'isArray'],
@@ -216,7 +216,7 @@ var funcDependencyMap = createMap({
   'reject': ['callback', 'filter', 'negate'],
   'remove': ['callback'],
   'repeat': [],
-  'rest': ['callback', 'slice'],
+  'rest': ['slice'],
   'result': ['isFunction'],
   'runInContext': ['defaults', 'pick'],
   'sample': ['baseRandom', 'isString', 'shuffle', 'values'],
@@ -228,10 +228,10 @@ var funcDependencyMap = createMap({
   'some': ['baseEach', 'callback', 'isArray'],
   'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'callback', 'isArray'],
   'sortedIndex': ['callback', 'identity'],
-  'take': ['first'],
-  'takeRight': ['last'],
-  'takeRightWhile': ['last'],
-  'takeWhile': ['first'],
+  'take': ['slice'],
+  'takeRight': ['slice'],
+  'takeRightWhile': ['callback', 'slice'],
+  'takeWhile': ['callback', 'slice'],
   'tap': [],
   'template': ['assign', 'assignOwnDefaults', 'compileFunction', 'escape', 'escapeStringChar', 'keys', 'values'],
   'throttle': ['debounce', 'isFunction', 'isObject'],
@@ -3766,7 +3766,7 @@ function build(options, callback) {
         }
         // replace `_.first`
         if (!isLodash('first')) {
-          _.pull(funcDepMap.first, 'callback');
+          funcDepMap.first.push('slice');
 
           source = replaceFunction(source, 'first', [
             'function first(array, n, guard) {',
@@ -3779,8 +3779,6 @@ function build(options, callback) {
         }
         // replace `_.initial`
         if (!isLodash('initial')) {
-          _.pull(funcDepMap.initial, 'callback');
-
           source = replaceFunction(source, 'initial', [
             'function initial(array, n, guard) {',
             '  var length = array ? array.length : 0;',
@@ -4063,7 +4061,7 @@ function build(options, callback) {
         }
         // replace `_.last`
         if (!isLodash('last')) {
-          _.pull(funcDepMap.last, 'callback');
+          funcDepMap.last.push('slice');
 
           source = replaceFunction(source, 'last', [
             'function last(array, n, guard) {',
@@ -4185,8 +4183,6 @@ function build(options, callback) {
         }
         // replace `_.rest`
         if (!isLodash('rest')) {
-          _.pull(funcDepMap.rest, 'callback');
-
           source = replaceFunction(source, 'rest', [
             'function rest(array, n, guard) {',
             '  if (n == null || guard) {',
