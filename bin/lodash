@@ -4666,10 +4666,7 @@ function build(options, callback) {
       if (isUnderscore) {
         // unexpose Lo-Dash methods for the Underscore build
         source = source.replace(getMethodAssignments(source), function(match) {
-          var unexpose = [
-            'assign', 'create', 'escapeRegExp', 'findIndex', 'isPlainObject',
-            'keysIn', 'negate', 'noop', 'slice', 'unzip', 'zipObject'
-          ];
+          var unexpose = lodashOnlyFuncs.concat('assign', 'unzip', 'zipObject');
 
           return _.reduce(unexpose, function(result, funcName) {
             if (isLodash(funcName)) {
@@ -4808,7 +4805,7 @@ function build(options, callback) {
   if (!isTemplate) {
     if (isExcluded(isModularize ? 'lodash' : 'lodashWrapper')) {
       // remove `lodashWrapper.prototype` assignment
-      source = source.replace(/(?: *\/\/.*\n)* *lodashWrapper\.prototype *=.+\n/, '');
+      source = source.replace(/^(?: *\/\/.*\n)* *lodashWrapper\.prototype *=.+\n/m, '');
     }
     if (isExcluded(isModularize ? 'lodash' : 'mixin')) {
       source = removeMixinCalls(source);
