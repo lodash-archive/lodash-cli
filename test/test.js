@@ -398,10 +398,7 @@ var lodashOnlyFuncs = [
 ];
 
 /** List of all functions */
-var allFuncs = _.reject(_.functions(_), _.bind(RegExp.prototype.test, /^_/));
-
-/** List of all Lo-Dash functions */
-var lodashFuncs = allFuncs.slice();
+var allFuncs = _.reject(_.functions(_), _.bind(RegExp.prototype.test, /^_/)).sort();
 
 /** List of Underscore functions */
 var underscoreFuncs = _.filter(_.difference(allFuncs, lodashOnlyFuncs), function(funcName, index, array) {
@@ -2282,7 +2279,7 @@ QUnit.module('lodash build');
             }
           }
           if (!funcNames) {
-            funcNames = lodashFuncs.slice();
+            funcNames = allFuncs.slice();
           }
           if (/\bplus=/.test(command)) {
             var otherNames = command.match(/\bplus=(\S*)/)[1].split(/, */);
@@ -2308,7 +2305,7 @@ QUnit.module('lodash build');
             otherNames = _.intersection(otherNames,
               isBackbone ? backboneDependencies :
               isUnderscore ? underscoreFuncs :
-              lodashFuncs
+              allFuncs
             );
 
             if (!_.isEmpty(otherNames)) {
