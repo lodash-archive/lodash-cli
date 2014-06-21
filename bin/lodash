@@ -194,7 +194,7 @@ var funcDependencyMap = createMap({
   'noConflict': [],
   'noop': [],
   'now': ['isNative'],
-  'omit': ['baseDifference', 'baseFlatten', 'basePick', 'arrayMap', 'callback', 'isObject', 'keysIn', 'negate'],
+  'omit': ['baseDifference', 'baseFlatten', 'basePick', 'arrayMap', 'callback', 'keysIn', 'negate'],
   'once': ['isFunction'],
   'pad': ['createPad'],
   'padLeft': ['createPad'],
@@ -204,7 +204,7 @@ var funcDependencyMap = createMap({
   'partial': ['createWrapper', 'slice'],
   'partialRight': ['createWrapper', 'slice'],
   'partition': ['createAggregator'],
-  'pick': ['baseFlatten', 'basePick', 'callback', 'isObject'],
+  'pick': ['baseFlatten', 'basePick', 'callback'],
   'pluck': ['map', 'property'],
   'property': [],
   'pull': [],
@@ -4106,7 +4106,7 @@ function build(options, callback) {
 
           source = replaceFunction(source, 'omit', [
             'function omit(object) {',
-            '  if (!isObject(object)) {',
+            '  if (object == null) {',
             '    return {};',
             '  }',
             '  var omitProps = baseFlatten(arguments, false, false, 1);',
@@ -4136,9 +4136,9 @@ function build(options, callback) {
 
           source = replaceFunction(source, 'pick', [
             'function pick(object) {',
-            '  return isObject(object)',
-            '    ? basePick(object, baseFlatten(arguments, false, false, 1))',
-            '    : {};',
+            '  return object == null',
+            '    ? {}',
+            '    : basePick(object, baseFlatten(arguments, false, false, 1));',
             '}'
           ].join('\n'));
         }
