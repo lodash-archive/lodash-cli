@@ -980,7 +980,7 @@ function buildModule(state, onComplete) {
       packageTemplate = fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf-8'),
       readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
 
-  var identifiers = buildFuncs.concat(includeObjs, includeVars),
+  var identifiers = _.without(_.union(buildFuncs, includeObjs, includeVars), 'main'),
       removedDeps = {},
       version = state.lodash.VERSION;
 
@@ -1037,7 +1037,7 @@ function buildModule(state, onComplete) {
 
   // exclude `_.noConflict` and "Chain" functions when exporting for npm
   if (isNpm) {
-    identifiers = _.difference(identifiers, ['noConflict'], categoryMap.Chaining);
+    identifiers = _.difference(identifiers, categoryMap.Chaining.concat('noConflict'));
   }
   // create modules for each identifier
   _.each(identifiers, function(identifier) {
@@ -1166,17 +1166,16 @@ function buildModule(state, onComplete) {
     if (isNpm || !_.contains(buildFuncs, 'lodash')) {
       return;
     }
-    var identifier = 'main',
-        basename = 'lodash',
-        modulePath = getModulePath(identifier, funcDepMap);
+    var basename = 'lodash',
+        modulePath = getModulePath('main', funcDepMap);
 
     var categories = _.uniq(_.compact(_.map(identifiers, _.compose(_.first, _.partial(getCategories, _, funcDepMap))))).sort(),
         categoryDeps = _.invoke(categories, 'toLowerCase'),
         categoryDepPaths = _.map(categoryDeps, function(depName) { return './' + depName; });
 
-    var deps = getDependencies(identifier, funcDepMap, true)
-      .concat(objDepMap[identifier] || [])
-      .concat(varDepMap[identifier] || [])
+    var deps = getDependencies('main', funcDepMap, true)
+      .concat(objDepMap.main || [])
+      .concat(varDepMap.main || [])
       .sort();
 
     if (isAMD) {
@@ -1185,7 +1184,7 @@ function buildModule(state, onComplete) {
     else if (!isES6) {
       basename = 'index';
     }
-    state.buildFuncs = state.includeFuncs = [identifier];
+    state.buildFuncs = state.includeFuncs = ['main'];
     state.includeObjs = state.includeVars = [];
     state.outputPath = path.join(outputPath, modulePath, basename + '.js');
 
@@ -1261,7 +1260,7 @@ function buildModule(state, onComplete) {
 
       var unusedDeps = getUnusedDeps(source, deps);
       deps = _.difference(deps, unusedDeps);
-      removedDeps[identifier] = unusedDeps;
+      removedDeps.main = unusedDeps;
 
       var iife = [],
           depNames = categoryDeps.concat(deps),
@@ -1284,7 +1283,7 @@ function buildModule(state, onComplete) {
               'import ' + depName + " from '" + depPath + "'";
           }, '') + ';',
           '%output%',
-          'export default ' + identifier + ';'
+          'export default lodash;'
         );
       }
       else {
@@ -1296,7 +1295,7 @@ function buildModule(state, onComplete) {
               (isCommonJS && !_.contains(categoryDepPaths, depPath) ? '.' + depName : '');
           }, '') + ';',
           '%output%',
-          (isCommonJS ? 'exports._' : 'module.exports') + ' = ' + identifier + ';'
+          (isCommonJS ? 'exports._' : 'module.exports') + ' = lodash;'
         );
       }
       if (!isAMD) {
