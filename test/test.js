@@ -342,6 +342,7 @@ var backboneDependencies = [
 var lodashOnlyFuncs = [
   'at',
   'bindKey',
+  'callback',
   'camelCase',
   'capitalize',
   'chunk',

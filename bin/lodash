@@ -638,6 +638,7 @@ var complexVars = [
 var lodashOnlyFuncs = [
   'at',
   'bindKey',
+  'callback',
   'camelCase',
   'capitalize',
   'chunk',
@@ -955,9 +956,10 @@ function addUnderscoreChaining(source, isModularize) {
  *
  * @private
  * @param {Object} state The build state object.
- * @param {Function} [callback] The function called when all module builds are completed.
+ * @param {Function} [onComplete] The function called when all module builds
+ *  are completed.
  */
-function buildModule(state, callback) {
+function buildModule(state, onComplete) {
   var buildFuncs = state.buildFuncs,
       funcDepMap = state.funcDepMap,
       includeObjs = state.includeObjs,
@@ -1409,8 +1411,8 @@ function buildModule(state, callback) {
       }
     });
   }
-  if (callback) {
-    callback({ 'outputPath': fs.realpathSync(outputPath) });
+  if (onComplete) {
+    onComplete({ 'outputPath': fs.realpathSync(outputPath) });
   }
 }
 
@@ -3065,8 +3067,8 @@ function trimIndent(source, level) {
 /*----------------------------------------------------------------------------*/
 
 /**
- * Creates a debug and/or minified build, executing the callback for each.
- * The callback is invoked with one argument; (data).
+ * Creates a debug and/or minified build, executing the callback for each. The
+ * `callback` is invoked with one argument; (data).
  *
  * Note: For a list of commands see `displayHelp()` or run `lodash --help`.
  *
@@ -3481,15 +3483,15 @@ function build(options, callback) {
           _.pull(funcDepMap.forEach, 'isArray');
 
           source = replaceFunction(source, 'forEach', [
-            'function forEach(collection, callback, thisArg) {',
+            'function forEach(collection, iterator, thisArg) {',
             '  var length = collection ? collection.length : 0;',
             '',
-            "  if (typeof callback != 'function' || typeof thisArg != 'undefined') {",
-            '    callback = baseCallback(callback, thisArg, 3);',
+            "  if (typeof iterator != 'function' || typeof thisArg != 'undefined') {",
+            '    iterator = baseCallback(iterator, thisArg, 3);',
             '  }',
             "  return (typeof length == 'number' && length > -1 && length <= maxSafeInteger)",
-            '    ? arrayEach(collection, callback)',
-            '    : baseEach(collection, callback);',
+            '    ? arrayEach(collection, iterator)',
+            '    : baseEach(collection, iterator);',
             '}',
           ].join('\n'));
         }
@@ -3498,15 +3500,15 @@ function build(options, callback) {
           _.pull(funcDepMap.forEachRight, 'isArray');
 
           source = replaceFunction(source, 'forEachRight', [
-            'function forEachRight(collection, callback, thisArg) {',
+            'function forEachRight(collection, iterator, thisArg) {',
             '  var length = collection ? collection.length : 0;',
             '',
-            "  if (typeof callback != 'function' || typeof thisArg != 'undefined') {",
-            '    callback = baseCallback(callback, thisArg, 3);',
+            "  if (typeof iterator != 'function' || typeof thisArg != 'undefined') {",
+            '    iterator = baseCallback(iterator, thisArg, 3);',
             '  }',
             "  return (typeof length == 'number' && length > -1 && length <= maxSafeInteger)",
-            '    ? arrayEachRight(collection, callback)',
-            '    : baseEachRight(collection, callback);',
+            '    ? arrayEachRight(collection, iterator)',
+            '    : baseEachRight(collection, iterator);',
             '}',
           ].join('\n'));
         }
@@ -3558,18 +3560,18 @@ function build(options, callback) {
           _.pull(funcDepMap.map, 'isArray');
 
           source = replaceFunction(source, 'map', [
-            'function map(collection, callback, thisArg) {',
+            'function map(collection, iterator, thisArg) {',
             '  var length = collection ? collection.length : 0;',
-            '  callback = lodash.callback(callback, thisArg, 3);',
+            '  iterator = lodash.callback(iterator, thisArg, 3);',
             '',
             "  if (typeof length == 'number' && length > -1 && length <= maxSafeInteger) {",
-            '    return arrayMap(collection, callback);',
+            '    return arrayMap(collection, iterator);',
             '  }',
             '  var index = -1,',
             '      result = [];',
             '',
             '  baseEach(collection, function(value, key, collection) {',
-            '    result[++index] = callback(value, key, collection);',
+            '    result[++index] = iterator(value, key, collection);',
             '  });',
             '  return result;',
             '}'
@@ -3599,8 +3601,8 @@ function build(options, callback) {
                   statement.replace(/\bisArray\([^\)]+\)/, "typeof length == 'number' && length > -1 && length <= maxSafeInteger");
               });
 
-              // adjust `callback` assignment placement
-              return match.replace(/\n+ *callback *=[^;]+;(?=\n *var )/, '$&\n');
+              // adjust callback assignment placement
+              return match.replace(/\n+ *(?:iterator|predicate) *=[^;]+;(?=\n *var )/, '$&\n');
             });
           }
         });
@@ -4189,15 +4191,15 @@ function build(options, callback) {
           _.pull(funcDepMap.sortBy, 'compareMultipleAscending', 'isArray');
 
           source = replaceFunction(source, 'sortBy', [
-            'function sortBy(collection, callback, thisArg) {',
+            'function sortBy(collection, iterator, thisArg) {',
             '  var index = -1,',
             '      length = collection && collection.length,',
             '      result = Array(length < 0 ? 0 : length >>> 0);',
             '',
-            '  callback = lodash.callback(callback, thisArg, 3);',
+            '  iterator = lodash.callback(iterator, thisArg, 3);',
             '  baseEach(collection, function(value, key, collection) {',
             '    result[++index] = {',
-            "      'criteria': callback(value, key, collection),",
+            "      'criteria': iterator(value, key, collection),",
             "      'index': index,",
             "      'value': value",
             '    };',
@@ -4325,7 +4327,7 @@ function build(options, callback) {
           _.pull(funcDepMap.baseUniq, 'cacheIndexOf', 'createCache');
 
           source = replaceFunction(source, 'baseUniq', [
-            'function baseUniq(array, isSorted, callback) {',
+            'function baseUniq(array, isSorted, iterator) {',
             '  var length = array ? array.length : 0;',
             '  if (!length) {',
             '    return [];',
@@ -4333,11 +4335,11 @@ function build(options, callback) {
             '  var index = -1,',
             '      indexOf = getIndexOf(),',
             '      result = [],',
-            '      seen = (callback && !isSorted) ? [] : result;',
+            '      seen = (iterator && !isSorted) ? [] : result;',
             '',
             '  while (++index < length) {',
             '    var value = array[index],',
-            '        computed = callback ? callback(value, index, array) : value;',
+            '        computed = iterator ? iterator(value, index, array) : value;',
             '',
             '    if (isSorted) {',
             '      if (!index || seen !== computed) {',
@@ -4346,7 +4348,7 @@ function build(options, callback) {
             '      }',
             '    }',
             '    else if (indexOf(seen, computed) < 0) {',
-            '      if (callback) {',
+            '      if (iterator) {',
             '        seen.push(computed);',
             '      }',
             '      result.push(value);',
@@ -4379,6 +4381,10 @@ function build(options, callback) {
             '  return result;',
             '}'
           ].join('\n'));
+        }
+        // replace references to external `lodash.createCallback` with internal `createCallback`
+        if (!isLodash('callback')) {
+          source = source.replace(/\blodash\.(callback)(?=\()/g, '$1');
         }
         // replace decimal NCRs with hexadecimal NCRs in `htmlEscapes`
         if (!isLodash('escape')) {
@@ -4491,7 +4497,7 @@ function build(options, callback) {
           });
 
           source = source.replace(matchFunction(source, 'transform'), function(match) {
-            return match.replace(/\breturn +callback[^)]+\)/, '$& === false && breakIndicator');
+            return match.replace(/\breturn +iterator[^)]+\)/, '$& === false && breakIndicator');
           });
 
           _.each(['arrayEach', 'arrayEachRight', 'baseEach', 'baseEachRight', 'baseFor', 'baseForRight'], function(funcName) {
