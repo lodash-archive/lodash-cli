@@ -542,7 +542,7 @@ var categoryMap = createMap({
 
 /* Used to enforce dependencies at the top level */
 var topLevel = createMap({
-  'lodash': true,
+  'main': true,
   'support': true
 });
 
@@ -947,9 +947,7 @@ function addUnderscoreChaining(source, isModularize) {
   source = source.replace(/^ *lodash\.prototype\.(?:toJSON|toString|valueOf) *=.+\n/gm, '');
 
   // remove `lodash.prototype` batch method assignments
-  source = source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+\n/gm, '');
-
-  return source;
+  return source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+\n/gm, '');
 }
 
 /**
@@ -980,8 +978,7 @@ function buildModule(state, callback) {
       packageTemplate = fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf-8'),
       readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
 
-  var empty = [],
-      identifiers = buildFuncs.concat(includeObjs, includeVars),
+  var identifiers = buildFuncs.concat(includeObjs, includeVars),
       removedDeps = {},
       version = state.lodash.VERSION;
 
@@ -1040,8 +1037,8 @@ function buildModule(state, callback) {
   if (isNpm) {
     identifiers = _.difference(identifiers, ['noConflict'], categoryMap.Chaining);
   }
-  // create modules for each identifier, except `lodash` because it's built separately
-  _.each(_.without(identifiers, 'lodash'), function(identifier) {
+  // create modules for each identifier
+  _.each(identifiers, function(identifier) {
     var categories = getCategories(identifier, funcDepMap);
     if (_.isEmpty(categories)) {
       categories.push(null);
@@ -1162,13 +1159,13 @@ function buildModule(state, callback) {
     });
   });
 
-  // create lodash module
+  // create main module
   (function() {
     if (isNpm || !_.contains(buildFuncs, 'lodash')) {
       return;
     }
-    var identifier = 'lodash',
-        basename = identifier,
+    var identifier = 'main',
+        basename = 'lodash',
         modulePath = getModulePath(identifier, funcDepMap);
 
     var categories = _.uniq(_.compact(_.map(identifiers, _.compose(_.first, _.partial(getCategories, _, funcDepMap))))).sort(),
@@ -1176,8 +1173,8 @@ function buildModule(state, callback) {
         categoryDepPaths = _.map(categoryDeps, function(depName) { return './' + depName; });
 
     var deps = getDependencies(identifier, funcDepMap, true)
-      .concat(objDepMap[identifier] || empty)
-      .concat(varDepMap[identifier] || empty)
+      .concat(objDepMap[identifier] || [])
+      .concat(varDepMap[identifier] || [])
       .sort();
 
     if (isAMD) {
@@ -1187,7 +1184,7 @@ function buildModule(state, callback) {
       basename = 'index';
     }
     state.buildFuncs = state.includeFuncs = [identifier];
-    state.includeObjs = state.includeVars = empty;
+    state.includeObjs = state.includeVars = [];
     state.outputPath = path.join(outputPath, modulePath, basename + '.js');
 
     build(state, function(data) {
@@ -1199,9 +1196,8 @@ function buildModule(state, callback) {
       });
 
       // wrap `_.mixin`
-      source = source.replace(/^ *lodashWrapper\.prototype\s*=[^;]+;\n/m, function(match) {
+      source = source.replace(/^(?: *\/\/.*\n)* *lodash\.[$\w]+\s*=[^;]+;\n/m, function(match) {
         var code = [
-          '',
           '  // wrap `_.mixin` so it works when provided only one argument',
           '  mixin = (function(func) {'
         ];
@@ -1231,9 +1227,11 @@ function buildModule(state, callback) {
         code.push(
           '    };',
           '  }(mixin));',
-          ''
+          '',
+          match
         );
-        return match + code.join('\n');
+
+        return code.join('\n');
       });
 
       // add `lodash.support` and `lodash.templateSettings` assignment
@@ -1317,14 +1315,14 @@ function buildModule(state, callback) {
     var categories = _.uniq(_.compact(_.flatten(_.map(identifiers, _.partial(getCategories, _, funcDepMap)))));
 
     _.each(categories, function(category) {
-      state.buildFuncs = state.includeFuncs = state.includeObjs = state.includeVars = empty;
+      state.buildFuncs = state.includeFuncs = state.includeObjs = state.includeVars = [];
       state.outputPath = path.join(outputPath, category.toLowerCase() + '.js');
 
       build(state, function(data) {
         var iife = [],
             source = data.source;
 
-        var depNames = _.intersection(getNamesByCategory(category), _.without(identifiers, 'lodash')).sort(),
+        var depNames = _.intersection(getNamesByCategory(category), identifiers).sort(),
             depPaths = getDepPaths(depNames, null, funcDepMap);
 
         var exportNames = _.transform(depNames, function(result, depName) {
@@ -2270,7 +2268,7 @@ function matchVar(source, varName, leadingComments) {
   // match complex variable assignments
   if (_.contains(complexVars, varName)) {
     reSources = [
-      '(' + indentA + ')var ' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\1(?:function\\b|var\\s|/[/*])))'
+      '(' + indentA + ')var ' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\1(?:function\\b|if\\b|lodash\\b|var\\s|/[/*])))'
     ];
   }
   return _.reduce(reSources, function(result, reSource) {
@@ -2326,8 +2324,7 @@ function optionToValue(name, string) {
 function removeAssignments(source) {
   // remove method and intermediate assignments
   source = removeMethodAssignments(source);
-  source = source.replace(/(=\s*)lodash\.[$\w]+\s*=\s*/g, '$1');
-  return source;
+  return source.replace(/(=\s*)lodash\.[$\w]+\s*=\s*/g, '$1');
 }
 
 /**
@@ -2353,19 +2350,10 @@ function removeChaining(source) {
   source = removeSpliceObjectsFix(source);
 
   // remove all `lodash.prototype` additions
-  source = source
+  return source
     .replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+\n/gm, '')
     .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['[\s\S]+?\n\1}.+\n/gm, '')
     .replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.[\s\S]+?;\n/gm, '');
-
-  // replace `lodash` with a simpler version
-  source = replaceFunction(source, 'lodash', [
-    'function lodash() {',
-    '  // no operation performed',
-    '}'
-  ].join('\n'));
-
-  return source;
 }
 
 /**
@@ -2689,8 +2677,7 @@ function removeSupportArgsClass(source) {
  */
 function removeSupportDom(source) {
   source = removeSupportProp(source, 'dom');
-  source = removeIsElementFork(source);
-  return source;
+  return removeIsElementFork(source);
 }
 
 /**
@@ -2715,11 +2702,9 @@ function removeSupportEnumPrototypes(source) {
   source = removeSupportProp(source, 'enumPrototypes');
 
   // remove `support.enumPrototypes` from `_.keys`
-  source = source.replace(matchFunction(source, 'keys'), function(match) {
+  return source.replace(matchFunction(source, 'keys'), function(match) {
     return match.replace(/\s*\|\|\s*\(support\.enumPrototypes\b[\s\S]+?\)/, '');
   });
-
-  return source;
 }
 
 /**
@@ -2745,11 +2730,9 @@ function removeSupportNodeClass(source) {
   });
 
   // remove `support.nodeClass` from `_.isElement`
-  source = source.replace(matchFunction(source, 'isElement'), function(match) {
+  return source.replace(matchFunction(source, 'isElement'), function(match) {
     return match.replace(/\(support\.nodeClass\s*\?\s*([^:]+?)\s*:[\s\S]+?\)\)/, '$1');
   });
-
-  return source;
 }
 
 /**
@@ -2785,11 +2768,9 @@ function removeSupportNonEnumStrings(source) {
   source = removeSupportProp(source, 'nonEnumStrings');
 
   // remove `support.nonEnumStrings` from `shimKeys`
-  source = source.replace(matchFunction(source, 'shimKeys'), function(match) {
+  return source.replace(matchFunction(source, 'shimKeys'), function(match) {
     return match.replace(/\s*\|\|\s*\(support\.nonEnumStrings\b[\s\S]+?\)\)/, '');
   });
-
-  return source;
 }
 
 /**
@@ -2803,11 +2784,9 @@ function removeSupportOwnLast(source) {
   source = removeSupportProp(source, 'ownLast');
 
   // remove `support.ownLast` from `shimIsPlainObject`
-  source = source.replace(matchFunction(source, 'shimIsPlainObject'), function(match) {
+  return source.replace(matchFunction(source, 'shimIsPlainObject'), function(match) {
     return match.replace(/^(?: *\/\/.*\n)*( *)if *\(support\.ownLast\b[\s\S]+?\n\1}\n/m, '');
   });
-
-  return source;
 }
 
 /**
@@ -2819,8 +2798,7 @@ function removeSupportOwnLast(source) {
  */
 function removeSupportSpliceObjects(source) {
   source = removeSupportProp(source, 'spliceObjects');
-  source = removeSpliceObjectsFix(source);
-  return source;
+  return removeSpliceObjectsFix(source);
 }
 
 /**
@@ -2846,11 +2824,9 @@ function removeSupportUnindexedChars(source) {
   });
 
   // remove `support.unindexedChars` from `_.toArray`
-  source = source.replace(matchFunction(source, 'toArray'), function(match) {
+  return source.replace(matchFunction(source, 'toArray'), function(match) {
     return match.replace(/(return\b).+?support\.unindexedChars[^:]+:\s*/, '$1 ');
   });
-
-  return source;
 }
 
 /**
@@ -3069,11 +3045,9 @@ function stringFree(source, callback) {
     return stringToken;
   })) || '';
 
-  source = source.replace(reStringTokens, function() {
+  return source.replace(reStringTokens, function() {
     return strings.shift();
   });
-
-  return source;
 }
 
 /**
@@ -3396,11 +3370,11 @@ function build(options, callback) {
           });
           delete varDepMap.root;
         }
-        funcDepMap.lodash.push('arrayEach', 'baseAssign', 'mixin');
-        objDepMap.lodash = ['support'];
+        funcDepMap.main = ['arrayEach', 'baseAssign', 'lodash', 'lodashWrapper', 'mixin'];
+        objDepMap.main = ['support'];
 
         if (!isUnderscore) {
-          funcDepMap.lodash.push('baseForOwn', 'baseFunctions', 'keys');
+          funcDepMap.main.push('baseForOwn', 'baseFunctions', 'keys');
         }
         _.pull(funcDepMap.mixin, 'lodash');
 
@@ -3415,7 +3389,7 @@ function build(options, callback) {
       }
       else {
         funcDepMap.chain.push('wrapperChain');
-        funcDepMap.wrapperValueOf.push('arrayEach', 'baseAssign', 'mixin', 'wrapperChain');
+        funcDepMap.wrapperValueOf.push('arrayEach', 'baseAssign', 'chain', 'mixin');
         objDepMap.wrapperValueOf = ['support'];
 
         _.each(['chain', 'lodashWrapper', 'tap', 'wrapperChain'], function(funcName) {
@@ -4803,18 +4777,18 @@ function build(options, callback) {
 
   // modify/remove references to removed functions/variables
   if (!isTemplate) {
-    if (isExcluded(isModularize ? 'lodash' : 'lodashWrapper')) {
+    if (isExcluded('lodash')) {
       // remove `lodashWrapper.prototype` assignment
       source = source.replace(/^(?: *\/\/.*\n)* *lodashWrapper\.prototype *=.+\n/m, '');
     }
-    if (isExcluded(isModularize ? 'lodash' : 'mixin')) {
+    if (isExcluded(isModularize ? 'main' : 'mixin')) {
       source = removeMixinCalls(source);
     }
-    if (isExcluded(isModularize ? 'lodash' : 'wrapperValueOf')) {
+    if (isExcluded(isModularize ? 'main' : 'wrapperValueOf')) {
       source = removeChaining(source);
     }
     if (isModularize) {
-      if (isExcluded('lodash')) {
+      if (isExcluded('main')) {
         source = removeAssignments(source);
       }
     }
@@ -4841,7 +4815,7 @@ function build(options, callback) {
         source = removeSupportNonEnumArgs(source);
         source = removeSupportNonEnumStrings(source);
       }
-      if (isExcluded('lodashWrapper')) {
+      if (isExcluded('wrapperValueOf')) {
         source = removeChaining(source);
       }
       if (!/\.(?:enumErrorProps|nonEnumShadows) *=/.test(source)) {
