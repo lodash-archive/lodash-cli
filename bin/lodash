@@ -1147,7 +1147,7 @@ function buildModule(state, onComplete) {
 
           fs.writeFileSync(path.join(outputPath, modulePath, 'package.json'), _.template(packageTemplate)(templateData), 'utf-8');
           fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE.txt'), _.template(licenseTemplate)(templateData), 'utf-8');
-          fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate, _.defaults({ 'description': markdownDesc })(templateData)), 'utf-8');
+          fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate)(_.defaults({ 'description': markdownDesc }, templateData)), 'utf-8');
         }
         if (!isAMD) {
           source = trimIndent(source);
