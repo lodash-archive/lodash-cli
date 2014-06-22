@@ -1744,7 +1744,7 @@ QUnit.module('exclude command');
         vm.runInContext(data.source, context);
 
         var lodash = context._;
-        ok(!(lodash([1]) instanceof lodash), basename);
+        ok(lodash([1]) instanceof lodash, basename);
         deepEqual(_.keys(lodash.prototype), [], basename);
 
         start();

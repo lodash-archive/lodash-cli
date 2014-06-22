@@ -3414,7 +3414,7 @@ function build(options, callback) {
         funcDepMap.wrapperValueOf.push('arrayEach','chain', 'mixin');
         objDepMap.wrapperValueOf = ['support'];
 
-        _.each(['chain', 'lodashWrapper', 'tap', 'wrapperChain'], function(funcName) {
+        _.each(['chain', 'tap', 'wrapperChain'], function(funcName) {
           funcDepMap[funcName].push('wrapperValueOf');
         });
 
@@ -4632,7 +4632,7 @@ function build(options, callback) {
         });
       }
       if (_.contains(buildFuncs, 'lodash')) {
-        push.apply(buildFuncs, funcDepMap.main);
+        push.apply(buildFuncs, getDependencies(funcDepMap.main, funcDepMap));
         push.apply(includeObjs, objDepMap.main);
         push.apply(includeVars, varDepMap.main);
       }
