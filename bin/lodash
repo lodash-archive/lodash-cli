@@ -46,7 +46,7 @@ var reStringTokens = RegExp(stringToken.replace(/\./g, '\\$&'), 'g');
 /** Shortcut to the `stdout` object */
 var stdout = process.stdout;
 
-/** Used to associate aliases with their real names */
+/** Used to map aliases with their real names */
 var aliasToRealMap = createMap({
   'all': 'every',
   'any': 'some',
@@ -70,7 +70,7 @@ var aliasToRealMap = createMap({
   'value': 'wrapperValueOf'
 });
 
-/** Used to associate real names with their aliases */
+/** Used to map real names with their aliases */
 var realToAliasMap = createMap({
   'assign': ['extend'],
   'contains': ['include'],
@@ -540,9 +540,10 @@ var categoryMap = createMap({
   ]
 });
 
+/* Used to map categories with their plural form */
 var categoryToPluralMap = createMap({
   'Array': 'Arrays',
-  'Chain': 'Chains',
+  'Chain': 'Chaining',
   'Collection': 'Collections',
   'Function': 'Functions',
   'Object': 'Objects',
