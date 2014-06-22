@@ -365,7 +365,7 @@ var varDependencyMap = createMap({
 
 /** Used to track the category of identifiers */
 var categoryMap = createMap({
-  'Arrays': [
+  'Array': [
     'chunk',
     'compact',
     'difference',
@@ -399,7 +399,7 @@ var categoryMap = createMap({
     'zip',
     'zipObject'
   ],
-  'Chaining': [
+  'Chain': [
     'chain',
     'lodash',
     'tap',
@@ -407,7 +407,7 @@ var categoryMap = createMap({
     'wrapperToString',
     'wrapperValueOf'
   ],
-  'Collections': [
+  'Collection': [
     'at',
     'contains',
     'countBy',
@@ -437,7 +437,7 @@ var categoryMap = createMap({
     'toArray',
     'where'
   ],
-  'Functions': [
+  'Function': [
     'after',
     'bind',
     'bindAll',
@@ -455,7 +455,7 @@ var categoryMap = createMap({
     'throttle',
     'wrap'
   ],
-  'Objects': [
+  'Object': [
     'assign',
     'clone',
     'cloneDeep',
@@ -499,7 +499,7 @@ var categoryMap = createMap({
     'values',
     'valuesIn'
   ],
-  'Strings': [
+  'String': [
     'camelCase',
     'capitalize',
     'endsWith',
@@ -520,7 +520,7 @@ var categoryMap = createMap({
     'trunc',
     'unescape'
   ],
-  'Utilities': [
+  'Utility': [
     'callback',
     'constant',
     'identity',
@@ -538,6 +538,16 @@ var categoryMap = createMap({
     'times',
     'uniqueId'
   ]
+});
+
+var categoryToPluralMap = createMap({
+  'Array': 'Arrays',
+  'Chain': 'Chains',
+  'Collection': 'Collections',
+  'Function': 'Functions',
+  'Object': 'Objects',
+  'String': 'Strings',
+  'Utility': 'Utilities'
 });
 
 /* Used to enforce dependencies at the top level */
@@ -1037,7 +1047,7 @@ function buildModule(state, onComplete) {
 
   // exclude `_.noConflict` and "Chain" functions when exporting for npm
   if (isNpm) {
-    identifiers = _.difference(identifiers, categoryMap.Chaining.concat('noConflict'));
+    identifiers = _.difference(identifiers, categoryMap.Chain.concat('noConflict'));
   }
   // create modules for each identifier
   _.each(identifiers, function(identifier) {
@@ -1169,9 +1179,17 @@ function buildModule(state, onComplete) {
     var basename = 'lodash',
         modulePath = getModulePath('main', funcDepMap);
 
-    var categories = _.uniq(_.compact(_.map(identifiers, _.compose(_.first, _.partial(getCategories, _, funcDepMap))))).sort(),
-        categoryDeps = _.invoke(categories, 'toLowerCase'),
-        categoryDepPaths = _.map(categoryDeps, function(depName) { return './' + depName; });
+    var categories = _.uniq(_.compact(_.map(identifiers, function(identifier) {
+      return _.first(getCategories(identifier, funcDepMap));
+    }))).sort();
+
+    var categoryDeps = _.map(categories, function(category) {
+      return categoryToPluralMap[category].toLowerCase();
+    });
+
+    var categoryDepPaths = _.map(categories, function(category) {
+      return './' + category.toLowerCase();
+    });
 
     var deps = getDependencies('main', funcDepMap, true)
       .concat(objDepMap.main || [])
@@ -1254,7 +1272,7 @@ function buildModule(state, onComplete) {
         if (_.contains(deps, identifier)) {
           return match;
         }
-        var category = _.first(getCategories(identifier, funcDepMap));
+        var category = categoryToPluralMap[_.first(getCategories(identifier, funcDepMap))];
         return prelude + (category ? category.toLowerCase() + '.' : '') + identifier;
       });
 
@@ -1700,8 +1718,8 @@ function displayHelp() {
     '  plus=..      Comma separated function/category names to add to the build',
     '',
     '  category=..  Comma separated categories of functions to include in the build',
-    '               (i.e. “arrays”, “chaining”, “collections”, “functions”,',
-    '               “objects”, & “utilities”)',
+    '               (i.e. “array”, “chain”, “collection”, “function”, “object”,',
+    '               “string”, & “utility”)',
     '',
     '  exports=..   Comma separated names of ways to export the `lodash` function.',
     '               (i.e. “amd”, “commonjs”, “es6”, “global”, “node”, “npm”, & “none”)',
@@ -2028,7 +2046,7 @@ function getModulePath(identifier, category, depMap) {
   if (!category) {
     category = _.first(getCategories(identifier, depMap));
   }
-  return (category || 'internals').toLowerCase();
+  return (category || 'internal').toLowerCase();
 }
 
 /**

@@ -100,7 +100,7 @@ var realToAliasMap = createMap({
 
 /** Used to track the category of identifiers */
 var categoryMap = createMap({
-  'Arrays': [
+  'Array': [
     'chunk',
     'compact',
     'difference',
@@ -134,7 +134,7 @@ var categoryMap = createMap({
     'zip',
     'zipObject'
   ],
-  'Chaining': [
+  'Chain': [
     'chain',
     'lodash',
     'tap',
@@ -142,7 +142,7 @@ var categoryMap = createMap({
     'wrapperToString',
     'wrapperValueOf'
   ],
-  'Collections': [
+  'Collection': [
     'at',
     'contains',
     'countBy',
@@ -172,7 +172,7 @@ var categoryMap = createMap({
     'toArray',
     'where'
   ],
-  'Functions': [
+  'Function': [
     'after',
     'bind',
     'bindAll',
@@ -190,7 +190,7 @@ var categoryMap = createMap({
     'throttle',
     'wrap'
   ],
-  'Objects': [
+  'Object': [
     'assign',
     'clone',
     'cloneDeep',
@@ -234,7 +234,7 @@ var categoryMap = createMap({
     'values',
     'valuesIn'
   ],
-  'Strings': [
+  'String': [
     'camelCase',
     'capitalize',
     'endsWith',
@@ -255,7 +255,7 @@ var categoryMap = createMap({
     'trunc',
     'unescape'
   ],
-  'Utilities': [
+  'Utility': [
     'callback',
     'constant',
     'identity',
@@ -520,7 +520,7 @@ function testMethod(lodash, methodName, message) {
       func = lodash[methodName];
 
   try {
-    if (_.contains(categoryMap.Arrays, methodName)) {
+    if (_.contains(categoryMap.Array, methodName)) {
       if (/(?:indexOf|sortedIndex|without)$/i.test(methodName)) {
         func(array, string);
       } else if (/^(?:difference|intersection|union|uniq|zip)/.test(methodName)) {
@@ -531,10 +531,10 @@ function testMethod(lodash, methodName, message) {
         func(array);
       }
     }
-    else if (_.contains(categoryMap.Chaining, methodName)) {
+    else if (_.contains(categoryMap.Chain, methodName)) {
       lodash(array)[methodName](_.noop);
     }
-    else if (_.contains(categoryMap.Collections, methodName)) {
+    else if (_.contains(categoryMap.Collection, methodName)) {
       if (/^(?:count|group|sort)By$/.test(methodName)) {
         func(array, _.noop);
         func(array, string);
@@ -562,7 +562,7 @@ function testMethod(lodash, methodName, message) {
         func(object, _.noop, object);
       }
     }
-    else if (_.contains(categoryMap.Functions, methodName)) {
+    else if (_.contains(categoryMap.Function, methodName)) {
       if (methodName == 'after') {
         func(1, _.noop);
       } else if (methodName == 'bindAll') {
@@ -579,7 +579,7 @@ function testMethod(lodash, methodName, message) {
         func(_.noop);
       }
     }
-    else if (_.contains(categoryMap.Objects, methodName)) {
+    else if (_.contains(categoryMap.Object, methodName)) {
       if (methodName == 'clone') {
         func(object);
         func(object, true);
@@ -596,7 +596,7 @@ function testMethod(lodash, methodName, message) {
         func(object);
       }
     }
-    else if (_.contains(categoryMap.Utilities, methodName)) {
+    else if (_.contains(categoryMap.Utility, methodName)) {
       if (methodName == 'mixin') {
         func({});
       } else if (methodName == 'result') {
@@ -1212,7 +1212,7 @@ QUnit.module('modularize modifier');
           ok(reLicense.test(fs.readFileSync(require.resolve(outputPath), 'utf-8')), 'lodash module should preserve the copyright header');
         }
         else {
-          var modulePath = path.join(outputPath, funcName == 'mixin' ? 'utilities' : 'strings', funcName);
+          var modulePath = path.join(outputPath, funcName == 'mixin' ? 'utility' : 'string', funcName);
           lodash = {};
           lodash[funcName] = require(modulePath);
 
@@ -1246,14 +1246,14 @@ QUnit.module('modularize modifier');
         if (lodash._) {
           lodash = lodash._;
         }
-        _.each(['arrays', 'chaining', 'collections', 'functions', 'objects', 'utilities'], function(category) {
+        _.each(['array', 'chain', 'collection', 'function', 'object', 'utility'], function(category) {
           var categoryModule = require(path.join(outputPath, category)),
               funcNames = categoryMap[_.capitalize(category)];
 
           _.each(funcNames, function(funcName) {
             var aliases = getAliases(funcName);
             _.each(aliases, function(alias) {
-              if (!(category == 'chaining' && /^wrapper/.test(funcName))) {
+              if (!(category == 'chain' && /^wrapper/.test(funcName))) {
                 ok(_.isFunction(lodash[alias]), '`' + command + '` should have `' + alias + '` as an alias of `' + funcName + '` in lodash');
               }
               ok(_.isFunction(categoryModule[alias]), '`' + command + '` should have `' + alias + '` as an alias of `' + funcName + '` in lodash/' + category);
@@ -1277,7 +1277,7 @@ QUnit.module('modularize modifier');
     build(['modularize', 'include=callback', 'minus=pluck,where', 'exports=node', '-o', outputPath], function() {
       emptyObject(require.cache);
 
-      var modulePath = path.join(outputPath, 'utilities'),
+      var modulePath = path.join(outputPath, 'utility'),
           utilities = require(modulePath),
           lodash = { 'callback': utilities.callback },
           callback = lodash.callback('x'),
@@ -1467,7 +1467,7 @@ QUnit.module('underscore modifier');
 
       strictEqual(last, _.last(array), '_.forEach should not exit early: ' + basename);
 
-      var callback = function(value, index) {
+      callback = function(value, index) {
         actual = this[index];
       };
 
@@ -2134,7 +2134,7 @@ QUnit.module('underscore builds with lodash methods');
     return String(value)
       .replace(/^ *\/\/.*/gm, '')
       .replace(/\bcontext\b/g, '')
-      .replace(/\blodash\.(callback\()\b/g, '$1')
+      .replace(/\blodash\.(callback)(?=\()/g, '$1')
       .replace(/[\s;]/g, '');
   }
 
@@ -2143,7 +2143,7 @@ QUnit.module('underscore builds with lodash methods');
       var command = 'underscore plus=' + funcName,
           expected = true;
 
-      if (funcName != 'chain' && _.contains(categoryMap.Chaining.concat('mixin'), funcName)) {
+      if (funcName != 'chain' && _.contains(categoryMap.Chain.concat('mixin'), funcName)) {
         expected = funcName == 'tap' || !!index;
         if (index) {
           command += ',chain';
@@ -2211,19 +2211,19 @@ QUnit.module('lodash build');
     'modern',
     'strict',
     'underscore',
-    'category=arrays',
-    'category=chaining',
-    'category=collections',
-    'category=functions',
-    'category=objects',
-    'category=utilities',
+    'category=array',
+    'category=chain',
+    'category=collection',
+    'category=function',
+    'category=object',
+    'category=utility',
     'exclude=union,uniq,zip',
     'include=each,filter,map',
-    'include=once plus=bind,Chaining',
-    'category=collections,functions',
-    'backbone category=utilities minus=first,last',
+    'include=once plus=bind,Chain',
+    'category=collection,function',
+    'backbone category=utility minus=first,last',
     'compat include=defer',
-    'mobile strict category=functions exports=amd,global plus=pick,uniq',
+    'mobile strict category=function exports=amd,global plus=pick,uniq',
     'modern strict include=isArguments,isArray,isFunction,isPlainObject,keys',
     'underscore include=debounce,throttle plus=after minus=throttle'
   ];

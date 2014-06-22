@@ -1,36 +1,8 @@
 var functions = require('lodash.functions'),
-    isArray = require('lodash.isarray'),
-    lodashWrapper = require('lodash._lodashwrapper'),
+    lodash = require('lodash.lodash'),
     mixin = require('lodash.mixin'),
     support = require('lodash.support'),
     templateSettings = require('lodash.templatesettings');
-
-/** Used for native method references */
-var arrayProto = Array.prototype,
-    objectProto = Object.prototype;
-
-/** Native method shortcuts */
-var hasOwnProperty = objectProto.hasOwnProperty,
-    push = arrayProto.push;
-
-/**
- * Creates a `lodash` object which wraps the given value to enable method
- * chaining.
- *
- * @name _
- * @constructor
- * @category Chaining
- * @param {*} value The value to wrap in a `lodash` instance.
- * @returns {Object} Returns a `lodash` instance.
- */
-function lodash(value) {
-  // don't wrap if already wrapped, even if wrapped by a different `lodash` constructor
-  return (value && typeof value == 'object' && !isArray(value) && hasOwnProperty.call(value, '__wrapped__'))
-   ? value
-   : new lodashWrapper(value);
-}
-// ensure `new lodashWrapper` is an instance of `lodash`
-lodashWrapper.prototype = lodash.prototype;
 
 // wrap `_.mixin` so it works when provided only one argument
 mixin = (function(func) {
