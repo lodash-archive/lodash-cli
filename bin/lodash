@@ -3869,7 +3869,7 @@ function build(options, callback) {
 
           source = replaceFunction(source, 'isEmpty', [
             'function isEmpty(value) {',
-            '  if (!value) {',
+            '  if (value == null) {',
             '    return true;',
             '  }',
             '  var length = value.length;',
