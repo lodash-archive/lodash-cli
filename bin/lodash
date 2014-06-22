@@ -1048,7 +1048,7 @@ function buildModule(state, onComplete) {
 
   // exclude `_.noConflict` and "Chain" functions when exporting for npm
   if (isNpm) {
-    identifiers = _.difference(identifiers, categoryMap.Chain.concat('noConflict'));
+    identifiers = _.without(identifiers, 'noConflict');
   }
   // create modules for each identifier
   _.each(identifiers, function(identifier) {
