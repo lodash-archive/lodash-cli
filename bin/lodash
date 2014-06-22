@@ -4132,7 +4132,7 @@ function build(options, callback) {
             '    return {};',
             '  }',
             '  var omitProps = baseFlatten(arguments, false, false, 1);',
-            '  return basePick(object, baseDifference(keysIn(object), arrayMap(omitProps, String)));',
+            '  return basePick(Object(object), baseDifference(keysIn(object), arrayMap(omitProps, String)));',
             '}'
           ].join('\n'));
         }
@@ -4160,7 +4160,7 @@ function build(options, callback) {
             'function pick(object) {',
             '  return object == null',
             '    ? {}',
-            '    : basePick(object, baseFlatten(arguments, false, false, 1));',
+            '    : basePick(Object(object), baseFlatten(arguments, false, false, 1));',
             '}'
           ].join('\n'));
         }
