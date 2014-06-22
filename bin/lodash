@@ -166,7 +166,7 @@ var funcDependencyMap = createMap({
   'isEmpty': ['baseForOwn', 'isArguments', 'isArray', 'isFunction', 'isString'],
   'isEqual': ['baseCallback', 'baseIsEqual'],
   'isError': [],
-  'isFinite': [],
+  'isFinite': ['isNative'],
   'isFunction': [],
   'isNaN': ['isNumber'],
   'isNull': [],
