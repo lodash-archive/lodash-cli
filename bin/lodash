@@ -4631,10 +4631,11 @@ function build(options, callback) {
           });
         });
       }
-      push.apply(buildFuncs, funcDepMap.main);
-      push.apply(includeObjs, objDepMap.main);
-      push.apply(includeVars, varDepMap.main);
-
+      if (_.contains(buildFuncs, 'lodash')) {
+        push.apply(buildFuncs, funcDepMap.main);
+        push.apply(includeObjs, objDepMap.main);
+        push.apply(includeVars, varDepMap.main);
+      }
       expand(includeObjs, objDependencies, objDepMap);
       expand(includeVars, varDependencies, varDepMap);
 
