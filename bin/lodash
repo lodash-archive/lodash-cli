@@ -911,7 +911,7 @@ function addUnderscoreChaining(source, isModularize) {
     return match.replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)?( *)lodash\.VERSION\b/m, function(match, indent) {
       return indent + [
         '// add functions to `lodash.prototype`',
-        'mixin(baseAssign({}, lodash));',
+        'mixin(assign({}, lodash));',
       ].join('\n' + indent) +
       '\n\n' + match
     });
@@ -3378,7 +3378,7 @@ function build(options, callback) {
 
     // names of functions to include in the build
     var buildFuncs = !isTemplate && (function() {
-      var result;
+      var isUnderscoreChaining = _.contains(plusFuncs, 'chain') == !isUnderscore;
 
       source = setUseStrictOption(source, isStrict);
 
@@ -3389,11 +3389,13 @@ function build(options, callback) {
           });
           delete varDepMap.root;
         }
-        funcDepMap.main = ['arrayEach', 'baseAssign', 'lodash', 'lodashWrapper', 'mixin'];
+        funcDepMap.main = ['arrayEach', 'lodash', 'lodashWrapper', 'mixin'];
         objDepMap.main = ['support'];
 
-        if (!isUnderscore) {
-          funcDepMap.main.push('baseForOwn', 'baseFunctions', 'keys');
+        if (isUnderscoreChaining) {
+          funcDepMap.main.push('assign');
+        } else {
+          funcDepMap.main.push('baseAssign', 'baseForOwn', 'baseFunctions', 'keys');
         }
         _.pull(funcDepMap.mixin, 'lodash');
 
@@ -3408,16 +3410,18 @@ function build(options, callback) {
       }
       else {
         funcDepMap.chain.push('wrapperChain');
-        funcDepMap.wrapperValueOf.push('arrayEach', 'baseAssign', 'chain', 'mixin');
+        funcDepMap.wrapperValueOf.push('arrayEach','chain', 'mixin');
         objDepMap.wrapperValueOf = ['support'];
 
         _.each(['chain', 'lodashWrapper', 'tap', 'wrapperChain'], function(funcName) {
           funcDepMap[funcName].push('wrapperValueOf');
         });
 
-        if (!isUnderscore || isLodash('chain')) {
+        if (isUnderscoreChaining) {
+          funcDepMap.wrapperValueOf.push('assign');
+        } else {
           funcDepMap.wrapperToString.push('wrapperValueOf');
-          funcDepMap.wrapperValueOf.push('baseForOwn', 'wrapperToString');
+          funcDepMap.wrapperValueOf.push('baseAssign', 'baseForOwn', 'wrapperToString');
         }
       }
       if (isModern) {
@@ -3432,7 +3436,7 @@ function build(options, callback) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if *\(Ctor instanceof Ctor[\s\S]+?\n\1}\n/m, '');
         });
       }
-      if (_.contains(plusFuncs, 'chain') == !isUnderscore) {
+      if (isUnderscoreChaining) {
         source = addUnderscoreChaining(source, isModularize);
         _.pull(funcDepMap.mixin, 'baseFunctions', 'isObject', 'keys').push('functions');
 
@@ -4563,7 +4567,7 @@ function build(options, callback) {
       }
       // add function names explicitly
       if (!_.isEmpty(includeFuncs)) {
-        result = includeFuncs;
+        var result = includeFuncs;
       }
       // add default function names
       if (_.isEmpty(includeObjs) && _.isEmpty(includeVars)) {
@@ -4626,6 +4630,9 @@ function build(options, callback) {
           });
         });
       }
+      push.apply(buildFuncs, funcDepMap.main);
+      push.apply(includeObjs, objDepMap.main);
+      push.apply(includeVars, varDepMap.main);
 
       expand(includeObjs, objDependencies, objDepMap);
       expand(includeVars, varDependencies, varDepMap);
