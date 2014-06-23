@@ -4012,6 +4012,16 @@ function build(options, callback) {
             });
           }
         }
+        // replace `_.isFinite`
+        if (!isLodash('isFinite')) {
+          _.pull(funcDepMap.isFinite, 'isNative');
+
+          source = replaceFunction(source, 'isFinite', [
+            'function isFinite(value) {',
+            '  return nativeIsFinite(value) && !nativeIsNaN(parseFloat(value));',
+            '}'
+          ].join('\n'));
+        }
         // replace `_.keys` and `shimKeys`
         if (!isLodash('keys')) {
           funcDepMap.keys.push('isObject');
