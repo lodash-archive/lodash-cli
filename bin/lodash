@@ -3550,6 +3550,9 @@ function build(options, callback) {
 
           source = replaceFunction(source, 'keysIn', [
             'function keysIn(object) {',
+            '  if (object == null) {',
+            '    return [];',
+            '  }',
             '  object = Object(object);',
             '',
             '  var length = object.length;',
