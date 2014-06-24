@@ -52,7 +52,7 @@ var timeLimit = _.reduce(process.argv, function(result, value, index) {
   return result;
 }, 0);
 
-/** Used to associate aliases with their real names */
+/** Used to map aliases with their real names */
 var aliasToRealMap = createMap({
   'all': 'every',
   'any': 'some',
@@ -76,7 +76,7 @@ var aliasToRealMap = createMap({
   'value': 'wrapperValueOf'
 });
 
-/** Used to associate real names with their aliases */
+/** Used to map real names with their aliases */
 var realToAliasMap = createMap({
   'assign': ['extend'],
   'contains': ['include'],
@@ -179,6 +179,7 @@ var categoryMap = createMap({
     'bindKey',
     'compose',
     'curry',
+    'curryRight',
     'debounce',
     'defer',
     'delay',
@@ -349,6 +350,7 @@ var lodashOnlyFuncs = [
   'cloneDeep',
   'create',
   'curry',
+  'curryRight',
   'dropRight',
   'dropRightWhile',
   'dropWhile',

@@ -102,7 +102,7 @@ var funcDependencyMap = createMap({
   'after': ['isFunction'],
   'assign': ['baseAssign', 'createAssigner'],
   'at': ['baseAt', 'baseFlatten', 'isString'],
-  'bind': ['createWrapper', 'slice'],
+  'bind': ['basePartial', 'createWrapper', 'slice'],
   'bindAll': ['baseBindAll', 'baseFlatten', 'functions'],
   'bindKey': ['createWrapper', 'slice'],
   'callback': ['baseCallback', 'matches', 'property'],
@@ -118,7 +118,8 @@ var funcDependencyMap = createMap({
   'contains': ['getIndexOf', 'isArray', 'isNative', 'isString', 'values'],
   'countBy': ['createAggregator'],
   'create': ['baseAssign', 'baseCreate'],
-  'curry': ['createWrapper'],
+  'curry': ['baseCurry'],
+  'curryRight': ['baseCurry'],
   'debounce': ['isFunction', 'isObject', 'now'],
   'defaults': ['assign', 'assignDefaults', 'slice'],
   'defer': ['isFunction', 'slice'],
@@ -201,8 +202,8 @@ var funcDependencyMap = createMap({
   'padRight': ['createPad'],
   'pairs': ['keys'],
   'parseInt': ['trim'],
-  'partial': ['createWrapper', 'slice'],
-  'partialRight': ['createWrapper', 'slice'],
+  'partial': ['basePartial', 'slice'],
+  'partialRight': ['basePartial', 'slice'],
   'partition': ['createAggregator'],
   'pick': ['baseFlatten', 'basePick', 'callback'],
   'pluck': ['map', 'property'],
@@ -273,6 +274,7 @@ var funcDependencyMap = createMap({
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
   'baseCreateWrapper': ['baseCreate', 'composeArgs', 'composeArgsRight', 'isObject', 'setData'],
+  'baseCurry': ['createWrapper'],
   'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseEach': ['baseForOwn', 'isString'],
   'baseEachRight': ['baseForOwnRight', 'isString'],
@@ -288,6 +290,7 @@ var funcDependencyMap = createMap({
   'baseInvoke': ['baseEach'],
   'baseIsEqual': ['isArguments', 'isFunction', 'isNode', 'keys'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isArrayLike', 'isPlainObject'],
+  'basePartial': ['createWrapper'],
   'basePick': ['baseForIn'],
   'basePullAt': ['baseAt', 'baseCompareAscending'],
   'baseRandom': [],
@@ -444,6 +447,7 @@ var categoryMap = createMap({
     'bindKey',
     'compose',
     'curry',
+    'curryRight',
     'debounce',
     'defer',
     'delay',
@@ -656,6 +660,7 @@ var lodashOnlyFuncs = [
   'cloneDeep',
   'create',
   'curry',
+  'curryRight',
   'dropRight',
   'dropRightWhile',
   'dropWhile',
@@ -721,6 +726,7 @@ var privateFuncs = [
   'baseCompareAscending',
   'baseCreate',
   'baseCreateWrapper',
+  'baseCurry',
   'baseDifference',
   'baseEach',
   'baseFind',
@@ -735,6 +741,7 @@ var privateFuncs = [
   'baseInvoke',
   'baseIsEqual',
   'baseMerge',
+  'basePartial',
   'basePick',
   'basePullAt',
   'baseRandom',
@@ -3674,16 +3681,6 @@ function build(options, callback) {
             '}'
           ].join('\n'));
         }
-        // replace `_.bind`
-        if (!isLodash('bind')) {
-          source = replaceFunction(source, 'bind', [
-            'function bind(func, thisArg) {',
-            '  return arguments.length < 3',
-            '    ? createWrapper(func, BIND_FLAG, null, thisArg)',
-            '    : createWrapper(func, BIND_FLAG | PARTIAL_FLAG, null, thisArg, slice(arguments, 2));',
-            '}'
-          ].join('\n'));
-        }
         // replace `_.clone`
         if (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep')) {
           _.pull(funcDepMap.clone, 'baseClone', 'baseCallback').push('assign', 'isArray', 'isObject', 'slice');
@@ -4149,19 +4146,12 @@ function build(options, callback) {
             '}'
           ].join('\n'));
         }
-        // replace `_.partial`
-        if (!isLodash('partial')) {
-          source = replaceFunction(source, 'partial', [
-            'function partial(func) {',
-            '  return createWrapper(func, PARTIAL_FLAG, null, null, slice(arguments, 1));',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.partialRight`
-        if (!isLodash('partialRight')) {
-          source = replaceFunction(source, 'partialRight', [
-            'function partialRight(func) {',
-            '  return createWrapper(func, PARTIAL_RIGHT_FLAG, null, null, null, slice(arguments, 1));',
+        // replace `basePartial`
+        if (!isLodash('partial') && !isLodash('partialRight')) {
+          source = replaceFunction(source, 'basePartial', [
+            'function basePartial(func, bitmask, args, thisArg) {',
+            '  var isPartial = bitmask & PARTIAL_FLAG;',
+            '  return createWrapper(func, bitmask, null, thisArg, isPartial && args, !isPartial && args);',
             '}'
           ].join('\n'));
         }

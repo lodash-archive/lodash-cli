@@ -38,6 +38,7 @@ lodash.contains = require('lodash.contains');
 lodash.countBy = require('lodash.countby');
 lodash.create = require('lodash.create');
 lodash.curry = require('lodash.curry');
+lodash.curryRight = require('lodash.curryright');
 lodash.debounce = require('lodash.debounce');
 lodash.defaults = require('lodash.defaults');
 lodash.defer = require('lodash.defer');
