@@ -1053,7 +1053,7 @@ function buildModule(state, onComplete) {
     }
   }, createMap());
 
-  // exclude `_.noConflict` and "Chain" functions when exporting for npm
+  // exclude `_.noConflict` when exporting for npm
   if (isNpm) {
     identifiers = _.without(identifiers, 'noConflict');
   }
@@ -1750,8 +1750,7 @@ function displayHelp() {
     '  All commands except `backbone`, `modern`, & `underscore` may be combined.',
     '',
     '  The `exports` values “es6” & “npm” may only be used in conjunction with',
-    '  the `modularize` command. The “es6” `exports` option is experimental & may',
-    '  be subject to change.',
+    '  the `modularize` command.',
     '',
     '  Unless specified by `-o` or `--output` all files created are saved to the',
     '  current working directory.',
@@ -3186,7 +3185,7 @@ function build(options, callback) {
     var isMinify = getOption(options, '-m') || getOption(options, '--minify');
 
     // flag to specify a modern build
-    var isModern = getOption(options, 'csp') || getOption(options, 'CSP') || getOption(options, 'modern');
+    var isModern = getOption(options, 'modern');
 
     // flag to specify a modularize build
     var isModularize = getOption(options, 'modularize');
@@ -3226,8 +3225,8 @@ function build(options, callback) {
     // flag to specify creating a custom build
     var isCustom = !isModularize && (
       isMapped || isModern || isStrict || isTemplate || isUnderscore || outputPath ||
-      getOption(options, 'compat') || getOption(options, 'legacy') || getOption(options, 'mobile') ||
-      /\b(?:category|exclude|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
+      getOption(options, 'compat') ||
+      /\b(?:category|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
       !_.isEqual(exportsOptions, defaultExports)
     );
 
@@ -3257,7 +3256,7 @@ function build(options, callback) {
     var includeVars = _.intersection(includeFuncs, varDependencies);
 
     // functions to remove from the build
-    var minusFuncs = _.map(_.union(getOption(options, 'exclude', []), getOption(options, 'minus', [])), _.partial(getRealName, _, funcDepMap));
+    var minusFuncs = _.map(getOption(options, 'minus', []), _.partial(getRealName, _, funcDepMap));
 
     // functions to add to the build
     var plusFuncs = _.map(getOption(options, 'plus', []), _.partial(getRealName, _, funcDepMap));
@@ -3295,13 +3294,13 @@ function build(options, callback) {
     // used to detect invalid command-line arguments
     var invalidArgs = _.reject(options.slice(reNode.test(options[0]) ? 2 : 0), function(value, index, options) {
       if (/^(?:-o|--output)$/.test(options[index - 1]) ||
-          /^(?:category|exclude|exports|iife|include|moduleId|minus|plus|settings|template)=[\s\S]*$/.test(value)) {
+          /^(?:category|exports|iife|include|moduleId|minus|plus|settings|template)=[\s\S]*$/.test(value)) {
         return true;
       }
       var result = _.contains([
         'backbone',
-        'compat', 'legacy', 'mobile',
-        'modern', 'csp',
+        'compat',
+        'modern',
         'modularize',
         'strict',
         'underscore',
@@ -3327,7 +3326,7 @@ function build(options, callback) {
       warnings.push('Invalid argument' + (_.size(invalidArgs) > 1 ? 's' : '') + ' passed: ' + invalidArgs.join(', '));
     }
     // report invalid command combinations
-    invalidArgs = _.intersection(options, ['backbone', 'compat', 'csp', 'legacy', 'mobile', 'modern', 'underscore']);
+    invalidArgs = _.intersection(options, ['backbone', 'compat', 'modern', 'underscore']);
 
     if (isTemplate) {
       invalidArgs.push('template');

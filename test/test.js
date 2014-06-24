@@ -649,11 +649,14 @@ QUnit.module('build command checks');
   });
 
   commands = [
-    'csp backbone',
+    'csp',
     'exports=es6',
     'exports=npm',
-    'mobile underscore',
-    'modern template=./*.jst'
+    'legacy',
+    'mobile',
+    'modern backbone',
+    'modern template=./*.jst',
+    'modern underscore'
   ];
 
   _.each(commands, function(command) {
@@ -1081,75 +1084,6 @@ QUnit.module('compat modifier');
     };
 
     build(['-s', '-d'], callback);
-    build(['-s', '-d', 'compat'], callback);
-  });
-}());
-
-/*----------------------------------------------------------------------------*/
-
-QUnit.module('csp modifier');
-
-(function() {
-  asyncTest('`lodash csp`', function() {
-    var sources = [];
-
-    var callback = function(data) {
-      sources.push(data.source.replace(reHeader, ''));
-      check();
-    };
-
-    var check = _.after(2, _.once(function() {
-      strictEqual(sources[0], sources[1]);
-      QUnit.start();
-    }));
-
-    build(['-s', '-d', 'csp'], callback);
-    build(['-s', '-d', 'modern'], callback);
-  });
-}());
-
-/*----------------------------------------------------------------------------*/
-
-QUnit.module('legacy modifier');
-
-(function() {
-  asyncTest('`lodash legacy`', function() {
-    var sources = [];
-
-    var callback = function(data) {
-      sources.push(data.source.replace(reHeader, ''));
-      check();
-    };
-
-    var check = _.after(2, _.once(function() {
-      strictEqual(sources[0], sources[1]);
-      QUnit.start();
-    }));
-
-    build(['-s', '-d', 'legacy'], callback);
-    build(['-s', '-d', 'compat'], callback);
-  });
-}());
-
-/*----------------------------------------------------------------------------*/
-
-QUnit.module('mobile modifier');
-
-(function() {
-  asyncTest('`lodash mobile`', function() {
-    var sources = [];
-
-    var callback = function(data) {
-      sources.push(data.source.replace(reHeader, ''));
-      check();
-    };
-
-    var check = _.after(2, _.once(function() {
-      strictEqual(sources[0], sources[1]);
-      QUnit.start();
-    }));
-
-    build(['-s', '-d', 'mobile'], callback);
     build(['-s', '-d', 'compat'], callback);
   });
 }());
@@ -2207,9 +2141,6 @@ QUnit.module('lodash build');
 (function() {
   var commands = [
     'backbone',
-    'csp',
-    'legacy',
-    'mobile',
     'modern',
     'strict',
     'underscore',
@@ -2225,7 +2156,7 @@ QUnit.module('lodash build');
     'category=collection,function',
     'backbone category=utility minus=first,last',
     'compat include=defer',
-    'mobile strict category=function exports=amd,global plus=pick,uniq',
+    'strict category=function exports=amd,global plus=pick,uniq',
     'modern strict include=isArguments,isArray,isFunction,isPlainObject,keys',
     'underscore include=debounce,throttle plus=after minus=throttle'
   ];
@@ -2234,7 +2165,7 @@ QUnit.module('lodash build');
     return 'include=' + funcName;
   }));
 
-  var reNonCombinable = /\b(?:backbone|compat|csp|legacy|mobile|modern|underscore)\b/;
+  var reNonCombinable = /\b(?:backbone|compat|modern|underscore)\b/;
 
   _.each(commands, function(origCommand) {
     _.each(['', 'modern', 'underscore'], function(otherCommand) {
