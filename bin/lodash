@@ -3390,7 +3390,7 @@ function build(options, callback) {
       source = setUseStrictOption(source, isStrict);
 
       if (isModularize) {
-        if (!(isCommonJS || isES6)) {
+        if (isNode) {
           _.forOwn(varDepMap, function(depNames) {
             _.pull(depNames, 'root');
           });
@@ -4734,9 +4734,8 @@ function build(options, callback) {
           return match.replace(/, *sourceURL(?=\))/, '');
         });
 
-        // replace `root` with the appropriate global object for the specified `exports` option
-        if (isAMD || isNode) {
-          source = source.replace(/\bcontext(?=\.)/g, isAMD ? 'window' : 'global');
+        if (isNode) {
+          source = source.replace(/\bcontext(?=\.)/g, 'global');
         }
         if (!isAMD) {
           source = removeVar(source, 'undefined');
