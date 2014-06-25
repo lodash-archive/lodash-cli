@@ -681,7 +681,7 @@ QUnit.module('minified AMD snippet');
   asyncTest('r.js build optimizer check', function() {
     var start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'exclude='], function(data) {
+    build(['-s', 'minus='], function(data) {
       // uses the same regexp from the r.js build optimizer
       var basename = path.basename(data.outputPath, '.js'),
           defineHasRegExp = /typeof\s+define\s*==(=)?\s*['"]function['"]\s*&&\s*typeof\s+define\.amd\s*==(=)?\s*['"]object['"]\s*&&\s*define\.amd/g;
@@ -694,7 +694,7 @@ QUnit.module('minified AMD snippet');
   asyncTest('Dojo builder check', function() {
     var start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'exclude='], function(data) {
+    build(['-s', 'minus='], function(data) {
       var basename = path.basename(data.outputPath, '.js'),
           reSpaceDefine = /\sdefine\(/;
 
@@ -1025,41 +1025,55 @@ QUnit.module('independent builds');
 (function() {
   var reLicense = /^\/\**\s+\* @license[\s\S]+?\*\/\n/;
 
-  asyncTest('debug only', function() {
-    var start = _.once(QUnit.start);
-    build(['-d', '-s'], function(data) {
-      strictEqual(path.basename(data.outputPath, '.js'), 'lodash');
-      start();
+  var options = [
+    '-d',
+    '--development'
+  ];
+
+  _.each(options, function(option) {
+    asyncTest('development build using `' + option + '`' , function() {
+      var start = _.once(QUnit.start);
+      build([option, '-s'], function(data) {
+        strictEqual(path.basename(data.outputPath, '.js'), 'lodash');
+        start();
+      });
+    });
+
+    asyncTest('development custom build using `' + option + '`', function() {
+      var start = _.once(QUnit.start);
+      build([option, '-s', 'backbone'], function(data) {
+        var comment = _.result(data.source.match(reLicense), 0, '');
+        ok(_.contains(comment, 'Custom Build'));
+        strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
+
+        start();
+      });
     });
   });
 
-  asyncTest('debug custom', function() {
-    var start = _.once(QUnit.start);
-    build(['-d', '-s', 'backbone'], function(data) {
-      var comment = _.result(data.source.match(reLicense), 0, '');
-      ok(_.contains(comment, 'Custom Build'));
-      strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
+  options = [
+    '-m',
+    '--minified'
+  ];
 
-      start();
+  _.each(options, function(option) {
+    asyncTest('minified build using `' + option + '`', function() {
+      var start = _.once(QUnit.start);
+      build([option, '-s'], function(data) {
+        strictEqual(path.basename(data.outputPath, '.js'), 'lodash.min');
+        start();
+      });
     });
-  });
 
-  asyncTest('minified only', function() {
-    var start = _.once(QUnit.start);
-    build(['-m', '-s'], function(data) {
-      strictEqual(path.basename(data.outputPath, '.js'), 'lodash.min');
-      start();
-    });
-  });
+    asyncTest('minified custom build using `' + option + '`', function() {
+      var start = _.once(QUnit.start);
+      build([option, '-s', 'backbone'], function(data) {
+        var comment = _.result(data.source.match(reLicense), 0, '');
+        ok(_.contains(comment, 'Custom Build'));
+        strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
 
-  asyncTest('minified custom', function() {
-    var start = _.once(QUnit.start);
-    build(['-m', '-s', 'backbone'], function(data) {
-      var comment = _.result(data.source.match(reLicense), 0, '');
-      ok(_.contains(comment, 'Custom Build'));
-      strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
-
-      start();
+        start();
+      });
     });
   });
 }());
@@ -1167,7 +1181,7 @@ QUnit.module('modularize modifier');
   ];
 
   _.each(commands, function(command, index) {
-    asyncTest('module aliases', function() {
+    asyncTest('module aliases for `' + command + '`', function() {
       var start = _.once(function() {
         process.chdir(cwd);
         QUnit.start();
@@ -1638,53 +1652,46 @@ QUnit.module('underscore chaining methods');
 
 /*----------------------------------------------------------------------------*/
 
-QUnit.module('exclude command');
+QUnit.module('minus command');
 
 (function() {
-  var commands = [
-    'exclude',
-    'minus'
-  ];
+  asyncTest('`lodash minus=runInContext`', function() {
+    var start = _.after(2, _.once(QUnit.start));
 
-  _.each(commands, function(command) {
-    asyncTest('`lodash ' + command + '=runInContext`', function() {
-      var start = _.after(2, _.once(QUnit.start));
+    build(['-s', 'minus=runInContext'], function(data) {
+      var basename = path.basename(data.outputPath, '.js'),
+          context = createContext();
 
-      build(['-s', command + '=runInContext'], function(data) {
-        var basename = path.basename(data.outputPath, '.js'),
-            context = createContext();
+      vm.runInContext(data.source, context);
 
-        vm.runInContext(data.source, context);
+      var lodash = context._,
+          array = [0];
 
-        var lodash = context._,
-            array = [0];
+      var actual = lodash.map(array, function() {
+        return String(this[0]);
+      }, array);
 
-        var actual = lodash.map(array, function() {
-          return String(this[0]);
-        }, array);
+      deepEqual(actual, ['0'], basename);
+      ok(!('runInContext' in lodash), basename);
 
-        deepEqual(actual, ['0'], basename);
-        ok(!('runInContext' in lodash), basename);
-
-        start();
-      });
+      start();
     });
+  });
 
-    asyncTest('`lodash ' + command + '=value`', function() {
-      var start = _.after(2, _.once(QUnit.start));
+  asyncTest('`lodash minus=value`', function() {
+    var start = _.after(2, _.once(QUnit.start));
 
-      build(['-s', command + '=value'], function(data) {
-        var basename = path.basename(data.outputPath, '.js'),
-            context = createContext();
+    build(['-s', 'minus=value'], function(data) {
+      var basename = path.basename(data.outputPath, '.js'),
+          context = createContext();
 
-        vm.runInContext(data.source, context);
+      vm.runInContext(data.source, context);
 
-        var lodash = context._;
-        ok(lodash([1]) instanceof lodash, basename);
-        deepEqual(_.keys(lodash.prototype), [], basename);
+      var lodash = context._;
+      ok(lodash([1]) instanceof lodash, basename);
+      deepEqual(_.keys(lodash.prototype), [], basename);
 
-        start();
-      });
+      start();
     });
   });
 
@@ -1941,7 +1948,7 @@ QUnit.module('output option');
     '-o ' + path.join('a', 'b', 'c.js'),
     '-o ' + relativePrefix + path.join('a', 'b', 'c.js'),
     '-o ' + path.join(nestedPath, 'c.js'),
-    '-o name_with_keywords_like_category_include_exclude_plus_minus.js'
+    '-o name_with_keywords_like_category_include_plus_minus.js'
   ];
 
   _.each(commands, function(command) {
@@ -2150,7 +2157,7 @@ QUnit.module('lodash build');
     'category=function',
     'category=object',
     'category=utility',
-    'exclude=union,uniq,zip',
+    'minus=union,uniq,zip',
     'include=each,filter,map',
     'include=once plus=bind,Chain',
     'category=collection,function',
@@ -2223,11 +2230,6 @@ QUnit.module('lodash build');
             otherNames = command.match(/\bminus=(\S*)/)[1].split(/, */);
             funcNames = _.difference(funcNames, expandFuncNames(otherNames));
           }
-          if (/\bexclude=/.test(command)) {
-            otherNames = command.match(/\bexclude=(\S*)/)[1].split(/, */);
-            funcNames = _.difference(funcNames, expandFuncNames(otherNames));
-          }
-
           // expand categories to function names
           _.each(funcNames.slice(), function(category) {
             var otherNames = _.filter(categoryMap[category], function(key) {

@@ -1757,14 +1757,14 @@ function displayHelp() {
     '',
     'Options:',
     '',
-    '  -c, --stdout      Write output to standard output',
-    '  -d, --debug       Write only the non-minified development output',
-    '  -h, --help        Display help information',
-    '  -m, --minify      Write only the minified production output',
-    '  -o, --output      Write output to a given path/filename',
-    '  -p, --source-map  Generate a source map using an optional source map URL',
-    '  -s, --silent      Skip status updates normally logged to the console',
-    '  -V, --version     Output current version of Lo-Dash',
+    '  -c, --stdout       Write output to standard output',
+    '  -d, --development  Write only the non-minified development output',
+    '  -h, --help         Display help information',
+    '  -m, --minified     Write only the minified production output',
+    '  -o, --output       Write output to a given path/filename',
+    '  -p, --source-map   Generate a source map using an optional source map URL',
+    '  -s, --silent       Skip status updates normally logged to the console',
+    '  -V, --version      Output current version of Lo-Dash',
     ''
   ].join('\n'));
 }
@@ -3102,9 +3102,6 @@ function trimIndent(source, level) {
 function build(options, callback) {
   options || (options = []);
 
-  // the debug version of `source`
-  var debugSource;
-
   // used to specify the output path for builds
   var outputPath;
 
@@ -3135,7 +3132,7 @@ function build(options, callback) {
         includeFuncs = state.includeFuncs,
         includeObjs = state.includeObjs,
         includeVars = state.includeVars,
-        isDebug = true,
+        isDevelopment = true,
         isModularize = true,
         isStdOut = state.isStdOut,
         isStrict = state.isStrict,
@@ -3172,8 +3169,8 @@ function build(options, callback) {
     // flag to specify a Backbone build
     var isBackbone = getOption(options, 'backbone');
 
-    // flag to specify only creating the debug build
-    var isDebug = getOption(options, '-d') || getOption(options, '--debug');
+    // flag to specify only creating the development build
+    var isDevelopment = getOption(options, '-d') || getOption(options, '--development');
 
     // flag to indicate that a custom IIFE was specified
     var isIIFE = typeof iife == 'string';
@@ -3182,7 +3179,7 @@ function build(options, callback) {
     var isMapped = getOption(options, '-p') || getOption(options, '--source-map');
 
     // flag to specify only creating the minified build
-    var isMinify = getOption(options, '-m') || getOption(options, '--minify');
+    var isMinified = getOption(options, '-m') || getOption(options, '--minified');
 
     // flag to specify a modern build
     var isModern = getOption(options, 'modern');
@@ -3305,9 +3302,9 @@ function build(options, callback) {
         'strict',
         'underscore',
         '-c', '--stdout',
-        '-d', '--debug',
+        '-d', '--development',
         '-h', '--help',
-        '-m', '--minify',
+        '-m', '--minified',
         '-o', '--output',
         '-p', '--source-map',
         '-s', '--silent',
@@ -4974,8 +4971,7 @@ function build(options, callback) {
   /*--------------------------------------------------------------------------*/
 
   callback || (callback = defaultBuildCallback);
-  debugSource = cleanupSource(source);
-  source = debugSource;
+  source = cleanupSource(source);
 
   // flag to track if `outputPath` has been used by `callback`
   var outputUsed = false;
@@ -4997,28 +4993,29 @@ function build(options, callback) {
   } else if (isCustom) {
     basename += '.custom';
   }
-  // output debug build
-  if (!isMinify && (isCustom || isDebug || isTemplate)) {
+  // output development build
+  if (!isMinified && (isCustom || isDevelopment || isTemplate)) {
+    var devSource = source;
     if (isCustom) {
-      debugSource = addCommandsToHeader(debugSource, options);
+      devSource = addCommandsToHeader(devSource, options);
     }
-    if (isDebug && isStdOut) {
-      stdout.write(debugSource);
+    if (isDevelopment && isStdOut) {
+      stdout.write(devSource);
       callback({
-        'source': debugSource
+        'source': devSource
       });
     }
     else if (!isStdOut) {
       filePath = outputPath || path.join(cwd, basename + '.js');
       outputUsed = true;
       callback({
-        'source': debugSource,
+        'source': devSource,
         'outputPath': filePath
       });
     }
   }
   // begin the minification process
-  if (!isDebug) {
+  if (!isDevelopment) {
     if (outputPath && outputUsed) {
       outputPath = path.join(path.dirname(outputPath), path.basename(outputPath, '.js') + '.min.js');
     } else if (!outputPath) {
