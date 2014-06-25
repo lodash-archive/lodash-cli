@@ -1760,9 +1760,9 @@ function displayHelp() {
     '  -c, --stdout       Write output to standard output',
     '  -d, --development  Write only the non-minified development output',
     '  -h, --help         Display help information',
-    '  -m, --minified     Write only the minified production output',
+    '  -m, --source-map   Generate a source map using an optional source map URL',
     '  -o, --output       Write output to a given path/filename',
-    '  -p, --source-map   Generate a source map using an optional source map URL',
+    '  -p, --production   Write only the minified production output',
     '  -s, --silent       Skip status updates normally logged to the console',
     '  -V, --version      Output current version of Lo-Dash',
     ''
@@ -3176,16 +3176,16 @@ function build(options, callback) {
     var isIIFE = typeof iife == 'string';
 
     // flag to specify creating a source map for the minified source
-    var isMapped = getOption(options, '-p') || getOption(options, '--source-map');
-
-    // flag to specify only creating the minified build
-    var isMinified = getOption(options, '-m') || getOption(options, '--minified');
+    var isMapped = getOption(options, '-m') || getOption(options, '--source-map');
 
     // flag to specify a modern build
     var isModern = getOption(options, 'modern');
 
     // flag to specify a modularize build
     var isModularize = getOption(options, 'modularize');
+
+    // flag to specify only creating the minified build
+    var isProduction = getOption(options, '-p') || getOption(options, '--production');
 
     // flag to specify writing output to standard output
     var isStdOut = getOption(options, '-c') || getOption(options, '--stdout');
@@ -3304,14 +3304,14 @@ function build(options, callback) {
         '-c', '--stdout',
         '-d', '--development',
         '-h', '--help',
-        '-m', '--minified',
+        '-m', '--source-map',
         '-o', '--output',
-        '-p', '--source-map',
+        '-p', '--production',
         '-s', '--silent',
         '-V', '--version'
       ], value);
 
-      if (!result && /^(?:-p|--source-map)$/.test(options[index - 1])) {
+      if (!result && /^(?:-m|--source-map)$/.test(options[index - 1])) {
         sourceMapURL = value;
         return true;
       }
@@ -4994,7 +4994,7 @@ function build(options, callback) {
     basename += '.custom';
   }
   // output development build
-  if (!isMinified && (isCustom || isDevelopment || isTemplate)) {
+  if (!isProduction && (isCustom || isDevelopment || isTemplate)) {
     var devSource = source;
     if (isCustom) {
       devSource = addCommandsToHeader(devSource, options);

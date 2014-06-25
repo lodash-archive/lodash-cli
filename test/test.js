@@ -1052,12 +1052,12 @@ QUnit.module('independent builds');
   });
 
   options = [
-    '-m',
-    '--minified'
+    '-p',
+    '--production'
   ];
 
   _.each(options, function(option) {
-    asyncTest('minified build using `' + option + '`', function() {
+    asyncTest('production build using `' + option + '`', function() {
       var start = _.once(QUnit.start);
       build([option, '-s'], function(data) {
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.min');
@@ -1065,7 +1065,7 @@ QUnit.module('independent builds');
       });
     });
 
-    asyncTest('minified custom build using `' + option + '`', function() {
+    asyncTest('production custom build using `' + option + '`', function() {
       var start = _.once(QUnit.start);
       build([option, '-s', 'backbone'], function(data) {
         var comment = _.result(data.source.match(reLicense), 0, '');
@@ -1249,8 +1249,8 @@ QUnit.module('source-map modifier');
 
 (function() {
   var mapCommands = [
-    '-p',
-    '-p custom.map',
+    '-m',
+    '-m custom.map',
     '--source-map',
     '--source-map custom.map'
   ];
@@ -1258,7 +1258,7 @@ QUnit.module('source-map modifier');
   var outputCommands = [
     '',
     '-o foo.js',
-    '-m -o bar.js'
+    '-p -o bar.js'
   ];
 
   _.each(mapCommands, function(mapCommand) {
@@ -1281,7 +1281,7 @@ QUnit.module('source-map modifier');
         process.chdir(__dirname);
 
         outputCommand = outputCommand ? outputCommand.split(' ') : [];
-        if (!_.contains(outputCommand, '-m')) {
+        if (!_.contains(outputCommand, '-p')) {
           callback = _.after(2, callback);
         }
         build(['-s'].concat(mapCommand.split(' '), outputCommand), callback);
