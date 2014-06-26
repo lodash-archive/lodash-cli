@@ -4467,6 +4467,7 @@ function build(options, callback) {
         source = removeEsOptimization(source);
         _.pull(funcDepMap.createWrapper, 'slice');
         _.pull(objDepMap.baseCallback, 'support');
+        _.pull(varDepMap.support, 'root');
 
         _.each(['baseCallback', 'support'], function(identifier) {
           _.pull(funcDepMap[identifier], 'isNative');
