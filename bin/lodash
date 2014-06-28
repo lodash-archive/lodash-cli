@@ -3488,57 +3488,6 @@ function build(options, callback) {
         });
       }
       if (isModern || isUnderscore) {
-        // replace `_.find`
-        if (!(isUnderscore && isLodash('find'))) {
-          _.pull(funcDepMap.find, 'isArray');
-
-          source = replaceFunction(source, 'find', [
-            'function find(collection, predicate, thisArg) {',
-            '  var length = collection ? collection.length : 0;',
-            '',
-            "  if (typeof length == 'number' && length > -1 && length <= maxSafeInteger) {",
-            '    var index = findIndex(collection, predicate, thisArg);',
-            '    return index > -1 ? collection[index] : undefined;',
-            '  }',
-            '  predicate = lodash.callback(predicate, thisArg, 3);',
-            '  return baseFind(collection, predicate, baseEach);',
-            '}',
-          ].join('\n'));
-        }
-        // replace `_.forEach`
-        if (!(isUnderscore && isLodash('forEach'))) {
-          _.pull(funcDepMap.forEach, 'isArray');
-
-          source = replaceFunction(source, 'forEach', [
-            'function forEach(collection, iterator, thisArg) {',
-            '  var length = collection ? collection.length : 0;',
-            '',
-            "  if (typeof iterator != 'function' || typeof thisArg != 'undefined') {",
-            '    iterator = baseCallback(iterator, thisArg, 3);',
-            '  }',
-            "  return (typeof length == 'number' && length > -1 && length <= maxSafeInteger)",
-            '    ? arrayEach(collection, iterator)',
-            '    : baseEach(collection, iterator);',
-            '}',
-          ].join('\n'));
-        }
-        // replace `_.forEachRight`
-        if (!(isUnderscore && isLodash('forEachRight'))) {
-          _.pull(funcDepMap.forEachRight, 'isArray');
-
-          source = replaceFunction(source, 'forEachRight', [
-            'function forEachRight(collection, iterator, thisArg) {',
-            '  var length = collection ? collection.length : 0;',
-            '',
-            "  if (typeof iterator != 'function' || typeof thisArg != 'undefined') {",
-            '    iterator = baseCallback(iterator, thisArg, 3);',
-            '  }',
-            "  return (typeof length == 'number' && length > -1 && length <= maxSafeInteger)",
-            '    ? arrayEachRight(collection, iterator)',
-            '    : baseEachRight(collection, iterator);',
-            '}',
-          ].join('\n'));
-        }
         // replace `_.isRegExp`
         if (!isUnderscore) {
           _.pull(funcDepMap.isRegExp, 'isObject');
@@ -3585,57 +3534,6 @@ function build(options, callback) {
             '}'
           ].join('\n'));
         }
-        // replace `_.map`
-        if (!(isUnderscore && (isLodash('map') || isLodash('pluck')))) {
-          _.pull(funcDepMap.map, 'isArray');
-
-          source = replaceFunction(source, 'map', [
-            'function map(collection, iterator, thisArg) {',
-            '  var length = collection ? collection.length : 0;',
-            '  iterator = lodash.callback(iterator, thisArg, 3);',
-            '',
-            "  if (typeof length == 'number' && length > -1 && length <= maxSafeInteger) {",
-            '    return arrayMap(collection, iterator);',
-            '  }',
-            '  var index = -1,',
-            '      result = [];',
-            '',
-            '  baseEach(collection, function(value, key, collection) {',
-            '    result[++index] = iterator(value, key, collection);',
-            '  });',
-            '  return result;',
-            '}'
-          ].join('\n'));
-        }
-
-        _.each(['createAggregator', 'every', 'filter', 'reduce', 'some'], function(funcName) {
-          if (!(isUnderscore && isLodash(funcName))) {
-            _.pull(funcDepMap[funcName], 'isArray');
-          }
-        });
-
-        _.each(['createAggregator', 'every', 'filter', 'max', 'min', 'reduce', 'some'], function(funcName) {
-          if (!(isUnderscore && isLodash(funcName))) {
-            source = source.replace(matchFunction(source, funcName), function(match) {
-              if (!isUnderscore && (funcName == 'min' || funcName == 'max')) {
-                return match;
-              }
-              // replace `_.isArray` checks with array-like checks
-              match = match.replace(/^( *)(if *\(.*?\bisArray\([^\)]+\).*?\) *\{\n)( *var index\b[^;]+;\n+)?/m, function(snippet, indent, statement, vars) {
-                if (vars) {
-                  vars = vars
-                    .replace(/\b(length *=)[^;=]+/, '$1 collection ? collection.length : 0')
-                    .replace(RegExp('^  ' + indent, 'gm'), indent);
-                }
-                return (vars || '') + indent +
-                  statement.replace(/\bisArray\([^\)]+\)/, "typeof length == 'number' && length > -1 && length <= maxSafeInteger");
-              });
-
-              // adjust callback assignment placement
-              return match.replace(/\n+ *(?:iterator|predicate) *=[^;]+;(?=\n *var )/, '$&\n');
-            });
-          }
-        });
       }
       if (isUnderscore) {
         source = removeSupportNonEnumArgs(source);
@@ -3871,7 +3769,7 @@ function build(options, callback) {
             '    return true;',
             '  }',
             '  var length = value.length;',
-            '  if ((length > -1 && length <= maxSafeInteger) &&',
+            "  if ((typeof length == 'number' && length > -1 && length <= maxSafeInteger) &&",
             '      (isArray(value) || isString(value) || isArguments(value))) {',
             '    return !length;',
             '  }',
