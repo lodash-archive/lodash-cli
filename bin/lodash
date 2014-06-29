@@ -132,8 +132,8 @@ var funcDependencyMap = createMap({
   'endsWith': [],
   'escape': ['escapeHtmlChar'],
   'escapeRegExp': [],
-  'every': ['baseEach', 'callback', 'isArray'],
-  'filter': ['baseEach', 'callback', 'isArray'],
+  'every': ['arrayEvery', 'baseEvery', 'callback', 'isArray'],
+  'filter': ['arrayFilter', 'baseFilter', 'callback', 'isArray'],
   'find': ['baseEach', 'baseFind', 'callback', 'findIndex', 'isArray'],
   'findIndex': ['callback'],
   'findLastIndex': ['callback'],
@@ -183,7 +183,7 @@ var funcDependencyMap = createMap({
   'last': [],
   'lastIndexOf': [],
   'lodash': ['isArray', 'lodashWrapper'],
-  'map': ['arrayMap', 'baseEach', 'callback', 'isArray'],
+  'map': ['arrayMap', 'baseMap', 'callback', 'isArray'],
   'mapValues': ['baseForOwn', 'callback'],
   'matches': ['baseIsEqual', 'isObject', 'keys'],
   'max': ['baseEach', 'charAtCallback', 'callback', 'isArray', 'isString'],
@@ -212,7 +212,7 @@ var funcDependencyMap = createMap({
   'pullAt': ['baseFlatten', 'basePullAt'],
   'random': ['baseRandom'],
   'range': [],
-  'reduce': ['baseEach', 'callback', 'isArray'],
+  'reduce': ['arrayReduce', 'baseReduce', 'callback', 'isArray'],
   'reduceRight': ['callback', 'baseEachRight'],
   'reject': ['callback', 'filter', 'negate'],
   'remove': ['callback'],
@@ -226,7 +226,7 @@ var funcDependencyMap = createMap({
   'slice': [],
   'snakeCase': ['createCompounder'],
   'startsWith': [],
-  'some': ['baseEach', 'callback', 'isArray'],
+  'some': ['arraySome', 'baseSome', 'callback', 'isArray'],
   'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'callback', 'isArray'],
   'sortedIndex': ['callback', 'identity'],
   'take': ['slice'],
@@ -262,22 +262,27 @@ var funcDependencyMap = createMap({
   // private functions
   'arrayEach': [],
   'arrayEachRight': [],
+  'arrayEvery': [],
+  'arrayFilter': [],
   'arrayMap': [],
+  'arrayReduce': [],
+  'arraySome': [],
   'assignDefaults': [],
   'assignOwnDefaults': [],
   'baseAt': [],
   'baseAssign': ['keys'],
-  'baseBind': ['composeArgs', 'createCtorWrapper', 'setData'],
   'baseBindAll': ['createWrapper'],
   'baseCallback': ['identity', 'isNative', 'setData'],
   'baseClone': ['arrayEach', 'baseAssign', 'baseForOwn', 'cloneBuffer', 'isArguments', 'isArray', 'isFunction', 'isObject', 'isNode', 'slice'],
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
-  'baseCreateWrapper': ['composeArgs', 'composeArgsRight', 'createCtorWrapper', 'setData'],
+  'baseCreateWrapper': ['composeArgs', 'composeArgsRight', 'createBindWrapper', 'createCtorWrapper', 'createPartialWrapper', 'setData'],
   'baseCurry': ['createWrapper'],
   'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseEach': ['baseForOwn', 'isString'],
   'baseEachRight': ['baseForOwnRight', 'isString'],
+  'baseEvery': ['baseEach'],
+  'baseFilter': ['baseEach'],
   'baseFind': [],
   'baseFlatten': ['isArguments', 'isArray'],
   'baseFor': [],
@@ -289,11 +294,14 @@ var funcDependencyMap = createMap({
   'baseIndexOf': [],
   'baseInvoke': ['baseEach'],
   'baseIsEqual': ['isArguments', 'isFunction', 'isNode', 'keys'],
+  'baseMap': ['baseEach'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isArrayLike', 'isPlainObject'],
   'basePartial': ['createWrapper'],
   'basePick': ['baseForIn'],
   'basePullAt': ['baseAt', 'baseCompareAscending'],
   'baseRandom': [],
+  'baseReduce': ['baseEach'],
+  'baseSome': ['baseEach'],
   'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseValues': [],
   'cacheIndexOf': [],
@@ -308,8 +316,10 @@ var funcDependencyMap = createMap({
   'composeArgsRight': [],
   'createAggregator': ['baseEach', 'callback', 'isArray'],
   'createAssigner': ['baseCallback'],
+  'createBindWrapper': ['createCtorWrapper'],
   'createCtorWrapper': ['baseCreate', 'isObject'],
-  'createWrapper': ['baseBind', 'baseCreateWrapper', 'getHolders', 'isFunction', 'slice'],
+  'createPartialWrapper': ['createCtorWrapper'],
+  'createWrapper': ['baseCreateWrapper', 'getHolders', 'isFunction', 'slice'],
   'createCache': ['isNative'],
   'createCompounder': ['deburrLetter'],
   'createPad': ['repeat'],
@@ -322,7 +332,7 @@ var funcDependencyMap = createMap({
   'isNative': ['escapeRegExp'],
   'isNode': [],
   'lodashWrapper': [],
-  'setData': ['isNative', 'noop'],
+  'setData': ['identity', 'isNative'],
   'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
   'shimKeys': ['isArguments', 'isArray', 'isString', 'keysIn'],
   'trimmedLeftIndex': [],
@@ -715,12 +725,15 @@ var lodashOnlyFuncs = [
 var privateFuncs = [
   'arrayEach',
   'arrayEachRight',
+  'arrayEvery',
+  'arrayFilter',
   'arrayMap',
+  'arrayReduce',
+  'arraySome',
   'assignDefaults',
   'assignOwnDefaults',
   'baseAssign',
   'baseAt',
-  'baseBind',
   'baseBindAll',
   'baseCallback',
   'baseClone',
@@ -730,6 +743,8 @@ var privateFuncs = [
   'baseCurry',
   'baseDifference',
   'baseEach',
+  'baseEvery',
+  'baseFilter',
   'baseFind',
   'baseFlatten',
   'baseFor',
@@ -746,6 +761,8 @@ var privateFuncs = [
   'basePick',
   'basePullAt',
   'baseRandom',
+  'baseReduce',
+  'baseSome',
   'baseUniq',
   'baseValues',
   'cacheIndexOf',
@@ -760,11 +777,12 @@ var privateFuncs = [
   'composeArgsRight',
   'createAggregator',
   'createAssigner',
-  'baseCreateWrapper',
-  'createWrapper',
+  'createBindWrapper',
   'createCache',
   'createCompounder',
   'createPad',
+  'createPartialWrapper',
+  'createWrapper',
   'deburrLetter',
   'escapeHtmlChar',
   'escapeStringChar',
@@ -2418,12 +2436,13 @@ function removeEsOptimization(source) {
   source = removeSupportProp(source, 'funcNames');
 
   // remove `expando` logic and `setData` function calls
-  _.each(['baseBind', 'baseCallback', 'baseCreateWrapper', 'createWrapper'], function(funcName) {
+  _.each(['baseCallback', 'baseCreateWrapper', 'createWrapper'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match
         .replace(/^(?: *\/\/.*\n)*( *)var data *=[\s\S]+?\n\1}\n/m, '')
         .replace(/^(?: *\/\/.*\n)*( *)if *\(data\b[\s\S]+?\n\1}\n/m, '')
-        .replace(/^(?: *\/\/.*\n)*.+?setData.+\n/m, '')
+        .replace(/^(?: *\/\/.*\n)* *setData.+\n/m, '')
+        .replace(/^( *return +)setData\(([^,]+),[^)]+\)/gm, '$1$2')
         .replace(/^ *(?=data *=[^=])/m, '$&var ')
     });
   });
@@ -4334,7 +4353,7 @@ function build(options, callback) {
           source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
             return match
               .replace(/!isBindKey *&& */, '')
-              .replace(/^( *)if *\(arity\b([\s\S]+?\n\1}){2}\n/m, '');
+              .replace(/^( *)if *\(arity\b(?:[\s\S]+?\n\1}){2}\n/m, '');
           });
         }
         // remove `_.curry` support from `baseCreateWrapper`
@@ -4351,7 +4370,7 @@ function build(options, callback) {
             source = source.replace(matchFunction(source, funcName), function(match) {
               return match
                 .replace(/,\s*partialRightHolders\b(?: *=.+?(?=[,;]))?/g, '')
-                .replace(/^( *)if *\((isPartialRight|partialRightArgs)\b[\s\S]+?\n\1}\n/gm, '');
+                .replace(/^( *)if *\((?:isPartialRight|partialRightArgs)\b[\s\S]+?\n\1}\n/gm, '');
             });
           });
         }
@@ -4371,12 +4390,9 @@ function build(options, callback) {
           _.pull(funcDepMap[identifier], 'isNative');
         });
 
-        _.each(['baseBind', 'baseCallback', 'baseCreateWrapper'], function(funcName) {
+        _.each(['baseCallback', 'baseCreateWrapper'], function(funcName) {
           _.pull(funcDepMap[funcName], 'setData');
         });
-
-        // remove `baseBind` from `createWrapper`
-        _.pull(funcDepMap.createWrapper, 'baseBind');
 
         source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
           return match.replace(/^( *return )[^;]+?(?=baseCreateWrapper)/m, '$1');
@@ -4392,7 +4408,7 @@ function build(options, callback) {
         // remove conditional `charCodeCallback` use from `_.max` and `_.min`
         _.each(['max', 'min'], function(funcName) {
           if (!isLodash(funcName)) {
-            _.pull(funcDepMap[funcName], 'charAtCallback', 'isArray', 'isString');
+            _.pull(funcDepMap[funcName], 'charAtCallback', 'isString');
 
             source = source.replace(matchFunction(source, funcName), function(match) {
               return match.replace(/=.+?isString[^:]+:\s*/g, '= ');
@@ -4414,7 +4430,11 @@ function build(options, callback) {
             ].join('\n');
           });
 
-          source = source.replace(matchFunction(source, 'some'), function(match) {
+          source = source.replace(matchFunction(source, 'baseEvery'), function(match) {
+            return match.replace(/^( *)result *=[\s\S]+?;\n\1return +result\b/gm, '$& || breakIndicator');
+          });
+
+          source = source.replace(matchFunction(source, 'baseSome'), function(match) {
             return match.replace(/^(( *)result *=[\s\S]+?;\n\2return *)!result\b/m, '$1result && breakIndicator');
           });
 
@@ -4425,12 +4445,6 @@ function build(options, callback) {
           _.each(['arrayEach', 'arrayEachRight', 'baseEach', 'baseEachRight', 'baseFor', 'baseForRight'], function(funcName) {
             source = source.replace(matchFunction(source, funcName), function(match) {
               return match.replace(/=== *false\b/g, '=== breakIndicator');
-            });
-          });
-
-          _.each(['baseIsEqual', 'every'], function(funcName) {
-            source = source.replace(matchFunction(source, funcName), function(match) {
-              return match.replace(/^( *)result *=[\s\S]+?;\n\1return +result\b/gm, '$& || breakIndicator');
             });
           });
 

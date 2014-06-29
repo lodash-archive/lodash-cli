@@ -2087,13 +2087,17 @@ QUnit.module('underscore builds with lodash methods');
           expected = true;
 
       if (funcName != 'chain' && _.contains(categoryMap.Chain.concat('mixin'), funcName)) {
-        expected = funcName == 'tap' || !!index;
+        if (funcName != 'tap') {
+          expected = !!index;
+        }
         if (index) {
           command += ',chain';
         }
       }
       if (_.contains(['every', 'some', 'transform'], funcName)) {
-        expected = !!index;
+        if (funcName == 'transform') {
+          expected = !!index;
+        }
         if (index) {
           command += ',forOwn';
         }
