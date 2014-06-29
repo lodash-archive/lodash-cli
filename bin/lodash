@@ -101,7 +101,7 @@ var funcDependencyMap = createMap({
   // public functions
   'after': ['isFunction'],
   'assign': ['baseAssign', 'createAssigner'],
-  'at': ['baseAt', 'baseFlatten', 'isString'],
+  'at': ['baseAt', 'baseFlatten', 'toIterable'],
   'bind': ['basePartial', 'createWrapper', 'slice'],
   'bindAll': ['baseBindAll', 'baseFlatten', 'functions'],
   'bindKey': ['createWrapper', 'slice'],
@@ -164,7 +164,7 @@ var funcDependencyMap = createMap({
   'isBoolean': [],
   'isDate': [],
   'isElement': ['isNode', 'isPlainObject'],
-  'isEmpty': ['baseForOwn', 'isArguments', 'isArray', 'isFunction', 'isString'],
+  'isEmpty': ['isArguments', 'isArray', 'isFunction', 'isString', 'keys'],
   'isEqual': ['baseCallback', 'baseIsEqual'],
   'isError': [],
   'isFinite': ['isNative'],
@@ -220,8 +220,8 @@ var funcDependencyMap = createMap({
   'rest': ['slice'],
   'result': ['isFunction'],
   'runInContext': ['defaults', 'pick'],
-  'sample': ['baseRandom', 'isString', 'shuffle', 'values'],
-  'shuffle': ['baseEach', 'baseRandom'],
+  'sample': ['baseRandom', 'shuffle', 'toIterable'],
+  'shuffle': ['baseRandom', 'toIterable'],
   'size': ['keys'],
   'slice': [],
   'snakeCase': ['createCompounder'],
@@ -237,7 +237,7 @@ var funcDependencyMap = createMap({
   'template': ['assign', 'assignOwnDefaults', 'compileFunction', 'escape', 'escapeStringChar', 'keys', 'values'],
   'throttle': ['debounce', 'isFunction', 'isObject'],
   'times': ['baseCallback'],
-  'toArray': ['isString', 'slice', 'values'],
+  'toArray': ['slice', 'toIterable'],
   'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'callback', 'isArrayLike', 'isObject'],
   'trim': ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
   'trimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
@@ -279,8 +279,8 @@ var funcDependencyMap = createMap({
   'baseCreateWrapper': ['composeArgs', 'composeArgsRight', 'createBindWrapper', 'createCtorWrapper', 'createPartialWrapper', 'setData'],
   'baseCurry': ['createWrapper'],
   'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
-  'baseEach': ['baseForOwn', 'isString'],
-  'baseEachRight': ['baseForOwnRight', 'isString'],
+  'baseEach': ['baseForOwn', 'toIterable'],
+  'baseEachRight': ['baseForOwnRight', 'toIterable'],
   'baseEvery': ['baseEach'],
   'baseFilter': ['baseEach'],
   'baseFind': [],
@@ -335,6 +335,7 @@ var funcDependencyMap = createMap({
   'setData': ['identity', 'isNative'],
   'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
   'shimKeys': ['isArguments', 'isArray', 'isString', 'keysIn'],
+  'toIterable': ['isString', 'values'],
   'trimmedLeftIndex': [],
   'trimmedRightIndex': [],
   'unescapeHtmlChar': []
@@ -342,22 +343,18 @@ var funcDependencyMap = createMap({
 
 /** Used to track Lo-Dash object dependencies of identifiers */
 var objDependencyMap = createMap({
-  'at': ['support'],
   'baseCallback': ['support'],
   'baseClone': ['support'],
-  'baseEach': ['support'],
-  'baseEachRight': ['support'],
   'baseIsEqual': ['support'],
   'isArguments': ['support'],
   'isElement': ['support'],
   'isPlainObject': ['support'],
   'keys': ['support'],
   'keysIn': ['support'],
-  'sample': ['support'],
   'shimIsPlainObject': ['support'],
   'shimKeys': ['support'],
   'template': ['templateSettings'],
-  'toArray': ['support']
+  'toIterable': ['support']
 });
 
 /** Used to track variable dependencies of identifiers */
@@ -795,6 +792,7 @@ var privateFuncs = [
   'setData',
   'shimIsPlainObject',
   'shimKeys',
+  'toIterable',
   'trimmedLeftIndex',
   'trimmedRightIndex',
   'unescapeHtmlChar'
@@ -2858,21 +2856,9 @@ function removeSupportSpliceObjects(source) {
 function removeSupportUnindexedChars(source) {
   source = removeSupportProp(source, 'unindexedChars');
 
-  // remove `support.unindexedChars` from `_.at`, `baseEach`, and `baseEachRight`
-  _.each(['at', 'baseEach', 'baseEachRight'], function(funcName) {
-    source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(/^( *)if *\(support\.unindexedChars\b[\s\S]+?\n\1}\n/m, '');
-    });
-  });
-
-  // remove `support.unindexedChars` from `_.sample`
-  source = source.replace(matchFunction(source, 'sample'), function(match) {
+  // remove `support.unindexedChars` from `toIterable`
+  return source = source.replace(matchFunction(source, 'toIterable'), function(match) {
     return match.replace(/\s*else if *\(support\.unindexedChars\b[^}]+}/, '');
-  });
-
-  // remove `support.unindexedChars` from `_.toArray`
-  return source.replace(matchFunction(source, 'toArray'), function(match) {
-    return match.replace(/(return\b).+?support\.unindexedChars[^:]+:\s*/, '$1 ');
   });
 }
 
@@ -3477,8 +3463,8 @@ function build(options, callback) {
         source = removeSupportOwnLast(source);
 
         _.each([
-          'at', 'baseClone', 'baseEach', 'baseEachRight', 'baseIsEqual', 'isArguments',
-          'isPlainObject', 'keys', 'sample','shimIsPlainObject', 'toArray'
+          'baseClone', 'baseIsEqual', 'isArguments', 'isPlainObject', 'keys',
+          'shimIsPlainObject', 'toIterable'
         ], function(funcName) {
           if (!(isUnderscore && isLodash(funcName))) {
             _.pull(objDepMap[funcName], 'support');
@@ -3500,7 +3486,7 @@ function build(options, callback) {
         });
 
         source = removeSupportUnindexedChars(source);
-        _.each(['at', 'baseEach', 'baseEachRight', 'sample', 'shimKeys', 'toArray'], function(funcName) {
+        _.each(['toIterable', 'shimKeys'], function(funcName) {
           if (!(isUnderscore && isLodash(funcName))) {
             _.pull(funcDepMap[funcName], 'isString');
           }
@@ -3775,29 +3761,6 @@ function build(options, callback) {
           source = replaceFunction(source, 'isElement', [
             'function isElement(value) {',
             '  return (value && value.nodeType === 1) || false;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.isEmpty`
-        if (!isLodash('isEmpty')) {
-          _.pull(funcDepMap.isEmpty, 'baseForOwn', 'isFunction');
-
-          source = replaceFunction(source, 'isEmpty', [
-            'function isEmpty(value) {',
-            '  if (value == null) {',
-            '    return true;',
-            '  }',
-            '  var length = value.length;',
-            "  if ((typeof length == 'number' && length > -1 && length <= maxSafeInteger) &&",
-            '      (isArray(value) || isString(value) || isArguments(value))) {',
-            '    return !length;',
-            '  }',
-            '  for (var key in value) {',
-            '    if (hasOwnProperty.call(value, key)) {',
-            '      return false;',
-            '    }',
-            '  }',
-            '  return true;',
             '}'
           ].join('\n'));
         }
@@ -4242,23 +4205,6 @@ function build(options, callback) {
             "    'maxWait': wait,",
             "    'trailing': trailing",
             '  });',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.toArray`
-        if (!isLodash('toArray')) {
-          _.pull(funcDepMap.toArray, 'isString').push('isArray', 'map');
-          _.pull(objDepMap.toArray, 'support');
-
-          source = replaceFunction(source, 'toArray', [
-            'function toArray(collection) {',
-            '  if (isArray(collection)) {',
-            '    return slice(collection);',
-            '  }',
-            "  if (collection && typeof collection.length == 'number') {",
-            '    return map(collection);',
-            '  }',
-            '  return values(collection);',
             '}'
           ].join('\n'));
         }
