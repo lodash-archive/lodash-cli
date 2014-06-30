@@ -181,7 +181,7 @@ var funcDependencyMap = createMap({
   'keys': ['isNative', 'shimKeys'],
   'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isString'],
   'last': [],
-  'lastIndexOf': [],
+  'lastIndexOf': ['sortedLastIndex'],
   'lodash': ['isArray', 'lodashWrapper'],
   'map': ['arrayMap', 'baseMap', 'callback', 'isArray'],
   'mapValues': ['baseForOwn', 'callback'],
@@ -225,10 +225,11 @@ var funcDependencyMap = createMap({
   'size': ['keys'],
   'slice': [],
   'snakeCase': ['createCompounder'],
-  'startsWith': [],
   'some': ['arraySome', 'baseSome', 'callback', 'isArray'],
   'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'callback', 'isArray'],
-  'sortedIndex': ['callback', 'identity'],
+  'sortedIndex': ['baseSortedIndex', 'callback', 'identity'],
+  'sortedLastIndex': ['baseSortedIndex', 'callback', 'identity'],
+  'startsWith': [],
   'take': ['slice'],
   'takeRight': ['slice'],
   'takeRightWhile': ['callback', 'slice'],
@@ -302,6 +303,7 @@ var funcDependencyMap = createMap({
   'baseRandom': [],
   'baseReduce': ['baseEach'],
   'baseSome': ['baseEach'],
+  'baseSortedIndex': [],
   'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseValues': [],
   'cacheIndexOf': [],
@@ -399,6 +401,7 @@ var categoryMap = createMap({
     'rest',
     'slice',
     'sortedIndex',
+    'sortedLastIndex',
     'take',
     'takeRight',
     'takeRightWhile',
@@ -704,6 +707,7 @@ var lodashOnlyFuncs = [
   'runInContext',
   'slice',
   'snakeCase',
+  'sortedLastIndex',
   'startsWith',
   'takeRight',
   'takeRightWhile',
@@ -760,6 +764,7 @@ var privateFuncs = [
   'baseRandom',
   'baseReduce',
   'baseSome',
+  'baseSortedIndex',
   'baseUniq',
   'baseValues',
   'cacheIndexOf',
@@ -4293,7 +4298,7 @@ function build(options, callback) {
         // remove `_.bindKey` support from `baseCreateWrapper` and `createWrapper`
         if (!isLodash('bindKey')) {
           source = source.replace(matchFunction(source, 'baseCreateWrapper'), function(match) {
-            return match.replace(/^( *)if *\(isBindKey\b[\s\S]+?\n\1}\n/gm, '');
+            return match.replace(/^( *)if *\(isBindKey\b[\s\S]+?\n\1}\n/m, '');
           });
 
           source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
@@ -4305,7 +4310,15 @@ function build(options, callback) {
         // remove `_.curry` support from `baseCreateWrapper`
         if (!isLodash('curry')) {
           source = source.replace(matchFunction(source, 'baseCreateWrapper'), function(match) {
-            return match.replace(/^( *)if *\(isCurry\b[\s\S]+?\n\1}\n/gm, '');
+            return match.replace(/^( *)if *\(isCurry\b[\s\S]+?\n\1}\n/m, '');
+          });
+        }
+        // remove `_.sortedLastIndex` support from `_.lastIndexOf`
+        if (!isLodash('lastIndexOf')) {
+          _.pull(funcDepMap.lastIndexOf, 'sortedLastIndex');
+
+          source = source.replace(matchFunction(source, 'lastIndexOf'), function(match) {
+            return match.replace(/\s*else if *\(fromIndex\b[^}]+}/, '');
           });
         }
         // remove `_.partialRight` support from `baseCreateWrapper`
