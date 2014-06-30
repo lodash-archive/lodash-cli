@@ -4313,6 +4313,14 @@ function build(options, callback) {
             return match.replace(/^( *)if *\(isCurry\b[\s\S]+?\n\1}\n/m, '');
           });
         }
+        // remove extended array-like object support from `_.isEmpty`
+        if (!isLodash('isEmpty')) {
+          _.pull(funcDepMap.isEmpty, 'isFunction');
+
+          source = source.replace(matchFunction(source, 'isEmpty'), function(match) {
+            return match.replace(/\s*\|\|\s*\(typeof value\b[\s\S]+?\)\)/, '');
+          });
+        }
         // remove `_.sortedLastIndex` support from `_.lastIndexOf`
         if (!isLodash('lastIndexOf')) {
           _.pull(funcDepMap.lastIndexOf, 'sortedLastIndex');
