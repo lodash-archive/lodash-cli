@@ -366,7 +366,6 @@ var varDependencyMap = createMap({
   'after': ['root'],
   'baseClone': ['root'],
   'baseCreate': ['root'],
-  'before': ['root'],
   'cloneBuffer': ['root'],
   'createCache': ['root'],
   'createPad': ['root'],
