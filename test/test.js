@@ -175,6 +175,7 @@ var categoryMap = createMap({
   ],
   'Function': [
     'after',
+    'before',
     'bind',
     'bindAll',
     'bindKey',
@@ -343,6 +344,7 @@ var backboneDependencies = [
 /** List of Lo-Dash only functions */
 var lodashOnlyFuncs = [
   'at',
+  'before',
   'bindKey',
   'callback',
   'camelCase',

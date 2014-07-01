@@ -22,6 +22,7 @@ mixin = (function(func) {
 lodash.after = require('lodash.after');
 lodash.assign = require('lodash.assign');
 lodash.at = require('lodash.at');
+lodash.before = require('lodash.before');
 lodash.bind = require('lodash.bind');
 lodash.bindAll = require('lodash.bindall');
 lodash.bindKey = require('lodash.bindkey');

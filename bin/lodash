@@ -102,6 +102,7 @@ var funcDependencyMap = createMap({
   'after': ['isFunction'],
   'assign': ['baseAssign', 'createAssigner'],
   'at': ['baseAt', 'baseFlatten', 'toIterable'],
+  'before': ['isFunction'],
   'bind': ['basePartial', 'createWrapper', 'slice'],
   'bindAll': ['baseBindAll', 'baseFlatten', 'functions'],
   'bindKey': ['createWrapper', 'slice'],
@@ -196,7 +197,7 @@ var funcDependencyMap = createMap({
   'noop': [],
   'now': ['isNative'],
   'omit': ['baseDifference', 'baseFlatten', 'basePick', 'arrayMap', 'callback', 'keysIn', 'negate'],
-  'once': ['isFunction'],
+  'once': ['before', 'partial'],
   'pad': ['createPad'],
   'padLeft': ['createPad'],
   'padRight': ['createPad'],
@@ -365,6 +366,7 @@ var varDependencyMap = createMap({
   'after': ['root'],
   'baseClone': ['root'],
   'baseCreate': ['root'],
+  'before': ['root'],
   'cloneBuffer': ['root'],
   'createCache': ['root'],
   'createPad': ['root'],
@@ -454,6 +456,7 @@ var categoryMap = createMap({
   ],
   'Function': [
     'after',
+    'before',
     'bind',
     'bindAll',
     'bindKey',
@@ -664,6 +667,7 @@ var complexVars = [
 /** List of Lo-Dash only functions */
 var lodashOnlyFuncs = [
   'at',
+  'before',
   'bindKey',
   'callback',
   'camelCase',
