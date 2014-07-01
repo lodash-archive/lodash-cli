@@ -1450,6 +1450,7 @@ QUnit.module('underscore modifier');
 
       strictEqual(actual, false, '_.isEqual should ignore `callback` and `thisArg`: ' + basename);
       deepEqual(lodash.keys('abc'), [], '_.keys should return an empty array for string primitives: ' + basename);
+      strictEqual(lodash.lastIndexOf([3, 2, 1], 3, true), 0, '_.lastIndexOf should not support binary search: ' + basename);
 
       strictEqual(lodash.max('abc'), -Infinity, '_.max should return `-Infinity` for strings: ' + basename);
       strictEqual(lodash.min('abc'), Infinity, '_.min should return `Infinity` for strings: ' + basename);
