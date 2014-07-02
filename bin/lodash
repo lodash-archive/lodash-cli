@@ -2781,7 +2781,7 @@ function removeSupportNodeClass(source) {
 
   // remove `support.nodeClass` from `baseIsEqual`
   source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
-    return match.replace(/\s*\|\|\s*\(!support\.nodeClass\b[\s\S]+?\)\)\)/, '');
+    return match.replace(/\s*&&\s*\(support\.nodeClass\b[\s\S]+?\)\)\)/, '');
   });
 
   // remove `support.nodeClass` from `_.isElement`
