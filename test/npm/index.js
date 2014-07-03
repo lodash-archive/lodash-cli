@@ -164,6 +164,7 @@ lodash.unescape = require('lodash.unescape');
 lodash.union = require('lodash.union');
 lodash.uniq = require('lodash.uniq');
 lodash.uniqueId = require('lodash.uniqueid');
+lodash.unzip = require('lodash.unzip');
 lodash.values = require('lodash.values');
 lodash.valuesIn = require('lodash.valuesin');
 lodash.where = require('lodash.where');
@@ -191,7 +192,6 @@ lodash.object = lodash.zipObject;
 lodash.select = lodash.filter;
 lodash.tail = lodash.rest;
 lodash.unique = lodash.uniq;
-lodash.unzip = lodash.zip;
 
 // add other properties
 lodash.support = support;

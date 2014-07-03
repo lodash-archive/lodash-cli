@@ -66,7 +66,6 @@ var aliasToRealMap = createMap({
   'tail': 'rest',
   'toJSON': 'wrapperValueOf',
   'unique': 'uniq',
-  'unzip': 'zip',
   'value': 'wrapperValueOf'
 });
 
@@ -88,7 +87,6 @@ var realToAliasMap = createMap({
   'some': ['any'],
   'uniq': ['unique'],
   'wrapperValueOf': ['toJSON', 'value'],
-  'zip': ['unzip'],
   'zipObject': ['object']
 });
 
@@ -249,6 +247,7 @@ var funcDependencyMap = createMap({
   'union': ['baseFlatten', 'baseUniq'],
   'uniq': ['baseUniq', 'callback'],
   'uniqueId': [],
+  'unzip': ['isObject', 'max', 'pluck'],
   'values': ['baseValues', 'keys'],
   'valuesIn': ['baseValues', 'keysIn'],
   'where': ['filter', 'matches'],
@@ -258,7 +257,7 @@ var funcDependencyMap = createMap({
   'wrapperToString': [],
   'wrapperValueOf': [],
   'xor': ['baseDifference', 'baseUniq', 'isArguments', 'isArray'],
-  'zip': ['isObject', 'max', 'pluck'],
+  'zip': ['unzip'],
   'zipObject': ['isArray'],
 
   // private functions
@@ -410,6 +409,7 @@ var categoryMap = createMap({
     'takeWhile',
     'union',
     'uniq',
+    'unzip',
     'without',
     'xor',
     'zip',
@@ -721,6 +721,7 @@ var lodashOnlyFuncs = [
   'trim',
   'trimLeft',
   'trimRight',
+  'unzip',
   'valuesIn',
   'wrapperToString',
   'xor'
@@ -4263,21 +4264,6 @@ function build(options, callback) {
             '}'
           ].join('\n'));
         }
-        // replace `_.zip`
-        if(!isLodash('zip')) {
-          source = replaceFunction(source, 'zip', [
-            'function zip() {',
-            '  var index = -1,',
-            "      length = isObject(length = max(arguments, 'length')) && length.length || 0,",
-            '      result = Array(length);',
-            '',
-            '  while (++index < length) {',
-            '    result[index] = pluck(arguments, index);',
-            '  }',
-            '  return result;',
-            '}'
-          ].join('\n'));
-        }
         // replace references to external `lodash.createCallback` with internal `createCallback`
         if (!isLodash('callback')) {
           source = source.replace(/\blodash\.(callback)(?=\()/g, '$1');
@@ -4558,7 +4544,7 @@ function build(options, callback) {
       if (isUnderscore) {
         // unexpose Lo-Dash methods for the Underscore build
         source = source.replace(getMethodAssignments(source), function(match) {
-          var unexpose = lodashOnlyFuncs.concat('assign', 'unzip', 'zipObject');
+          var unexpose = lodashOnlyFuncs.concat('assign', 'zipObject');
 
           return _.reduce(unexpose, function(result, funcName) {
             if (isLodash(funcName)) {

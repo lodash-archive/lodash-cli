@@ -72,7 +72,6 @@ var aliasToRealMap = createMap({
   'tail': 'rest',
   'toJSON': 'wrapperValueOf',
   'unique': 'uniq',
-  'unzip': 'zip',
   'value': 'wrapperValueOf'
 });
 
@@ -94,7 +93,6 @@ var realToAliasMap = createMap({
   'some': ['any'],
   'uniq': ['unique'],
   'wrapperValueOf': ['toJSON', 'value'],
-  'zip': ['unzip'],
   'zipObject': ['object']
 });
 
@@ -130,6 +128,7 @@ var categoryMap = createMap({
     'takeWhile',
     'union',
     'uniq',
+    'unzip',
     'without',
     'xor',
     'zip',
@@ -399,6 +398,7 @@ var lodashOnlyFuncs = [
   'trim',
   'trimLeft',
   'trimRight',
+  'unzip',
   'valuesIn',
   'wrapperToString',
   'xor'
