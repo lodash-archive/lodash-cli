@@ -100,6 +100,7 @@ var funcDependencyMap = createMap({
   'after': ['isFunction'],
   'assign': ['baseAssign', 'createAssigner'],
   'at': ['baseAt', 'baseFlatten', 'toIterable'],
+  'attempt': [],
   'before': ['isFunction'],
   'bind': ['basePartial', 'createWrapper', 'slice'],
   'bindAll': ['baseBindAll', 'baseFlatten', 'functions'],
@@ -234,7 +235,7 @@ var funcDependencyMap = createMap({
   'takeRightWhile': ['callback', 'slice'],
   'takeWhile': ['callback', 'slice'],
   'tap': [],
-  'template': ['assign', 'assignOwnDefaults', 'compileFunction', 'escape', 'escapeStringChar', 'keys', 'values'],
+  'template': ['assign', 'assignOwnDefaults', 'attempt', 'escape', 'escapeStringChar', 'keys', 'values'],
   'throttle': ['debounce', 'isFunction', 'isObject'],
   'times': ['baseCallback'],
   'toArray': ['slice', 'toIterable'],
@@ -314,7 +315,6 @@ var funcDependencyMap = createMap({
   'cloneBuffer': ['identity', 'isNative'],
   'compareAscending': ['baseCompareAscending'],
   'compareMultipleAscending': ['baseCompareAscending'],
-  'compileFunction': [],
   'composeArgs': [],
   'composeArgsRight': [],
   'createAggregator': ['baseEach', 'callback', 'isArray'],
@@ -539,6 +539,7 @@ var categoryMap = createMap({
     'unescape'
   ],
   'Utility': [
+    'attempt',
     'callback',
     'constant',
     'identity',
@@ -666,6 +667,7 @@ var complexVars = [
 /** List of Lo-Dash only functions */
 var lodashOnlyFuncs = [
   'at',
+  'attempt',
   'before',
   'bindKey',
   'callback',
@@ -780,7 +782,6 @@ var privateFuncs = [
   'cloneBuffer',
   'compareAscending',
   'compareMultipleAscending',
-  'compileFunction',
   'composeArgs',
   'composeArgsRight',
   'createAggregator',
@@ -4190,7 +4191,14 @@ function build(options, callback) {
             '    source +',
             "    'return __p\\n}';",
             '',
-            "  var result = compileFunction(source, ['_'], [_]);",
+            '  var result = attempt(function() {',
+            "    return Function('_', 'return ' + source)(_);",
+            '  });',
+            '',
+            '  result.source = source;',
+            '  if (result instanceof Error) {',
+            '    throw result;',
+            '  }',
             '  return data ? result(data) : result;',
             '}'
           ].join('\n'));

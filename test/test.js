@@ -258,6 +258,7 @@ var categoryMap = createMap({
     'unescape'
   ],
   'Utility': [
+    'attempt',
     'callback',
     'constant',
     'identity',
@@ -343,6 +344,7 @@ var backboneDependencies = [
 /** List of Lo-Dash only functions */
 var lodashOnlyFuncs = [
   'at',
+  'attempt',
   'before',
   'bindKey',
   'callback',
