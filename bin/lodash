@@ -4608,9 +4608,9 @@ function build(options, callback) {
           match = match.replace(/= *templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings');
 
           // remove `sourceURL` from `_.template`
-          match = match.replace(/^(?: *\/\/.*\n)*(?= *var sourceURL\b)/m, '');
           match = removeVar(match, 'sourceURL');
-          return match.replace(/, *sourceURL(?=\))/, '');
+          match = match.replace(/^(?: *\/\/.*\n)* *sourceURL *=[^;]+;\n+/m, '');
+          return match.replace(/ *\+ *sourceURL(?=\))/, '');
         });
 
         if (isNode) {
