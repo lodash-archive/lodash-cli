@@ -9,14 +9,14 @@ var _ = require('lodash/lodash.js'),
     minify = require('../lib/minify.js'),
     util = require('../lib/util.js');
 
-/** Module shortcuts */
+/** Module references */
 var fs = util.fs,
     path = util.path;
 
 /** The current working directory */
 var cwd = process.cwd();
 
-/** Native method shortcuts */
+/** Native method references */
 var push = Array.prototype.push;
 
 /** Used to create regexes that may detect multi-line comment blocks */
@@ -100,7 +100,7 @@ var funcDependencyMap = createMap({
   'after': ['isFunction'],
   'assign': ['baseAssign', 'createAssigner'],
   'at': ['baseAt', 'baseFlatten', 'toIterable'],
-  'attempt': [],
+  'attempt': ['isError'],
   'before': ['isFunction'],
   'bind': ['basePartial', 'createWrapper', 'slice'],
   'bindAll': ['baseBindAll', 'baseFlatten', 'functions'],
@@ -374,7 +374,8 @@ var varDependencyMap = createMap({
   'repeat': ['root'],
   'support': ['root'],
   'template': ['reInterpolate'],
-  'templateSettings': ['reEscape', 'reEvaluate', 'reInterpolate']
+  'templateSettings': ['reEscape', 'reEvaluate', 'reInterpolate'],
+  'times': ['root']
 });
 
 /** Used to track the category of identifiers */

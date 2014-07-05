@@ -9,7 +9,7 @@ var _ = require('lodash/lodash.js'),
     minify = require('../lib/minify.js'),
     util = require('../lib/util.js');
 
-/** Module shortcuts */
+/** Module references */
 var fs = util.fs,
     path = util.path;
 
