@@ -4730,14 +4730,6 @@ function build(options, callback) {
       if (isExcluded('wrapperValueOf')) {
         source = removeChaining(source);
       }
-      if (!/\.(?:enumErrorProps|nonEnumShadows) *=/.test(source)) {
-        // remove 'Error' from the `contextProps` array
-        source = source.replace(/^ *var contextProps *=[\s\S]+?;/m, function(match) {
-          return match
-            .replace(/'Error',? */, '')
-            .replace(/,(?=\s*])/, '');
-        });
-      }
     }
     // remove functions from the build
     _.each(allFuncs, function(funcName) {
