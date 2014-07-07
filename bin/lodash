@@ -2446,7 +2446,7 @@ function removeEsOptimization(source) {
   source = removeSupportProp(source, 'funcDecomp');
   source = removeSupportProp(source, 'funcNames');
 
-  // remove `expando` logic and `setData` function calls
+  // remove metadata code and `setData` function calls
   _.each(['baseCallback', 'baseCreateWrapper', 'createWrapper'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match
@@ -3616,7 +3616,7 @@ function build(options, callback) {
             '  var indexOf = getIndexOf(),',
             '      length = collection ? collection.length : 0;',
             '',
-            "  if (!(typeof length == 'number' && length > -1 && length <= maxSafeInteger)) {",
+            "  if (!(typeof length == 'number' && length > -1 && length <= MAX_SAFE_INTEGER)) {",
             '    collection = values(collection);',
             '  }',
             '  return indexOf(collection, target) > -1;',
@@ -4388,11 +4388,11 @@ function build(options, callback) {
             !isLodash('forIn') && !isLodash('forInRight') &&
             !isLodash('forOwn') && !isLodash('forOwnRight')) {
 
-          source = source.replace(matchVar(source, 'expando'), function(match) {
+          source = source.replace(matchVar(source, 'EXPANDO'), function(match) {
             return match + [
               '',
               '  /** Used by methods to exit iteration */',
-              "  var breakIndicator = expando + 'breaker__';",
+              "  var breakIndicator = EXPANDO + 'breaker__';",
               ''
             ].join('\n');
           });
