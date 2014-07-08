@@ -4197,7 +4197,7 @@ function build(options, callback) {
             '  });',
             '',
             '  result.source = source;',
-            '  if (isError(Error)) {',
+            '  if (isError(result)) {',
             '    throw result;',
             '  }',
             '  return data ? result(data) : result;',
