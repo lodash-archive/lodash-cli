@@ -957,7 +957,7 @@ function addUnderscoreChaining(source, isModularize) {
   });
 
   // replace wrapper `Array` method assignments
-  source = source.replace(/^(?:(?: *\/\/.*\n)*( *)(?:if *\([^{]+\{\n\1( *))?arrayEach\(\['[\s\S]+?\n\1\2}\);(?:\n\1})?\n+)+/m, function(match, indent) {
+  source = source.replace(/^(?:(?: *\/\/.*\n)*( *)(?:if\s*\([^{]+\{\n\1( *))?arrayEach\(\['[\s\S]+?\n\1\2}\);(?:\n\1})?\n+)+/m, function(match, indent) {
     return indent + [
       '// add `Array` mutator functions to the wrapper',
       "arrayEach(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
@@ -994,7 +994,7 @@ function addUnderscoreChaining(source, isModularize) {
   });
 
   // remove `lodash.prototype` methods assignments for `toJSON`, `toString`, and `valueOf`
-  source = source.replace(/^ *lodash\.prototype\.(?:toJSON|toString|valueOf) *=.+\n/gm, '');
+  source = source.replace(/^ *lodash\.prototype\.(?:toJSON|toString|valueOf)\s*=.+\n/gm, '');
 
   // remove `lodash.prototype` batch method assignments
   return source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+\n/gm, '');
@@ -1656,8 +1656,8 @@ function buildTemplate(state) {
 function cleanupCompiled(source) {
   return stringFree(source, function(source) {
     return source
-      .replace(/\b(function) *(\()/g, '$1$2')
-      .replace(/([{}]) *;/g, '$1');
+      .replace(/\b(function)\s*(\()/g, '$1$2')
+      .replace(/([{}])\s*;/g, '$1');
   });
 }
 
@@ -1841,7 +1841,7 @@ function getCategories(identifier, depMap) {
  * @returns {string} Returns the fork.
  */
 function getBaseCreateFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!nativeCreate\b[\s\S]+?\n\1  baseCreate *=[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!nativeCreate\b[\s\S]+?\n\1  baseCreate\s*=[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -1852,7 +1852,7 @@ function getBaseCreateFork(source) {
  * @returns {string} Returns the fork.
  */
 function getCloneBufferFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!bufferSlice\b[\s\S]+?\n\1  cloneBuffer *=[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!bufferSlice\b[\s\S]+?\n\1  cloneBuffer\s*=[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -2015,7 +2015,7 @@ function getIndent(func) {
  * @returns {string} Returns the fork.
  */
 function getIsArgumentsFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n\1  isArguments *=[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n\1  isArguments\s*=[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -2039,7 +2039,7 @@ function getIsArrayFork(source) {
  * @returns {string} Returns the fork.
  */
 function getIsElementFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(!support\.dom\b[\s\S]+?\n\1  isElement *=[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.dom\b[\s\S]+?\n\1  isElement\s*=[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -2050,7 +2050,7 @@ function getIsElementFork(source) {
  * @returns {string} Returns the fork.
  */
 function getIsFunctionFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if *\(isFunction\(\/x\/[\s\S]+?\n\1  isFunction *=[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(isFunction\(\/x\/[\s\S]+?\n\1  isFunction\s*=[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -2173,9 +2173,9 @@ function getVars(source) {
 
   // remove all functions except `runInContext`
   source = source
-    .replace(/^( *)function (?!runInContext)[\s\S]+?\{\n[\s\S]+?\n\1}\n/gm, '')
-    .replace(/^( *)(?:var )?[$\w]+ *=.*?create[A-Z][a-z]+\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '')
-    .replace(/^( *)(?:var )?[$\w]+ *= *function\b[\s\S]+?\{\n[\s\S]+?\n\1};\n/gm, '');
+    .replace(/^( *)function\s+(?!runInContext)[\s\S]+?\{\n[\s\S]+?\n\1}\n/gm, '')
+    .replace(/^( *)(?:var\s+)?[$\w]+\s*=.*?create[A-Z][a-z]+\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '')
+    .replace(/^( *)(?:var\s+)?[$\w]+\s*=\s*function\b[\s\S]+?\{\n[\s\S]+?\n\1};\n/gm, '');
 
   var isDeep = reDeepVars.test(source),
       indentA = isDeep ? ' {2,4}' : ' {2}',
@@ -2183,11 +2183,11 @@ function getVars(source) {
 
   var result = _.reduce([
     // match a varaible at the start of a declaration list
-    indentA + 'var ([$\\w]+) *=.+?,\\n(?= *[$\\w]+ *=)',
+    indentA + 'var\\s+([$\\w]+)\\s*=.+?,\\n(?=\\s*[$\\w]+\\s*=)',
     // match a variable declaration in a declaration list
-    indentB + '([$\\w]+) *=.+?[,;]\\n',
+    indentB + '([$\\w]+)\\s*=[\\s\\S]+?[,;]\\n',
     // match a variable that is not part of a declaration list
-    '(' + indentA + ')var ([$\\w]+) *(?:|= *(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1[^\\n ]+?));\\n'
+    '(' + indentA + ')var\\s+([$\\w]+)\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n'
   ], function(result, reSource) {
     source = source.replace(RegExp('^' + reSource, 'gm'), function(match, indent, varName) {
       result.push(typeof varName == 'number' ? indent : varName);
@@ -2256,13 +2256,13 @@ function isVarUsed(source, varName) {
 function matchFunction(source, funcName, leadingComments) {
   var result = _.reduce([
     // match a function declaration
-    '( *)function ' + funcName + '\\b[\\s\\S]+?\\n\\3}\\n',
+    '( *)function\\s+' + funcName + '\\b[\\s\\S]+?\\n\\3}\\n',
     // match variable declarations using `createAggregator`, or `createCompounder`
-    '( *)var ' + funcName + ' *=.*?create[A-Z][a-z]+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
+    '( *)var\\s+' + funcName + '\\s*=.*?create[A-Z][a-z]+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
     // match a variable declaration with function expression
-    '( *)var ' + funcName + ' *=.*?function\\b[\\s\\S]+?\{\\n[\\s\\S]+?\\n\\3}(?:\\(\\)\\))?;\\n',
+    '( *)var\\s+' + funcName + '\\s*=.*?function\\b[\\s\\S]+?\{\\n[\\s\\S]+?\\n\\3}(?:\\(\\)\\))?;\\n',
     // match a simple variable declaration
-    ' *var ' + funcName + ' *=.+?;\\n'
+    ' *var\\s+' + funcName + '\\s*=.+?;\\n'
   ], function(result, reSource) {
     if (result) {
       return result;
@@ -2292,7 +2292,7 @@ function matchFunction(source, funcName, leadingComments) {
 function matchProp(source, propName, leadingComments) {
   return _.result(source.match(RegExp(
     '^' + (leadingComments ? multilineComment : '') +
-    '(?: {2,4}var ' + propName + '\\b.+|(?: *|.*?=\\s*)lodash\\._?' + propName + '\\s*)=[\\s\\S]+?' +
+    '(?: {2,4}var\\s+' + propName + '\\b.+|(?:\\s*|.*?=\\s*)lodash\\._?' + propName + '\\s*)=[\\s\\S]+?' +
     '(?:\\(function\\b[\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
     '[;}]\\n(?=\\n(?!\\s*\\(func)))'
   , 'm')), 0, '');
@@ -2315,17 +2315,17 @@ function matchVar(source, varName, leadingComments) {
 
   var reSources = [
     // match a varaible at the start of a declaration list
-    indentA + 'var ' + varName + ' *=.+?,\\n(?= *[$\\w]+ *=)',
+    indentA + 'var ' + varName + '\\s*=.+?,\\n(?=\\s*[$\\w]+\\s*=)',
     // match a variable declaration in a declaration list
-    indentB + varName + ' *=.+?[,;]\\n',
+    indentB + varName + '\\s*=[\\s\\S]+?[,;]\\n',
     // match a variable that is not part of a declaration list
-    '(' + indentA + ')var ' + varName + ' *(?:|= *(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1[^\\n ]+?));\\n'
+    '(' + indentA + ')var\\s+' + varName + '\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n'
   ];
 
   // match complex variable assignments
   if (_.contains(complexVars, varName)) {
     reSources = [
-      '(' + indentA + ')var ' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\1(?:function\\b|if\\b|lodash\\b|var\\s|/[/*])))'
+      '(' + indentA + ')var\\s+' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\1(?:function\\b|if\\b|lodash\\b|var\\s|/[/*])))'
     ];
   }
   return _.reduce(reSources, function(result, reSource) {
@@ -2450,11 +2450,11 @@ function removeEsOptimization(source) {
   _.each(['baseCallback', 'baseCreateWrapper', 'createWrapper'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match
-        .replace(/^(?: *\/\/.*\n)*( *)var data *=[\s\S]+?\n\1}\n/m, '')
-        .replace(/^(?: *\/\/.*\n)*( *)if *\(data\b[\s\S]+?\n\1}\n/m, '')
+        .replace(/^(?: *\/\/.*\n)*( *)var\s+data\s*=[\s\S]+?\n\1}\n/m, '')
+        .replace(/^(?: *\/\/.*\n)*( *)if\s*\(data\b[\s\S]+?\n\1}\n/m, '')
         .replace(/^(?: *\/\/.*\n)* *setData.+\n/m, '')
-        .replace(/^( *return +)setData\(([^,]+),[^)]+\)/gm, '$1$2')
-        .replace(/^ *(?=data *=[^=])/m, '$&var ')
+        .replace(/^( *return\s+)setData\(([^,]+),[^)]+\)/gm, '$1$2')
+        .replace(/^ *(?=data\s*=[^=])/m, '$&var ')
     });
   });
 
@@ -2499,7 +2499,7 @@ function removeGetIndexOf(source) {
         // replace all `getIndexOf` calls with `baseIndexOf`
         .replace(/\bgetIndexOf\(\)/g, 'baseIndexOf')
         // simplify `isLarge` assignments
-        .replace(/ *&& *indexOf *=== *baseIndexOf\b/g, '')
+        .replace(/\s*&&\s*indexOf\s*===\s*baseIndexOf\b/g, '')
     });
   });
 
@@ -2570,7 +2570,7 @@ function removeIsFunctionFork(source) {
  * @returns {string} Returns the modified source.
  */
 function removeLicenseTag(source) {
-  return source.replace(/^ \* @license\n/m, '');
+  return source.replace(/^ \* *@license\n/m, '');
 }
 
 /**
@@ -2586,7 +2586,7 @@ function removeMethodAssignment(source, methodName) {
     var reAssignment = RegExp(
       '^( *//.*\\n)* *' +
       'lodash(?:\\.prototype)?\\.' +
-      '(?:[$\\w]+ *= *' + methodName + '|' + methodName + ' *= [$\\w]+);' +
+      '(?:[$\\w]+\\s*=\\s*' + methodName + '|' + methodName + '\\s*=\\s*[$\\w]+);' +
       '\\n(\\n)?'
     , 'gm');
 
@@ -2657,20 +2657,20 @@ function removeRunInContext(source) {
   source = source.replace(/\btest\(runInContext\)/, 'test(function() { return this; })');
 
   // remove `runInContext` assignment
-  source = source.replace(/^(?: *\/\/.*\n)* *lodash\.runInContext *=[\s\S]+?;\n/m, '');
+  source = source.replace(/^(?: *\/\/.*\n)* *lodash\.runInContext\\s*=[\s\S]+?;\n/m, '');
 
   // remove function scaffolding, leaving most of its content
   source = source.replace(matchFunction(source, 'runInContext', true), function(match) {
     match = replaceIndent(match, 2, 1);
-    return match.replace(/^[\s\S]+?function runInContext\b[\s\S]+?context *= *context.+\s+| *return lodash\b[\s\S]+$/g, '');
+    return match.replace(/^[\s\S]+?function\s+runInContext\b[\s\S]+?context\s*=\s*context.+?\n+| *return\s+lodash\b[\s\S]+$/g, '');
   });
 
   // cleanup adjusted source
   return source
     .replace(/\bcontext\b/g, 'root')
-    .replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)? *var Array *=[\s\S]+?;\n/m, '')
-    .replace(/(\breturn *|= *)_([;)])/g, '$1lodash$2')
-    .replace(/^(?: *\/\/.*\n)* *var _ *= *runInContext\b.+\n+/m, '');
+    .replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)? *var\s+Array\s*=[\s\S]+?;\n/m, '')
+    .replace(/(\breturn\s+|=\s*)_([;)])/g, '$1lodash$2')
+    .replace(/^(?: *\/\/.*\n)* *var\s+_\s*=\s*runInContext\b.+\n+/m, '');
 }
 
 /**
@@ -2682,7 +2682,7 @@ function removeRunInContext(source) {
  * @returns {string} Returns the modified source.
  */
 function removeSpliceObjectsFix(source) {
-  return source.replace(/^(?: *\/\/.*\n)*( *)if *\(!support\.spliceObjects\b[\s\S]+?(?:\{\s*}|\n\1})\n/m, '');
+  return source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.spliceObjects\b[\s\S]+?(?:\{\s*}|\n\1})\n/m, '');
 }
 
 /**
@@ -2713,7 +2713,7 @@ function removeSupportArgsClass(source) {
 
   // remove `support.argsClass` from `baseIsEqual`
   source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
-    return match.replace(/^( *)if *\(!support\.argsClass\b[\s\S]+?\n\1}\n/m, '');
+    return match.replace(/^( *)if\s*\(!support\.argsClass\b[\s\S]+?\n\1}\n/m, '');
   });
 
   // remove `support.argsClass` from `baseClone` and `_.isPlainObject`
@@ -2843,7 +2843,7 @@ function removeSupportOwnLast(source) {
 
   // remove `support.ownLast` from `shimIsPlainObject`
   return source.replace(matchFunction(source, 'shimIsPlainObject'), function(match) {
-    return match.replace(/^(?: *\/\/.*\n)*( *)if *\(support\.ownLast\b[\s\S]+?\n\1}\n/m, '');
+    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(support\.ownLast\b[\s\S]+?\n\1}\n/m, '');
   });
 }
 
@@ -2871,7 +2871,7 @@ function removeSupportUnindexedChars(source) {
 
   // remove `support.unindexedChars` from `toIterable`
   return source = source.replace(matchFunction(source, 'toIterable'), function(match) {
-    return match.replace(/\s*else if *\(support\.unindexedChars\b[^}]+}/, '');
+    return match.replace(/\s*else if\s*\(support\.unindexedChars\b[^}]+}/, '');
   });
 }
 
@@ -2890,9 +2890,9 @@ function removeSupportProp(source, propName) {
       // match a `try` block
       '(?:( *)try\\b.+\\n)?' +
       // match the `support` property assignment
-      ' *support\\.' + propName + ' *=[\\s\\S]+?;' +
+      ' *support\\.' + propName + '\\s*=[\\s\\S]+?;' +
       // match `catch` block
-      '(?:\\n\\1} *catch\\b[\\s\\S]+?\\n\\1})?'
+      '(?:\\n\\1}\\s*catch\\b[\\s\\S]+?\\n\\1})?'
     , 'm'), '');
   });
 }
@@ -2917,19 +2917,19 @@ function removeVar(source, varName) {
     },
     function(source) {
       // remove a varaible at the start of a declaration list
-      return source.replace(RegExp('(var +)' + varName + ' *=.+?,\\n *'), '$1');
+      return source.replace(RegExp('(var\\s+)' + varName + '\\s*=.+?,\\n *'), '$1');
     },
     function(source) {
       // remove a variable declaration in a declaration list
       return source.replace(RegExp(
-        '( *(?:var +)?[$\\w]+ *=.+?),\\n *' + varName + ' *=.+?([,;])(?=\\n)'
-      ), '$1$2');
+        '^( *(?:var\\s+)?[$\\w]+\\s*=.+?),\\n *' + varName + '\\s*=[\\s\\S]+?([,;])(?=\\n)'
+      , 'm'), '$1$2');
     },
     function(source) {
       // remove a variable that is not part of a declaration list
       return source.replace(RegExp(
         '^' + multilineComment +
-        '( *)var ' + varName + ' *(?:|= *(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1[^\\n ]+?));\\n'
+        '( *)var\\s+' + varName + '\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n'
       , 'm'), '');
     }
   ], function(func) {
@@ -3019,12 +3019,12 @@ function replaceIndent(source, from, to) {
 function replaceSupportProp(source, propName, propValue) {
   return source.replace(RegExp(
     // match a `try` block
-    '(?: *try\\b.+\\n)?' +
+    '^(?: *try\\b.+\\n)?' +
     // match the `support` property assignment
-    '( *support\\.' + propName + ' *=).+\\n' +
+    '( *support\\.' + propName + '\\s*=).+\\n' +
     // match `catch` block
     '(?:( *).+?catch\\b[\\s\\S]+?\\n\\2}\\n)?'
-  ), function(match, left) {
+  , 'm'), function(match, left) {
     return left + ' ' + propValue + ';\n';
   });
 }
@@ -3041,7 +3041,7 @@ function replaceSupportProp(source, propName, propValue) {
 function replaceVar(source, varName, varValue) {
   // replace a variable that's not part of a declaration list
   var result = source.replace(RegExp(
-    '(( *)var ' + varName + ' *=)' +
+    '(( *)var\\s+' + varName + '\\s*=)' +
     '(?:.+?;|(?:Function\\(.+?|.*?[^,])\\n[\\s\\S]+?\\n\\2.+?;)\\n'
   ), function(match, left) {
     return left + ' ' + varValue + ';\n';
@@ -3049,14 +3049,14 @@ function replaceVar(source, varName, varValue) {
 
   if (source == result) {
     // replace a varaible at the start or middle of a declaration list
-    result = source.replace(RegExp('((?:var|\\n) +' + varName + ' *=).+?,'), function(match, left) {
-      return left + ' ' + varValue + ',';
+    result = source.replace(RegExp('((?:var|\\n)\\s+' + varName + '\\s*=).+?(?=,\\n)'), function(match, left) {
+      return left + ' ' + varValue;
     });
   }
   if (source == result) {
     // replace a variable at the end of a variable declaration list
-    result = source.replace(RegExp('(,\\s*' + varName + ' *=).+?;'), function(match, left) {
-      return left + ' ' + varValue + ';';
+    result = source.replace(RegExp('(,\\s*' + varName + '\\s*=).+?(?=;\\n)'), function(match, left) {
+      return left + ' ' + varValue;
     });
   }
   return result;
@@ -3457,7 +3457,7 @@ function build(options, callback) {
         _.pull(varDepMap.baseClone, 'root');
 
         source = source.replace(matchFunction(source, 'baseClone'), function(match) {
-          return match.replace(/^(?: *\/\/.*\n)*( *)if *\(Ctor instanceof Ctor[\s\S]+?\n\1}\n/m, '');
+          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(Ctor\s+instanceof\s+Ctor[\s\S]+?\n\1}\n/m, '');
         });
       }
       if (isUnderscoreChaining) {
@@ -3899,7 +3899,7 @@ function build(options, callback) {
            // replace complex lodash wrapper checks with simpler ones
           if (!isModularize) {
             source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
-              return match.replace(/hasOwnProperty\.call\(([$\w]+), *'__wrapped__'\)/g, '$1 instanceof lodash')
+              return match.replace(/hasOwnProperty\.call\(([$\w]+),\s*'__wrapped__'\)/g, '$1 instanceof lodash')
             });
           }
         }
@@ -4298,19 +4298,19 @@ function build(options, callback) {
         // remove `_.bindKey` support from `baseCreateWrapper` and `createWrapper`
         if (!isLodash('bindKey')) {
           source = source.replace(matchFunction(source, 'baseCreateWrapper'), function(match) {
-            return match.replace(/^( *)if *\(isBindKey\b[\s\S]+?\n\1}\n/m, '');
+            return match.replace(/^( *)if\s*\(isBindKey\b[\s\S]+?\n\1}\n/m, '');
           });
 
           source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
             return match
               .replace(/!isBindKey *&& */, '')
-              .replace(/^( *)if *\(arity\b(?:[\s\S]+?\n\1}){2}\n/m, '');
+              .replace(/^( *)if\s*\(arity\b(?:[\s\S]+?\n\1}){2}\n/m, '');
           });
         }
         // remove `_.curry` support from `baseCreateWrapper`
         if (!isLodash('curry')) {
           source = source.replace(matchFunction(source, 'baseCreateWrapper'), function(match) {
-            return match.replace(/^( *)if *\(isCurry\b[\s\S]+?\n\1}\n/m, '');
+            return match.replace(/^( *)if\s*\(isCurry\b[\s\S]+?\n\1}\n/m, '');
           });
         }
         // remove extended array-like object support from `_.isEmpty`
@@ -4326,7 +4326,7 @@ function build(options, callback) {
           _.pull(funcDepMap.lastIndexOf, 'sortedLastIndex');
 
           source = source.replace(matchFunction(source, 'lastIndexOf'), function(match) {
-            return match.replace(/\s*else if *\(fromIndex\b[^}]+}/, '');
+            return match.replace(/\s*else\s+if\s*\(fromIndex\b[^}]+}/, '');
           });
         }
         // remove `_.partialRight` support from `baseCreateWrapper`
@@ -4336,15 +4336,15 @@ function build(options, callback) {
           _.each(['baseCreateWrapper', 'createWrapper'], function(funcName) {
             source = source.replace(matchFunction(source, funcName), function(match) {
               return match
-                .replace(/,\s*partialRightHolders\b(?: *=.+?(?=[,;]))?/g, '')
-                .replace(/^( *)if *\((?:isPartialRight|partialRightArgs)\b[\s\S]+?\n\1}\n/gm, '');
+                .replace(/,\s*partialRightHolders(?:\s*=[\s\S]+?(?=[,;]\n))?/g, '')
+                .replace(/^( *)if\s*\((?:isPartialRight|partialRightArgs)\b[\s\S]+?\n\1}\n/gm, '');
             });
           });
         }
         // remove support for a `step` of `0` in `_.range`
         if (!isLodash('range')) {
           source = source.replace(matchFunction(source, 'range'), function(match) {
-            return match.replace(/\bstep *== *null\b[^;]+/, '+step || 1');
+            return match.replace(/\bstep\s*==\s*null\b[^;]+/, '+step || 1');
           });
         }
         // remove metadata optimizations
@@ -4362,7 +4362,7 @@ function build(options, callback) {
         });
 
         source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
-          return match.replace(/^( *return )[^;]+?(?=baseCreateWrapper)/m, '$1');
+          return match.replace(/^( *return\s+)[^;]+?(?=baseCreateWrapper)/m, '$1');
         });
 
         // remove callback support from `_.isEqual`, `_.omit`, and `_.pick`
@@ -4398,26 +4398,26 @@ function build(options, callback) {
           });
 
           source = source.replace(matchFunction(source, 'baseEvery'), function(match) {
-            return match.replace(/^( *)result *=[\s\S]+?;\n\1return +result\b/gm, '$& || breakIndicator');
+            return match.replace(/^( *)result\s*=[\s\S]+?;\n\1return\s+result\b/gm, '$& || breakIndicator');
           });
 
           source = source.replace(matchFunction(source, 'baseSome'), function(match) {
-            return match.replace(/^(( *)result *=[\s\S]+?;\n\2return *)!result\b/m, '$1result && breakIndicator');
+            return match.replace(/^(( *)result\s*=[\s\S]+?;\n\2return\s*)!result\b/m, '$1result && breakIndicator');
           });
 
           source = source.replace(matchFunction(source, 'transform'), function(match) {
-            return match.replace(/\breturn +iterator[^)]+\)/, '$& === false && breakIndicator');
+            return match.replace(/\breturn\s+iterator[^)]+\)/, '$& === false && breakIndicator');
           });
 
           _.each(['arrayEach', 'arrayEachRight', 'baseEach', 'baseEachRight', 'baseFor', 'baseForRight'], function(funcName) {
             source = source.replace(matchFunction(source, funcName), function(match) {
-              return match.replace(/=== *false\b/g, '=== breakIndicator');
+              return match.replace(/===\s*false\b/g, '=== breakIndicator');
             });
           });
 
           _.each(['baseFind', 'shimIsPlainObject'], function(funcName) {
             source = source.replace(matchFunction(source, funcName), function(match) {
-              return match.replace(/\breturn +false\b/, 'return breakIndicator');
+              return match.replace(/\breturn\s+false\b/, 'return breakIndicator');
             });
           });
         }
@@ -4559,7 +4559,7 @@ function build(options, callback) {
             if (isLodash(funcName)) {
               return result;
             }
-            return result.replace(RegExp('^( *//.*\\n)* *lodash\\.' + funcName + ' *=[\\s\\S]+?;\\n(\\n)?', 'gm'), function(match, comment, newline) {
+            return result.replace(RegExp('^( *//.*\\n)* *lodash\\.' + funcName + '\\s*=[\\s\\S]+?;\\n(\\n)?', 'gm'), function(match, comment, newline) {
               return (!newline && comment) || newline || '';
             });
           }, match);
@@ -4571,7 +4571,7 @@ function build(options, callback) {
 
           // unexpose `lodash.support`
           if (!isLodash('support')) {
-            source = source.replace(/\blodash\.support *= */, '');
+            source = source.replace(/\blodash\.support\s*=\s*/, '');
           }
         }
       }
@@ -4579,7 +4579,7 @@ function build(options, callback) {
         source = removeGetIndexOf(source);
 
         // replace the `lodash.templateSettings` property assignment with a variable assignment
-        source = source.replace(/\b(lodash\.)(?=templateSettings *=)/, 'var ');
+        source = source.replace(/\b(lodash\.)(?=templateSettings\s*=)/, 'var ');
 
         // remove the `lodash` namespace from properties
         source = source.replace(/\blodash\.(?!com|prototype)([$\w]+)\b(?!\s*=)/g, '$1');
@@ -4589,7 +4589,7 @@ function build(options, callback) {
 
         // remove `lodash` branch in `_.mixin`
         source = source.replace(matchFunction(source, 'mixin'), function(match) {
-          return match.replace(/^(?: *\/\/.*\n)*( *)if *\(!source\b[\s\S]+?\n\1}\n+/m, '');
+          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!source\b[\s\S]+?\n\1}\n+/m, '');
         });
 
         // replace `lodash` use in `_.templateSettings.imports`
@@ -4601,16 +4601,16 @@ function build(options, callback) {
           if (isUnderscore) {
             // assign `_` using `template.imports`
             return match
-              .replace(/(_ *= *)lodash\b/, '$1templateSettings.imports._')
-              .replace(/= *_\.templateSettings(?=[,;])/, '$& || templateSettings');
+              .replace(/(_\s*=\s*)lodash\b/, '$1templateSettings.imports._')
+              .replace(/=\s*_\.templateSettings(?=[,;])/, '$& || templateSettings');
           }
           // assign `settings` using `template.imports`
-          match = match.replace(/= *templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings');
+          match = match.replace(/=\s*templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings');
 
           // remove `sourceURL` from `_.template`
           match = removeVar(match, 'sourceURL');
-          match = match.replace(/^(?: *\/\/.*\n)* *sourceURL *=[^;]+;\n+/m, '');
-          return match.replace(/ *\+ *sourceURL(?=\))/, '');
+          match = match.replace(/^(?: *\/\/.*\n)* *sourceURL\s*=[^;]+;\n+/m, '');
+          return match.replace(/\s*\+\s*sourceURL(?=\))/, '');
         });
 
         if (isNode) {
@@ -4631,26 +4631,26 @@ function build(options, callback) {
     }
     // customize Lo-Dash's export bootstrap
     if (!isAMD || isModularize) {
-      source = source.replace(/^(?: *\/\/.*\n)*( *)if *\(typeof +define\b[\s\S]+?else /m, '$1');
+      source = source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(typeof\s+define\b[\s\S]+?else\s+/m, '$1');
     }
     if (!isNode || isModularize) {
-      source = source.replace(/^(?: *\/\/.*\n)*( *)if *\(moduleExports\b[\s\S]+?else *\{([\s\S]+?\n)\1}\n+/m, '$1$2');
+      source = source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(moduleExports\b[\s\S]+?else\s*\{([\s\S]+?\n)\1}\n+/m, '$1$2');
     }
     if (!isCommonJS || isModularize) {
-      source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)}?) *else *\{)?\s*freeExports\.[$\w]+ *=[\s\S]+?(?:\n\2})?\n+/m, function(match, prelude) {
+      source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)}?)\s*else\s*\{)?\s*freeExports\.[$\w]+\s*=[\s\S]+?(?:\n\2})?\n+/m, function(match, prelude) {
         return prelude ? prelude + '\n' : '';
       });
     }
     if (!isGlobal || isModularize) {
-      source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)}?) *else(?: *if *\(_\))? *\{)?(?:\s*\/\/.*)*\s*(?:root\._|_\.templates) *=[\s\S]+?(?:\n\2})?\n+/gm, function(match, prelude) {
+      source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)}?)\s*else(?:\s*if\s*\(_\))?\s*\{)?(?:\s*\/\/.*)*\s*(?:root\._|_\.templates)\s*=[\s\S]+?(?:\n\2})?\n+/gm, function(match, prelude) {
         return prelude ? prelude + '\n' : '';
       });
     }
     // remove `if (freeExports && freeModule) {...}` if it's empty
     if (isAMD && isGlobal && !isModularize) {
-      source = source.replace(/^(?: *\/\/.*\n)* *(?:else )?if *\(freeExports.*?\) *\{\s*}\n+/m, '');
+      source = source.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*}\n+/m, '');
     } else {
-      source = source.replace(/^(?: *\/\/.*\n)* *(?:else )?if *\(freeExports.*?\) *\{\s*}(?:\s*else *\{([\s\S]+?) *})?\n+/m, '$1\n');
+      source = source.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*}(?:\s*else\s*\{([\s\S]+?)\s*})?\n+/m, '$1\n');
     }
 
     /*------------------------------------------------------------------------*/
@@ -4691,7 +4691,7 @@ function build(options, callback) {
   if (!isTemplate) {
     if (isExcluded('lodash')) {
       // remove `lodashWrapper.prototype` assignment
-      source = source.replace(/^(?: *\/\/.*\n)* *lodashWrapper\.prototype *=.+\n/m, '');
+      source = source.replace(/^(?: *\/\/.*\n)* *lodashWrapper\.prototype\s*=.+\n/m, '');
     }
     if (isExcluded(isModularize ? 'main' : 'mixin')) {
       source = removeMixinCalls(source);
@@ -4767,25 +4767,25 @@ function build(options, callback) {
 
     // remove code used to resolve unneeded `support` properties
     source = source.replace(matchProp(source, 'support'), function(match) {
-      return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var Ctor *=[\s\S]+?(?:\n *for.+)+\n)([\s\S]+?)}\(0, *0\)\);\n/m, function(match, setup, indent, body) {
+      return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var\s+Ctor\s*=[\s\S]+?(?:\n *for.+)+\n)([\s\S]+?)}\(0,\s*0\)\);\n/m, function(match, setup, indent, body) {
         var modified = setup;
 
-        if (!/\.spliceObjects *= *(?!false|true)/.test(body)) {
-          modified = modified.replace(/^ *object *=.+\n/m, '');
+        if (!/\.spliceObjects\s*=\s*(?!false|true)/.test(body)) {
+          modified = modified.replace(/^ *object\s*=.+\n/m, '');
         }
-        if (!/\.enumPrototypes *= *(?!false|true)/.test(body) &&
-            !/\.nonEnumShadows *= *(?!false|true)/.test(body) &&
-            !/\.ownLast *= *(?!false|true)/.test(body)) {
+        if (!/\.enumPrototypes\s*=\s*(?!false|true)/.test(body) &&
+            !/\.nonEnumShadows\s*=\s*(?!false|true)/.test(body) &&
+            !/\.ownLast\s*=\s*(?!false|true)/.test(body)) {
           modified = modified
-            .replace(/\bCtor *=.+\s+/, '')
+            .replace(/\bCtor\s*=.+\s+/, '')
             .replace(/^ *Ctor\.prototype.+\s+.+\n/m, '')
-            .replace(/(?:,\n)? *props *=[^;=]+/, '')
+            .replace(/(?:,\n)? *props\s*=[^;=]+/, '')
         }
-        if (!/\.nonEnumArgs *= *(?!false|true)/.test(body)) {
-          modified = modified.replace(/\s*for *\(var argsKey\b[^}]+}/, '');
+        if (!/\.nonEnumArgs\s*=\s*(?!false|true)/.test(body)) {
+          modified = modified.replace(/\s*for\s*\(var\s+argsKey\b[^}]+}/, '');
         }
-        if (!/\.nonEnumStrings *= *(?!false|true)/.test(body)) {
-          modified = modified.replace(/\s*for *\(var strKey\b[^}]+}/, '');
+        if (!/\.nonEnumStrings\s*=\s*(?!false|true)/.test(body)) {
+          modified = modified.replace(/\s*for\s*\(var\s+strKey\b[^}]+}/, '');
         }
         // cleanup the empty var statement
         modified = modified.replace(/^ *var;\n/m, '');
