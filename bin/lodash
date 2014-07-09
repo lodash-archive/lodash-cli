@@ -185,7 +185,7 @@ var funcDependencyMap = createMap({
   'lodash': ['isArray', 'lodashWrapper'],
   'map': ['arrayMap', 'baseMap', 'callback', 'isArray'],
   'mapValues': ['baseForOwn', 'callback'],
-  'matches': ['baseIsEqual', 'isObject', 'pairs'],
+  'matches': ['baseClone', 'baseIsEqual', 'isObject', 'keys'],
   'max': ['baseEach', 'charAtCallback', 'callback', 'isArray', 'isString'],
   'memoize': ['isFunction'],
   'merge': ['baseMerge', 'createAssigner'],
@@ -3980,22 +3980,27 @@ function build(options, callback) {
         }
         // replace `_.matches`
         if (!isLodash('matches')) {
-          _.pull(funcDepMap.matches, 'baseIsEqual', 'isObject');
+          _.pull(funcDepMap.matches, 'baseClone', 'baseIsEqual', 'isObject', 'keys').push('pairs');
 
           source = replaceFunction(source, 'matches', [
             'function matches(source) {',
             '  var keyVals = pairs(source),',
-            '      keyValsLength = keyVals.length;',
+            '      length = keyVals.length;',
             '',
             '  return function(object) {',
-            '    var length = keyValsLength;',
-            '    if (length && object == null) {',
-            '      return false;',
+            '    var index = length;',
+            '    if (object == null) {',
+            '      return !index;',
             '    }',
-            '    while (length--) {',
-            '      var keyVal = keyVals[length],',
-            '          key = keyVal[0];',
-            '      if (!(object[key] === keyVal[1] && hasOwnProperty.call(object, key))) {',
+            '    while (index--) {',
+            '      var keyVal = keyVals[index];',
+            '      if (object[keyVal[0]] !== keyVal[1]) {',
+            '        return false',
+            '      }',
+            '    }',
+            '    index = length;',
+            '    while (index--) {',
+            '      if (!hasOwnProperty.call(object, keyVals[index][0])) {',
             '        return false',
             '      }',
             '    }',
