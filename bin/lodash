@@ -105,7 +105,7 @@ var funcDependencyMap = createMap({
   'bind': ['basePartial', 'createWrapper', 'slice'],
   'bindAll': ['baseBindAll', 'baseFlatten', 'functions'],
   'bindKey': ['createWrapper', 'slice'],
-  'callback': ['baseCallback', 'matches', 'property'],
+  'callback': ['baseCallback'],
   'camelCase': ['createCompounder'],
   'capitalize': [],
   'chain': ['lodash'],
@@ -127,19 +127,19 @@ var funcDependencyMap = createMap({
   'difference': ['baseDifference', 'baseFlatten', 'isArguments', 'isArray'],
   'drop': ['slice'],
   'dropRight': ['slice'],
-  'dropRightWhile': ['callback', 'slice'],
-  'dropWhile': ['callback', 'slice'],
+  'dropRightWhile': ['getCallback', 'slice'],
+  'dropWhile': ['getCallback', 'slice'],
   'endsWith': [],
   'escape': ['escapeHtmlChar'],
   'escapeRegExp': [],
-  'every': ['arrayEvery', 'baseEvery', 'callback', 'isArray'],
-  'filter': ['arrayFilter', 'baseFilter', 'callback', 'isArray'],
-  'find': ['baseEach', 'baseFind', 'callback', 'findIndex', 'isArray'],
-  'findIndex': ['callback'],
-  'findLastIndex': ['callback'],
-  'findKey': ['baseFind', 'baseForOwn', 'callback'],
-  'findLast': ['baseEachRight', 'baseFind', 'callback'],
-  'findLastKey': ['baseFind', 'baseForOwnRight', 'callback'],
+  'every': ['arrayEvery', 'baseEvery', 'getCallback', 'isArray'],
+  'filter': ['arrayFilter', 'baseFilter', 'getCallback', 'isArray'],
+  'find': ['baseEach', 'baseFind', 'getCallback', 'findIndex', 'isArray'],
+  'findIndex': ['getCallback'],
+  'findLastIndex': ['getCallback'],
+  'findKey': ['baseFind', 'baseForOwn', 'getCallback'],
+  'findLast': ['baseEachRight', 'baseFind', 'getCallback'],
+  'findLastKey': ['baseFind', 'baseForOwnRight', 'getCallback'],
   'findWhere': ['find', 'matches'],
   'first': [],
   'flatten': ['baseFlatten'],
@@ -183,19 +183,19 @@ var funcDependencyMap = createMap({
   'last': [],
   'lastIndexOf': ['sortedLastIndex'],
   'lodash': ['isArray', 'lodashWrapper'],
-  'map': ['arrayMap', 'baseMap', 'callback', 'isArray'],
-  'mapValues': ['baseForOwn', 'callback'],
+  'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
+  'mapValues': ['baseForOwn', 'getCallback'],
   'matches': ['baseClone', 'baseIsEqual', 'isObject', 'keys'],
-  'max': ['baseEach', 'charAtCallback', 'callback', 'isArray', 'isString'],
+  'max': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isString'],
   'memoize': ['isFunction'],
   'merge': ['baseMerge', 'createAssigner'],
-  'min': ['baseEach', 'charAtCallback', 'callback', 'isArray', 'isString'],
+  'min': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isString'],
   'mixin': ['baseFunctions', 'isFunction', 'isObject', 'keys', 'lodash'],
   'negate': ['isFunction'],
   'noConflict': [],
   'noop': [],
   'now': ['isNative'],
-  'omit': ['baseDifference', 'baseFlatten', 'basePick', 'arrayMap', 'callback', 'keysIn', 'negate'],
+  'omit': ['baseDifference', 'baseFlatten', 'basePick', 'arrayMap', 'getCallback', 'keysIn', 'negate'],
   'once': ['before', 'partial'],
   'pad': ['createPad'],
   'padLeft': ['createPad'],
@@ -205,17 +205,17 @@ var funcDependencyMap = createMap({
   'partial': ['basePartial', 'slice'],
   'partialRight': ['basePartial', 'slice'],
   'partition': ['createAggregator'],
-  'pick': ['baseFlatten', 'basePick', 'callback'],
+  'pick': ['baseFlatten', 'basePick', 'getCallback'],
   'pluck': ['map', 'property'],
   'property': [],
   'pull': [],
   'pullAt': ['baseFlatten', 'basePullAt'],
   'random': ['baseRandom'],
   'range': [],
-  'reduce': ['arrayReduce', 'baseEach', 'baseReduce', 'callback', 'isArray'],
-  'reduceRight': ['arrayReduceRight', 'baseEachRight', 'baseReduce', 'callback', 'isArray'],
-  'reject': ['callback', 'filter', 'negate'],
-  'remove': ['callback'],
+  'reduce': ['arrayReduce', 'baseEach', 'baseReduce', 'getCallback', 'isArray'],
+  'reduceRight': ['arrayReduceRight', 'baseEachRight', 'baseReduce', 'getCallback', 'isArray'],
+  'reject': ['getCallback', 'filter', 'negate'],
+  'remove': ['getCallback'],
   'repeat': [],
   'rest': ['slice'],
   'result': ['isFunction'],
@@ -225,28 +225,28 @@ var funcDependencyMap = createMap({
   'size': ['keys'],
   'slice': [],
   'snakeCase': ['createCompounder'],
-  'some': ['arraySome', 'baseSome', 'callback', 'isArray'],
-  'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'callback', 'isArray'],
-  'sortedIndex': ['baseSortedIndex', 'callback', 'identity'],
-  'sortedLastIndex': ['baseSortedIndex', 'callback', 'identity'],
+  'some': ['arraySome', 'baseSome', 'getCallback', 'isArray'],
+  'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'getCallback', 'isArray'],
+  'sortedIndex': ['baseSortedIndex', 'getCallback', 'identity'],
+  'sortedLastIndex': ['baseSortedIndex', 'getCallback', 'identity'],
   'startsWith': [],
   'take': ['slice'],
   'takeRight': ['slice'],
-  'takeRightWhile': ['callback', 'slice'],
-  'takeWhile': ['callback', 'slice'],
+  'takeRightWhile': ['getCallback', 'slice'],
+  'takeWhile': ['getCallback', 'slice'],
   'tap': [],
   'template': ['assign', 'assignOwnDefaults', 'attempt', 'escape', 'escapeStringChar', 'isError', 'keys', 'values'],
   'throttle': ['debounce', 'isFunction', 'isObject'],
   'times': ['baseCallback'],
   'toArray': ['slice', 'toIterable'],
-  'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'callback', 'isArrayLike', 'isObject'],
+  'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'getCallback', 'isArrayLike', 'isObject'],
   'trim': ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
   'trimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
   'trimRight': ['charsRightIndex', 'trimmedRightIndex'],
   'trunc': ['isObject', 'isRegExp'],
   'unescape': ['unescapeHtmlChar'],
   'union': ['baseFlatten', 'baseUniq'],
-  'uniq': ['baseUniq', 'callback'],
+  'uniq': ['baseUniq', 'getCallback'],
   'uniqueId': [],
   'unzip': ['isObject', 'max', 'pluck'],
   'values': ['baseValues', 'keys'],
@@ -275,7 +275,7 @@ var funcDependencyMap = createMap({
   'baseAt': [],
   'baseAssign': ['keys'],
   'baseBindAll': ['createWrapper'],
-  'baseCallback': ['identity', 'isNative', 'setData'],
+  'baseCallback': ['identity', 'isNative',  'matches', 'property', 'setData'],
   'baseClone': ['arrayEach', 'baseAssign', 'baseForOwn', 'cloneBuffer', 'isArguments', 'isArray', 'isFunction', 'isObject', 'isNode', 'slice'],
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
@@ -317,7 +317,7 @@ var funcDependencyMap = createMap({
   'compareMultipleAscending': ['baseCompareAscending'],
   'composeArgs': [],
   'composeArgsRight': [],
-  'createAggregator': ['baseEach', 'callback', 'isArray'],
+  'createAggregator': ['baseEach', 'getCallback', 'isArray'],
   'createAssigner': ['baseCallback'],
   'createBindWrapper': ['createCtorWrapper'],
   'createCtorWrapper': ['baseCreate', 'isObject'],
@@ -329,6 +329,7 @@ var funcDependencyMap = createMap({
   'deburrLetter': [],
   'escapeHtmlChar': [],
   'escapeStringChar': [],
+  'getCallback': ['baseCallback', 'callback'],
   'getHolders': ['lodash'],
   'getIndexOf': ['baseIndexOf', 'indexOf'],
   'isArrayLike': [],
@@ -796,6 +797,7 @@ var privateFuncs = [
   'deburrLetter',
   'escapeHtmlChar',
   'escapeStringChar',
+  'getCallback',
   'getHolders',
   'getIndexOf',
   'isArrayLike',
@@ -3613,13 +3615,12 @@ function build(options, callback) {
 
           source = replaceFunction(source, 'contains', [
             'function contains(collection, target) {',
-            '  var indexOf = getIndexOf(),',
-            '      length = collection ? collection.length : 0;',
+            '  var length = collection ? collection.length : 0;',
             '',
             "  if (!(typeof length == 'number' && length > -1 && length <= MAX_SAFE_INTEGER)) {",
             '    collection = values(collection);',
             '  }',
-            '  return indexOf(collection, target) > -1;',
+            '  return getIndexOf(collection, target) > -1;',
             '}'
           ].join('\n'));
         }
@@ -4031,7 +4032,7 @@ function build(options, callback) {
         }
         // replace `_.omit`
         if (!isLodash('omit')) {
-          _.pull(funcDepMap.omit, 'callback', 'negate');
+          _.pull(funcDepMap.omit, 'getCallback', 'negate');
 
           source = replaceFunction(source, 'omit', [
             'function omit(object) {',
@@ -4054,7 +4055,7 @@ function build(options, callback) {
         }
         // replace `_.pick`
         if (!isLodash('pick')) {
-          _.pull(funcDepMap.pick, 'callback');
+          _.pull(funcDepMap.pick, 'getCallback');
 
           source = replaceFunction(source, 'pick', [
             'function pick(object) {',
@@ -4118,7 +4119,7 @@ function build(options, callback) {
             '      length = collection && collection.length,',
             '      result = Array(length < 0 ? 0 : length >>> 0);',
             '',
-            '  iterator = lodash.callback(iterator, thisArg, 3);',
+            '  iterator = getCallback(iterator, thisArg, 3);',
             '  baseEach(collection, function(value, key, collection) {',
             '    result[++index] = {',
             "      'criteria': iterator(value, key, collection),",
@@ -4279,9 +4280,9 @@ function build(options, callback) {
             '}'
           ].join('\n'));
         }
-        // replace references to external `lodash.createCallback` with internal `createCallback`
+        // replace references to external `getCallback` with internal `createCallback`
         if (!isLodash('callback')) {
-          source = source.replace(/\blodash\.(callback)(?=\()/g, '$1');
+          source = source.replace(/\bgetCallback(?=\()/g, 'createCallback');
         }
         // replace decimal NCRs with hexadecimal NCRs in `htmlEscapes`
         if (!isLodash('escape')) {
@@ -4374,7 +4375,7 @@ function build(options, callback) {
         // remove callback support from `_.isEqual`, `_.omit`, and `_.pick`
         _.each(['isEqual', 'omit', 'pick'], function(funcName) {
           if (!isLodash(funcName) && !(funcName == 'isEqual' && isLodash('baseIsEqual'))) {
-            _.pull(funcDepMap[funcName], 'baseCallback', 'callback');
+            _.pull(funcDepMap[funcName], 'baseCallback', 'getCallback');
           }
         });
 
@@ -4429,30 +4430,26 @@ function build(options, callback) {
         }
       }
       if (isModularize) {
+        source = removeGetIndexOf(source);
+
         _.each(['baseDifference', 'baseUniq', 'contains', 'intersection'], function(funcName) {
           _.pull(funcDepMap[funcName], 'getIndexOf').push('baseIndexOf');
         });
       }
-      // alias `baseCallback` as `callback`
-      if (_.contains(minusFuncs, 'pluck') && _.contains(minusFuncs, 'where')) {
-        _.pull(funcDepMap.callback, 'matches', 'property');
-        source = replaceFunction(source, 'callback', 'var callback = baseCallback;');
-      }
-      // remove "_.pluck" or "_.where" style callback support from `_.callback`
-      else {
-        _.each(['pluck', 'where'], function(funcName) {
-          if (_.contains(minusFuncs, funcName)) {
-            _.pull(funcDepMap.callback, funcName);
-            funcDepMap.callback.push('identity');
+      // remove "_.pluck" or "_.where" style callback support from `baseCallback`
+      _.each(['pluck', 'where'], function(funcName) {
+        if (_.contains(minusFuncs, funcName)) {
+          _.pull(funcDepMap.baseCallback, funcName);
+          funcDepMap.baseCallback.push('identity');
 
-            source = source.replace(matchFunction(source, 'callback'), function(match) {
-              var otherName = funcName == 'where' ? 'matches' : 'property';
-              _.pull(funcDepMap.callback, otherName);
-              return match.replace(RegExp('\\b' + otherName + '\\([^)]+\\)', 'm'), 'identity');
-            });
-          }
-        });
-      }
+          source = source.replace(matchFunction(source, 'baseCallback'), function(match) {
+            var otherName = funcName == 'where' ? 'matches' : 'property';
+            _.pull(funcDepMap.baseCallback, otherName);
+            return match.replace(RegExp('\\b' + otherName + '\\([^)]+\\)', 'm'), 'identity');
+          });
+        }
+      });
+
       // add function names explicitly
       if (!_.isEmpty(includeFuncs)) {
         var result = includeFuncs;
@@ -4582,8 +4579,6 @@ function build(options, callback) {
         }
       }
       if (isModularize) {
-        source = removeGetIndexOf(source);
-
         // replace the `lodash.templateSettings` property assignment with a variable assignment
         source = source.replace(/\b(lodash\.)(?=templateSettings\s*=)/, 'var ');
 
