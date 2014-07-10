@@ -165,7 +165,7 @@ var funcDependencyMap = createMap({
   'isDate': [],
   'isElement': ['isNode', 'isPlainObject'],
   'isEmpty': ['isArguments', 'isArray', 'isFunction', 'isString', 'keys'],
-  'isEqual': ['baseCallback', 'baseIsEqual'],
+  'isEqual': ['baseCallback', 'baseIsEqual', 'isStrictComparable'],
   'isError': [],
   'isFinite': ['isNative'],
   'isFunction': [],
@@ -185,7 +185,7 @@ var funcDependencyMap = createMap({
   'lodash': ['isArray', 'lodashWrapper'],
   'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
   'mapValues': ['baseForOwn', 'getCallback'],
-  'matches': ['baseClone', 'baseIsEqual', 'isObject', 'keys'],
+  'matches': ['baseClone', 'baseIsEqual', 'isStrictComparable', 'keys'],
   'max': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isString'],
   'memoize': ['isFunction'],
   'merge': ['baseMerge', 'createAssigner'],
@@ -335,6 +335,7 @@ var funcDependencyMap = createMap({
   'isArrayLike': [],
   'isNative': ['escapeRegExp'],
   'isNode': [],
+  'isStrictComparable': ['isObject'],
   'lodashWrapper': [],
   'setData': ['identity', 'isNative'],
   'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
@@ -803,6 +804,7 @@ var privateFuncs = [
   'isArrayLike',
   'isNative',
   'isNode',
+  'isStrictComparable',
   'lodashWrapper',
   'setData',
   'shimIsPlainObject',
@@ -3780,6 +3782,7 @@ function build(options, callback) {
         }
         // replace `_.isEqual`
         if (!isLodash('baseIsEqual') && !isLodash('isEqual')) {
+          _.pull(funcDepMap.isEqual, 'baseCallback', 'isStrictComparable');
           _.pull(funcDepMap.baseIsEqual, 'isArguments', 'isNode');
           _.pull(objDepMap.baseIsEqual, 'support');
 
@@ -3981,7 +3984,7 @@ function build(options, callback) {
         }
         // replace `_.matches`
         if (!isLodash('matches')) {
-          _.pull(funcDepMap.matches, 'baseClone', 'baseIsEqual', 'isObject', 'keys').push('pairs');
+          _.pull(funcDepMap.matches, 'baseClone', 'baseIsEqual', 'isStrictComparable', 'keys').push('pairs');
 
           source = replaceFunction(source, 'matches', [
             'function matches(source) {',
@@ -4370,13 +4373,6 @@ function build(options, callback) {
 
         source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
           return match.replace(/^( *return\s+)[^;]+?(?=baseCreateWrapper)/m, '$1');
-        });
-
-        // remove callback support from `_.isEqual`, `_.omit`, and `_.pick`
-        _.each(['isEqual', 'omit', 'pick'], function(funcName) {
-          if (!isLodash(funcName) && !(funcName == 'isEqual' && isLodash('baseIsEqual'))) {
-            _.pull(funcDepMap[funcName], 'baseCallback', 'getCallback');
-          }
         });
 
         // remove conditional `charCodeCallback` use from `_.max` and `_.min`
