@@ -186,10 +186,10 @@ var funcDependencyMap = createMap({
   'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
   'mapValues': ['baseForOwn', 'getCallback'],
   'matches': ['baseClone', 'baseIsEqual', 'isStrictComparable', 'keys'],
-  'max': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isString'],
+  'max': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isString', 'values'],
   'memoize': ['isFunction'],
   'merge': ['baseMerge', 'createAssigner'],
-  'min': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isString'],
+  'min': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isString', 'values'],
   'mixin': ['baseFunctions', 'isFunction', 'isObject', 'keys', 'lodash'],
   'negate': ['isFunction'],
   'noConflict': [],
@@ -4426,7 +4426,15 @@ function build(options, callback) {
             _.pull(funcDepMap[funcName], 'charAtCallback', 'isString');
 
             source = source.replace(matchFunction(source, funcName), function(match) {
-              return match.replace(/=.+?isString[^:]+:\s*/g, '= ');
+              match = removeVar(match, 'noIterator');
+              match = removeVar(match, 'isArr');
+              match = removeVar(match, 'isStr');
+
+              return match
+                .replace(/\s*&&\s*\!isStr\b/, '')
+                .replace(/=.+?isStr[^:]+:\s*/g, '= ')
+                .replace(/\bnoIterator\b/, 'iterator == null')
+                .replace(/\bisArr\b/, 'isArray(collection)');
             });
           }
         });
