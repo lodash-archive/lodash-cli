@@ -2101,12 +2101,14 @@ QUnit.module('underscore builds with lodash methods');
           command += ',chain';
         }
       }
-      if (_.contains(['every', 'some', 'transform'], funcName)) {
-        if (funcName == 'transform') {
-          expected = !!index;
-        }
+      if (_.contains([
+            'every', 'filter', 'find', 'findIndex', 'findKey', 'findLast',
+            'findLastIndex', 'findLastKey', 'map', 'max', 'min', 'omit', 'pick',
+            'some', 'transform'
+          ], funcName)) {
+        expected = !!index;
         if (index) {
-          command += ',forOwn';
+          command += ',callback,forOwn';
         }
       }
       if (tested[command]) {
