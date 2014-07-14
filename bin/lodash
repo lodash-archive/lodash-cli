@@ -884,10 +884,17 @@ function addCommandsToHeader(source, commands) {
  *
  * @private
  * @param {string} source The source to process.
+ * @param {Object} [funcDepMap] The dependency map to modify.
  * @param {boolean} [isModularize=false] A flag to specify a modularize build
  * @returns {string} Returns the modified source.
  */
-function addUnderscoreChaining(source, isModularize) {
+function addUnderscoreChaining(source, funcDepMap, isModularize) {
+  var deps = _.result(funcDepMap, 'mixin', []);
+  _.pull(deps, 'baseFunctions', 'isObject', 'keys').push('functions');
+
+  if (!isModularize) {
+    _.pull(deps, 'isFunction');
+  }
   // replace `_.mixin`
   source = replaceFunction(source, 'mixin', (isModularize
     ? [
@@ -1809,12 +1816,12 @@ function displayHelp() {
  *
  * @private
  * @param {string} funcName The name of the function to get aliases for.
- * @param {Object} [depMap] The dependency map used to validate aliases.
+ * @param {Object} [funcDepMap] The dependency map used to validate aliases.
  * @returns {Array} Returns an array of aliases.
  */
-function getAliases(funcName, depMap) {
+function getAliases(funcName, funcDepMap) {
   var aliases = _.has(realToAliasMap, funcName) && realToAliasMap[funcName];
-  return _.reject(aliases, _.partial(_.has, depMap || funcDependencyMap));
+  return _.reject(aliases, _.partial(_.has, funcDepMap || funcDependencyMap));
 }
 
 /**
@@ -1822,12 +1829,12 @@ function getAliases(funcName, depMap) {
  *
  * @private
  * @param {string} identifier The identifier to query.
- * @param {Object} [depMap] The dependency map used to resolve the identifier.
+ * @param {Object} [funcDepMap] The dependency map used to resolve the identifier.
  * @returns {Array} Returns the array of categories.
  */
-function getCategories(identifier, depMap) {
+function getCategories(identifier, funcDepMap) {
   var result = [];
-  identifier = getRealName(identifier, depMap);
+  identifier = getRealName(identifier, funcDepMap);
 
   _.forOwn(categoryMap, function(identifiers, category) {
     if (_.contains(identifiers, identifier)) {
@@ -1866,12 +1873,12 @@ function getCloneBufferFork(source) {
  * @private
  * @param {string} depName The name of the dependency.
  * @param {string} [fromPath=''] The path to resolve the dependency relative to.
- * @param {Object} [depMap] The dependency map used to resolve identifiers.
+ * @param {Object} [funcDepMap] The dependency map used to resolve identifiers.
  * @returns {string} Returns the dependency path.
  */
-function getDepPath(depName, fromPath, depMap) {
+function getDepPath(depName, fromPath, funcDepMap) {
   var sep = '/',
-      toPath = getModulePath(depName, depMap),
+      toPath = getModulePath(depName, funcDepMap),
       relative = path.relative(fromPath || '', toPath).replace(RegExp(path.sepEscaped, 'g'), sep);
 
   if (relative.charAt(0) != '.') {
@@ -1887,11 +1894,11 @@ function getDepPath(depName, fromPath, depMap) {
  * @private
  * @param {Array} depNames The array dependency names.
  * @param {string} [fromPath=''] The path to resolve dependencies relative to.
- * @param {Object} [depMap] The dependency map used to resolve identifiers.
+ * @param {Object} [funcDepMap] The dependency map used to resolve identifiers.
  * @returns {string[]} Returns the dependency paths.
  */
-function getDepPaths(depNames, fromPath, depMap) {
-  return _.map(depNames, _.partial(getDepPath, _, fromPath, depMap));
+function getDepPaths(depNames, fromPath, funcDepMap) {
+  return _.map(depNames, _.partial(getDepPath, _, fromPath, funcDepMap));
 }
 
 /**
@@ -1899,24 +1906,24 @@ function getDepPaths(depNames, fromPath, depMap) {
  *
  * @private
  * @param {string} funcName A function name or array of function names.
- * @param {Object} [depMap] The dependency map used to look up dependants.
+ * @param {Object} [funcDepMap] The dependency map used to look up dependants.
  * @param {boolean} [isShallow=false] A flag to specify getting only the immediate dependants.
  * @param- {Array} [stackA=[]] Internally used track queried function names.
  * @returns {Array} Returns an array of function dependants.
  */
-function getDependants(funcName, depMap, isShallow, stack) {
+function getDependants(funcName, funcDepMap, isShallow, stack) {
   var funcNames = _.isArray(funcName) ? funcName : [funcName];
-  depMap || (depMap = funcDependencyMap);
+  funcDepMap || (funcDepMap = funcDependencyMap);
   stack || (stack = []);
 
   // iterate over the dependency map, adding names of functions that have `funcName` as a dependency
-  return _.uniq(_.transform(depMap, function(result, depNames, otherName) {
+  return _.uniq(_.transform(funcDepMap, function(result, depNames, otherName) {
     if (!_.contains(stack, otherName) &&
         _.some(funcNames, _.partial(_.contains, depNames, _, 0))) {
       result.push(otherName);
       if (!isShallow) {
         stack.push(otherName);
-        push.apply(result, getDependants(otherName, depMap, isShallow, stack));
+        push.apply(result, getDependants(otherName, funcDepMap, isShallow, stack));
       }
     }
   }, []));
@@ -1929,14 +1936,14 @@ function getDependants(funcName, depMap, isShallow, stack) {
  *
  * @private
  * @param {string|string[]} funcName A function name or array of dependencies to query.
- * @param {Object} [depMap] The dependency map used to look up dependants.
+ * @param {Object} [funcDepMap] The dependency map used to look up dependants.
  * @param {boolean} [isShallow=false] A flag to specify getting only the immediate dependencies.
  * @param- {Array} [stackA=[]] Internally used track queried function names.
  * @returns {Array} Returns an array of function dependencies.
  */
-function getDependencies(funcName, depMap, isShallow, stack) {
-  var depNames = _.isArray(funcName) ? funcName : depMap[funcName];
-  depMap || (depMap = funcDependencyMap);
+function getDependencies(funcName, funcDepMap, isShallow, stack) {
+  var depNames = _.isArray(funcName) ? funcName : funcDepMap[funcName];
+  funcDepMap || (funcDepMap = funcDependencyMap);
 
   if (!_.size(depNames)) {
     return [];
@@ -1952,7 +1959,7 @@ function getDependencies(funcName, depMap, isShallow, stack) {
     if (!_.contains(stack, otherName)) {
       stack.push(otherName);
       result.push(otherName);
-      push.apply(result, getDependencies(otherName, depMap, isShallow, stack));
+      push.apply(result, getDependencies(otherName, funcDepMap, isShallow, stack));
     }
   }));
 }
@@ -2074,19 +2081,19 @@ function getMethodAssignments(source) {
  * @private
  * @param {string} identifier The module identifier.
  * @param {string} [category] The category of the identifier.
- * @param {Object} [depMap] The dependency map used to resolve identifiers.
+ * @param {Object} [funcDepMap] The dependency map used to resolve identifiers.
  * @returns {string} Returns the module path.
  */
-function getModulePath(identifier, category, depMap) {
+function getModulePath(identifier, category, funcDepMap) {
   if (topLevel[identifier]) {
     return '';
   }
   if (_.isObject(category)) {
-    depMap = category;
+    funcDepMap = category;
     category = null;
   }
   if (!category) {
-    category = _.first(getCategories(identifier, depMap));
+    category = _.first(getCategories(identifier, funcDepMap));
   }
   return (category || 'internal').toLowerCase();
 }
@@ -2142,12 +2149,12 @@ function getOption(options, name, defaultValue) {
  *
  * @private
  * @param {string} funcName The name of the function to resolve.
- * @param {Object} [depMap] The dependency map used to validate the real name.
+ * @param {Object} [funcDepMap] The dependency map used to validate the real name.
  * @returns {string} Returns the real function name.
  */
-function getRealName(funcName, depMap) {
+function getRealName(funcName, funcDepMap) {
   return (
-    !_.has(depMap || funcDependencyMap, funcName) &&
+    !_.has(funcDepMap || funcDependencyMap, funcName) &&
     _.has(aliasToRealMap, funcName) &&
     aliasToRealMap[funcName]
   ) || funcName;
@@ -2444,9 +2451,31 @@ function removeComments(source) {
  *
  * @private
  * @param {string} source The source to process.
+ * @param {Object} [funcDepMap] The function dependency map to modify.
+ * @param {Object} [objDepMap] The object dependency map to modify.
+ * @param {Object} [varDepMap] The variable dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeEsOptimization(source) {
+function removeEsOptimization(source, funcDepMap, objDepMap, varDepMap) {
+  var deps = _.result(funcDepMap, 'createWrapper', []);
+  _.pull(deps, 'slice');
+
+  deps = _.result(objDepMap, 'baseCallback', []);
+  _.pull(deps, 'support');
+
+  deps = _.result(varDepMap, 'support', []);
+  _.pull(deps, 'root');
+
+  _.each(['baseCallback', 'support'], function(identifier) {
+    var deps = _.result(funcDepMap, identifier, []);
+    _.pull(deps, 'isNative');
+  });
+
+  _.each(['baseCallback', 'baseCreateWrapper'], function(funcName) {
+    var deps = _.result(funcDepMap, funcName, []);
+    _.pull(deps, 'setData');
+  });
+
   source = removeSupportProp(source, 'funcDecomp');
   source = removeSupportProp(source, 'funcNames');
 
@@ -2488,22 +2517,58 @@ function removeFunction(source, funcName) {
 }
 
 /**
+ * Removes all references to `getCallback` from `source`.
+ *
+ * @private
+ * @param {string} source The source to process.
+ * @param {Object} [funcDepMap] The dependency map to modify.
+ * @returns {string} Returns the modified source.
+ */
+function removeGetCallback(source, funcDepMap) {
+  source = removeFunction(source, 'getCallback');
+
+  _.each([
+    'dropRightWhile', 'dropWhile', 'every', 'filter', 'find', 'findIndex',
+    'findLastIndex', 'findKey', 'findLast', 'findLastKey', 'map', 'mapValues',
+    'max', 'min', 'omit', 'pick', 'reduce', 'reduceRight', 'reject', 'remove',
+    'some', 'sortBy', 'sortedIndex', 'sortedLastIndex', 'takeRightWhile',
+    'takeWhile', 'transform', 'uniq', 'createAggregator'
+  ], function(funcName) {
+    source = source.replace(matchFunction(source, funcName), function(match) {
+      // replace all `getCallback` calls with `baseCallback`
+      return match.replace(/\bgetCallback(?:\(\))?/g, function() {
+        var deps = _.result(funcDepMap, funcName, []);
+        _.pull(deps, 'getCallback').push('baseCallback');
+        return 'baseCallback';
+      });
+    });
+  });
+
+  return source;
+}
+
+/**
  * Removes all references to `getIndexOf` from `source`.
  *
  * @private
  * @param {string} source The source to process.
+ * @param {Object} [funcDepMap] The dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeGetIndexOf(source) {
+function removeGetIndexOf(source, funcDepMap) {
   source = removeFunction(source, 'getIndexOf');
 
-  _.each(['baseDifference', 'baseUniq', 'contains', 'intersection'], function(funcName) {
+  _.each(['baseDifference', 'baseUniq', 'contains', 'intersection', 'uniq'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
-      return match
-        // replace all `getIndexOf` calls with `baseIndexOf`
-        .replace(/\bgetIndexOf\(\)/g, 'baseIndexOf')
-        // simplify `isLarge` assignments
-        .replace(/\s*&&\s*indexOf\s*===\s*baseIndexOf\b/g, '')
+      // remove "indexOf" comparisons
+      match = match.replace(/\s*&&\s*indexOf(?:\(\))?\s*==\s*baseIndexOf\b/g, '');
+
+      // replace all `getIndexOf` calls with `baseIndexOf`
+      return match.replace(/\bgetIndexOf(?:\(\))?/g, function() {
+        var deps = _.result(funcDepMap, funcName, []);
+        _.pull(deps, 'getIndexOf').push('baseIndexOf');
+        return 'baseIndexOf';
+      });
     });
   });
 
@@ -2705,10 +2770,22 @@ function removeStrings(source) {
  *
  * @private
  * @param {string} source The source to process.
+ * @param {Object} [funcDepMap] The function dependency map to modify.
+ * @param {Object} [objDepMap] The object dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeSupportArgsClass(source) {
+function removeSupportArgsClass(source, funcDepMap, objDepMap) {
   source = removeSupportProp(source, 'argsClass');
+
+  _.each(['isArguments', 'isPlainObject'], function(funcName) {
+    var deps = _.result(objDepMap, funcName, []);
+    _.pull(deps, 'support');
+  });
+
+  _.each(['baseClone', 'baseIsEqual', 'isPlainObject', 'shimIsPlainObject'], function(funcName) {
+    var deps = _.result(funcDepMap, funcName, []);
+    _.pull(deps, 'isArguments');
+  });
 
   // replace `support.argsClass` in the `_.isArguments` fork
   source = source.replace(getIsArgumentsFork(source), function(match) {
@@ -2735,9 +2812,13 @@ function removeSupportArgsClass(source) {
  *
  * @private
  * @param {string} source The source to process.
+ * @param {Object} [objDepMap] The dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeSupportDom(source) {
+function removeSupportDom(source, objDepMap) {
+  var deps = _.result(objDepMap, 'isElement', []);
+  _.pull(deps, 'support');
+
   source = removeSupportProp(source, 'dom');
   return removeIsElementFork(source);
 }
@@ -2774,10 +2855,16 @@ function removeSupportEnumPrototypes(source) {
  *
  * @private
  * @param {string} source The source to process.
+ * @param {Object} [funcDepMap] The dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeSupportNodeClass(source) {
+function removeSupportNodeClass(source, funcDepMap) {
   source = removeSupportProp(source, 'nodeClass');
+
+  _.each(['baseClone', 'baseIsEqual', 'isElement', 'shimIsPlainObject'], function(funcName) {
+    var deps = _.result(funcDepMap, funcName, []);
+    _.pull(deps, 'isNode');
+  });
 
   // remove `support.nodeClass` from `baseClone` and `shimIsPlainObject`
   _.each(['baseClone', 'shimIsPlainObject'], function(funcName) {
@@ -2840,10 +2927,12 @@ function removeSupportNonEnumStrings(source) {
  *
  * @private
  * @param {string} source The source to process.
+* @param {Object} [objDepMap] The dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeSupportOwnLast(source) {
-  source = removeSupportProp(source, 'ownLast');
+function removeSupportOwnLast(source, objDepMap) {
+  var deps = _.result(objDepMap, 'shimIsPlainObject', []);
+  _.pull(deps, 'support');
 
   // remove `support.ownLast` from `shimIsPlainObject`
   return source.replace(matchFunction(source, 'shimIsPlainObject'), function(match) {
@@ -2868,10 +2957,20 @@ function removeSupportSpliceObjects(source) {
  *
  * @private
  * @param {string} source The source to process.
+ * @param {Object} [funcDepMap] The function dependency map to modify.
+ * @param {Object} [objDepMap] The object dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeSupportUnindexedChars(source) {
+function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
   source = removeSupportProp(source, 'unindexedChars');
+
+  var deps =  _.result(objDepMap, 'toIterable', []);
+  _.pull(deps, 'support');
+
+  _.each(['toIterable', 'shimKeys'], function(funcName) {
+    var deps = _.result(funcDepMap, funcName, []);
+    _.pull(deps, 'isString');
+  });
 
   // remove `support.unindexedChars` from `toIterable`
   return source = source.replace(matchFunction(source, 'toIterable'), function(match) {
@@ -3465,48 +3564,26 @@ function build(options, callback) {
         });
       }
       if (isUnderscoreChaining) {
-        source = addUnderscoreChaining(source, isModularize);
-        _.pull(funcDepMap.mixin, 'baseFunctions', 'isObject', 'keys').push('functions');
-
-        if (!isModularize) {
-          _.pull(funcDepMap.mixin, 'isFunction');
-        }
+        source = addUnderscoreChaining(source, funcDepMap, isModularize);
       }
       if (isModern || (isUnderscore && _.isEmpty(plusFuncs))) {
-        source = removeSupportEnumErrorProps(source);
+        source = removeSupportOwnLast(source, objDepMap);
+        source = removeSupportUnindexedChars(source, funcDepMap, objDepMap);
+
+        source = removeSupportEnumErrorProps(source)
         source = removeSupportEnumPrototypes(source);
         source = removeSupportNonEnumShadows(source);
         source = removeSupportNonEnumStrings(source);
-        source = removeSupportOwnLast(source);
 
-        _.each([
-          'baseClone', 'baseIsEqual', 'isArguments', 'isPlainObject', 'keys',
-          'shimIsPlainObject', 'toIterable'
-        ], function(funcName) {
-          if (!(isUnderscore && isLodash(funcName))) {
-            _.pull(objDepMap[funcName], 'support');
-          }
+        _.each(['keys', 'keysIn', 'shimKeys'], function(funcName) {
+          _.pull(objDepMap, funcName, 'support');
         });
 
-        source = removeSupportArgsClass(source);
-        _.each(['baseClone', 'baseIsEqual', 'isPlainObject', 'shimIsPlainObject'], function(funcName) {
-          if (!(isUnderscore && isLodash(funcName))) {
-            _.pull(funcDepMap[funcName], 'isArguments');
-          }
-        });
+        source = removeSupportArgsClass(source, funcDepMap, objDepMap);
+        source = removeSupportNodeClass(source, funcDepMap);
 
-        source = removeSupportNodeClass(source);
-        _.each(['baseClone', 'baseIsEqual', 'isElement', 'shimIsPlainObject'], function(funcName) {
-          if (!(isUnderscore && isLodash(funcName))) {
-            _.pull(funcDepMap[funcName], 'isNode');
-          }
-        });
-
-        source = removeSupportUnindexedChars(source);
-        _.each(['toIterable', 'shimKeys'], function(funcName) {
-          if (!(isUnderscore && isLodash(funcName))) {
-            _.pull(funcDepMap[funcName], 'isString');
-          }
+        _.each(['baseClone', 'baseIsEqual'], function(funcName) {
+          _.pull(objDepMap, funcName, 'support');
         });
       }
       if (isModern || isUnderscore) {
@@ -3769,10 +3846,8 @@ function build(options, callback) {
         }
         // replace `_.isElement`
         if (!isLodash('isElement')) {
+          source = removeSupportDom(source, objDepMap);
           funcDepMap.isElement = [];
-          _.pull(objDepMap.isElement, 'support');
-
-          source = removeSupportDom(source);
 
           source = replaceFunction(source, 'isElement', [
             'function isElement(value) {',
@@ -4283,10 +4358,6 @@ function build(options, callback) {
             '}'
           ].join('\n'));
         }
-        // replace references to external `getCallback` with internal `createCallback`
-        if (!isLodash('callback')) {
-          source = source.replace(/\bgetCallback(?=\()/g, 'createCallback');
-        }
         // replace decimal NCRs with hexadecimal NCRs in `htmlEscapes`
         if (!isLodash('escape')) {
           _.each(['htmlEscapes', 'htmlUnescapes', 'reEscapedHtml'], function(varName) {
@@ -4357,23 +4428,7 @@ function build(options, callback) {
             return match.replace(/\bstep\s*==\s*null\b[^;]+/, '+step || 1');
           });
         }
-        // remove metadata optimizations
-        source = removeEsOptimization(source);
-        _.pull(funcDepMap.createWrapper, 'slice');
-        _.pull(objDepMap.baseCallback, 'support');
-        _.pull(varDepMap.support, 'root');
-
-        _.each(['baseCallback', 'support'], function(identifier) {
-          _.pull(funcDepMap[identifier], 'isNative');
-        });
-
-        _.each(['baseCallback', 'baseCreateWrapper'], function(funcName) {
-          _.pull(funcDepMap[funcName], 'setData');
-        });
-
-        source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
-          return match.replace(/^( *return\s+)[^;]+?(?=baseCreateWrapper)/m, '$1');
-        });
+        source = removeEsOptimization(source, funcDepMap, objDepMap, varDepMap);
 
         // remove conditional `charCodeCallback` use from `_.max` and `_.min`
         _.each(['max', 'min'], function(funcName) {
@@ -4425,12 +4480,11 @@ function build(options, callback) {
           });
         }
       }
-      if (isModularize) {
-        source = removeGetIndexOf(source);
-
-        _.each(['baseDifference', 'baseUniq', 'contains', 'intersection'], function(funcName) {
-          _.pull(funcDepMap[funcName], 'getIndexOf').push('baseIndexOf');
-        });
+      if (isModularize || !isLodash('callback')) {
+        source = removeGetCallback(source, funcDepMap);
+      }
+      if (isModularize || !isLodash('indexOf')) {
+        source = removeGetIndexOf(source, funcDepMap);
       }
       // remove "_.pluck" or "_.where" style callback support from `baseCallback`
       _.each(['pluck', 'where'], function(funcName) {
