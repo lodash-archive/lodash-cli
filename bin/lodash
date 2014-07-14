@@ -2841,10 +2841,14 @@ function removeSupportEnumErrorProps(source) {
  *
  * @private
  * @param {string} source The source to process.
+ * @param {Object} [objDepMap] The dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeSupportEnumPrototypes(source) {
+function removeSupportEnumPrototypes(source, objDepMap) {
   source = removeSupportProp(source, 'enumPrototypes');
+
+  var deps = _.result(objDepMap, 'keys', []);
+  _.pull(deps, 'support');
 
   // remove `support.enumPrototypes` from `_.keys`
   return source.replace(matchFunction(source, 'keys'), function(match) {
@@ -3567,14 +3571,11 @@ function build(options, callback) {
         source = addUnderscoreChaining(source, funcDepMap, isModularize);
       }
       if (isModern || (isUnderscore && _.isEmpty(plusFuncs))) {
-        source = removeSupportEnumErrorProps(source)
-        source = removeSupportEnumPrototypes(source);
+        source = removeSupportEnumErrorProps(source);
+        source = removeSupportEnumPrototypes(source, objDepMap);
         source = removeSupportNonEnumShadows(source);
         source = removeSupportNonEnumStrings(source);
-
-        _.each(['keys', 'keysIn', 'shimKeys'], function(funcName) {
-          _.pull(objDepMap[funcName], 'support');
-        });
+        source = removeSupportUnindexedChars(source, funcDepMap, objDepMap);
 
         source = removeSupportArgsClass(source, funcDepMap, objDepMap);
         source = removeSupportNodeClass(source, funcDepMap);
@@ -3583,8 +3584,6 @@ function build(options, callback) {
         _.each(['baseClone', 'baseIsEqual', 'shimIsPlainObject'], function(funcName) {
           _.pull(objDepMap[funcName], 'support');
         });
-
-        source = removeSupportUnindexedChars(source, funcDepMap, objDepMap);
       }
       if (isModern || isUnderscore) {
         // replace `_.isRegExp`
