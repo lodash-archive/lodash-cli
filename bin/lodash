@@ -4423,7 +4423,7 @@ function build(options, callback) {
         // remove conditional `charCodeCallback` use from `_.max` and `_.min`
         _.each(['max', 'min'], function(funcName) {
           if (!isLodash(funcName)) {
-            _.pull(funcDepMap[funcName], 'charAtCallback', 'isString');
+            _.pull(funcDepMap[funcName], 'charAtCallback', 'isArray', 'isString');
 
             source = source.replace(matchFunction(source, funcName), function(match) {
               match = removeVar(match, 'noIterator');
