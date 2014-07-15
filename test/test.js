@@ -529,12 +529,12 @@ function testMethod(lodash, methodName, message) {
 
   try {
     if (_.contains(categoryMap.Array, methodName)) {
-      if (/(?:indexOf|sortedIndex|without)$/i.test(methodName)) {
-        func(array, string);
+      if (methodName == 'range') {
+        func(2, 4);
       } else if (/^(?:difference|intersection|union|uniq|zip)/.test(methodName)) {
         func(array, array);
-      } else if (methodName == 'range') {
-        func(2, 4);
+      } else if (/(?:indexOf|sortedIndex|without)$/i.test(methodName)) {
+        func(array, string);
       } else {
         func(array);
       }
@@ -543,40 +543,35 @@ function testMethod(lodash, methodName, message) {
       lodash(array)[methodName](_.noop);
     }
     else if (_.contains(categoryMap.Collection, methodName)) {
-      if (/^(?:count|group|sort)By$/.test(methodName)) {
+      if (methodName == 'at') {
+        func(array, 0, 2);
+        func(object, 'a', 'c');
+      } else if (methodName == 'invoke') {
+        func(array, 'slice');
+        func(object, 'toFixed');
+      } else if (methodName == 'where') {
+        func(array, object);
+        func(object, object);
+      } else if (/^(?:count|group|sort)By$/.test(methodName)) {
         func(array, _.noop);
         func(array, string);
         func(object, _.noop);
         func(object, string);
-      }
-      else if (/^(?:size|toArray)$/.test(methodName)) {
+      } else if (/^(?:size|toArray)$/.test(methodName)) {
         func(array);
         func(object);
-      }
-      else if (methodName == 'at') {
-        func(array, 0, 2);
-        func(object, 'a', 'c');
-      }
-      else if (methodName == 'invoke') {
-        func(array, 'slice');
-        func(object, 'toFixed');
-      }
-      else if (methodName == 'where') {
-        func(array, object);
-        func(object, object);
-      }
-      else {
+      } else {
         func(array, _.noop, object);
         func(object, _.noop, object);
       }
     }
     else if (_.contains(categoryMap.Function, methodName)) {
-      if (methodName == 'after') {
-        func(1, _.noop);
-      } else if (methodName == 'bindAll') {
+      if (methodName == 'bindAll') {
         func({ 'noop': _.noop });
       } else if (methodName == 'bindKey') {
         func(lodash, 'identity', array, string);
+      } else if (/^(?:after|before)$/.test(methodName)) {
+        func(2, _.noop);
       } else if (/^(?:bind|partial(?:Right)?)$/.test(methodName)) {
         func(_.noop, object, array, string);
       } else if (/^(?:compose|memoize|wrap)$/.test(methodName)) {
@@ -591,15 +586,14 @@ function testMethod(lodash, methodName, message) {
       if (methodName == 'clone') {
         func(object);
         func(object, true);
-      }
-      else if (/^(?:defaults|extend|merge)$/.test(methodName)) {
+      } else if (methodName == 'has') {
+        func(object, string);
+      } else if (/^(?:assign|defaults|extend|merge)$/.test(methodName)) {
         func({}, object);
       } else if (/^for(?:In|Own)(?:Right)?$/.test(methodName)) {
         func(object, _.noop);
       } else if (/^(?:omit|pick)$/.test(methodName)) {
         func(object, 'b');
-      } else if (methodName == 'has') {
-        func(object, string);
       } else {
         func(object);
       }
@@ -2063,9 +2057,11 @@ QUnit.module('underscore builds with lodash methods');
     'pluck',
     'reduce',
     'reduceRight',
+    'reject',
     'result',
     'rest',
     'some',
+    'sortedIndex',
     'tap',
     'template',
     'throttle',
@@ -2084,7 +2080,6 @@ QUnit.module('underscore builds with lodash methods');
     return String(value)
       .replace(/^ *\/\/.*/gm, '')
       .replace(/\bcontext\b/g, '')
-      .replace(/\blodash\.(callback)(?=\()/g, '$1')
       .replace(/[\s;]/g, '');
   }
 
@@ -2104,7 +2099,8 @@ QUnit.module('underscore builds with lodash methods');
       if (_.contains([
             'every', 'filter', 'find', 'findIndex', 'findKey', 'findLast',
             'findLastIndex', 'findLastKey', 'map', 'max', 'min', 'omit', 'pick',
-            'some', 'transform'
+            'reduce', 'reduceRight', 'reject', 'some', 'sortedIndex', 'transform',
+            'uniq'
           ], funcName)) {
         expected = !!index;
         if (index) {
