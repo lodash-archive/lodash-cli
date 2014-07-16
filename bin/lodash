@@ -3244,12 +3244,13 @@ function build(options, callback) {
 
   var isLodash = function(funcName) {
     funcName = getRealName(funcName);
-    if (_.contains(lodashOnlyFuncs, funcName) || /^(?:assign|zipObject)$/.test(funcName)) {
-      var funcNames = _.difference(_.union(includeFuncs, plusFuncs), minusFuncs);
-      return _.contains(funcNames, funcName);
-    }
-    funcNames = _.difference(plusFuncs, minusFuncs);
-    return _.contains(funcNames, funcName);
+
+    var funcNames = (isUnderscore && ((/^(?:assign|zipObject)$/.test(funcName) || _.contains(lodashOnlyFuncs, funcName))))
+      ? _.difference(_.union(includeFuncs, plusFuncs), minusFuncs)
+      : _.difference(plusFuncs, minusFuncs);
+
+    var result = _.contains(funcNames, funcName);
+    return isUnderscore ? result : !result;
   };
 
   if (state) {
@@ -3587,7 +3588,7 @@ function build(options, callback) {
       }
       if (isModern || isUnderscore) {
         // replace `_.isRegExp`
-        if (!isUnderscore) {
+        if (isLodash('isRegExp') == !isUnderscore) {
           _.pull(funcDepMap.isRegExp, 'isObject');
 
           source = replaceFunction(source, 'isRegExp', [
@@ -3597,7 +3598,7 @@ function build(options, callback) {
           ].join('\n'));
         }
         // replace `_.keysIn`
-        if (!(isUnderscore && isLodash('keysIn'))) {
+        if (isLodash('keysIn') == !isUnderscore) {
           _.pull(funcDepMap.keysIn, 'arrayEach', 'isString');
 
           source = replaceFunction(source, 'keysIn', [
@@ -3732,7 +3733,7 @@ function build(options, callback) {
           ].join('\n'));
         }
         // replace `baseDifference`
-        if (!(isUnderscore && (isLodash('baseDifference') || isLodash('difference')))) {
+        if (!isLodash('baseDifference') && !isLodash('difference')) {
           _.pull(funcDepMap.baseDifference, 'cacheIndexOf', 'createCache');
 
           source = replaceFunction(source, 'baseDifference', [
@@ -3787,7 +3788,7 @@ function build(options, callback) {
           ].join('\n'));
         }
         // replace `_.intersection`
-        if (!(isUnderscore && isLodash('intersection'))) {
+        if (!isLodash('intersection')) {
           _.pull(funcDepMap.intersection, 'cacheIndexOf', 'createCache');
 
           source = replaceFunction(source, 'intersection', [
@@ -4313,7 +4314,7 @@ function build(options, callback) {
           ].join('\n'));
         }
         // replace `baseUniq`
-        if (!(isUnderscore && (isLodash('baseUniq') || isLodash('uniq')))) {
+        if (!isLodash('baseUniq') && !isLodash('uniq')) {
           _.pull(funcDepMap.baseUniq, 'cacheIndexOf', 'createCache');
 
           source = replaceFunction(source, 'baseUniq', [
