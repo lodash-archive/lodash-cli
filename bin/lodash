@@ -3567,6 +3567,17 @@ function build(options, callback) {
         source = source.replace(matchFunction(source, 'baseClone'), function(match) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(Ctor\s+instanceof\s+Ctor[\s\S]+?\n\1}\n/m, '');
         });
+
+        // replace `_.isRegExp`
+        if (isLodash('isRegExp')) {
+          _.pull(funcDepMap.isRegExp, 'isObject');
+
+          source = replaceFunction(source, 'isRegExp', [
+            'function isRegExp(value) {',
+            "  return (value && typeof value == 'object' && toString.call(value) == regexpClass) || false;",
+            '}'
+          ].join('\n'));
+        }
       }
       if (isUnderscoreChaining) {
         source = addUnderscoreChaining(source, funcDepMap, isModularize);
@@ -3587,16 +3598,6 @@ function build(options, callback) {
         });
       }
       if (isModern || isUnderscore) {
-        // replace `_.isRegExp`
-        if (isLodash('isRegExp') == !isUnderscore) {
-          _.pull(funcDepMap.isRegExp, 'isObject');
-
-          source = replaceFunction(source, 'isRegExp', [
-            'function isRegExp(value) {',
-            "  return (value && typeof value == 'object' && toString.call(value) == regexpClass) || false;",
-            '}'
-          ].join('\n'));
-        }
         // replace `_.keysIn`
         if (isLodash('keysIn') == !isUnderscore) {
           _.pull(funcDepMap.keysIn, 'arrayEach', 'isString');
