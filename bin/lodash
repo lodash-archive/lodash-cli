@@ -336,14 +336,15 @@ var funcDependencyMap = createMap({
   'isNative': ['escapeRegExp'],
   'isNode': [],
   'isStrictComparable': ['isObject'],
+  'isWhitespace': [],
   'lodashWrapper': [],
   'setData': ['identity', 'isNative'],
   'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
   'shimKeys': ['isArguments', 'isArray', 'isString', 'keysIn'],
   'sortedUniq': [],
   'toIterable': ['isString', 'values'],
-  'trimmedLeftIndex': [],
-  'trimmedRightIndex': [],
+  'trimmedLeftIndex': ['isWhitespace'],
+  'trimmedRightIndex': ['isWhitespace'],
   'unescapeHtmlChar': []
 });
 
@@ -806,6 +807,7 @@ var privateFuncs = [
   'isNative',
   'isNode',
   'isStrictComparable',
+  'isWhitespace',
   'lodashWrapper',
   'setData',
   'shimIsPlainObject',
