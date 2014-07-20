@@ -64,6 +64,7 @@ lodash.findLastKey = require('lodash.findlastkey');
 lodash.findWhere = require('lodash.findwhere');
 lodash.first = require('lodash.first');
 lodash.flatten = require('lodash.flatten');
+lodash.flattenDeep = require('lodash.flattendeep');
 lodash.forEach = require('lodash.foreach');
 lodash.forEachRight = require('lodash.foreachright');
 lodash.forIn = require('lodash.forin');
