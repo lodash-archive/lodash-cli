@@ -2492,7 +2492,8 @@ function removeEsOptimization(source, funcDepMap, objDepMap, varDepMap) {
   _.each(['baseCallback', 'baseCreateWrapper', 'createWrapper'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match
-        .replace(/^(?: *\/\/.*\n)*( *)var\s+funcData\s*=[\s\S]+?\n\1}\n/m, '')
+        .replace(/^(?: *\/\/.*\n)*( *)var\s+(?:data|funcData)\s*=[\s\S]+?\n\1}\n/m, '')
+        .replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:data|funcData)\b[\s\S]+?\n\1}\n/m, '')
         .replace(/^(?: *\/\/.*\n)* *setData.+\n/m, '')
         .replace(/^( *return\s+)setData\(([^,]+),[^)]+\)/gm, '$1$2')
     });
