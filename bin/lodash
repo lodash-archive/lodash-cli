@@ -3681,6 +3681,18 @@ function build(options, callback) {
             '}'
           ].join('\n'));
         }
+        // replace `_.bind`
+        if (!isLodash('bind')) {
+          _.pull(funcDepMap.bind, 'getHolders');
+
+          source = replaceFunction(source, 'bind', [
+            'function bind(func, thisArg) {',
+            '  return arguments.length < 3',
+            '    ? createWrapper([func, BIND_FLAG, null, thisArg])',
+            '    : basePartial(func, BIND_FLAG | PARTIAL_FLAG, slice(arguments, 2), [], thisArg);',
+            '}'
+          ].join('\n'));
+        }
         // replace `_.clone`
         if (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep')) {
           _.pull(funcDepMap.clone, 'baseClone', 'baseCallback').push('assign', 'isArray', 'isObject', 'slice');
