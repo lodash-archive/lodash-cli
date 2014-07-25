@@ -2152,6 +2152,17 @@ function getOption(options, name, defaultValue) {
 }
 
 /**
+ * Gets the `_.parseInt` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to inspect.
+ * @returns {string} Returns the fork.
+ */
+function getParseIntFork(source) {
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(nativeParseInt\(whitespace\b[\s\S]+?\n\1  parseInt\s*=[\s\S]+?\n\1}\n/m), 0, '');
+}
+
+/**
  * Gets the real name, not alias, of a given function name.
  *
  * @private
@@ -2702,6 +2713,17 @@ function removeMixinCalls(source) {
  */
 function removeNowFork(source) {
   return source.replace(getNowFork(source), '');
+}
+
+/**
+ * Removes the `_.parseInt` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to process.
+ * @returns {string} Returns the modified source.
+ */
+function removeParseIntFork(source) {
+  return source.replace(getParseIntFork(source), '');
 }
 
 /**
@@ -4808,7 +4830,8 @@ function build(options, callback) {
       'isArray': removeIsArrayFork,
       'isElement': removeIsElementFork,
       'isFunction': removeIsFunctionFork,
-      'now': removeNowFork
+      'now': removeNowFork,
+      'parseInt': removeParseIntFork,
     },
     function(removeFork, funcName) {
       if (isExcluded(funcName)) {
