@@ -239,7 +239,7 @@ var funcDependencyMap = createMap({
   'template': ['assign', 'assignOwnDefaults', 'attempt', 'escape', 'escapeStringChar', 'isError', 'keys', 'values'],
   'throttle': ['debounce', 'isFunction', 'isObject'],
   'times': ['baseCallback'],
-  'toArray': ['slice', 'toIterable'],
+  'toArray': ['isString', 'slice', 'values'],
   'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'getCallback', 'isArrayLike', 'isObject'],
   'trim': ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
   'trimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
@@ -362,6 +362,7 @@ var objDependencyMap = createMap({
   'shimIsPlainObject': ['support'],
   'shimKeys': ['support'],
   'template': ['templateSettings'],
+  'toArray': ['support'],
   'toIterable': ['support']
 });
 
@@ -2822,7 +2823,7 @@ function removeSupportArgsClass(source, funcDepMap, objDepMap) {
 
   // remove `support.argsClass` from `baseIsEqual`
   source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
-    return match.replace(/^( *)if\s*\(!support\.argsClass\b[\s\S]+?\n\1}\n/m, '');
+    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.argsClass\b[\s\S]+?\n\1}\n/m, '');
   });
 
   // remove `support.argsClass` from `baseClone` and `_.isPlainObject`
@@ -2943,10 +2944,14 @@ function removeSupportNonEnumShadows(source) {
  *
  * @private
  * @param {string} source The source to process.
+ * @param {Object} [funcDepMap] The function dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeSupportNonEnumStrings(source) {
+function removeSupportNonEnumStrings(source, funcDepMap) {
   source = removeSupportProp(source, 'nonEnumStrings');
+
+  var deps = _.result(funcDepMap, 'shimKeys', []);
+  _.pull(deps, 'isString');
 
   // remove `support.nonEnumStrings` from `shimKeys`
   return source.replace(matchFunction(source, 'shimKeys'), function(match) {
@@ -2994,18 +2999,25 @@ function removeSupportSpliceObjects(source) {
 function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
   source = removeSupportProp(source, 'unindexedChars');
 
-  var deps =  _.result(objDepMap, 'toIterable', []);
-  _.pull(deps, 'support');
-
-  _.each(['toIterable', 'shimKeys'], function(funcName) {
+  _.each(['toIterable', 'toArray'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isString');
+
+    deps =  _.result(objDepMap, funcName, []);
+    _.pull(deps, 'support');
   });
 
   // remove `support.unindexedChars` from `toIterable`
-  return source = source.replace(matchFunction(source, 'toIterable'), function(match) {
-    return match.replace(/\s*else if\s*\(support\.unindexedChars\b[^}]+}/, '');
+  source = source.replace(matchFunction(source, 'toIterable'), function(match) {
+    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(support\.unindexedChars\b[\s\S]+?\n\1}\n/m, '');
   });
+
+  // remove `support.unindexedChars` from `_.toArray`
+  source = source.replace(matchFunction(source, 'toArray'), function(match) {
+    return match.replace(/\(support\.unindexedChars\b[\s\S]+?:\s*/, '');
+  });
+
+  return source;
 }
 
 /**
@@ -3610,7 +3622,7 @@ function build(options, callback) {
         source = removeSupportEnumErrorProps(source);
         source = removeSupportEnumPrototypes(source, objDepMap);
         source = removeSupportNonEnumShadows(source);
-        source = removeSupportNonEnumStrings(source);
+        source = removeSupportNonEnumStrings(source, funcDepMap);
         source = removeSupportUnindexedChars(source, funcDepMap, objDepMap);
 
         source = removeSupportArgsClass(source, funcDepMap, objDepMap);
@@ -3660,8 +3672,6 @@ function build(options, callback) {
         }
       }
       if (isUnderscore) {
-        source = removeSupportNonEnumArgs(source);
-
         // replace `lodash`
         if (!isLodash('lodash')) {
           _.pull(funcDepMap.lodash, 'isArray');
@@ -4030,12 +4040,15 @@ function build(options, callback) {
             '}'
           ].join('\n'));
         }
-        // replace `_.keys` and `shimKeys`
-        if (!isLodash('keys')) {
+        // replace `_.keys`, `_.keysIn`, and `shimKeys`
+        if (!isLodash('keys') && !isLodash('keysIn')) {
+          source = removeSupportNonEnumArgs(source);
+
           funcDepMap.keys.push('isObject');
+          _.pull(funcDepMap.keysIn, 'isArguments', 'isArray', 'isString').push('isObject');
           _.pull(funcDepMap.shimKeys, 'isArguments', 'isArray', 'isString');
 
-          _.each(['keys', 'shimKeys'], function(funcName) {
+          _.each(['keys', 'keysIn', 'shimKeys'], function(funcName) {
             _.pull(objDepMap[funcName], 'support');
           });
 
@@ -4043,6 +4056,19 @@ function build(options, callback) {
             'var keys = !nativeKeys ? shimKeys : function(object) {',
             '  return isObject(object) ? nativeKeys(object) : [];',
             '};'
+          ].join('\n'));
+
+          source = replaceFunction(source, 'keysIn', [
+            'function keysIn(object) {',
+            '  var result = [];',
+            '  if (!isObject(object)) {',
+            '    return result;',
+            '  }',
+            '  for (var key in object) {',
+            '    result.push(key);',
+            '  }',
+            '  return result;',
+            '}'
           ].join('\n'));
 
           source = replaceFunction(source, 'shimKeys', [
@@ -4057,24 +4083,6 @@ function build(options, callback) {
             '    if (hasOwnProperty.call(object, key)) {',
             '      result.push(key);',
             '    }',
-            '  }',
-            '  return result;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.keysIn`
-        if (!isLodash('keysIn')) {
-          _.pull(funcDepMap.keysIn, 'isArguments', 'isArray', 'isString').push('isObject');
-          _.pull(objDepMap.keysIn, 'support');
-
-          source = replaceFunction(source, 'keysIn', [
-            'function keysIn(object) {',
-            '  var result = [];',
-            '  if (!isObject(object)) {',
-            '    return result;',
-            '  }',
-            '  for (var key in object) {',
-            '    result.push(key);',
             '  }',
             '  return result;',
             '}'
