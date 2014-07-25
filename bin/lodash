@@ -102,9 +102,9 @@ var funcDependencyMap = createMap({
   'at': ['baseAt', 'baseFlatten', 'toIterable'],
   'attempt': ['isError'],
   'before': ['isFunction'],
-  'bind': ['basePartial', 'createWrapper', 'getHolders', 'lodash', 'slice'],
+  'bind': ['basePartial', 'createWrapper', 'lodash', 'replaceHolders', 'slice'],
   'bindAll': ['baseBindAll', 'baseFlatten', 'functions'],
-  'bindKey': ['createWrapper', 'getHolders', 'lodash', 'slice'],
+  'bindKey': ['createWrapper', 'lodash', 'replaceHolders', 'slice'],
   'callback': ['baseCallback'],
   'camelCase': ['createCompounder'],
   'capitalize': [],
@@ -203,8 +203,8 @@ var funcDependencyMap = createMap({
   'padRight': ['createPad'],
   'pairs': ['keys'],
   'parseInt': ['trim'],
-  'partial': ['basePartial', 'getHolders', 'lodash', 'slice'],
-  'partialRight': ['basePartial', 'getHolders', 'lodash', 'slice'],
+  'partial': ['basePartial', 'lodash', 'replaceHolders', 'slice'],
+  'partialRight': ['basePartial', 'lodash', 'replaceHolders', 'slice'],
   'partition': ['createAggregator'],
   'pick': ['baseFlatten', 'basePick', 'getCallback'],
   'pluck': ['map', 'property'],
@@ -263,7 +263,6 @@ var funcDependencyMap = createMap({
   'zipObject': ['isArray'],
 
   // private functions
-  'appendHolders': [],
   'arrayEach': [],
   'arrayEachRight': [],
   'arrayEvery': [],
@@ -277,11 +276,11 @@ var funcDependencyMap = createMap({
   'baseAt': [],
   'baseAssign': ['keys'],
   'baseBindAll': ['createWrapper'],
-  'baseCallback': ['identity', 'isNative',  'matches', 'property', 'setData'],
+  'baseCallback': ['identity', 'isNative', 'matches', 'property', 'setData'],
   'baseClone': ['arrayEach', 'baseAssign', 'baseForOwn', 'cloneBuffer', 'isArguments', 'isArray', 'isFunction', 'isObject', 'isNode', 'slice'],
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
-  'baseCreateWrapper': ['composeArgs', 'composeArgsRight', 'createBindWrapper', 'createCtorWrapper', 'createPartialWrapper', 'getHolders', 'setData'],
+  'baseCreateWrapper': ['composeArgs', 'composeArgsRight', 'createBindWrapper', 'createCtorWrapper', 'createPartialWrapper', 'replaceHolders', 'setData'],
   'baseCurry': ['createWrapper'],
   'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseEach': ['baseForOwn', 'toIterable'],
@@ -324,7 +323,7 @@ var funcDependencyMap = createMap({
   'createBindWrapper': ['createCtorWrapper'],
   'createCtorWrapper': ['baseCreate', 'isObject'],
   'createPartialWrapper': ['createCtorWrapper'],
-  'createWrapper': ['appendHolders', 'baseCreateWrapper', 'isFunction', 'slice'],
+  'createWrapper': ['baseCreateWrapper', 'composeArgs', 'composeArgsRight', 'isFunction', 'replaceHolders', 'slice'],
   'createCache': ['isNative'],
   'createCompounder': ['deburrLetter'],
   'createPad': ['repeat'],
@@ -332,7 +331,6 @@ var funcDependencyMap = createMap({
   'escapeHtmlChar': [],
   'escapeStringChar': [],
   'getCallback': ['baseCallback', 'callback'],
-  'getHolders': [],
   'getIndexOf': ['baseIndexOf', 'indexOf'],
   'isArrayLike': [],
   'isNative': ['escapeRegExp'],
@@ -340,6 +338,7 @@ var funcDependencyMap = createMap({
   'isStrictComparable': ['isObject'],
   'isWhitespace': [],
   'lodashWrapper': [],
+  'replaceHolders': [],
   'setData': ['identity', 'isNative'],
   'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
   'shimKeys': ['isArguments', 'isArray', 'isString', 'keysIn'],
@@ -740,7 +739,6 @@ var lodashOnlyFuncs = [
 
 /** List of private functions */
 var privateFuncs = [
-  'appendHolders',
   'arrayEach',
   'arrayEachRight',
   'arrayEvery',
@@ -806,7 +804,6 @@ var privateFuncs = [
   'escapeHtmlChar',
   'escapeStringChar',
   'getCallback',
-  'getHolders',
   'getIndexOf',
   'isArrayLike',
   'isNative',
@@ -814,6 +811,7 @@ var privateFuncs = [
   'isStrictComparable',
   'isWhitespace',
   'lodashWrapper',
+  'replaceHolders',
   'setData',
   'shimIsPlainObject',
   'shimKeys',
@@ -2467,7 +2465,7 @@ function removeComments(source) {
  */
 function removeEsOptimization(source, funcDepMap, objDepMap, varDepMap) {
   var deps = _.result(funcDepMap, 'createWrapper', []);
-  _.pull(deps, 'appendHolders', 'slice');
+  _.pull(deps, 'composeArgs', 'composeArgsRight', 'replaceHolders', 'slice');
 
   deps = _.result(objDepMap, 'baseCallback', []);
   _.pull(deps, 'support');
@@ -3683,7 +3681,7 @@ function build(options, callback) {
         }
         // replace `_.bind`
         if (!isLodash('bind')) {
-          _.pull(funcDepMap.bind, 'getHolders');
+          _.pull(funcDepMap.bind, 'replaceHolders');
 
           source = replaceFunction(source, 'bind', [
             'function bind(func, thisArg) {',
@@ -4390,7 +4388,7 @@ function build(options, callback) {
         }
         // remove `_.curry` support from `baseCreateWrapper`
         if (!isLodash('curry')) {
-          _.pull(funcDepMap.baseCreateWrapper, 'getHolders');
+          _.pull(funcDepMap.baseCreateWrapper, 'replaceHolders');
 
           source = source.replace(matchFunction(source, 'baseCreateWrapper'), function(match) {
             return match.replace(/^( *)if\s*\(isCurry\b[\s\S]+?\n\1}\n/gm, '');
