@@ -179,8 +179,8 @@ var funcDependencyMap = createMap({
   'isString': [],
   'isUndefined': [],
   'kebabCase': ['createCompounder'],
-  'keys': ['isNative', 'shimKeys'],
-  'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isString'],
+  'keys': ['isNative', 'shimKeys', 'toObject'],
+  'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isString', 'toObject'],
   'last': [],
   'lastIndexOf': ['sortedLastIndex'],
   'lodash': ['isArray', 'lodashWrapper'],
@@ -196,7 +196,7 @@ var funcDependencyMap = createMap({
   'noConflict': [],
   'noop': [],
   'now': ['isNative'],
-  'omit': ['baseDifference', 'baseFlatten', 'basePick', 'arrayMap', 'getCallback', 'keysIn', 'negate'],
+  'omit': ['baseDifference', 'baseFlatten', 'basePick', 'arrayMap', 'getCallback', 'keysIn', 'negate', 'toObject'],
   'once': ['before', 'partial'],
   'pad': ['createPad'],
   'padLeft': ['createPad'],
@@ -206,7 +206,7 @@ var funcDependencyMap = createMap({
   'partial': ['basePartial', 'lodash', 'replaceHolders', 'slice'],
   'partialRight': ['basePartial', 'lodash', 'replaceHolders', 'slice'],
   'partition': ['createAggregator'],
-  'pick': ['baseFlatten', 'basePick', 'getCallback'],
+  'pick': ['baseFlatten', 'basePick', 'getCallback', 'toObject'],
   'pluck': ['map', 'property'],
   'property': [],
   'pull': [],
@@ -306,7 +306,7 @@ var funcDependencyMap = createMap({
   'baseRandom': [],
   'baseReduce': [],
   'baseSome': ['baseEach'],
-  'baseSortedIndex': [],
+  'baseSortedIndex': ['isFunction'],
   'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseValues': [],
   'cacheIndexOf': [],
@@ -343,7 +343,8 @@ var funcDependencyMap = createMap({
   'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
   'shimKeys': ['isArguments', 'isArray', 'isString', 'keysIn'],
   'sortedUniq': [],
-  'toIterable': ['isString', 'values'],
+  'toIterable': ['isString', 'toObject', 'values'],
+  'toObject': ['isObject'],
   'trimmedLeftIndex': ['isWhitespace'],
   'trimmedRightIndex': ['isWhitespace'],
   'unescapeHtmlChar': []
@@ -818,6 +819,7 @@ var privateFuncs = [
   'shimKeys',
   'sortedUniq',
   'toIterable',
+  'toObject',
   'trimmedLeftIndex',
   'trimmedRightIndex',
   'unescapeHtmlChar'
@@ -3643,7 +3645,7 @@ function build(options, callback) {
             '  if (object == null) {',
             '    return [];',
             '  }',
-            '  object = Object(object);',
+            '  object = toObject(object);',
             '',
             '  var length = object.length;',
             "  length = (typeof length == 'number' && length > 0 &&",
@@ -4044,8 +4046,8 @@ function build(options, callback) {
         if (!isLodash('keys') && !isLodash('keysIn')) {
           source = removeSupportNonEnumArgs(source);
 
-          funcDepMap.keys.push('isObject');
-          _.pull(funcDepMap.keysIn, 'isArguments', 'isArray', 'isString').push('isObject');
+          _.pull(funcDepMap.keys, 'toObject').push('isObject');
+          _.pull(funcDepMap.keysIn, 'isArguments', 'isArray', 'isString', 'toObject').push('isObject');
           _.pull(funcDepMap.shimKeys, 'isArguments', 'isArray', 'isString');
 
           _.each(['keys', 'keysIn', 'shimKeys'], function(funcName) {
@@ -4164,7 +4166,7 @@ function build(options, callback) {
             '    return {};',
             '  }',
             '  var omitProps = baseFlatten(arguments, false, false, 1);',
-            '  return basePick(Object(object), baseDifference(keysIn(object), arrayMap(omitProps, String)));',
+            '  return basePick(toObject(object), baseDifference(keysIn(object), arrayMap(omitProps, String)));',
             '}'
           ].join('\n'));
         }
@@ -4176,7 +4178,7 @@ function build(options, callback) {
             'function pick(object) {',
             '  return object == null',
             '    ? {}',
-            '    : basePick(Object(object), baseFlatten(arguments, false, false, 1));',
+            '    : basePick(toObject(object), baseFlatten(arguments, false, false, 1));',
             '}'
           ].join('\n'));
         }
