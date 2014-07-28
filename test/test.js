@@ -670,7 +670,7 @@ QUnit.module('build command checks');
         QUnit.start();
       });
 
-      build(command.split(' '), function() {});
+      build(command.split(' '), _.noop);
     });
   });
 }());
@@ -1506,7 +1506,7 @@ QUnit.module('underscore modifier');
       _.each(['difference', 'intersection', 'unique'], function(methodName) {
         try {
           var actual = lodash[methodName]();
-        } catch(e) { }
+        } catch(e) {}
         deepEqual(actual, [], '_.' + methodName + ' should return an empty array when no `array` argument is provided: ' + basename);
       });
 
