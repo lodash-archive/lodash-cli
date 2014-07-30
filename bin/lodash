@@ -1698,11 +1698,11 @@ function cleanupSource(source) {
         return indent + separators.slice(separators.lastIndexOf('/*'));
       })
       // remove unneeded single line comments
-      .replace(/(\{\s*)?(\n *\/\/.*)(\s*\})/g, function(match, prelude, comment, postlude) {
+      .replace(/(\{\s*)?(\n *\/\/.*)(\s*})/g, function(match, prelude, comment, postlude) {
         return (!prelude && postlude) ? postlude : match;
       })
       // remove unneeded horizontal rule comment separators
-      .replace(/(\{\s*\n) *\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*\})/gm, '$1$2')
+      .replace(/(\{\s*\n) *\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*})/gm, '$1$2')
       // remove trailing horizontal rule comment separators
       .replace(/\s*\/\*-+\*\/\s*$/, '')
       // remove lines with just spaces and semicolons
@@ -2325,7 +2325,7 @@ function matchProp(source, propName, leadingComments) {
   return _.result(source.match(RegExp(
     '^' + (leadingComments ? multilineComment : '') +
     '(?: {2,4}var\\s+' + propName + '\\b.+|(?:\\s*|.*?=\\s*)lodash\\._?' + propName + '\\s*)=[\\s\\S]+?' +
-    '(?:\\(function\\b[\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
+    '(?:\\(function\\b[\\s\\S]+?}\\([^)]*\\)\\);\\n(?=\\n)|' +
     '[;}]\\n(?=\\n(?!\\s*\\(func)))'
   , 'm')), 0, '');
 }
