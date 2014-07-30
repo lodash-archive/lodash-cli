@@ -4868,7 +4868,7 @@ function build(options, callback) {
 
     // remove code used to resolve unneeded `support` properties
     source = source.replace(matchProp(source, 'support'), function(match) {
-      return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var\s+Ctor\s*=[\s\S]+?(?:\n *for.+)+\n)([\s\S]+?)}\(0,\s*0\)\);\n/m, function(match, setup, indent, body) {
+      return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var\s+Ctor\s*=[\s\S]+?\n *for\b[\s\S]+?}\n)([\s\S]+?)}\(0,\s*0\)\);\n/m, function(match, setup, indent, body) {
         var modified = setup;
 
         if (!/\.spliceObjects\s*=\s*(?!false|true)/.test(body)) {
@@ -4881,12 +4881,6 @@ function build(options, callback) {
             .replace(/\bCtor\s*=.+\s+/, '')
             .replace(/^ *Ctor\.prototype.+\s+.+\n/m, '')
             .replace(/(?:,\n)? *props\s*=[^;=]+/, '')
-        }
-        if (!/\.nonEnumArgs\s*=\s*(?!false|true)/.test(body)) {
-          modified = modified.replace(/\s*for\s*\(var\s+argsKey\b[^}]+}/, '');
-        }
-        if (!/\.nonEnumStrings\s*=\s*(?!false|true)/.test(body)) {
-          modified = modified.replace(/\s*for\s*\(var\s+strKey\b[^}]+}/, '');
         }
         // cleanup the empty var statement
         modified = modified.replace(/^ *var;\n/m, '');
