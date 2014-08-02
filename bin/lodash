@@ -4231,15 +4231,15 @@ function build(options, callback) {
           _.pull(funcDepMap.sortBy, 'compareMultipleAscending', 'isArray');
 
           source = replaceFunction(source, 'sortBy', [
-            'function sortBy(collection, iterator, thisArg) {',
+            'function sortBy(collection, iteratee, thisArg) {',
             '  var index = -1,',
             '      length = collection && collection.length,',
             '      result = Array(length < 0 ? 0 : length >>> 0);',
             '',
-            '  iterator = getCallback(iterator, thisArg, 3);',
+            '  iteratee = getCallback(iteratee, thisArg, 3);',
             '  baseEach(collection, function(value, key, collection) {',
             '    result[++index] = {',
-            "      'criteria': iterator(value, key, collection),",
+            "      'criteria': iteratee(value, key, collection),",
             "      'index': index,",
             "      'value': value",
             '    };',
@@ -4357,19 +4357,19 @@ function build(options, callback) {
           _.pull(funcDepMap.baseUniq, 'cacheIndexOf', 'createCache');
 
           source = replaceFunction(source, 'baseUniq', [
-            'function baseUniq(array, iterator) {',
+            'function baseUniq(array, iteratee) {',
             '  var index = -1,',
             '      indexOf = getIndexOf(),',
             '      length = array.length,',
             '      result = [],',
-            '      seen = iterator ? [] : result;',
+            '      seen = iteratee ? [] : result;',
             '',
             '  while (++index < length) {',
             '    var value = array[index],',
-            '        computed = iterator ? iterator(value, index, array) : value;',
+            '        computed = iteratee ? iteratee(value, index, array) : value;',
             '',
             '    if (indexOf(seen, computed) < 0) {',
-            '      if (iterator) {',
+            '      if (iteratee) {',
             '        seen.push(computed);',
             '      }',
             '      result.push(value);',
@@ -4468,14 +4468,14 @@ function build(options, callback) {
             _.pull(funcDepMap[funcName], 'charAtCallback', 'isArray', 'isString');
 
             source = source.replace(matchFunction(source, funcName), function(match) {
-              match = removeVar(match, 'noIterator');
+              match = removeVar(match, 'noIteratee');
               match = removeVar(match, 'isArr');
               match = removeVar(match, 'isStr');
 
               return match
                 .replace(/\s*&&\s*\!isStr\b/, '')
                 .replace(/=.+?isStr[^:]+:\s*/g, '= ')
-                .replace(/\bnoIterator\b/, 'iterator == null');
+                .replace(/\bnoIteratee\b/, 'iteratee == null');
             });
           }
         });
@@ -4503,7 +4503,7 @@ function build(options, callback) {
           });
 
           source = source.replace(matchFunction(source, 'transform'), function(match) {
-            return match.replace(/\breturn\s+iterator[^)]+\)/, '$& === false && breakIndicator');
+            return match.replace(/\breturn\s+iteratee[^)]+\)/, '$& === false && breakIndicator');
           });
 
           _.each(['arrayEach', 'arrayEachRight', 'baseEach', 'baseEachRight', 'baseFor', 'baseForRight'], function(funcName) {
