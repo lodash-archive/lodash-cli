@@ -209,7 +209,7 @@ var funcDependencyMap = createMap({
   'pick': ['baseFlatten', 'basePick', 'getCallback', 'toObject'],
   'pluck': ['map', 'property'],
   'property': [],
-  'pull': [],
+  'pull': ['getIndexOf'],
   'pullAt': ['baseFlatten', 'basePullAt'],
   'random': ['baseRandom'],
   'range': [],
