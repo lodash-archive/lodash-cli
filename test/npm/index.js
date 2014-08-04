@@ -189,6 +189,7 @@ lodash.foldr = lodash.reduceRight;
 lodash.head = lodash.first;
 lodash.include = lodash.contains;
 lodash.inject = lodash.reduce;
+lodash.iteratee = lodash.callback;
 lodash.methods = lodash.functions;
 lodash.object = lodash.zipObject;
 lodash.select = lodash.filter;

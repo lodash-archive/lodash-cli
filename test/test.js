@@ -66,6 +66,7 @@ var aliasToRealMap = createMap({
   'head': 'first',
   'include': 'contains',
   'inject': 'reduce',
+  'iteratee': 'callback',
   'methods': 'functions',
   'object': 'zipObject',
   'select': 'filter',
@@ -78,6 +79,7 @@ var aliasToRealMap = createMap({
 /** Used to map real names with their aliases */
 var realToAliasMap = createMap({
   'assign': ['extend'],
+  'callback': ['iteratee'],
   'contains': ['include'],
   'every': ['all'],
   'filter': ['select'],
