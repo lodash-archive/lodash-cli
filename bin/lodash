@@ -1293,8 +1293,13 @@ function buildModule(state, onComplete) {
         } else {
           code.push(
             '    return function(object, source, options) {',
-            '      if (!source || (!options && !baseFunctions(source, keys).length)) {',
-            '        if (options == null) {',
+            '      var isObj = isObject(source),',
+            '          noOpts = options == null,',
+            '          props = noOpts && isObj && keys(source),',
+            '          methodNames = props && baseFunctions(source, props);',
+            '',
+            '      if ((props && props.length && !methodNames.length) || (noOpts && !isObj)) {',
+            '        if (noOpts) {',
             '          options = source;',
             '        }',
             '        source = object;',
@@ -2578,7 +2583,7 @@ function removeGetCallback(source, funcDepMap) {
 function removeGetIndexOf(source, funcDepMap) {
   source = removeFunction(source, 'getIndexOf');
 
-  _.each(['baseDifference', 'baseUniq', 'contains', 'intersection', 'uniq'], function(funcName) {
+  _.each(['baseDifference', 'baseUniq', 'contains', 'intersection', 'pull', 'uniq'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       // remove "indexOf" comparisons
       match = match.replace(/\s*&&\s*indexOf(?:\(\))?\s*==\s*baseIndexOf\b/g, '');
@@ -3567,7 +3572,7 @@ function build(options, callback) {
         if (isUnderscoreChaining) {
           funcDepMap.main.push('assign');
         } else {
-          funcDepMap.main.push('baseAssign', 'baseForOwn', 'baseFunctions', 'keys');
+          funcDepMap.main.push('baseAssign', 'baseForOwn', 'baseFunctions', 'isObject', 'keys');
         }
         _.pull(funcDepMap.mixin, 'lodash');
 
