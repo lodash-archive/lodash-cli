@@ -4686,7 +4686,7 @@ function build(options, callback) {
 
         // remove `lodash` branch in `_.mixin`
         source = source.replace(matchFunction(source, 'mixin'), function(match) {
-          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!source\b[\s\S]+?\n\1}\n+/m, '');
+          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(\(props\b[\s\S]+?\n\1}\n+/m, '');
         });
 
         // replace `lodash` use in `_.templateSettings.imports`
