@@ -4879,23 +4879,21 @@ function build(options, callback) {
         var modified = setup;
 
         if (!/\.spliceObjects\s*=\s*(?!false|true)/.test(body)) {
-          modified = modified.replace(/^ *object\s*=.+\n/m, '');
+          modified = removeVar(modified, 'object');
         }
         if (!/\.enumPrototypes\s*=\s*(?!false|true)/.test(body) &&
             !/\.nonEnumShadows\s*=\s*(?!false|true)/.test(body) &&
             !/\.ownLast\s*=\s*(?!false|true)/.test(body)) {
+          modified = removeVar(modified, 'Ctor');
+          modified = removeVar(modified, 'props');
           modified = modified
-            .replace(/\bCtor\s*=.+\s+/, '')
-            .replace(/^ *Ctor\.prototype.+\s+.+\n/m, '')
-            .replace(/(?:,\n)? *props\s*=[^;=]+/, '')
+            .replace(/^ *Ctor\.prototype\b[\s\S]+?;\n/m, '')
+            .replace(/^ *for\s*\(var\s+key\b[\s\S]+?}\n/m, '');
         }
-        // cleanup the empty var statement
-        modified = modified.replace(/^ *var;\n/m, '');
-
         // if no setup then remove IIFE
-        return modified == false
-          ? body.replace(RegExp('^' + indent, 'gm'), indent.slice(0, -2))
-          : match.replace(setup, modified);
+        return (_.trim(modified) || /\barguments\b/.test(body))
+          ? match.replace(setup, modified)
+          : body.replace(RegExp('^' + indent, 'gm'), indent.slice(0, -2));
       });
     });
 
