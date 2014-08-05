@@ -1,4 +1,6 @@
-var functions = require('lodash.functions'),
+var baseFunctions = require('lodash._basefunctions'),
+    isObject = require('lodash.isobject'),
+    keys = require('lodash.keys'),
     lodash = require('lodash.lodash'),
     mixin = require('lodash.mixin'),
     support = require('lodash.support'),
@@ -7,8 +9,13 @@ var functions = require('lodash.functions'),
 // wrap `_.mixin` so it works when provided only one argument
 mixin = (function(func) {
   return function(object, source, options) {
-    if (!source || (!options && !functions(source).length)) {
-      if (options == null) {
+    var isObj = isObject(source),
+        noOpts = options == null,
+        props = noOpts && isObj && keys(source),
+        methodNames = props && baseFunctions(source, props);
+
+    if ((props && props.length && !methodNames.length) || (noOpts && !isObj)) {
+      if (noOpts) {
         options = source;
       }
       source = object;
