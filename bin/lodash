@@ -2488,7 +2488,7 @@ function removeComments(source) {
  */
 function removeEsOptimization(source, funcDepMap, objDepMap, varDepMap) {
   var deps = _.result(funcDepMap, 'createWrapper', []);
-  _.pull(deps, 'composeArgs', 'composeArgsRight', 'replaceHolders', 'slice');
+  _.pull(deps, 'arrayClone', 'composeArgs', 'composeArgsRight', 'replaceHolders');
 
   deps = _.result(objDepMap, 'baseCallback', []);
   _.pull(deps, 'support');
@@ -3736,12 +3736,12 @@ function build(options, callback) {
         }
         // replace `_.clone`
         if (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep')) {
-          _.pull(funcDepMap.clone, 'baseClone', 'baseCallback').push('assign', 'isArray', 'isObject', 'slice');
+          _.pull(funcDepMap.clone, 'baseClone', 'baseCallback').push('arrayClone', 'assign', 'isArray', 'isObject');
 
           source = replaceFunction(source, 'clone', [
             'function clone(value) {',
             '  return isObject(value)',
-            '    ? (isArray(value) ? slice(value) : assign({}, value))',
+            '    ? (isArray(value) ? arrayClone(value) : assign({}, value))',
             '    : value;',
             '}'
           ].join('\n'));
@@ -3763,7 +3763,7 @@ function build(options, callback) {
         }
         // replace `_.defaults`
         if (!isLodash('defaults')) {
-          _.pull(funcDepMap.defaults, 'assign', 'assignDefaults', 'slice');
+          _.pull(funcDepMap.defaults, 'arrayClone', 'assign', 'assignDefaults');
 
           source = replaceFunction(source, 'defaults', [
             'function defaults(object) {',
@@ -4167,27 +4167,25 @@ function build(options, callback) {
         }
         // replace `_.omit`
         if (!isLodash('omit')) {
-          _.pull(funcDepMap.omit, 'getCallback', 'negate');
+          _.pull(funcDepMap.omit, 'getCallback', 'negate', 'pickByCallback');
 
           source = replaceFunction(source, 'omit', [
             'function omit(object) {',
-            '  if (object == null) {',
-            '    return {};',
-            '  }',
-            '  var omitProps = baseFlatten(arguments, false, false, 1);',
-            '  return basePick(toObject(object), baseDifference(keysIn(object), arrayMap(omitProps, String)));',
+            '  return object == null',
+            '    ? {}',
+            '    : pickByArray(toObject(object), baseDifference(keysIn(object), arrayMap(baseFlatten(arguments, false, false, 1), String)));',
             '}'
           ].join('\n'));
         }
         // replace `_.pick`
         if (!isLodash('pick')) {
-          _.pull(funcDepMap.pick, 'getCallback');
+          _.pull(funcDepMap.pick, 'getCallback', 'pickByCallback');
 
           source = replaceFunction(source, 'pick', [
             'function pick(object) {',
             '  return object == null',
             '    ? {}',
-            '    : basePick(toObject(object), baseFlatten(arguments, false, false, 1));',
+            '    : pickByArray(toObject(object), baseFlatten(arguments, false, false, 1));',
             '}'
           ].join('\n'));
         }
