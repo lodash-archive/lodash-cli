@@ -123,7 +123,7 @@ var funcDependencyMap = createMap({
   'curry': ['baseCurry', 'lodash'],
   'curryRight': ['baseCurry', 'lodash'],
   'debounce': ['isFunction', 'isObject', 'now'],
-  'defaults': ['assign', 'assignDefaults', 'slice'],
+  'defaults': ['arrayClone', 'assign', 'assignDefaults'],
   'defer': ['isFunction', 'slice'],
   'delay': ['isFunction', 'slice'],
   'difference': ['baseDifference', 'baseFlatten', 'isArguments', 'isArray'],
@@ -198,7 +198,7 @@ var funcDependencyMap = createMap({
   'noConflict': [],
   'noop': [],
   'now': ['isNative'],
-  'omit': ['baseDifference', 'baseFlatten', 'basePick', 'arrayMap', 'getCallback', 'keysIn', 'negate', 'toObject'],
+  'omit': ['baseDifference', 'baseFlatten', 'arrayMap', 'getCallback', 'keysIn', 'negate', 'pickByArray', 'pickByCallback', 'toObject'],
   'once': ['before', 'partial'],
   'pad': ['createPad'],
   'padLeft': ['createPad'],
@@ -208,7 +208,7 @@ var funcDependencyMap = createMap({
   'partial': ['basePartial', 'lodash', 'replaceHolders', 'slice'],
   'partialRight': ['basePartial', 'lodash', 'replaceHolders', 'slice'],
   'partition': ['createAggregator'],
-  'pick': ['baseFlatten', 'basePick', 'getCallback', 'toObject'],
+  'pick': ['baseFlatten', 'getCallback', 'pickByArray', 'pickByCallback', 'toObject'],
   'pluck': ['map', 'property'],
   'property': [],
   'pull': ['getIndexOf'],
@@ -226,7 +226,7 @@ var funcDependencyMap = createMap({
   'sample': ['baseRandom', 'shuffle', 'toIterable'],
   'shuffle': ['baseRandom', 'toIterable'],
   'size': ['keys'],
-  'slice': [],
+  'slice': ['arrayClone'],
   'snakeCase': ['createCompounder'],
   'some': ['arraySome', 'baseSome', 'getCallback', 'isArray'],
   'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'getCallback', 'isArray'],
@@ -241,7 +241,7 @@ var funcDependencyMap = createMap({
   'template': ['assign', 'assignOwnDefaults', 'attempt', 'escape', 'escapeStringChar', 'isError', 'keys', 'values'],
   'throttle': ['debounce', 'isFunction', 'isObject'],
   'times': ['baseCallback'],
-  'toArray': ['isString', 'slice', 'values'],
+  'toArray': ['arrayClone', 'isString', 'values'],
   'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'getCallback', 'isArrayLike', 'isObject'],
   'trim': ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
   'trimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
@@ -265,6 +265,7 @@ var funcDependencyMap = createMap({
   'zipObject': ['isArray'],
 
   // private functions
+  'arrayClone': [],
   'arrayEach': [],
   'arrayEachRight': [],
   'arrayEvery': [],
@@ -279,7 +280,7 @@ var funcDependencyMap = createMap({
   'baseAssign': ['keys'],
   'baseBindAll': ['createWrapper'],
   'baseCallback': ['identity', 'isNative', 'matches', 'property', 'setData'],
-  'baseClone': ['arrayEach', 'baseAssign', 'baseForOwn', 'cloneBuffer', 'isArguments', 'isArray', 'isFunction', 'isObject', 'isNode', 'slice'],
+  'baseClone': ['arrayClone', 'arrayEach', 'baseAssign', 'baseForOwn', 'bufferClone', 'isArguments', 'isArray', 'isFunction', 'isObject', 'isNode'],
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
   'baseCreateWrapper': ['composeArgs', 'composeArgsRight', 'createBindWrapper', 'createCtorWrapper', 'createPartialWrapper', 'replaceHolders', 'setData'],
@@ -303,7 +304,6 @@ var funcDependencyMap = createMap({
   'baseMap': ['baseEach'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isArrayLike', 'isPlainObject'],
   'basePartial': ['createWrapper'],
-  'basePick': ['baseForIn'],
   'basePullAt': ['baseAt', 'baseCompareAscending'],
   'baseRandom': [],
   'baseReduce': [],
@@ -311,11 +311,11 @@ var funcDependencyMap = createMap({
   'baseSortedIndex': ['isFunction'],
   'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseValues': [],
+  'bufferClone': ['identity', 'isNative'],
   'cacheIndexOf': [],
   'charAtCallback': [],
   'charsLeftIndex': [],
   'charsRightIndex': [],
-  'cloneBuffer': ['identity', 'isNative'],
   'compareAscending': ['baseCompareAscending'],
   'compareMultipleAscending': ['baseCompareAscending'],
   'composeArgs': [],
@@ -325,7 +325,7 @@ var funcDependencyMap = createMap({
   'createBindWrapper': ['createCtorWrapper'],
   'createCtorWrapper': ['baseCreate', 'isObject'],
   'createPartialWrapper': ['createCtorWrapper'],
-  'createWrapper': ['baseCreateWrapper', 'composeArgs', 'composeArgsRight', 'isFunction', 'replaceHolders', 'slice'],
+  'createWrapper': ['arrayClone', 'baseCreateWrapper', 'composeArgs', 'composeArgsRight', 'isFunction', 'replaceHolders'],
   'createCache': ['isNative'],
   'createCompounder': ['deburrLetter'],
   'createPad': ['repeat'],
@@ -340,6 +340,8 @@ var funcDependencyMap = createMap({
   'isStrictComparable': ['isObject'],
   'isWhitespace': [],
   'lodashWrapper': [],
+  'pickByArray': [],
+  'pickByCallback': ['baseForIn'],
   'replaceHolders': [],
   'setData': ['identity', 'isNative'],
   'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
@@ -374,7 +376,7 @@ var varDependencyMap = createMap({
   'after': ['root'],
   'baseClone': ['root'],
   'baseCreate': ['root'],
-  'cloneBuffer': ['root'],
+  'bufferClone': ['root'],
   'createCache': ['root'],
   'createPad': ['root'],
   'isFinite': ['root'],
@@ -787,11 +789,11 @@ var privateFuncs = [
   'baseSortedIndex',
   'baseUniq',
   'baseValues',
+  'bufferClone',
   'cacheIndexOf',
   'charAtCallback',
   'charsLeftIndex',
   'charsRightIndex',
-  'cloneBuffer',
   'compareAscending',
   'compareMultipleAscending',
   'composeArgs',
@@ -1873,14 +1875,14 @@ function getBaseCreateFork(source) {
 }
 
 /**
- * Gets the `cloneBuffer` fork from `source`.
+ * Gets the `bufferClone` fork from `source`.
  *
  * @private
  * @param {string} source The source to inspect.
  * @returns {string} Returns the fork.
  */
-function getCloneBufferFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!bufferSlice\b[\s\S]+?\n\1  cloneBuffer\s*=[\s\S]+?\n\1}\n/m), 0, '');
+function getBufferCloneFork(source) {
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!bufferSlice\b[\s\S]+?\n\1  bufferClone\s*=[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -2435,6 +2437,17 @@ function removeBaseCreateFork(source) {
 }
 
 /**
+ * Removes the `bufferClone` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to process.
+ * @returns {string} Returns the modified source.
+ */
+function removeBufferCloneFork(source) {
+  return source.replace(getBufferCloneFork(source), '');
+}
+
+/**
  * Removes support for Lo-Dash wrapper chaining in `source`.
  *
  * @private
@@ -2450,17 +2463,6 @@ function removeChaining(source) {
     .replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+\n/gm, '')
     .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['[\s\S]+?\n\1}.+\n/gm, '')
     .replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.[\s\S]+?;\n/gm, '');
-}
-
-/**
- * Removes the `cloneBuffer` fork from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeCloneBufferFork(source) {
-  return source.replace(getCloneBufferFork(source), '');
 }
 
 /**
@@ -4842,7 +4844,7 @@ function build(options, callback) {
     // remove forks of removed functions
     _.forOwn({
       'baseCreate': removeBaseCreateFork,
-      'cloneBuffer': removeCloneBufferFork,
+      'bufferClone': removeBufferCloneFork,
       'isArguments': removeIsArgumentsFork,
       'isArray': removeIsArrayFork,
       'isElement': removeIsElementFork,
