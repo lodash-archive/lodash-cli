@@ -123,7 +123,7 @@ var funcDependencyMap = createMap({
   'curry': ['baseCurry', 'lodash'],
   'curryRight': ['baseCurry', 'lodash'],
   'debounce': ['isFunction', 'isObject', 'now'],
-  'defaults': ['arrayClone', 'assign', 'assignDefaults'],
+  'defaults': ['assign', 'assignDefaults', 'baseSlice'],
   'defer': ['isFunction', 'slice'],
   'delay': ['isFunction', 'slice'],
   'difference': ['baseDifference', 'baseFlatten', 'isArguments', 'isArray'],
@@ -226,7 +226,7 @@ var funcDependencyMap = createMap({
   'sample': ['baseRandom', 'shuffle', 'toIterable'],
   'shuffle': ['baseRandom', 'toIterable'],
   'size': ['keys'],
-  'slice': ['arrayClone'],
+  'slice': ['baseSlice'],
   'snakeCase': ['createCompounder'],
   'some': ['arraySome', 'baseSome', 'getCallback', 'isArray'],
   'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'getCallback', 'isArray'],
@@ -241,7 +241,7 @@ var funcDependencyMap = createMap({
   'template': ['assign', 'assignOwnDefaults', 'attempt', 'escape', 'escapeStringChar', 'isError', 'keys', 'values'],
   'throttle': ['debounce', 'isFunction', 'isObject'],
   'times': ['baseCallback'],
-  'toArray': ['arrayClone', 'isString', 'values'],
+  'toArray': ['baseSlice', 'isString', 'values'],
   'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'getCallback', 'isArrayLike', 'isObject'],
   'trim': ['charsLeftIndex', 'charsRightIndex', 'trimmedLeftIndex', 'trimmedRightIndex'],
   'trimLeft': ['charsLeftIndex', 'trimmedLeftIndex'],
@@ -265,7 +265,6 @@ var funcDependencyMap = createMap({
   'zipObject': ['isArray'],
 
   // private functions
-  'arrayClone': [],
   'arrayEach': [],
   'arrayEachRight': [],
   'arrayEvery': [],
@@ -280,7 +279,7 @@ var funcDependencyMap = createMap({
   'baseAssign': ['keys'],
   'baseBindAll': ['createWrapper'],
   'baseCallback': ['identity', 'isNative', 'matches', 'property', 'setData'],
-  'baseClone': ['arrayClone', 'arrayEach', 'baseAssign', 'baseForOwn', 'bufferClone', 'isArguments', 'isArray', 'isFunction', 'isObject', 'isNode'],
+  'baseClone': ['arrayEach', 'baseForOwn', 'initArrayClone', 'initObjectClone', 'isArray', 'isFunction', 'isObject'],
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
   'baseCreateWrapper': ['composeArgs', 'composeArgsRight', 'createBindWrapper', 'createCtorWrapper', 'createPartialWrapper', 'replaceHolders', 'setData'],
@@ -307,6 +306,7 @@ var funcDependencyMap = createMap({
   'basePullAt': ['baseAt', 'baseCompareAscending'],
   'baseRandom': [],
   'baseReduce': [],
+  'baseSlice': [],
   'baseSome': ['baseEach'],
   'baseSortedIndex': ['isFunction'],
   'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
@@ -325,7 +325,7 @@ var funcDependencyMap = createMap({
   'createBindWrapper': ['createCtorWrapper'],
   'createCtorWrapper': ['baseCreate', 'isObject'],
   'createPartialWrapper': ['createCtorWrapper'],
-  'createWrapper': ['arrayClone', 'baseCreateWrapper', 'composeArgs', 'composeArgsRight', 'isFunction', 'replaceHolders'],
+  'createWrapper': ['baseSlice', 'baseCreateWrapper', 'composeArgs', 'composeArgsRight', 'isFunction', 'replaceHolders'],
   'createCache': ['isNative'],
   'createCompounder': ['deburrLetter'],
   'createPad': ['repeat'],
@@ -334,6 +334,8 @@ var funcDependencyMap = createMap({
   'escapeStringChar': [],
   'getCallback': ['baseCallback', 'callback'],
   'getIndexOf': ['baseIndexOf', 'indexOf'],
+  'initArrayClone': [],
+  'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isNode'],
   'isArrayLike': [],
   'isNative': ['escapeRegExp'],
   'isNode': [],
@@ -785,6 +787,7 @@ var privateFuncs = [
   'basePullAt',
   'baseRandom',
   'baseReduce',
+  'baseSlice',
   'baseSome',
   'baseSortedIndex',
   'baseUniq',
@@ -811,6 +814,8 @@ var privateFuncs = [
   'escapeStringChar',
   'getCallback',
   'getIndexOf',
+  'initArrayClone',
+  'initObjectClone',
   'isArrayLike',
   'isNative',
   'isNode',
@@ -2488,7 +2493,7 @@ function removeComments(source) {
  */
 function removeEsOptimization(source, funcDepMap, objDepMap, varDepMap) {
   var deps = _.result(funcDepMap, 'createWrapper', []);
-  _.pull(deps, 'arrayClone', 'composeArgs', 'composeArgsRight', 'replaceHolders');
+  _.pull(deps, 'baseSlice', 'composeArgs', 'composeArgsRight', 'replaceHolders');
 
   deps = _.result(objDepMap, 'baseCallback', []);
   _.pull(deps, 'support');
@@ -3736,12 +3741,12 @@ function build(options, callback) {
         }
         // replace `_.clone`
         if (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep')) {
-          _.pull(funcDepMap.clone, 'baseClone', 'baseCallback').push('arrayClone', 'assign', 'isArray', 'isObject');
+          _.pull(funcDepMap.clone, 'baseClone', 'baseCallback').push('assign', 'baseSlice', 'isArray', 'isObject');
 
           source = replaceFunction(source, 'clone', [
             'function clone(value) {',
             '  return isObject(value)',
-            '    ? (isArray(value) ? arrayClone(value) : assign({}, value))',
+            '    ? (isArray(value) ? baseSlice(value) : assign({}, value))',
             '    : value;',
             '}'
           ].join('\n'));
@@ -3763,7 +3768,7 @@ function build(options, callback) {
         }
         // replace `_.defaults`
         if (!isLodash('defaults')) {
-          _.pull(funcDepMap.defaults, 'arrayClone', 'assign', 'assignDefaults');
+          _.pull(funcDepMap.defaults, 'assign', 'assignDefaults', 'baseSlice');
 
           source = replaceFunction(source, 'defaults', [
             'function defaults(object) {',
