@@ -279,7 +279,7 @@ var funcDependencyMap = createMap({
   'baseAssign': ['keys'],
   'baseBindAll': ['createWrapper'],
   'baseCallback': ['identity', 'isNative', 'matches', 'property', 'setData'],
-  'baseClone': ['arrayEach', 'baseForOwn', 'initArrayClone', 'initObjectClone', 'isArray', 'isFunction', 'isObject'],
+  'baseClone': ['arrayEach', 'baseForOwn', 'initArrayClone', 'initObjectClone', 'isArray', 'isObject'],
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
   'baseCreateWrapper': ['composeArgs', 'composeArgsRight', 'createBindWrapper', 'createCtorWrapper', 'createPartialWrapper', 'replaceHolders', 'setData'],
@@ -335,7 +335,7 @@ var funcDependencyMap = createMap({
   'getCallback': ['baseCallback', 'callback'],
   'getIndexOf': ['baseIndexOf', 'indexOf'],
   'initArrayClone': [],
-  'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isNode'],
+  'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isFunction', 'isNode'],
   'isArrayLike': [],
   'isNative': ['escapeRegExp'],
   'isNode': [],
@@ -359,8 +359,8 @@ var funcDependencyMap = createMap({
 /** Used to track Lo-Dash object dependencies of identifiers */
 var objDependencyMap = createMap({
   'baseCallback': ['support'],
-  'baseClone': ['support'],
   'baseIsEqual': ['support'],
+  'initObjectClone': ['support'],
   'isArguments': ['support'],
   'isElement': ['support'],
   'isPlainObject': ['support'],
@@ -376,11 +376,11 @@ var objDependencyMap = createMap({
 /** Used to track variable dependencies of identifiers */
 var varDependencyMap = createMap({
   'after': ['root'],
-  'baseClone': ['root'],
   'baseCreate': ['root'],
   'bufferClone': ['root'],
   'createCache': ['root'],
   'createPad': ['root'],
+  'initObjectClone': ['root'],
   'isFinite': ['root'],
   'pad': ['root'],
   'parseInt': ['root'],
@@ -2827,7 +2827,7 @@ function removeSupportArgsClass(source, funcDepMap, objDepMap) {
     _.pull(deps, 'support');
   });
 
-  _.each(['baseClone', 'baseIsEqual', 'isPlainObject', 'shimIsPlainObject'], function(funcName) {
+  _.each(['baseIsEqual', 'initObjectClone', 'isPlainObject', 'shimIsPlainObject'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isArguments');
   });
@@ -2842,8 +2842,8 @@ function removeSupportArgsClass(source, funcDepMap, objDepMap) {
     return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.argsClass\b[\s\S]+?\n\1}\n/m, '');
   });
 
-  // remove `support.argsClass` from `baseClone` and `_.isPlainObject`
-  _.each(['baseClone', 'shimIsPlainObject', 'isPlainObject'], function(funcName) {
+  // remove `support.argsClass` from `initObjectClone` and `_.isPlainObject`
+  _.each(['shimIsPlainObject', 'initObjectClone', 'isPlainObject'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match.replace(/\s*\|\|\s*\(!support\.argsClass\b[\s\S]+?\)\)/, '');
     });
@@ -2910,13 +2910,13 @@ function removeSupportEnumPrototypes(source, objDepMap) {
 function removeSupportNodeClass(source, funcDepMap) {
   source = removeSupportProp(source, 'nodeClass');
 
-  _.each(['baseClone', 'baseIsEqual', 'isElement', 'shimIsPlainObject'], function(funcName) {
+  _.each(['baseIsEqual', 'initObjectClone', 'isElement', 'shimIsPlainObject'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isNode');
   });
 
-  // remove `support.nodeClass` from `baseClone` and `shimIsPlainObject`
-  _.each(['baseClone', 'shimIsPlainObject'], function(funcName) {
+  // remove `support.nodeClass` from `initObjectClone` and `shimIsPlainObject`
+  _.each(['initObjectClone', 'shimIsPlainObject'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match.replace(/\s*\|\|\s*\(!support\.nodeClass\b[\s\S]+?\)\)/, '');
     });
@@ -3613,10 +3613,10 @@ function build(options, callback) {
         source = removeIsArgumentsFork(source);
         source = removeSupportSpliceObjects(source);
 
-        // simplify `baseClone`
-        _.pull(varDepMap.baseClone, 'root');
+        // simplify `initObjectClone`
+        _.pull(varDepMap.initObjectClone, 'root');
 
-        source = source.replace(matchFunction(source, 'baseClone'), function(match) {
+        source = source.replace(matchFunction(source, 'initObjectClone'), function(match) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(Ctor\s+instanceof\s+Ctor[\s\S]+?\n\1}\n/m, '');
         });
 
@@ -3645,7 +3645,7 @@ function build(options, callback) {
         source = removeSupportNodeClass(source, funcDepMap);
         source = removeSupportOwnLast(source);
 
-        _.each(['baseClone', 'baseIsEqual', 'shimIsPlainObject'], function(funcName) {
+        _.each(['baseIsEqual', 'initObjectClone', 'shimIsPlainObject'], function(funcName) {
           _.pull(objDepMap[funcName], 'support');
         });
       }
@@ -4813,7 +4813,7 @@ function build(options, callback) {
       if (isExcluded('isArguments')) {
         source = replaceSupportProp(source, 'argsClass', 'true');
       }
-      if (isExcluded('baseClone', 'baseIsEqual', 'isArguments', 'isPlainObject')) {
+      if (isExcluded('baseIsEqual', 'initObjectClone', 'isArguments', 'isPlainObject')) {
         source = removeSupportArgsClass(source);
       }
       if (isExcluded('isElement')) {
