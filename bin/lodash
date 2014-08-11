@@ -4474,6 +4474,16 @@ function build(options, callback) {
         }
         source = removeEsOptimization(source, funcDepMap, objDepMap, varDepMap);
 
+        // remove reflexive checks from `baseIndexOf` and `_.lastIndexOf`
+        _.each(['baseIndexOf', 'lastIndexOf'], function(funcName) {
+          if (!isLodash(funcName) && !(funcName == 'baseIndexOf' && isLodash(funcName))) {
+            source = source.replace(matchFunction(source, funcName), function(match) {
+              match = removeVar(match, 'isReflexive');
+              return match.replace(/\(isReflexive\s*\?\s*([^:]+?)\s*:[\s\S]+?\)/, '$1');
+            });
+          }
+        });
+
         // remove conditional `charCodeCallback` use from `_.max` and `_.min`
         _.each(['max', 'min'], function(funcName) {
           if (!isLodash(funcName)) {

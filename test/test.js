@@ -1505,6 +1505,12 @@ QUnit.module('underscore modifier');
       actual = lodash.zip(lodash.zip(['fred', 'barney'], [30, 40], [true, false]));
       deepEqual(actual, expected, '_.zip is unable to correctly consume it\'s output: ' + basename);
 
+      deepEqual(lodash.difference([NaN], [NaN]), [NaN], '_.difference should not match `NaN`: ' + basename);
+      strictEqual(lodash.indexOf([NaN], NaN), -1, '_.indexOf should not match `NaN`: ' + basename);
+      deepEqual(lodash.intersection([NaN], [NaN]), [], '_.intersection should not match `NaN`: ' + basename);
+      strictEqual(lodash.lastIndexOf([NaN], NaN), -1, '_.lastIndexOf should not match `NaN`: ' + basename);
+      deepEqual(lodash.uniq([NaN, NaN]), [NaN, NaN], '_.uniq should treat `NaN` as unique: ' + basename);
+
       _.each(['difference', 'intersection', 'unique'], function(methodName) {
         try {
           var actual = lodash[methodName]();
