@@ -117,7 +117,7 @@ var funcDependencyMap = createMap({
   'compact': [],
   'compose': ['isFunction'],
   'constant': [],
-  'contains': ['getIndexOf', 'isArray', 'isNative', 'isString', 'values'],
+  'contains': ['getIndexOf', 'isArray', 'isString', 'values'],
   'countBy': ['createAggregator'],
   'create': ['baseAssign', 'baseCreate'],
   'curry': ['baseCurry', 'lodash'],
