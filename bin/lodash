@@ -282,7 +282,6 @@ var funcDependencyMap = createMap({
   'baseClone': ['arrayEach', 'baseForOwn', 'initArrayClone', 'initObjectClone', 'isArray', 'isObject'],
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
-  'baseCreateWrapper': ['composeArgs', 'composeArgsRight', 'createBindWrapper', 'createCtorWrapper', 'createPartialWrapper', 'replaceHolders', 'setData'],
   'baseCurry': ['createWrapper'],
   'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseEach': ['baseForOwn', 'toIterable'],
@@ -324,8 +323,9 @@ var funcDependencyMap = createMap({
   'createAssigner': ['baseCallback'],
   'createBindWrapper': ['createCtorWrapper'],
   'createCtorWrapper': ['baseCreate', 'isObject'],
+  'createHybridWrapper': ['composeArgs', 'composeArgsRight', 'createCtorWrapper', 'replaceHolders', 'setData'],
   'createPartialWrapper': ['createCtorWrapper'],
-  'createWrapper': ['baseSlice', 'baseCreateWrapper', 'composeArgs', 'composeArgsRight', 'isFunction', 'replaceHolders'],
+  'createWrapper': ['baseSlice', 'composeArgs', 'composeArgsRight', 'createBindWrapper', 'createHybridWrapper', 'createPartialWrapper', 'isFunction', 'replaceHolders', 'setData'],
   'createCache': ['isNative'],
   'createCompounder': ['deburrLetter'],
   'createPad': ['repeat'],
@@ -764,7 +764,6 @@ var privateFuncs = [
   'baseClone',
   'baseCompareAscending',
   'baseCreate',
-  'baseCreateWrapper',
   'baseCurry',
   'baseDifference',
   'baseEach',
@@ -806,6 +805,7 @@ var privateFuncs = [
   'createBindWrapper',
   'createCache',
   'createCompounder',
+  'createHybridWrapper',
   'createPad',
   'createPartialWrapper',
   'createWrapper',
@@ -2506,16 +2506,14 @@ function removeEsOptimization(source, funcDepMap, objDepMap, varDepMap) {
     _.pull(deps, 'isNative');
   });
 
-  _.each(['baseCallback', 'baseCreateWrapper'], function(funcName) {
-    var deps = _.result(funcDepMap, funcName, []);
-    _.pull(deps, 'setData');
-  });
-
   source = removeSupportProp(source, 'funcDecomp');
   source = removeSupportProp(source, 'funcNames');
 
   // remove metadata code and `setData` function calls
   _.each(['baseCallback', 'createHybridWrapper', 'createWrapper'], function(funcName) {
+    var deps = _.result(funcDepMap, funcName, []);
+    _.pull(deps, 'setData');
+
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match = match
         .replace(/^(?: *\/\/.*\n)*( *)var\s+data\s*=[\s\S]+?\n\1}\n/m, '')
@@ -2929,7 +2927,7 @@ function removeSupportNodeClass(source, funcDepMap) {
 
   // remove `support.nodeClass` from `_.isElement`
   return source.replace(matchFunction(source, 'isElement'), function(match) {
-    return match.replace(/\(support\.nodeClass\s*\?\s*([^:]+?)\s*:[\s\S]+?\)\)/, '$1');
+    return match.replace(/\(support\.nodeClass\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)\)/, '$1');
   });
 }
 
@@ -4418,23 +4416,23 @@ function build(options, callback) {
         if (!isModularize && !isLodash('chain')) {
           _.pull(funcDepMap.wrapperValueOf, 'wrapperToString');
         }
-        // remove `_.bindKey` support from `baseCreateWrapper` and `createWrapper`
+        // remove `_.bindKey` support from `createHybridWrapper` and `createWrapper`
         if (!isLodash('bindKey')) {
-          source = source.replace(matchFunction(source, 'baseCreateWrapper'), function(match) {
+          source = source.replace(matchFunction(source, 'createHybridWrapper'), function(match) {
             return match.replace(/^( *)if\s*\(isBindKey\b[\s\S]+?\n\1}\n/m, '');
           });
 
           source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
             return match
-              .replace(/!isBindKey *&& */, '')
-              .replace(/^( *)if\s*\(arity\b(?:[\s\S]+?\n\1}){2}\n/m, '');
+              .replace(/!isBindKey\s*&&\s*/, '')
+              .replace(/\bisBindKey\s*\?[^:]+:\s*/, '');
           });
         }
-        // remove `_.curry` support from `baseCreateWrapper`
+        // remove `_.curry` support from `createHybridWrapper`
         if (!isLodash('curry')) {
-          _.pull(funcDepMap.baseCreateWrapper, 'replaceHolders');
+          _.pull(funcDepMap.createHybridWrapper, 'replaceHolders');
 
-          source = source.replace(matchFunction(source, 'baseCreateWrapper'), function(match) {
+          source = source.replace(matchFunction(source, 'createHybridWrapper'), function(match) {
             return match.replace(/^( *)if\s*\(isCurry\b[\s\S]+?\n\1}\n/gm, '');
           });
         }
@@ -4454,15 +4452,16 @@ function build(options, callback) {
             return match.replace(/\s*else\s+if\s*\(fromIndex\b[^}]+}/, '');
           });
         }
-        // remove `_.partialRight` support from `baseCreateWrapper`
+        // remove `_.partialRight` support from `createHybridWrapper` and `createWrapper`
         if (!isLodash('partialRight')) {
-          _.pull(funcDepMap.baseCreateWrapper, 'composeArgsRight');
+          _.each(['createHybridWrapper', 'createWrapper'], function(funcName) {
+            _.pull(funcDepMap[funcName], 'composeArgsRight');
 
-          _.each(['baseCreateWrapper', 'createWrapper'], function(funcName) {
             source = source.replace(matchFunction(source, funcName), function(match) {
+              match = removeVar(match, 'partialRightHolders');
               return match
-                .replace(/,\s*partialRightHolders(?:\s*=[\s\S]+?(?=[,;]\n))?/g, '')
-                .replace(/^( *)if\s*\((?:isPartialRight|partialRightArgs)\b[\s\S]+?\n\1}\n/gm, '');
+                .replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:isPartialRight|partialRightArgs)\b[\s\S]+?\n\1}\n/gm, '')
+                .replace(/^(?: *\/\/.*\n)*( *)funcArgs\s*=\s*data\[6\][\s\S]+?\n\1}\n/m, '');
             });
           });
         }
@@ -4479,7 +4478,7 @@ function build(options, callback) {
           if (!isLodash(funcName) && !(funcName == 'baseIndexOf' && isLodash(funcName))) {
             source = source.replace(matchFunction(source, funcName), function(match) {
               match = removeVar(match, 'isReflexive');
-              return match.replace(/\(isReflexive\s*\?\s*([^:]+?)\s*:[\s\S]+?\)/, '$1');
+              return match.replace(/\(isReflexive\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)/, '$1');
             });
           }
         });
