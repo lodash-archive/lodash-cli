@@ -381,11 +381,13 @@ var varDependencyMap = createMap({
   'bufferClone': ['root'],
   'createCache': ['root'],
   'createPad': ['root'],
+  'getData': ['root'],
   'initObjectClone': ['root'],
   'isFinite': ['root'],
   'pad': ['root'],
   'parseInt': ['root'],
   'repeat': ['root'],
+  'setData': ['root'],
   'support': ['root'],
   'template': ['reInterpolate'],
   'templateSettings': ['reEscape', 'reEvaluate', 'reInterpolate'],
@@ -2023,6 +2025,17 @@ function getFunctionSource(func, indent) {
 }
 
 /**
+ * Gets the `getData` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to inspect.
+ * @returns {string} Returns the fork.
+ */
+function getGetDataFork(source) {
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!WeakMap\)\s*\{\n\1  getData\s*=[\s\S]+?\n\1}\n/m), 0, '');
+}
+
+/**
  * Gets the copyright/license header of `source`.
  *
  * @private
@@ -2205,7 +2218,7 @@ function getRealName(funcName, funcDepMap) {
  * @returns {string} Returns the fork.
  */
 function getSetDataFork(source) {
-  return _.result(matchFunction(source, 'setData').match(/!defineProperty[^:]+:\s*/), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!WeakMap\)\s*\{\n\1  setData\s*=[\s\S]+?\n\1}\n/m), 0, '');
 }
 
 /**
@@ -2494,7 +2507,10 @@ function removeComments(source) {
  * @returns {string} Returns the modified source.
  */
 function removeEsOptimization(source, funcDepMap, objDepMap, varDepMap) {
-  var deps = _.result(funcDepMap, 'createWrapper', []);
+  var deps = _.result(funcDepMap, 'basePartial', []);
+  _.pull(deps, 'getData');
+
+  deps = _.result(funcDepMap, 'createWrapper', []);
   _.pull(deps, 'baseSlice', 'composeArgs', 'composeArgsRight', 'replaceHolders');
 
   deps = _.result(objDepMap, 'baseCallback', []);
@@ -2511,10 +2527,16 @@ function removeEsOptimization(source, funcDepMap, objDepMap, varDepMap) {
   source = removeSupportProp(source, 'funcDecomp');
   source = removeSupportProp(source, 'funcNames');
 
-  // remove metadata code and `setData` function calls
+  // remove metadata related code
+  source = source.replace(matchFunction(source, 'basePartial'), function(match) {
+    match = removeVar(match, 'data');
+    match = replaceVar(match, 'arity', 'func.length');
+    return match;
+  });
+
   _.each(['baseCallback', 'createHybridWrapper', 'createWrapper'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
-    _.pull(deps, 'setData');
+    _.pull(deps, 'getData', 'setData');
 
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match = match
@@ -2579,6 +2601,17 @@ function removeGetCallback(source, funcDepMap) {
   });
 
   return source;
+}
+
+/**
+ * Removes the `getData` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to process.
+ * @returns {string} Returns the modified source.
+ */
+function removeGetDataFork(source) {
+  return source.replace(getGetDataFork(source), '');
 }
 
 /**
@@ -2785,6 +2818,17 @@ function removeRunInContext(source) {
     .replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)? *var\s+Array\s*=[\s\S]+?;\n/m, '')
     .replace(/(\breturn\s+|=\s*)_([;)])/g, '$1lodash$2')
     .replace(/^(?: *\/\/.*\n)* *var\s+_\s*=\s*runInContext\b.+\n+/m, '');
+}
+
+/**
+ * Removes the `setData` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to process.
+ * @returns {string} Returns the modified source.
+ */
+function removeSetDataFork(source) {
+  return source.replace(getSetDataFork(source), '');
 }
 
 /**
@@ -3734,7 +3778,7 @@ function build(options, callback) {
           source = replaceFunction(source, 'bind', [
             'function bind(func, thisArg) {',
             '  return arguments.length < 3',
-            '    ? createWrapper([func, BIND_FLAG, null, thisArg])',
+            '    ? createWrapper(func, BIND_FLAG, null, thisArg)',
             '    : basePartial(func, BIND_FLAG | PARTIAL_FLAG, slice(arguments, 2), [], thisArg);',
             '}'
           ].join('\n'));
@@ -4460,6 +4504,7 @@ function build(options, callback) {
             _.pull(funcDepMap[funcName], 'composeArgsRight');
 
             source = source.replace(matchFunction(source, funcName), function(match) {
+              match = removeVar(match, 'isPartialRight');
               match = removeVar(match, 'partialRightHolders');
               return match
                 .replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:isPartialRight|partialRightArgs)\b[\s\S]+?\n\1}\n/gm, '')
@@ -4494,7 +4539,6 @@ function build(options, callback) {
               match = removeVar(match, 'noIteratee');
               match = removeVar(match, 'isArr');
               match = removeVar(match, 'isStr');
-
               return match
                 .replace(/\s*&&\s*\!isStr\b/, '')
                 .replace(/=.+?isStr[^:]+:\s*/g, '= ')
@@ -4859,12 +4903,14 @@ function build(options, callback) {
     _.forOwn({
       'baseCreate': removeBaseCreateFork,
       'bufferClone': removeBufferCloneFork,
+      'getData': removeGetDataFork,
       'isArguments': removeIsArgumentsFork,
       'isArray': removeIsArrayFork,
       'isElement': removeIsElementFork,
       'isFunction': removeIsFunctionFork,
       'now': removeNowFork,
       'parseInt': removeParseIntFork,
+      'setData': removeSetDataFork
     },
     function(removeFork, funcName) {
       if (isExcluded(funcName)) {
