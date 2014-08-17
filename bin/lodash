@@ -198,7 +198,7 @@ var funcDependencyMap = createMap({
   'noConflict': [],
   'noop': [],
   'now': ['isNative'],
-  'omit': ['baseDifference', 'baseFlatten', 'arrayMap', 'getCallback', 'keysIn', 'negate', 'pickByArray', 'pickByCallback', 'toObject'],
+  'omit': ['baseDifference', 'baseFlatten', 'arrayMap', 'getCallback', 'keysIn', 'pickByArray', 'pickByCallback', 'toObject'],
   'once': ['before', 'partial'],
   'pad': ['createPad'],
   'padLeft': ['createPad'],
@@ -217,7 +217,7 @@ var funcDependencyMap = createMap({
   'range': [],
   'reduce': ['arrayReduce', 'baseEach', 'baseReduce', 'getCallback', 'isArray'],
   'reduceRight': ['arrayReduceRight', 'baseEachRight', 'baseReduce', 'getCallback', 'isArray'],
-  'reject': ['getCallback', 'filter', 'negate'],
+  'reject': ['arrayFilter', 'baseFilter', 'getCallback', 'isArray'],
   'remove': ['getCallback'],
   'repeat': [],
   'rest': ['slice'],
@@ -4216,13 +4216,17 @@ function build(options, callback) {
         }
         // replace `_.omit`
         if (!isLodash('omit')) {
-          _.pull(funcDepMap.omit, 'getCallback', 'negate', 'pickByCallback');
+          _.pull(funcDepMap.omit, 'getCallback', 'pickByCallback');
 
           source = replaceFunction(source, 'omit', [
             'function omit(object) {',
-            '  return object == null',
-            '    ? {}',
-            '    : pickByArray(toObject(object), baseDifference(keysIn(object), arrayMap(baseFlatten(arguments, false, false, 1), String)));',
+            '  if (object == null) {',
+            '    return {};',
+            '  }',
+            '  var iterable = toObject(object),',
+            '      props = arrayMap(baseFlatten(arguments, false, false, 1), String);',
+            '',
+            '  return pickByArray(iterable, baseDifference(keysIn(iterable), props));',
             '}'
           ].join('\n'));
         }
