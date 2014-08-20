@@ -99,6 +99,7 @@ lodash.isError = require('lodash.iserror');
 lodash.isFinite = require('lodash.isfinite');
 lodash.isFunction = require('lodash.isfunction');
 lodash.isNaN = require('lodash.isnan');
+lodash.isNative = require('lodash.isnative');
 lodash.isNull = require('lodash.isnull');
 lodash.isNumber = require('lodash.isnumber');
 lodash.isObject = require('lodash.isobject');
