@@ -173,7 +173,7 @@ var funcDependencyMap = createMap({
   'isFinite': ['isNative'],
   'isFunction': [],
   'isNaN': ['isNumber'],
-  'isNative': ['escapeRegExp'],
+  'isNative': ['escapeRegExp', 'isFunction'],
   'isNull': [],
   'isNumber': [],
   'isObject': [],
