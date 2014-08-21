@@ -166,14 +166,14 @@ var funcDependencyMap = createMap({
   'isArray': ['isNative'],
   'isBoolean': [],
   'isDate': [],
-  'isElement': ['isNode', 'isPlainObject'],
+  'isElement': ['isHostObject', 'isPlainObject'],
   'isEmpty': ['isArguments', 'isArray', 'isFunction', 'isString', 'keys'],
   'isEqual': ['baseCallback', 'baseIsEqual', 'isStrictComparable'],
   'isError': [],
   'isFinite': ['isNative'],
   'isFunction': [],
   'isNaN': ['isNumber'],
-  'isNative': ['escapeRegExp', 'isFunction'],
+  'isNative': ['escapeRegExp', 'isFunction', 'isHostObject'],
   'isNull': [],
   'isNumber': [],
   'isObject': [],
@@ -299,7 +299,7 @@ var funcDependencyMap = createMap({
   'baseFunctions': ['isFunction'],
   'baseIndexOf': [],
   'baseInvoke': ['baseEach'],
-  'baseIsEqual': ['isArguments', 'isFunction', 'isNode', 'keys'],
+  'baseIsEqual': ['isArguments', 'isFunction', 'isHostObject', 'keys'],
   'baseMap': ['baseEach'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isArrayLike', 'isPlainObject'],
   'basePartial': ['createWrapper', 'getData'],
@@ -338,9 +338,9 @@ var funcDependencyMap = createMap({
   'getData': ['isNative', 'noop'],
   'getIndexOf': ['baseIndexOf', 'indexOf'],
   'initArrayClone': [],
-  'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isFunction', 'isNode'],
+  'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isFunction', 'isHostObject'],
   'isArrayLike': [],
-  'isNode': [],
+  'isHostObject': ['constant'],
   'isStrictComparable': ['isObject'],
   'isWhitespace': [],
   'lodashWrapper': [],
@@ -348,7 +348,7 @@ var funcDependencyMap = createMap({
   'pickByCallback': ['baseForIn'],
   'replaceHolders': [],
   'setData': ['baseSetData', 'now'],
-  'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isNode'],
+  'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isHostObject'],
   'shimKeys': ['isArguments', 'isArray', 'isString', 'keysIn'],
   'sortedUniq': [],
   'toIterable': ['isString', 'toObject', 'values'],
@@ -365,6 +365,7 @@ var objDependencyMap = createMap({
   'initObjectClone': ['support'],
   'isArguments': ['support'],
   'isElement': ['support'],
+  'isHostObject': ['support'],
   'isPlainObject': ['support'],
   'keys': ['support'],
   'keysIn': ['support'],
@@ -825,7 +826,7 @@ var privateFuncs = [
   'initArrayClone',
   'initObjectClone',
   'isArrayLike',
-  'isNode',
+  'isHostObject',
   'isStrictComparable',
   'isWhitespace',
   'lodashWrapper',
@@ -2964,7 +2965,7 @@ function removeSupportNodeClass(source, funcDepMap) {
 
   _.each(['baseIsEqual', 'initObjectClone', 'isElement', 'shimIsPlainObject'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
-    _.pull(deps, 'isNode');
+    _.pull(deps, 'isHostObject');
   });
 
   // remove `support.nodeClass` from `initObjectClone` and `shimIsPlainObject`
@@ -3973,7 +3974,7 @@ function build(options, callback) {
         // replace `_.isEqual`
         if (!isLodash('baseIsEqual') && !isLodash('isEqual')) {
           _.pull(funcDepMap.isEqual, 'baseCallback', 'isStrictComparable');
-          _.pull(funcDepMap.baseIsEqual, 'isArguments', 'isNode');
+          _.pull(funcDepMap.baseIsEqual, 'isArguments', 'isHostObject');
           _.pull(objDepMap.baseIsEqual, 'support');
 
           source = replaceFunction(source, 'isEqual', [
