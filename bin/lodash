@@ -340,7 +340,7 @@ var funcDependencyMap = createMap({
   'initArrayClone': [],
   'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isFunction', 'isHostObject'],
   'isArrayLike': [],
-  'isHostObject': ['constant'],
+  'isHostObject': [],
   'isStrictComparable': ['isObject'],
   'isWhitespace': [],
   'lodashWrapper': [],
@@ -365,7 +365,6 @@ var objDependencyMap = createMap({
   'initObjectClone': ['support'],
   'isArguments': ['support'],
   'isElement': ['support'],
-  'isHostObject': ['support'],
   'isPlainObject': ['support'],
   'keys': ['support'],
   'keysIn': ['support'],
@@ -2873,8 +2872,6 @@ function removeStrings(source) {
  * @returns {string} Returns the modified source.
  */
 function removeSupportArgsClass(source, funcDepMap, objDepMap) {
-  source = removeSupportProp(source, 'argsClass');
-
   _.each(['isArguments', 'isPlainObject'], function(funcName) {
     var deps = _.result(objDepMap, funcName, []);
     _.pull(deps, 'support');
@@ -2884,6 +2881,8 @@ function removeSupportArgsClass(source, funcDepMap, objDepMap) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isArguments');
   });
+
+  source = removeSupportProp(source, 'argsClass');
 
   // replace `support.argsClass` in the `_.isArguments` fork
   source = source.replace(getIsArgumentsFork(source), function(match) {
@@ -2941,10 +2940,10 @@ function removeSupportEnumErrorProps(source) {
  * @returns {string} Returns the modified source.
  */
 function removeSupportEnumPrototypes(source, objDepMap) {
-  source = removeSupportProp(source, 'enumPrototypes');
-
   var deps = _.result(objDepMap, 'keys', []);
   _.pull(deps, 'support');
+
+  source = removeSupportProp(source, 'enumPrototypes');
 
   // remove `support.enumPrototypes` from `_.keys`
   return source.replace(matchFunction(source, 'keys'), function(match) {
@@ -2961,24 +2960,10 @@ function removeSupportEnumPrototypes(source, objDepMap) {
  * @returns {string} Returns the modified source.
  */
 function removeSupportNodeClass(source, funcDepMap) {
+  var deps = _.result(funcDepMap, 'isElement', []);
+  _.pull(deps, 'isHostObject');
+
   source = removeSupportProp(source, 'nodeClass');
-
-  _.each(['baseIsEqual', 'initObjectClone', 'isElement', 'shimIsPlainObject'], function(funcName) {
-    var deps = _.result(funcDepMap, funcName, []);
-    _.pull(deps, 'isHostObject');
-  });
-
-  // remove `support.nodeClass` from `initObjectClone` and `shimIsPlainObject`
-  _.each(['initObjectClone', 'shimIsPlainObject'], function(funcName) {
-    source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(/\s*\|\|\s*\(!support\.nodeClass\b[\s\S]+?\)\)/, '');
-    });
-  });
-
-  // remove `support.nodeClass` from `baseIsEqual`
-  source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
-    return match.replace(/\s*&&\s*!isHostObject\([^)]+\)/g, '');
-  });
 
   // remove `support.nodeClass` from `_.isElement`
   return source.replace(matchFunction(source, 'isElement'), function(match) {
@@ -3017,10 +3002,10 @@ function removeSupportNonEnumShadows(source) {
  * @returns {string} Returns the modified source.
  */
 function removeSupportNonEnumStrings(source, funcDepMap) {
-  source = removeSupportProp(source, 'nonEnumStrings');
-
   var deps = _.result(funcDepMap, 'shimKeys', []);
   _.pull(deps, 'isString');
+
+  source = removeSupportProp(source, 'nonEnumStrings');
 
   // remove `support.nonEnumStrings` from `shimKeys`
   return source.replace(matchFunction(source, 'shimKeys'), function(match) {
@@ -3066,8 +3051,6 @@ function removeSupportSpliceObjects(source) {
  * @returns {string} Returns the modified source.
  */
 function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
-  source = removeSupportProp(source, 'unindexedChars');
-
   _.each(['toIterable', 'toArray'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isString');
@@ -3075,6 +3058,8 @@ function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
     deps =  _.result(objDepMap, funcName, []);
     _.pull(deps, 'support');
   });
+
+  source = removeSupportProp(source, 'unindexedChars');
 
   // remove `support.unindexedChars` from `toIterable`
   source = source.replace(matchFunction(source, 'toIterable'), function(match) {
