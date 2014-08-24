@@ -51,6 +51,7 @@ var aliasToRealMap = createMap({
   'all': 'every',
   'any': 'some',
   'collect': 'map',
+  'compose': 'consumeRight',
   'detect': 'find',
   'each': 'forEach',
   'eachRight': 'forEachRight',
@@ -74,6 +75,7 @@ var aliasToRealMap = createMap({
 var realToAliasMap = createMap({
   'assign': ['extend'],
   'callback': ['iteratee'],
+  'consumeRight': ['compose'],
   'contains': ['include'],
   'every': ['all'],
   'filter': ['select'],
@@ -115,8 +117,9 @@ var funcDependencyMap = createMap({
   'clone': ['baseCallback', 'baseClone'],
   'cloneDeep': ['baseCallback', 'baseClone'],
   'compact': [],
-  'compose': ['isFunction'],
   'constant': [],
+  'consume': ['arrayEvery', 'isFunction'],
+  'consumeRight': ['arrayEvery', 'isFunction'],
   'contains': ['getIndexOf', 'isArray', 'isString', 'values'],
   'countBy': ['createAggregator'],
   'create': ['baseAssign', 'baseCreate'],
@@ -478,7 +481,8 @@ var categoryMap = createMap({
     'bind',
     'bindAll',
     'bindKey',
-    'compose',
+    'consume',
+    'consumeRight',
     'curry',
     'curryRight',
     'debounce',
@@ -695,6 +699,7 @@ var lodashOnlyFuncs = [
   'capitalize',
   'chunk',
   'cloneDeep',
+  'consume',
   'create',
   'curry',
   'curryRight',
@@ -4743,7 +4748,7 @@ function build(options, callback) {
       if (isUnderscore) {
         // unexpose Lo-Dash methods for the Underscore build
         source = source.replace(getMethodAssignments(source), function(match) {
-          var unexpose = lodashOnlyFuncs.concat('assign', 'zipObject');
+          var unexpose = lodashOnlyFuncs.concat('assign', 'consumeRight', 'zipObject');
 
           return _.reduce(unexpose, function(result, funcName) {
             if (isLodash(funcName)) {
