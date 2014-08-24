@@ -2717,6 +2717,39 @@ function removeIsFunctionFork(source) {
 }
 
 /**
+ * Removes all `isHostObject` references from `source`.
+ *
+ * @private
+ * @param {string} source The source to process.
+ * @param {Object} [funcDepMap] The dependency map to modify.
+ * @returns {string} Returns the modified source.
+ */
+function removeIsHostObject(source, funcDepMap) {
+  _.each(['baseIsEqual', 'initObjectClone', 'isElement', 'isNative', 'shimIsPlainObject'], function(funcName) {
+    var deps = _.result(funcDepMap, funcName, []);
+    _.pull(deps, 'isHostObject');
+  });
+
+  _.each(['baseIsEqual', 'shimIsPlainObject'], function(funcName) {
+    source = source.replace(matchFunction(source, funcName), function(match) {
+      return match.replace(/\s*&&\s*!isHostObject\([^)]+\)/g, '');
+    });
+  });
+
+  source = source.replace(matchFunction(source, 'initObjectClone'), function(match) {
+    return match.replace(/\s*\|\|\s*isHostObject\([^)]+\)/g, '');
+  });
+
+  source = source.replace(matchFunction(source, 'isElement'), function(match) {
+    return match.replace(/\(support\.nodeClass\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)\)/, '$1');
+  });
+
+  return source.replace(matchFunction(source, 'isNative'), function(match) {
+    return match.replace(/\s*\(isHostObject\b[^:]+:([\s\S]+?)\)/, '$1');
+  });
+}
+
+/**
  * Removes the `@license` tag from the copyright header so minifiers and
  * build optimizers may strip them.
  *
@@ -3673,15 +3706,15 @@ function build(options, callback) {
         source = addUnderscoreChaining(source, funcDepMap, isModularize);
       }
       if (isModern || (isUnderscore && _.isEmpty(plusFuncs))) {
+        source = removeIsHostObject(source, funcDepMap);
+        source = removeSupportArgsClass(source, funcDepMap, objDepMap);
         source = removeSupportEnumErrorProps(source);
         source = removeSupportEnumPrototypes(source, objDepMap);
+        source = removeSupportNodeClass(source, funcDepMap);
         source = removeSupportNonEnumShadows(source);
         source = removeSupportNonEnumStrings(source, funcDepMap);
-        source = removeSupportUnindexedChars(source, funcDepMap, objDepMap);
-
-        source = removeSupportArgsClass(source, funcDepMap, objDepMap);
-        source = removeSupportNodeClass(source, funcDepMap);
         source = removeSupportOwnLast(source);
+        source = removeSupportUnindexedChars(source, funcDepMap, objDepMap);
 
         _.each(['baseIsEqual', 'initObjectClone', 'shimIsPlainObject'], function(funcName) {
           _.pull(objDepMap[funcName], 'support');
@@ -4539,7 +4572,7 @@ function build(options, callback) {
               match = removeVar(match, 'isStr');
               return match
                 .replace(/\s*&&\s*\!isStr\b/, '')
-                .replace(/=.+?isStr[^:]+:\s*/g, '= ')
+                .replace(/=.+?isStr\b[^:]+:\s*/g, '= ')
                 .replace(/\bnoIteratee\b/, 'iteratee == null');
             });
           }
