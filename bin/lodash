@@ -50,8 +50,9 @@ var stdout = process.stdout;
 var aliasToRealMap = createMap({
   'all': 'every',
   'any': 'some',
+  'backflow': 'flowRight',
   'collect': 'map',
-  'compose': 'consumeRight',
+  'compose': 'flowRight',
   'detect': 'find',
   'each': 'forEach',
   'eachRight': 'forEachRight',
@@ -75,12 +76,12 @@ var aliasToRealMap = createMap({
 var realToAliasMap = createMap({
   'assign': ['extend'],
   'callback': ['iteratee'],
-  'consumeRight': ['compose'],
   'contains': ['include'],
   'every': ['all'],
   'filter': ['select'],
   'find': ['detect'],
   'first': ['head'],
+  'flowRight': ['backflow', 'compose'],
   'forEach': ['each'],
   'forEachRight': ['eachRight'],
   'functions': ['methods'],
@@ -118,8 +119,6 @@ var funcDependencyMap = createMap({
   'cloneDeep': ['baseCallback', 'baseClone'],
   'compact': [],
   'constant': [],
-  'consume': ['arrayEvery', 'isFunction'],
-  'consumeRight': ['arrayEvery', 'isFunction'],
   'contains': ['getIndexOf', 'isArray', 'isString', 'values'],
   'countBy': ['createAggregator'],
   'create': ['baseAssign', 'baseCreate'],
@@ -149,6 +148,8 @@ var funcDependencyMap = createMap({
   'first': [],
   'flatten': ['baseFlatten'],
   'flattenDeep': ['baseFlatten'],
+  'flow': ['arrayEvery', 'isFunction'],
+  'flowRight': ['arrayEvery', 'isFunction'],
   'forEach': ['arrayEach', 'baseCallback', 'baseEach', 'isArray'],
   'forEachRight': ['arrayEachRight', 'baseCallback', 'baseEachRight', 'isArray'],
   'forIn': ['baseCallback', 'baseFor', 'keysIn'],
@@ -481,13 +482,13 @@ var categoryMap = createMap({
     'bind',
     'bindAll',
     'bindKey',
-    'consume',
-    'consumeRight',
     'curry',
     'curryRight',
     'debounce',
     'defer',
     'delay',
+    'flow',
+    'flowRight',
     'memoize',
     'negate',
     'once',
@@ -699,7 +700,6 @@ var lodashOnlyFuncs = [
   'capitalize',
   'chunk',
   'cloneDeep',
-  'consume',
   'create',
   'curry',
   'curryRight',
@@ -714,6 +714,7 @@ var lodashOnlyFuncs = [
   'findLastIndex',
   'findLastKey',
   'flattenDeep',
+  'flow',
   'forEachRight',
   'forIn',
   'forInRight',
@@ -3348,7 +3349,7 @@ function trimIndent(source, level) {
 /*----------------------------------------------------------------------------*/
 
 /**
- * Creates a debug and/or minified build, executing the callback for each. The
+ * Creates a debug and/or minified build, invoking the callback for each. The
  * `callback` is invoked with one argument; (data).
  *
  * Note: For a list of commands see `displayHelp()` or run `lodash --help`.
@@ -4748,7 +4749,7 @@ function build(options, callback) {
       if (isUnderscore) {
         // unexpose Lo-Dash methods for the Underscore build
         source = source.replace(getMethodAssignments(source), function(match) {
-          var unexpose = lodashOnlyFuncs.concat('assign', 'consumeRight', 'zipObject');
+          var unexpose = lodashOnlyFuncs.concat('assign', 'backflow', 'flowRight', 'zipObject');
 
           return _.reduce(unexpose, function(result, funcName) {
             if (isLodash(funcName)) {
