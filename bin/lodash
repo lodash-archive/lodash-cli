@@ -693,9 +693,7 @@ var complexVars = [
 var lodashOnlyFuncs = [
   'at',
   'attempt',
-  'before',
   'bindKey',
-  'callback',
   'camelCase',
   'capitalize',
   'chunk',
@@ -727,8 +725,6 @@ var lodashOnlyFuncs = [
   'keysIn',
   'mapValues',
   'merge',
-  'negate',
-  'noop',
   'pad',
   'padLeft',
   'padRight',
@@ -3779,7 +3775,7 @@ function build(options, callback) {
         }
         // replace `_.assign`
         if (!isLodash('assign')) {
-          _.pull(funcDepMap.assign, 'baseAssign', 'createAssigner');
+          _.pull(funcDepMap.assign, 'createAssigner');
 
           source = replaceFunction(source, 'assign', [
             'function assign(object) {',
@@ -3795,10 +3791,7 @@ function build(options, callback) {
             '    length = 2;',
             '  }',
             '  while (++index < length) {',
-            '    var source = args[index];',
-            '    for (var key in source) {',
-            '      object[key] = source[key];',
-            '    }',
+            '    baseAssign(object, args[index]);',
             '  }',
             '  return object;',
             '}'
@@ -3867,6 +3860,7 @@ function build(options, callback) {
             '        object[key] = source[key];',
             '      }',
             '    }',
+
             '  }',
             '  return object;',
             '}'
@@ -4227,54 +4221,6 @@ function build(options, callback) {
             '}'
           ].join('\n'));
         }
-        // replace `_.memoize`
-        if (!isLodash('memoize')) {
-           source = replaceFunction(source, 'memoize', [
-              'function memoize(func, resolver) {',
-              '  if (!isFunction(func) || (resolver && !isFunction(resolver))) {',
-              '    throw new TypeError(funcErrorText);',
-              '  }',
-              '  var cache = {};',
-              '  return function() {',
-              "    var key = resolver ? resolver.apply(this, arguments) : arguments[0];",
-              "    if (key == '__proto__') {",
-              '      return func.apply(this, arguments);',
-              '    }',
-              '    return hasOwnProperty.call(cache, key)',
-              '      ? cache[key]',
-              '      : (cache[key] = func.apply(this, arguments));',
-              '  };',
-              '}'
-          ].join('\n'));
-        }
-        // replace `_.omit`
-        if (!isLodash('omit')) {
-          _.pull(funcDepMap.omit, 'getCallback', 'pickByCallback');
-
-          source = replaceFunction(source, 'omit', [
-            'function omit(object) {',
-            '  if (object == null) {',
-            '    return {};',
-            '  }',
-            '  var iterable = toObject(object),',
-            '      props = arrayMap(baseFlatten(arguments, false, false, 1), String);',
-            '',
-            '  return pickByArray(iterable, baseDifference(keysIn(iterable), props));',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.pick`
-        if (!isLodash('pick')) {
-          _.pull(funcDepMap.pick, 'getCallback', 'pickByCallback');
-
-          source = replaceFunction(source, 'pick', [
-            'function pick(object) {',
-            '  return object == null',
-            '    ? {}',
-            '    : pickByArray(toObject(object), baseFlatten(arguments, false, false, 1));',
-            '}'
-          ].join('\n'));
-        }
         // replace `_.random`
         if (!isLodash('random')) {
           _.pull(funcDepMap.random, 'baseRandom');
@@ -4367,12 +4313,12 @@ function build(options, callback) {
           _.pull(varDepMap.template, 'reInterpolate');
 
           source = replaceFunction(source, 'template', [
-            'function template(string, data, options) {',
+            'function template(string, options, otherOptions) {',
             '  var _ = lodash,',
             '      settings = _.templateSettings;',
             '',
             "  string = String(string == null ? '' : string);",
-            '  options = defaults({}, options, settings);',
+            '  options = defaults({}, otherOptions || options, settings);',
             '',
             '  var index = 0,',
             '      source = "__p += \'",',
@@ -4417,7 +4363,7 @@ function build(options, callback) {
             '  if (isError(result)) {',
             '    throw result;',
             '  }',
-            '  return data ? result(data) : result;',
+            '  return result;',
             '}'
           ].join('\n'));
         }
@@ -4749,7 +4695,7 @@ function build(options, callback) {
       if (isUnderscore) {
         // unexpose Lo-Dash methods for the Underscore build
         source = source.replace(getMethodAssignments(source), function(match) {
-          var unexpose = lodashOnlyFuncs.concat('assign', 'backflow', 'flowRight', 'zipObject');
+          var unexpose = lodashOnlyFuncs.concat('assign', 'backflow', 'callback', 'flowRight', 'zipObject');
 
           return _.reduce(unexpose, function(result, funcName) {
             if (isLodash(funcName)) {

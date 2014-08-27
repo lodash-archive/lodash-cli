@@ -353,9 +353,7 @@ var backboneDependencies = [
 var lodashOnlyFuncs = [
   'at',
   'attempt',
-  'before',
   'bindKey',
-  'callback',
   'camelCase',
   'capitalize',
   'chunk',
@@ -387,8 +385,6 @@ var lodashOnlyFuncs = [
   'keysIn',
   'mapValues',
   'merge',
-  'negate',
-  'noop',
   'pad',
   'padLeft',
   'padRight',
@@ -1395,7 +1391,6 @@ QUnit.module('underscore modifier');
       Foo.prototype = { 'a': 1 };
 
       deepEqual(lodash.defaults({}, new Foo), Foo.prototype, '_.defaults should assign inherited `source` properties: ' + basename);
-      deepEqual(lodash.extend({}, new Foo), Foo.prototype, '_.extend should assign inherited `source` properties: ' + basename);
 
       var callback = function(a, b) {
         return this[b];
@@ -1456,7 +1451,6 @@ QUnit.module('underscore modifier');
       }, { 'a': 1, 'b': 1 });
 
       strictEqual(actual, false, '_.isEqual should ignore `callback` and `thisArg`: ' + basename);
-      deepEqual(lodash.keys('abc'), [], '_.keys should return an empty array for string primitives: ' + basename);
       strictEqual(lodash.lastIndexOf([3, 2, 1], 3, true), 0, '_.lastIndexOf should not support binary search: ' + basename);
 
       strictEqual(lodash.max('abc'), -Infinity, '_.max should return `-Infinity` for strings: ' + basename);
@@ -1472,13 +1466,6 @@ QUnit.module('underscore modifier');
 
       // avoid comparing objects created by `lodash` methods with `deepEqual`
       // because QUnit has problems comparing objects from different realms
-      object = { 'a': 1, 'b': 2, 'c': 3 };
-      actual = lodash.omit(object, function(value) { return value === 3; });
-      deepEqual(_.keys(actual).sort(), ['a', 'b', 'c'], '_.omit should not accept a `callback`: ' + basename);
-
-      actual = lodash.pick(object, function(value) { return value !== 3; });
-      deepEqual(_.keys(actual), [], '_.pick should not accept a `callback`: ' + basename);
-
       actual = lodash.omit({ '0': 'a' }, 0);
       deepEqual(_.keys(actual), [], '_.omit should coerce property names to strings: ' + basename);
 
@@ -1495,7 +1482,7 @@ QUnit.module('underscore modifier');
       actual = lodash.tap([], function(value) { value.push(this); }, 'a');
       deepEqual(actual, [undefined], '_.tap should ignore `thisArg`: ' + basename);
 
-      strictEqual(lodash.template('${a}', object), '${a}', '_.template should ignore ES6 delimiters: ' + basename);
+      strictEqual(lodash.template('${a}')(object), '${a}', '_.template should ignore ES6 delimiters: ' + basename);
       ok(!('support' in lodash), '_.support should not exist: ' + basename);
       ok(!('imports' in lodash.templateSettings), '_.templateSettings should not have an "imports" property: ' + basename);
 
@@ -1507,10 +1494,6 @@ QUnit.module('underscore modifier');
 
       var collection = [{ 'a': { 'b': 1, 'c': 2 } }];
       deepEqual(lodash.where(collection, { 'a': { 'b': 1 } }), [], '_.where performs shallow comparisons: ' + basename);
-
-      expected = [[['fred', 30, true]], [['barney', 40, false]]];
-      actual = lodash.zip(lodash.zip(['fred', 'barney'], [30, 40], [true, false]));
-      deepEqual(actual, expected, '_.zip is unable to correctly consume it\'s output: ' + basename);
 
       deepEqual(lodash.difference([NaN], [NaN]), [NaN], '_.difference should not match `NaN`: ' + basename);
       strictEqual(lodash.indexOf([NaN], NaN), -1, '_.indexOf should not match `NaN`: ' + basename);
