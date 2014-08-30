@@ -753,6 +753,16 @@ var lodashOnlyFuncs = [
   'xor'
 ];
 
+/** List of functions that support argument placeholders */
+var placeholderFuncs = [
+  'bind',
+  'bindKey',
+  'curry',
+  'curryRight',
+  'partial',
+  'partialRight'
+];
+
 /** List of private functions */
 var privateFuncs = [
   'arrayEach',
@@ -920,69 +930,69 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
   var deps = _.result(funcDepMap, 'mixin', []);
   _.pull(deps, 'baseFunctions', 'isObject', 'keys').push('functions');
 
-  if (!isModularize) {
-    _.pull(deps, 'isFunction');
-  }
   // replace `_.mixin`
-  source = replaceFunction(source, 'mixin', (isModularize
-    ? [
-        'function mixin(object, source) {',
-        '  if (!source) {',
-        '    source = object;',
-        '    object = lodash;',
-        '  }',
-        '  var index = -1,',
-        '      isFunc = isFunction(object),',
-        '      methodNames = functions(source),',
-        '      length = methodNames.length;',
-        '',
-        '  while (++index < length) {',
-        '    var methodName = methodNames[index],',
-        '        func = object[methodName] = source[methodName];',
-        '',
-        '    if (isFunc) {',
-        '      object.prototype[methodName] = (function(func) {',
-        '        return function() {',
-        '          var args = [this.__wrapped__];',
-        '          push.apply(args, arguments);',
-        '',
-        '          var result = func.apply(object, args);',
-        '          if (this.__chain__) {',
-        '            result = new object(result);',
-        '            result.__chain__ = true;',
-        '          }',
-        '          return result;',
-        '        };',
-        '      }(func));',
-        '    }',
-        '  }',
-        '}'
-      ]
-    : [
-        'function mixin(source) {',
-        '  var index = -1,',
-        '      methodNames = functions(source),',
-        '      length = methodNames.length;',
-        '',
-        '  while (++index < length) {',
-        '    var methodName = methodNames[index];',
-        '    lodash.prototype[methodName] = (function() {',
-        '      var func = lodash[methodName] = source[methodName];',
-        '      return function() {',
-        '        var args = [this.__wrapped__];',
-        '        push.apply(args, arguments);',
-        '',
-        '        var result = func.apply(lodash, args);',
-        '        return this.__chain__',
-        '          ? new lodashWrapper(result, true)',
-        '          : result;',
-        '      };',
-        '    }());',
-        '  }',
-        '}'
-      ]
-  ).join('\n'));
+  if (isModularize) {
+    source = replaceFunction(source, 'mixin', [
+      'function mixin(object, source) {',
+      '  if (!source) {',
+      '    source = object;',
+      '    object = lodash;',
+      '  }',
+      '  var index = -1,',
+      '      isFunc = isFunction(object),',
+      '      methodNames = functions(source),',
+      '      length = methodNames.length;',
+      '',
+      '  while (++index < length) {',
+      '    var methodName = methodNames[index],',
+      '        func = object[methodName] = source[methodName];',
+      '',
+      '    if (isFunc) {',
+      '      object.prototype[methodName] = (function(func) {',
+      '        return function() {',
+      '          var args = [this.__wrapped__];',
+      '          push.apply(args, arguments);',
+      '',
+      '          var result = func.apply(object, args);',
+      '          if (this.__chain__) {',
+      '            result = new object(result);',
+      '            result.__chain__ = true;',
+      '          }',
+      '          return result;',
+      '        };',
+      '      }(func));',
+      '    }',
+      '  }',
+      '}'
+    ].join('\n'));
+  }
+  else {
+    _.pull(deps, 'isFunction');
 
+    source = replaceFunction(source, 'mixin', [
+      'function mixin(source) {',
+      '  var index = -1,',
+      '      methodNames = functions(source),',
+      '      length = methodNames.length;',
+      '',
+      '  while (++index < length) {',
+      '    var methodName = methodNames[index];',
+      '    lodash.prototype[methodName] = (function() {',
+      '      var func = lodash[methodName] = source[methodName];',
+      '      return function() {',
+      '        var args = [this.__wrapped__];',
+      '        push.apply(args, arguments);',
+      '',
+      '        var result = func.apply(lodash, args);',
+      '        return this.__chain__',
+      '          ? new lodashWrapper(result, true)',
+      '          : result;',
+      '      };',
+      '    }());',
+      '  }',
+      '}'
+    ].join('\n'));
+  }
   // move `mixin(...)` before `_.VERSION`
   source = source.replace(getMethodAssignments(source), function(match) {
     match = removeMixinCalls(match);
@@ -996,7 +1006,7 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
   });
 
   // replace wrapper `Array` method assignments
-  source = source.replace(/^(?:(?: *\/\/.*\n)*( *)(?:if\s*\([^{]+\{\n\1( *))?arrayEach\(\['[\s\S]+?\n\1\2}\);(?:\n\1})?\n+)+/m, function(match, indent) {
+  source = source.replace(/^(?:(?: *\/\/.*\n)*( *)(?:if\s*\([^{]+\{\n\1( *))?arrayEach\(\['(?!bind\b)[\s\S]+?\n\1\2}\);(?:\n\1})?\n+)+/m, function(match, indent) {
     return indent + [
       '// add `Array` mutator functions to the wrapper',
       "arrayEach(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
@@ -1336,8 +1346,10 @@ function buildModule(state, onComplete) {
         return code.join('\n');
       });
 
-      // add `lodash.support` and `lodash.templateSettings` assignment
+      // add `lodash.support`, `lodash.templateSettings`, placeholder assignments
       source = source.replace(/^ *lodash\.VERSION\b.+\n/m, function(match) {
+        var funcNames = _.intersection(buildFuncs, placeholderFuncs);
+
         var code = [
           '',
           '  lodash.support = support;'
@@ -1345,6 +1357,21 @@ function buildModule(state, onComplete) {
 
         if (_.contains(identifiers, 'templateSettings')) {
           code.push('  (lodash.templateSettings = strings.templateSettings).imports._ = lodash;');
+        }
+        if (!_.isEmpty(funcNames)) {
+          code.push(
+            '',
+            '  // assign default placeholders'
+          );
+          if (_.size(funcNames) > 1) {
+            code.push(
+              "  arrayEach(['" + funcNames.join("', '") + "'], function(methodName) {",
+              '    lodash[methodName].placeholder = lodash;',
+              '  });'
+            );
+          } else {
+            code.push('  lodash.' + funcNames[0] + '.placeholder = lodash;');
+          }
         }
         code.push('');
         return match + code.join('\n');
@@ -2497,7 +2524,7 @@ function removeChaining(source) {
   // remove all `lodash.prototype` additions
   return source
     .replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+\n/gm, '')
-    .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['[\s\S]+?\n\1}.+\n/gm, '')
+    .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?!bind)[\s\S]+?\n\1}.+\n/gm, '')
     .replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.[\s\S]+?;\n/gm, '');
 }
 
@@ -3656,12 +3683,7 @@ function build(options, callback) {
         } else {
           funcDepMap.main.push('baseAssign', 'baseForOwn', 'baseFunctions', 'isObject', 'keys');
         }
-        _.pull(funcDepMap.mixin, 'lodash');
-
-        // replace `lodash` placeholders
-        source = source.replace(/\b(placeholder\s*=\s*)lodash\b/, '$1{}');
-
-        _.each(['bind', 'bindKey', 'curry', 'curryRight', 'partial', 'partialRight'], function(funcName) {
+        _.each(placeholderFuncs.concat('mixin'), function(funcName) {
           _.pull(funcDepMap[funcName], 'lodash');
         });
       }
@@ -4901,14 +4923,15 @@ function build(options, callback) {
       }
     });
 
-    // remove placeholder assignments of removed functions
-    source = source.replace(/^(?: *\/\/.*\n)* *(?:[$\w]+\.placeholder\s*=\s*){2,}[\s\S]+?;\n/m, function(match) {
-      _.each(['bind', 'bindKey', 'curry', 'curryRight', 'partial', 'partialRight'], function(funcName) {
-        if (isExcluded(funcName)) {
-          match = match.replace(RegExp('\\b' + funcName + '\\.placeholder\\s*=\\s*'), '');
-        }
-      });
-      return _.contains(removeComments(match), 'placeholder') ? match : '';
+    // remove placeholder assignments of removed functions and modify for modularized builds
+    source = source.replace(RegExp("^( *\\/\\/.*\\n)*( *)(arrayEach\\(\\[')" + placeholderFuncs.join("',\\s*'") + "('][\\s\\S]+?\\n\\2}\\))(?=;\\n)", 'm'), function(match, comment, indent, prelude, postlude) {
+      var funcNames = _.reject(placeholderFuncs, isExcluded);
+      if (_.isEmpty(funcNames)) {
+        return '';
+      }
+      return _.size(funcNames) > 1
+        ? (comment + indent + prelude + funcNames.join("', '") + postlude)
+        : (comment + indent + funcNames[0] + '.placeholder = {}');
     });
 
     // remove unneeded property dependencies
