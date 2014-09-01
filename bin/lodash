@@ -4937,7 +4937,7 @@ function build(options, callback) {
       }
       return length > 1
         ? (comment + indent + prelude + funcNames.join("', '") + postlude)
-        : (comment + indent + funcNames[0] + '.placeholder = {}');
+        : (comment + indent + funcNames[0] + '.placeholder = ') + (isModularize ? '{}' : 'lodash');
     });
 
     // remove unneeded property dependencies
