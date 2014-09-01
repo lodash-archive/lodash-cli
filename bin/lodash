@@ -1656,7 +1656,7 @@ function buildTemplate(state) {
     // add the initial `_.templates` object to `source`
     source.splice(insertAt, 0, '  var templates = ' +
       JSON.stringify(templates, null, 4)
-        .replace(/^ *}$/m, '  $&')
+        .replace(/^ *\}$/m, '  $&')
         .replace(/'/g, "\\'")
         .replace(/([^\\])"/g, "$1'") +
       ';',
@@ -1752,11 +1752,11 @@ function cleanupSource(source) {
         return indent + separators.slice(separators.lastIndexOf('/*'));
       })
       // remove unneeded single line comments
-      .replace(/(\{\s*)?(\n *\/\/.*)(\s*})/g, function(match, prelude, comment, postlude) {
+      .replace(/(\{\s*)?(\n *\/\/.*)(\s*\})/g, function(match, prelude, comment, postlude) {
         return (!prelude && postlude) ? postlude : match;
       })
       // remove unneeded horizontal rule comment separators
-      .replace(/(\{\s*\n) *\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*})/gm, '$1$2')
+      .replace(/(\{\s*\n) *\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*\})/gm, '$1$2')
       // remove trailing horizontal rule comment separators
       .replace(/\s*\/\*-+\*\/\s*$/, '')
       // remove lines with just spaces and semicolons
@@ -1916,7 +1916,7 @@ function getCategories(identifier, funcDepMap) {
  * @returns {string} Returns the fork.
  */
 function getBaseCreateFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!nativeCreate\b[\s\S]+?\n\1  baseCreate\s*=[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!nativeCreate\b[\s\S]+?\n\1  baseCreate\s*=[\s\S]+?\n\1\}\n/m), 0, '');
 }
 
 /**
@@ -1927,7 +1927,7 @@ function getBaseCreateFork(source) {
  * @returns {string} Returns the fork.
  */
 function getBaseSetDataFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!WeakMap\)\s*\{\n\1  baseSetData\s*=[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!WeakMap\)\s*\{\n\1  baseSetData\s*=[\s\S]+?\n\1\}\n/m), 0, '');
 }
 
 /**
@@ -1938,7 +1938,7 @@ function getBaseSetDataFork(source) {
  * @returns {string} Returns the fork.
  */
 function getBufferCloneFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!bufferSlice\b[\s\S]+?\n\1  bufferClone\s*=[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!bufferSlice\b[\s\S]+?\n\1  bufferClone\s*=[\s\S]+?\n\1\}\n/m), 0, '');
 }
 
 /**
@@ -2079,7 +2079,7 @@ function getFunctionSource(func, indent) {
  * @returns {string} Returns the fork.
  */
 function getGetDataFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!WeakMap\)\s*\{\n\1  getData\s*=[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!WeakMap\)\s*\{\n\1  getData\s*=[\s\S]+?\n\1\}\n/m), 0, '');
 }
 
 /**
@@ -2112,7 +2112,7 @@ function getIndent(func) {
  * @returns {string} Returns the fork.
  */
 function getIsArgumentsFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n\1  isArguments\s*=[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n\1  isArguments\s*=[\s\S]+?\n\1\}\n/m), 0, '');
 }
 
 /**
@@ -2136,7 +2136,7 @@ function getIsArrayFork(source) {
  * @returns {string} Returns the fork.
  */
 function getIsElementFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.dom\b[\s\S]+?\n\1  isElement\s*=[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.dom\b[\s\S]+?\n\1  isElement\s*=[\s\S]+?\n\1\}\n/m), 0, '');
 }
 
 /**
@@ -2147,7 +2147,7 @@ function getIsElementFork(source) {
  * @returns {string} Returns the fork.
  */
 function getIsFunctionFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(isFunction\(\/x\/[\s\S]+?\n\1  isFunction\s*=[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(isFunction\(\/x\/[\s\S]+?\n\1  isFunction\s*=[\s\S]+?\n\1\}\n/m), 0, '');
 }
 
 /**
@@ -2238,7 +2238,7 @@ function getOption(options, name, defaultValue) {
  * @returns {string} Returns the fork.
  */
 function getParseIntFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(nativeParseInt\(whitespace\b[\s\S]+?\n\1  parseInt\s*=[\s\S]+?\n\1}\n/m), 0, '');
+  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(nativeParseInt\(whitespace\b[\s\S]+?\n\1  parseInt\s*=[\s\S]+?\n\1\}\n/m), 0, '');
 }
 
 /**
@@ -2270,9 +2270,9 @@ function getVars(source) {
 
   // remove all functions except `runInContext`
   source = source
-    .replace(/^( *)function\s+(?!runInContext)[\s\S]+?\{\n[\s\S]+?\n\1}\n/gm, '')
+    .replace(/^( *)function\s+(?!runInContext)[\s\S]+?\{\n[\s\S]+?\n\1\}\n/gm, '')
     .replace(/^( *)(?:var\s+)?[$\w]+\s*=.*?create[A-Z][a-z]+\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '')
-    .replace(/^( *)(?:var\s+)?[$\w]+\s*=\s*function\b[\s\S]+?\{\n[\s\S]+?\n\1};\n/gm, '');
+    .replace(/^( *)(?:var\s+)?[$\w]+\s*=\s*function\b[\s\S]+?\{\n[\s\S]+?\n\1\};\n/gm, '');
 
   var isDeep = reDeepVars.test(source),
       indentA = isDeep ? ' {2,4}' : ' {2}',
@@ -2357,7 +2357,7 @@ function matchFunction(source, funcName, leadingComments) {
     // match variable declarations using `createAggregator`, or `createCompounder`
     '( *)var\\s+' + funcName + '\\s*=.*?create[A-Z][a-z]+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
     // match a variable declaration with function expression
-    '( *)var\\s+' + funcName + '\\s*=.*?function\\b[\\s\\S]+?\{\\n[\\s\\S]+?\\n\\3}(?:\\(\\)\\))?;\\n',
+    '( *)var\\s+' + funcName + '\\s*=.*?function\\b[\\s\\S]+?\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n',
     // match a simple variable declaration
     ' *var\\s+' + funcName + '\\s*=.+?;\\n'
   ], function(result, reSource) {
@@ -2390,7 +2390,7 @@ function matchProp(source, propName, leadingComments) {
   return _.result(source.match(RegExp(
     '^' + (leadingComments ? multilineComment : '') +
     '(?: {2,4}var\\s+' + propName + '\\b.+|(?:\\s*|.*?=\\s*)lodash\\._?' + propName + '\\s*)=[\\s\\S]+?' +
-    '(?:\\(function\\b[\\s\\S]+?}\\([^)]*\\)\\);\\n(?=\\n)|' +
+    '(?:\\(function\\b[\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
     '[;}]\\n(?=\\n(?!\\s*\\(func)))'
   , 'm')), 0, '');
 }
@@ -2592,8 +2592,8 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
 
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match
-        .replace(/^(?: *\/\/.*\n)*( *)var\s+data\s*=[\s\S]+?\n\1}\n/m, '')
-        .replace(/^(?: *\/\/.*\n)*( *)if\s*\(data\b[\s\S]+?\n\1}\n/m, '')
+        .replace(/^(?: *\/\/.*\n)*( *)var\s+data\s*=[\s\S]+?\n\1\}\n/m, '')
+        .replace(/^(?: *\/\/.*\n)*( *)if\s*\(data\b[\s\S]+?\n\1\}\n/m, '')
         .replace(/^(?: *\/\/.*\n)* *setData.+\n/m, '')
         .replace(/^( *return\s+)setData\(([^,]+),[^)]+\)/gm, '$1$2')
     });
@@ -2836,7 +2836,7 @@ function removeMethodAssignments(source) {
  * @returns {string} Returns the modified source.
  */
 function removeMixinCalls(source) {
-  return source.replace(/^(?: *\/\/.*\n)*( *)mixin\((?:.+?|[\s\S]+?\1(?:}.+?)?)\);\n/gm, '');
+  return source.replace(/^(?: *\/\/.*\n)*( *)mixin\((?:.+?|[\s\S]+?\1(?:\}.+?)?)\);\n/gm, '');
 }
 
 /**
@@ -2914,7 +2914,7 @@ function removeRunInContext(source) {
  * @returns {string} Returns the modified source.
  */
 function removeSpliceObjectsFix(source) {
-  return source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.spliceObjects\b[\s\S]+?(?:\{\s*}|\n\1})\n/m, '');
+  return source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.spliceObjects\b[\s\S]+?(?:\{\s*\}|\n\1\})\n/m, '');
 }
 
 /**
@@ -2957,7 +2957,7 @@ function removeSupportArgsClass(source, funcDepMap, objDepMap) {
 
   // remove `support.argsClass` from `baseIsEqual`
   source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
-    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.argsClass\b[\s\S]+?\n\1}\n/m, '');
+    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.argsClass\b[\s\S]+?\n\1\}\n/m, '');
   });
 
   // remove `support.argsClass` from `initObjectClone` and `_.isPlainObject`
@@ -3091,7 +3091,7 @@ function removeSupportOwnLast(source) {
 
   // remove `support.ownLast` from `shimIsPlainObject`
   return source.replace(matchFunction(source, 'shimIsPlainObject'), function(match) {
-    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(support\.ownLast\b[\s\S]+?\n\1}\n/m, '');
+    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(support\.ownLast\b[\s\S]+?\n\1\}\n/m, '');
   });
 }
 
@@ -3129,7 +3129,7 @@ function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
 
   // remove `support.unindexedChars` from `toIterable`
   source = source.replace(matchFunction(source, 'toIterable'), function(match) {
-    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(support\.unindexedChars\b[\s\S]+?\n\1}\n/m, '');
+    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(support\.unindexedChars\b[\s\S]+?\n\1\}\n/m, '');
   });
 
   // remove `support.unindexedChars` from `_.toArray`
@@ -3157,7 +3157,7 @@ function removeSupportProp(source, propName) {
       // match the `support` property assignment
       ' *support\\.' + propName + '\\s*=[\\s\\S]+?;' +
       // match `catch` block
-      '(?:\\n\\1}\\s*catch\\b[\\s\\S]+?\\n\\1})?'
+      '(?:\\n\\1\\}\\s*catch\\b[\\s\\S]+?\\n\\1\\})?'
     , 'm'), '');
   });
 }
@@ -3256,7 +3256,7 @@ function replaceIIFE(source, iife) {
   }
   return header +
     iife.slice(0, index) +
-    source.replace(/^[\s\S]+?\(function[^{]+\{\n+|\s*}\.call\(this\)\)[;\s]*$/g, '\n') +
+    source.replace(/^[\s\S]+?\(function[^{]+\{\n+|\s*\}\.call\(this\)\)[;\s]*$/g, '\n') +
     iife.slice(index + token.length);
 }
 
@@ -3288,7 +3288,7 @@ function replaceSupportProp(source, propName, propValue) {
     // match the `support` property assignment
     '( *support\\.' + propName + '\\s*=).+\\n' +
     // match `catch` block
-    '(?:( *).+?catch\\b[\\s\\S]+?\\n\\2}\\n)?'
+    '(?:( *).+?catch\\b[\\s\\S]+?\\n\\2\\}\\n)?'
   , 'm'), function(match, left) {
     return left + ' ' + propValue + ';\n';
   });
@@ -3448,7 +3448,7 @@ function build(options, callback) {
     var templateSettings = (function() {
       var result = getOption(options, 'settings');
       return result
-        ? Function('return {' + result.replace(/^\{|}$/g, '') + '}')()
+        ? Function('return {' + result.replace(/^\{|\}$/g, '') + '}')()
         : _.clone(_.templateSettings);
     }());
 
@@ -3716,7 +3716,7 @@ function build(options, callback) {
         _.pull(varDepMap.initObjectClone, 'root');
 
         source = source.replace(matchFunction(source, 'initObjectClone'), function(match) {
-          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(Ctor\s+instanceof\s+Ctor[\s\S]+?\n\1}\n/m, '');
+          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(Ctor\s+instanceof\s+Ctor[\s\S]+?\n\1\}\n/m, '');
         });
 
         // replace `_.isRegExp`
@@ -4474,7 +4474,7 @@ function build(options, callback) {
         // remove `_.bindKey` support from `createHybridWrapper` and `createWrapper`
         if (!isLodash('bindKey')) {
           source = source.replace(matchFunction(source, 'createHybridWrapper'), function(match) {
-            return match.replace(/^( *)if\s*\(isBindKey\b[\s\S]+?\n\1}\n/m, '');
+            return match.replace(/^( *)if\s*\(isBindKey\b[\s\S]+?\n\1\}\n/m, '');
           });
 
           source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
@@ -4488,7 +4488,7 @@ function build(options, callback) {
           _.pull(funcDepMap.createHybridWrapper, 'replaceHolders');
 
           source = source.replace(matchFunction(source, 'createHybridWrapper'), function(match) {
-            return match.replace(/^( *)if\s*\(isCurry\b[\s\S]+?\n\1}\n/gm, '');
+            return match.replace(/^( *)if\s*\(isCurry\b[\s\S]+?\n\1\}\n/gm, '');
           });
         }
         // remove extended array-like object support from `_.isEmpty`
@@ -4504,7 +4504,7 @@ function build(options, callback) {
           _.pull(funcDepMap.lastIndexOf, 'sortedLastIndex');
 
           source = source.replace(matchFunction(source, 'lastIndexOf'), function(match) {
-            return match.replace(/\s*else\s+if\s*\(fromIndex\b[^}]+}/, '');
+            return match.replace(/\s*else\s+if\s*\(fromIndex\b[^}]+\}/, '');
           });
         }
         // remove `_.partialRight` support from `createHybridWrapper` and `createWrapper`
@@ -4516,8 +4516,8 @@ function build(options, callback) {
               match = removeVar(match, 'isPartialRight');
               match = removeVar(match, 'partialRightHolders');
               return match
-                .replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:isPartialRight|partialRightArgs)\b[\s\S]+?\n\1}\n/gm, '')
-                .replace(/^(?: *\/\/.*\n)*( *)funcArgs\s*=\s*data\[6\][\s\S]+?\n\1}\n/m, '');
+                .replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:isPartialRight|partialRightArgs)\b[\s\S]+?\n\1\}\n/gm, '')
+                .replace(/^(?: *\/\/.*\n)*( *)funcArgs\s*=\s*data\[6\][\s\S]+?\n\1\}\n/m, '');
             });
           });
         }
@@ -4735,7 +4735,7 @@ function build(options, callback) {
 
         if (!isModularize) {
           // remove `_.templateSettings.imports assignment
-          source = source.replace(/,[^']*'imports':[^}]+}/, '');
+          source = source.replace(/,[^']*'imports':[^}]+\}/, '');
 
           // unexpose `lodash.support`
           if (!isLodash('support')) {
@@ -4755,7 +4755,7 @@ function build(options, callback) {
 
         // remove `lodash` branch in `_.mixin`
         source = source.replace(matchFunction(source, 'mixin'), function(match) {
-          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(\(props\b[\s\S]+?\n\1}\n+/m, '');
+          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(\(props\b[\s\S]+?\n\1\}\n+/m, '');
         });
 
         // replace `lodash` use in `_.templateSettings.imports`
@@ -4800,23 +4800,23 @@ function build(options, callback) {
       source = source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(typeof\s+define\b[\s\S]+?else\s+/m, '$1');
     }
     if (!isNode || isModularize) {
-      source = source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(moduleExports\b[\s\S]+?else\s*\{([\s\S]+?\n)\1}\n+/m, '$1$2');
+      source = source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(moduleExports\b[\s\S]+?else\s*\{([\s\S]+?\n)\1\}\n+/m, '$1$2');
     }
     if (!isCommonJS || isModularize) {
-      source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)}?)\s*else\s*\{)?\s*freeExports\.[$\w]+\s*=[\s\S]+?(?:\n\2})?\n+/m, function(match, prelude) {
+      source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)\}?)\s*else\s*\{)?\s*freeExports\.[$\w]+\s*=[\s\S]+?(?:\n\2\})?\n+/m, function(match, prelude) {
         return prelude ? prelude + '\n' : '';
       });
     }
     if (!isGlobal || isModularize) {
-      source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)}?)\s*else(?:\s*if\s*\(_\))?\s*\{)?(?:\s*\/\/.*)*\s*(?:root\._|_\.templates)\s*=[\s\S]+?(?:\n\2})?\n+/gm, function(match, prelude) {
+      source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)\}?)\s*else(?:\s*if\s*\(_\))?\s*\{)?(?:\s*\/\/.*)*\s*(?:root\._|_\.templates)\s*=[\s\S]+?(?:\n\2\})?\n+/gm, function(match, prelude) {
         return prelude ? prelude + '\n' : '';
       });
     }
     // remove `if (freeExports && freeModule) {...}` if it's empty
     if (isAMD && isGlobal && !isModularize) {
-      source = source.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*}\n+/m, '');
+      source = source.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*\}\n+/m, '');
     } else {
-      source = source.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*}(?:\s*else\s*\{([\s\S]+?)\s*})?\n+/m, '$1\n');
+      source = source.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*\}(?:\s*else\s*\{([\s\S]+?)\s*\})?\n+/m, '$1\n');
     }
 
     /*------------------------------------------------------------------------*/
@@ -4928,12 +4928,14 @@ function build(options, callback) {
     });
 
     // remove placeholder assignments of removed functions and modify for modularized builds
-    source = source.replace(RegExp("^( *\\/\\/.*\\n)*( *)(arrayEach\\(\\[')" + placeholderFuncs.join("',\\s*'") + "('][\\s\\S]+?\\n\\2}\\))(?=;\\n)", 'm'), function(match, comment, indent, prelude, postlude) {
-      var funcNames = _.reject(placeholderFuncs, isExcluded);
-      if (_.isEmpty(funcNames)) {
+    source = source.replace(/^( *\/\/.*\n)*( *)(arrayEach\(\[')bind\b[\s\S]+?('\][\s\S]+?\n\2\}\))/m, function(match, comment, indent, prelude, postlude) {
+      var funcNames = _.reject(isUnderscore ? ['partial'] : placeholderFuncs, isExcluded),
+          length = funcNames.length;
+
+      if (!length) {
         return '';
       }
-      return _.size(funcNames) > 1
+      return length > 1
         ? (comment + indent + prelude + funcNames.join("', '") + postlude)
         : (comment + indent + funcNames[0] + '.placeholder = {}');
     });
@@ -4947,7 +4949,7 @@ function build(options, callback) {
 
     // remove code used to resolve unneeded `support` properties
     source = source.replace(matchProp(source, 'support'), function(match) {
-      return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var\s+Ctor\s*=[\s\S]+?\n *for\b[\s\S]+?}\n)([\s\S]+?)}\(0,\s*0\)\);\n/m, function(match, setup, indent, body) {
+      return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var\s+Ctor\s*=[\s\S]+?\n *for\b[\s\S]+?\}\n)([\s\S]+?)\}\(0,\s*0\)\);\n/m, function(match, setup, indent, body) {
         var modified = setup;
 
         if (!/\.spliceObjects\s*=\s*(?!false|true)/.test(body)) {
@@ -4960,7 +4962,7 @@ function build(options, callback) {
           modified = removeVar(modified, 'props');
           modified = modified
             .replace(/^ *Ctor\.prototype\b[\s\S]+?;\n/m, '')
-            .replace(/^ *for\s*\(var\s+key\b[\s\S]+?}\n/m, '');
+            .replace(/^ *for\s*\(var\s+key\b[\s\S]+?\}\n/m, '');
         }
         // if no setup then remove IIFE
         return (_.trim(modified) || /\barguments\b/.test(body))
