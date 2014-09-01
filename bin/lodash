@@ -1006,7 +1006,8 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
   });
 
   // replace wrapper `Array` method assignments
-  source = source.replace(/^(?:(?: *\/\/.*\n)*( *)(?:if\s*\([^{]+\{\n\1( *))?arrayEach\(\['(?!bind\b)[\s\S]+?\n\1\2}\);(?:\n\1})?\n+)+/m, function(match, indent) {
+
+  source = source.replace(/^(?:(?: *\/\/.*\n)*( *)(?:if\s*\([^{]+\{\n\1( *))?arrayEach\(\['(?:concat|join|pop|push)\b[\s\S]+?\n\1\2\}\);(?:\n\1\})?\n+)+/m, function(match, indent) {
     return indent + [
       '// add `Array` mutator functions to the wrapper',
       "arrayEach(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
@@ -1042,11 +1043,14 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
     ].join('\n' + indent);
   });
 
-  // remove `lodash.prototype` methods assignments for `toJSON`, `toString`, and `valueOf`
-  source = source.replace(/^ *lodash\.prototype\.(?:toJSON|toString|valueOf)\s*=.+\n/gm, '');
+  // remove `value` aliases
+  source = source.replace(/\blodash\.prototype\.(?:toJSON|valueOf)\s*=\s*/gm, '');
+
+  // remove `lodash.prototype.toString` assignment
+  source = source.replace(/^ *lodash\.prototype\.toString\s*=.+\n/m, '')
 
   // remove `lodash.prototype` batch method assignments
-  return source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+\n/gm, '');
+  return source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1\}.+\n/gm, '');
 }
 
 /**
@@ -1348,7 +1352,7 @@ function buildModule(state, onComplete) {
 
       // add `lodash.support`, `lodash.templateSettings`, placeholder assignments
       source = source.replace(/^ *lodash\.VERSION\b.+\n/m, function(match) {
-        var funcNames = _.intersection(buildFuncs, placeholderFuncs);
+        var funcNames = _.intersection(buildFuncs, isUnderscore ? ['partial'] : placeholderFuncs);
 
         var code = [
           '',
@@ -2523,8 +2527,8 @@ function removeChaining(source) {
 
   // remove all `lodash.prototype` additions
   return source
-    .replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1}.+\n/gm, '')
-    .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?!bind)[\s\S]+?\n\1}.+\n/gm, '')
+    .replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1\}.+\n/gm, '')
+    .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:concat|join|pop|push)\b[\s\S]+?\n\1\}.+\n/gm, '')
     .replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.[\s\S]+?;\n/gm, '');
 }
 
