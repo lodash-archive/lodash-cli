@@ -1047,7 +1047,7 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
   source = source.replace(/\blodash\.prototype\.(?:toJSON|valueOf)\s*=\s*/gm, '');
 
   // remove `lodash.prototype.toString` assignment
-  source = source.replace(/^ *lodash\.prototype\.toString\s*=.+\n/m, '')
+  source = source.replace(/^ *lodash\.prototype\.toString\s*=.+\n/m, '');
 
   // remove `lodash.prototype` batch method assignments
   return source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1\}.+\n/gm, '');
@@ -1920,17 +1920,6 @@ function getBaseCreateFork(source) {
 }
 
 /**
- * Gets the `baseSetData` fork from `source`.
- *
- * @private
- * @param {string} source The source to inspect.
- * @returns {string} Returns the fork.
- */
-function getBaseSetDataFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!WeakMap\)\s*\{\n\1  baseSetData\s*=[\s\S]+?\n\1\}\n/m), 0, '');
-}
-
-/**
  * Gets the `bufferClone` fork from `source`.
  *
  * @private
@@ -2490,17 +2479,6 @@ function removeAssignments(source) {
  */
 function removeBaseCreateFork(source) {
   return source.replace(getBaseCreateFork(source), '');
-}
-
-/**
- * Removes the `baseSetData` fork from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeBaseSetDataFork(source) {
-  return source.replace(getBaseSetDataFork(source), '');
 }
 
 /**
@@ -4911,9 +4889,7 @@ function build(options, callback) {
     // remove forks of removed functions
     _.forOwn({
       'baseCreate': removeBaseCreateFork,
-      'baseSetData': removeBaseSetDataFork,
       'bufferClone': removeBufferCloneFork,
-      'getData': removeGetDataFork,
       'isArguments': removeIsArgumentsFork,
       'isArray': removeIsArrayFork,
       'isElement': removeIsElementFork,
