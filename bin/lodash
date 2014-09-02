@@ -101,6 +101,9 @@ var funcDependencyMap = createMap({
   'support': ['isNative'],
   'templateSettings': ['escape'],
 
+  // variables
+  'metaMap': ['isNative'],
+
   // public functions
   'after': ['isFunction'],
   'assign': ['baseAssign', 'createAssigner'],
@@ -310,7 +313,7 @@ var funcDependencyMap = createMap({
   'basePullAt': ['baseAt', 'baseCompareAscending'],
   'baseRandom': [],
   'baseReduce': [],
-  'baseSetData': ['identity', 'isNative'],
+  'baseSetData': ['identity'],
   'baseSlice': [],
   'baseSome': ['baseEach'],
   'baseSortedIndex': ['isFunction'],
@@ -339,7 +342,7 @@ var funcDependencyMap = createMap({
   'escapeHtmlChar': [],
   'escapeStringChar': [],
   'getCallback': ['baseCallback', 'callback'],
-  'getData': ['isNative', 'noop'],
+  'getData': ['noop'],
   'getIndexOf': ['baseIndexOf', 'indexOf'],
   'initArrayClone': [],
   'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isFunction', 'isHostObject'],
@@ -383,13 +386,14 @@ var objDependencyMap = createMap({
 var varDependencyMap = createMap({
   'after': ['root'],
   'baseCreate': ['root'],
-  'baseSetData': ['root'],
+  'baseSetData': ['metaMap'],
   'bufferClone': ['root'],
   'createCache': ['root'],
   'createPad': ['root'],
-  'getData': ['root'],
+  'getData': ['metaMap'],
   'initObjectClone': ['root'],
   'isFinite': ['root'],
+  'metaMap': ['root'],
   'pad': ['root'],
   'parseInt': ['root'],
   'repeat': ['root'],
