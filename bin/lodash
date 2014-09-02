@@ -4539,36 +4539,36 @@ function build(options, callback) {
             !isLodash('forIn') && !isLodash('forInRight') &&
             !isLodash('forOwn') && !isLodash('forOwnRight')) {
 
-          source = source.replace(matchVar(source, 'EXPANDO'), function(match) {
+          source = source.replace(matchVar(source, 'VERSION'), function(match) {
             return match + [
               '',
               '  /** Used by methods to exit iteration */',
-              "  var breakIndicator = EXPANDO + 'breaker__';",
+              "  var BREAK_INDICATOR = '__lodash_breaker__';",
               ''
             ].join('\n');
           });
 
           source = source.replace(matchFunction(source, 'baseEvery'), function(match) {
-            return match.replace(/^( *)result\s*=[\s\S]+?;\n\1return\s+result\b/gm, '$& || breakIndicator');
+            return match.replace(/^( *)result\s*=[\s\S]+?;\n\1return\s+result\b/gm, '$& || BREAK_INDICATOR');
           });
 
           source = source.replace(matchFunction(source, 'baseSome'), function(match) {
-            return match.replace(/^(( *)result\s*=[\s\S]+?;\n\2return\s*)!result\b/m, '$1result && breakIndicator');
+            return match.replace(/^(( *)result\s*=[\s\S]+?;\n\2return\s*)!result\b/m, '$1result && BREAK_INDICATOR');
           });
 
           source = source.replace(matchFunction(source, 'transform'), function(match) {
-            return match.replace(/\breturn\s+iteratee[^)]+\)/, '$& === false && breakIndicator');
+            return match.replace(/\breturn\s+iteratee[^)]+\)/, '$& === false && BREAK_INDICATOR');
           });
 
           _.each(['arrayEach', 'arrayEachRight', 'baseEach', 'baseEachRight', 'baseFor', 'baseForRight'], function(funcName) {
             source = source.replace(matchFunction(source, funcName), function(match) {
-              return match.replace(/===\s*false\b/g, '=== breakIndicator');
+              return match.replace(/===\s*false\b/g, '=== BREAK_INDICATOR');
             });
           });
 
           _.each(['baseFind', 'shimIsPlainObject'], function(funcName) {
             source = source.replace(matchFunction(source, funcName), function(match) {
-              return match.replace(/\breturn\s+false\b/, 'return breakIndicator');
+              return match.replace(/\breturn\s+false\b/, 'return BREAK_INDICATOR');
             });
           });
         }
