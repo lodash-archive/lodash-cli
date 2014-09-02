@@ -501,21 +501,9 @@ var categoryMap = createMap({
     'throttle',
     'wrap'
   ],
-  'Object': [
-    'assign',
+  'Lang': [
     'clone',
     'cloneDeep',
-    'create',
-    'defaults',
-    'findKey',
-    'findLastKey',
-    'forIn',
-    'forInRight',
-    'forOwn',
-    'forOwnRight',
-    'functions',
-    'has',
-    'invert',
     'isArguments',
     'isArray',
     'isBoolean',
@@ -535,6 +523,20 @@ var categoryMap = createMap({
     'isRegExp',
     'isString',
     'isUndefined',
+  ],
+  'Object': [
+    'assign',
+    'create',
+    'defaults',
+    'findKey',
+    'findLastKey',
+    'forIn',
+    'forInRight',
+    'forOwn',
+    'forOwnRight',
+    'functions',
+    'has',
+    'invert',
     'keys',
     'keysIn',
     'mapValues',
@@ -590,13 +592,14 @@ var categoryMap = createMap({
 
 /* Used to map categories with their plural form */
 var categoryToPluralMap = createMap({
-  'Array': 'Arrays',
-  'Chain': 'Chaining',
-  'Collection': 'Collections',
-  'Function': 'Functions',
-  'Object': 'Objects',
-  'String': 'Strings',
-  'Utility': 'Utilities'
+  'Array': 'Array',
+  'Chain': 'Chain',
+  'Collection': 'Collection',
+  'Function': 'Func',
+  'Lang': 'Lang',
+  'Object': 'Object',
+  'String': 'String',
+  'Utility': 'Utility'
 });
 
 /* Used to enforce dependencies at the top level */
@@ -1364,7 +1367,7 @@ function buildModule(state, onComplete) {
         ];
 
         if (_.contains(identifiers, 'templateSettings')) {
-          code.push('  (lodash.templateSettings = strings.templateSettings).imports._ = lodash;');
+          code.push('  (lodash.templateSettings = ' + categoryToPluralMap.String.toLowerCase() + '.templateSettings).imports._ = lodash;');
         }
         if (!_.isEmpty(funcNames)) {
           code.push(
