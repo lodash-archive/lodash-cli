@@ -4512,8 +4512,6 @@ function build(options, callback) {
             return match.replace(/\bstep\s*==\s*null\b[^;]+/, '+step || 1');
           });
         }
-        source = removeMetadata(source, funcDepMap, objDepMap, varDepMap);
-
         // remove reflexive checks from `baseIndexOf` and `_.lastIndexOf`
         _.each(['baseIndexOf', 'lastIndexOf'], function(funcName) {
           if (!isLodash(funcName) && !(funcName == 'baseIndexOf' && isLodash(funcName))) {
@@ -4580,11 +4578,14 @@ function build(options, callback) {
           });
         }
       }
+      if (isModularize) {
+        source = removeGetIndexOf(source, funcDepMap);
+      }
       if (isModularize || !isLodash('callback')) {
         source = removeGetCallback(source, funcDepMap);
       }
-      if (isModularize) {
-        source = removeGetIndexOf(source, funcDepMap);
+      if (isNpm || isUnderscore) {
+        source = removeMetadata(source, funcDepMap, objDepMap, varDepMap);
       }
       // remove "_.pluck" or "_.where" style callback support from `baseCallback`
       _.each(['pluck', 'where'], function(funcName) {
