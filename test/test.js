@@ -144,6 +144,7 @@ var categoryMap = createMap({
     'chain',
     'lodash',
     'tap',
+    'thru',
     'wrapperChain',
     'wrapperToString',
     'wrapperValueOf'
@@ -249,6 +250,7 @@ var categoryMap = createMap({
   'String': [
     'camelCase',
     'capitalize',
+    'deburr',
     'endsWith',
     'escape',
     'escapeRegExp',
@@ -265,7 +267,8 @@ var categoryMap = createMap({
     'trimLeft',
     'trimRight',
     'trunc',
-    'unescape'
+    'unescape',
+    'words'
   ],
   'Utility': [
     'attempt',
@@ -404,6 +407,7 @@ var lodashOnlyFuncs = [
   'takeRight',
   'takeRightWhile',
   'takeWhile',
+  'thru',
   'transform',
   'trunc',
   'trim',

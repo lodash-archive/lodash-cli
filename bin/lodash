@@ -128,6 +128,7 @@ var funcDependencyMap = createMap({
   'curry': ['baseCurry', 'lodash'],
   'curryRight': ['baseCurry', 'lodash'],
   'debounce': ['isFunction', 'isObject', 'now'],
+  'deburr': ['deburrLetter'],
   'defaults': ['assign', 'assignDefaults', 'baseSlice'],
   'defer': ['isFunction', 'slice'],
   'delay': ['isFunction', 'slice'],
@@ -248,6 +249,7 @@ var funcDependencyMap = createMap({
   'tap': [],
   'template': ['assign', 'assignOwnDefaults', 'attempt', 'escape', 'escapeStringChar', 'isError', 'keys', 'values'],
   'throttle': ['debounce', 'isFunction', 'isObject'],
+  'thru': [],
   'times': ['baseCallback'],
   'toArray': ['baseSlice', 'isString', 'values'],
   'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'getCallback', 'isArrayLike', 'isObject'],
@@ -264,6 +266,7 @@ var funcDependencyMap = createMap({
   'valuesIn': ['baseValues', 'keysIn'],
   'where': ['filter', 'matches'],
   'without': ['baseDifference', 'slice'],
+  'words': [],
   'wrap': ['basePartial'],
   'wrapperChain': ['chain'],
   'wrapperToString': [],
@@ -336,7 +339,7 @@ var funcDependencyMap = createMap({
   'createPartialWrapper': ['createCtorWrapper'],
   'createWrapper': ['baseSetData', 'baseSlice', 'composeArgs', 'composeArgsRight', 'createBindWrapper', 'createHybridWrapper', 'createPartialWrapper', 'getData', 'isFunction', 'replaceHolders', 'setData'],
   'createCache': ['isNative'],
-  'createCompounder': ['deburrLetter'],
+  'createCompounder': ['deburr', 'words'],
   'createPad': ['repeat'],
   'deburrLetter': [],
   'escapeHtmlChar': [],
@@ -446,6 +449,7 @@ var categoryMap = createMap({
     'chain',
     'lodash',
     'tap',
+    'thru',
     'wrapperChain',
     'wrapperToString',
     'wrapperValueOf'
@@ -551,6 +555,7 @@ var categoryMap = createMap({
   'String': [
     'camelCase',
     'capitalize',
+    'deburr',
     'endsWith',
     'escape',
     'escapeRegExp',
@@ -567,7 +572,8 @@ var categoryMap = createMap({
     'trimLeft',
     'trimRight',
     'trunc',
-    'unescape'
+    'unescape',
+    'words'
   ],
   'Utility': [
     'attempt',
@@ -749,6 +755,7 @@ var lodashOnlyFuncs = [
   'takeRight',
   'takeRightWhile',
   'takeWhile',
+  'thru',
   'transform',
   'trunc',
   'trim',
@@ -3681,7 +3688,7 @@ function build(options, callback) {
         funcDepMap.wrapperValueOf.push('arrayEach','chain', 'mixin');
         objDepMap.wrapperValueOf = ['support'];
 
-        _.each(['chain', 'tap', 'wrapperChain'], function(funcName) {
+        _.each(['chain', 'tap', 'thru', 'wrapperChain'], function(funcName) {
           funcDepMap[funcName].push('wrapperValueOf');
         });
 
@@ -3689,7 +3696,7 @@ function build(options, callback) {
           funcDepMap.wrapperValueOf.push('assign');
         } else {
           funcDepMap.wrapperToString.push('wrapperValueOf');
-          funcDepMap.wrapperValueOf.push('baseAssign', 'baseForOwn', 'wrapperToString');
+          funcDepMap.wrapperValueOf.push('baseAssign', 'baseForOwn', 'tap', 'thru', 'wrapperToString');
         }
       }
       if (isModern) {
