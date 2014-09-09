@@ -193,7 +193,7 @@ var funcDependencyMap = createMap({
   'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isString', 'toObject'],
   'last': [],
   'lastIndexOf': ['sortedLastIndex'],
-  'lodash': ['isArray', 'lodashWrapper'],
+  'lodash': ['baseSlice', 'isArray', 'lodashWrapper'],
   'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
   'mapValues': ['baseForOwn', 'getCallback'],
   'matches': ['baseClone', 'baseIsEqual', 'isStrictComparable', 'keys'],
@@ -201,7 +201,7 @@ var funcDependencyMap = createMap({
   'memoize': ['isFunction'],
   'merge': ['baseMerge', 'createAssigner'],
   'min': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isString', 'toIterable'],
-  'mixin': ['baseFunctions', 'isFunction', 'isObject', 'keys', 'lodash'],
+  'mixin': ['baseFunctions', 'baseSlice', 'isFunction', 'isObject', 'keys', 'lodash'],
   'negate': ['isFunction'],
   'noConflict': [],
   'noop': [],
@@ -265,7 +265,7 @@ var funcDependencyMap = createMap({
   'where': ['filter', 'matches'],
   'without': ['baseDifference', 'slice'],
   'wrap': ['basePartial'],
-  'wrapperChain': [],
+  'wrapperChain': ['chain'],
   'wrapperToString': [],
   'wrapperValueOf': [],
   'xor': ['baseDifference', 'baseUniq', 'isArguments', 'isArray'],
@@ -316,7 +316,7 @@ var funcDependencyMap = createMap({
   'baseSetData': ['identity'],
   'baseSlice': [],
   'baseSome': ['baseEach'],
-  'baseSortedIndex': ['isFunction'],
+  'baseSortedIndex': [],
   'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseValues': [],
   'bufferClone': ['identity', 'isNative'],
@@ -1053,11 +1053,11 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
   // remove `value` aliases
   source = source.replace(/\blodash\.prototype\.(?:toJSON|valueOf)\s*=\s*/gm, '');
 
-  // remove `lodash.prototype.toString` assignment
-  source = source.replace(/^ *lodash\.prototype\.toString\s*=.+\n/m, '');
+  // remove `lodash.prototype.sample` assignment
+  source = source.replace(/^( *)lodash\.prototype\.sample\s*=[\s\S]+?\n\1\};\n/m, '');
 
-  // remove `lodash.prototype` batch method assignments
-  return source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1\}.+\n/gm, '');
+  // remove `lodash.prototype.toString` assignment
+  return source.replace(/^ *lodash\.prototype\.toString\s*=[\s\S]+?;\n/m, '');
 }
 
 /**
