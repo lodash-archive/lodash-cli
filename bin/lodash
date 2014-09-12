@@ -1021,7 +1021,7 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
 
   // replace wrapper `Array` method assignments
 
-  source = source.replace(/^(?:(?: *\/\/.*\n)*( *)(?:if\s*\([^{]+\{\n\1( *))?arrayEach\(\['(?:concat|join|pop|push)\b[\s\S]+?\n\1\2\}\);(?:\n\1\})?\n+)+/m, function(match, indent) {
+  source = source.replace(/^(?:(?: *\/\/.*\n)*( *)(?:if\s*\([^{]+\{\n\1( *))?arrayEach\(\['(?:concat|join|pop)\b[\s\S]+?\n\1\2\}\);(?:\n\1\})?\n+)+/m, function(match, indent) {
     return indent + [
       '// add `Array` mutator functions to the wrapper',
       "arrayEach(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
@@ -2520,7 +2520,7 @@ function removeChaining(source) {
   // remove all `lodash.prototype` additions
   return source
     .replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1\}.+\n/gm, '')
-    .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:concat|join|pop|push)\b[\s\S]+?\n\1\}.+\n/gm, '')
+    .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:concat|join|pop)\b[\s\S]+?\n\1\}.+\n/gm, '')
     .replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.[\s\S]+?;\n/gm, '');
 }
 
@@ -3677,7 +3677,7 @@ function build(options, callback) {
         if (isUnderscoreChaining) {
           funcDepMap.main.push('assign');
         } else {
-          funcDepMap.main.push('baseAssign', 'baseForOwn', 'baseFunctions', 'isObject', 'keys');
+          funcDepMap.main.push('baseForOwn', 'baseFunctions', 'isObject', 'keys');
         }
         _.each(placeholderFuncs.concat('mixin'), function(funcName) {
           _.pull(funcDepMap[funcName], 'lodash');
