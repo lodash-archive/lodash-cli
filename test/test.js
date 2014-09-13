@@ -366,6 +366,7 @@ var lodashOnlyFuncs = [
   'create',
   'curry',
   'curryRight',
+  'deburr',
   'dropRight',
   'dropRightWhile',
   'dropWhile',
@@ -415,6 +416,7 @@ var lodashOnlyFuncs = [
   'trimRight',
   'unzip',
   'valuesIn',
+  'words',
   'wrapperToString',
   'xor'
 ];

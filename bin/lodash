@@ -694,11 +694,11 @@ var complexVars = [
   'cloneableClasses',
   'contextProps',
   'ctorByClass',
-  'defineProperty',
   'freeGlobal',
   'nonEnumProps',
   'shadowedProps',
   'support',
+  'reWords',
   'whitespace'
 ];
 
@@ -714,6 +714,7 @@ var lodashOnlyFuncs = [
   'create',
   'curry',
   'curryRight',
+  'deburr',
   'dropRight',
   'dropRightWhile',
   'dropWhile',
@@ -763,6 +764,7 @@ var lodashOnlyFuncs = [
   'trimRight',
   'unzip',
   'valuesIn',
+  'words',
   'wrapperToString',
   'xor'
 ];
