@@ -946,6 +946,21 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
   var deps = _.result(funcDepMap, 'mixin', []);
   _.pull(deps, 'baseFunctions', 'isObject', 'keys').push('functions');
 
+  // replace `lodashWrapper`
+  source = replaceFunction(source, 'lodashWrapper', [
+    'function lodashWrapper(value, chainAll) {',
+    '  this.__chain__ = !!chainAll;',
+    '  this.__wrapped__ = value;',
+    '}'
+  ].join('\n'));
+
+  // replace `wrapperValueOf`
+  source = replaceFunction(source, 'wrapperValueOf', [
+    'function wrapperValueOf() {',
+    '  return this.__wrapped__;',
+    '}'
+  ].join('\n'));
+
   // replace `_.mixin`
   if (isModularize) {
     source = replaceFunction(source, 'mixin', [
@@ -1022,37 +1037,27 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
   });
 
   // replace wrapper `Array` method assignments
-
-  source = source.replace(/^(?:(?: *\/\/.*\n)*( *)(?:if\s*\([^{]+\{\n\1( *))?arrayEach\(\['(?:concat|join|pop)\b[\s\S]+?\n\1\2\}\);(?:\n\1\})?\n+)+/m, function(match, indent) {
+  source = source.replace(/^(?:(?: *\/\/.*\n)*( *)(?:if\s*\([^{]+\{\n\1( *))?arrayEach\(\['concat\b[\s\S]+?\n\1\2\}\);(?:\n\1\})?\n+)+/m, function(match, indent) {
     return indent + [
-      '// add `Array` mutator functions to the wrapper',
-      "arrayEach(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
-      '  var func = arrayProto[methodName];',
-      '  lodash.prototype[methodName] = function() {',
-      '    var value = this.__wrapped__;',
-      '    func.apply(value, arguments);',
+      '// add `Array.prototype` functions',
+      "arrayEach(['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
+      '  var func = arrayProto[methodName],',
+      '      retValue = !/concat|join|slice/.test(methodName),',
+      '      fixObjects = !support.spliceObjects && /pop|shift|splice/.test(methodName);',
       '',
-      '    // avoid array-like object bugs with `Array#shift` and `Array#splice`',
-      '    // in Firefox < 10 and IE < 9',
-      '    if (!support.spliceObjects && value.length === 0) {',
-      '      delete value[0];',
-      '    }',
-      '    return this;',
-      '  };',
-      '});',
-      '',
-      '// add `Array` accessor functions to the wrapper',
-      "arrayEach(['concat', 'join', 'slice'], function(methodName) {",
-      '  var func = arrayProto[methodName];',
       '  lodash.prototype[methodName] = function() {',
       '    var value = this.__wrapped__,',
       '        result = func.apply(value, arguments);',
       '',
-      '    if (this.__chain__) {',
-      '      result = new lodashWrapper(result);',
-      '      result.__chain__ = true;',
+      '    // avoid array-like object bugs with `Array#shift` and `Array#splice` in',
+      '    // IE < 9, Firefox < 10, and RingoJS',
+      '    if (fixObjects && value.length === 0) {',
+      '      delete value[0];',
       '    }',
-      '    return result;',
+      '    if (retValue) {',
+      '      result = value;',
+      '    }',
+      '    return this.__chain__ ? new lodashWrapper(result, true) : result;',
       '  };',
       '});',
       ''
@@ -2522,7 +2527,7 @@ function removeChaining(source) {
   // remove all `lodash.prototype` additions
   return source
     .replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1\}.+\n/gm, '')
-    .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:concat|join|pop)\b[\s\S]+?\n\1\}.+\n/gm, '')
+    .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['concat\b[\s\S]+?\n\1\}.+\n/gm, '')
     .replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.[\s\S]+?;\n/gm, '');
 }
 
