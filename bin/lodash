@@ -2364,12 +2364,12 @@ function matchFunction(source, funcName, leadingComments) {
   var result = _.reduce([
     // match a function declaration
     '( *)function\\s+' + funcName + '\\b[\\s\\S]+?\\n\\3}\\n',
+    // match a simple variable declaration
+    ' *var\\s+' + funcName + '\\s*=.+?;\\n',
     // match variable declarations using `createAggregator`, or `createCompounder`
     '( *)var\\s+' + funcName + '\\s*=.*?create[A-Z][a-z]+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
     // match a variable declaration with function expression
-    '( *)var\\s+' + funcName + '\\s*=.*?function\\b[\\s\\S]+?\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n',
-    // match a simple variable declaration
-    ' *var\\s+' + funcName + '\\s*=.+?;\\n'
+    '( *)var\\s+' + funcName + '\\s*=.*?function\\b[\\s\\S]+?\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n'
   ], function(result, reSource) {
     if (result) {
       return result;
@@ -2416,33 +2416,29 @@ function matchProp(source, propName, leadingComments) {
  * @returns {string} Returns the matched variable snippet.
  */
 function matchVar(source, varName, leadingComments) {
+  leadingComments = leadingComments ? multilineComment : '';
+
   var isDeep = reDeepVars.test(source),
-      indentA = isDeep ? ' {2,4}' : ' {2}',
-      indentB = isDeep ? ' {6,8}' : ' {6}';
+      indentA = isDeep ? ' {2,4}' : ' *',
+      indentB = isDeep ? ' {6,8}' : ' *';
 
   var reSources = [
     // match a varaible at the start of a declaration list
-    indentA + 'var ' + varName + '\\s*=.+?,\\n(?=\\s*[$\\w]+\\s*=)',
+    ['^(' + indentA + 'var\\s+)(' + varName + '\\s*=.+?,\\n *)', 2],
     // match a variable declaration in a declaration list
-    indentB + varName + '\\s*=[\\s\\S]+?[,;]\\n',
+    [',\\n' + leadingComments + indentB + varName + '\\s*=[\\s\\S]+?(?=[,;]\\n)', 0],
     // match a variable that is not part of a declaration list
-    '(' + indentA + ')var\\s+' + varName + '\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n'
+    ['^' + leadingComments + '(' + indentA + ')var\\s+' + varName + '\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n', 0]
   ];
 
   // match complex variable assignments
   if (_.contains(complexVars, varName)) {
     reSources = [
-      '(' + indentA + ')var\\s+' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\1(?:function\\b|if\\b|lodash\\b|var\\s|/[/*])))'
+      ['^' + leadingComments + '(' + indentA + ')var\\s+' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\1(?:function\\b|if\\b|lodash\\b|var\\s|/[/*])))', 0]
     ];
   }
-  return _.reduce(reSources, function(result, reSource) {
-    if (result) {
-      return result;
-    }
-    return _.result(source.match(RegExp(
-      '^' + (leadingComments ? multilineComment : '') +
-      reSource
-    , 'm')), 0, '');
+  return _.reduce(reSources, function(result, data) {
+    return result || _.result(source.match(RegExp(data[0], 'm')), data[1], '');
   }, '');
 }
 
@@ -2611,16 +2607,9 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
  * @returns {string} Returns the modified source.
  */
 function removeFunction(source, funcName) {
-  // defer to specialized removal functions
-  if (funcName == 'runInContext') {
-    return removeRunInContext(source, funcName);
-  }
-  // remove function
-  var snippet = matchFunction(source, funcName, true);
-  if (snippet) {
-    source = source.replace(snippet, '');
-  }
-  return source;
+  return (funcName == 'runInContext')
+    ? removeRunInContext(source, funcName)
+    : source.replace(matchFunction(source, funcName, true), '');
 }
 
 /**
@@ -3172,29 +3161,10 @@ function removeSupportProp(source, propName) {
 function removeVar(source, varName) {
   _.some([
     function(source) {
-      return _.contains(complexVars, varName)
-        ? source.replace(matchVar(source, varName, true), '')
-        : source;
-    },
-    function(source) {
       return removeFunction(source, varName);
     },
     function(source) {
-      // remove a varaible at the start of a declaration list
-      return source.replace(RegExp('(var\\s+)' + varName + '\\s*=.+?,\\n *'), '$1');
-    },
-    function(source) {
-      // remove a variable declaration in a declaration list
-      return source.replace(RegExp(
-        '^( *(?:var\\s+)?[$\\w]+\\s*=.+?),\\n *' + varName + '\\s*=[\\s\\S]+?([,;])(?=\\n)'
-      , 'm'), '$1$2');
-    },
-    function(source) {
-      // remove a variable that is not part of a declaration list
-      return source.replace(RegExp(
-        '^' + multilineComment +
-        '( *)var\\s+' + varName + '\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n'
-      , 'm'), '');
+      return source.replace(matchVar(source, varName, true), '');
     }
   ], function(func) {
     var result = func(source);
