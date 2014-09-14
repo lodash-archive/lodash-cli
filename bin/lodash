@@ -1416,12 +1416,12 @@ function buildModule(state, onComplete) {
       });
 
       // add category namespaces to each lodash function assignment
-      source = source.replace(/(lodash(?:\.prototype)?\.[$\w]+\s*=\s*)([$\w]+)/g, function(match, prelude, identifier) {
+      source = source.replace(/(lodash(?:\.prototype)?\.[$\w]+\s*=\s*)([$\w]+)/g, function(match, left, identifier) {
         if (_.contains(deps, identifier)) {
           return match;
         }
         var category = categoryToPluralMap[_.first(getCategories(identifier, funcDepMap))];
-        return prelude + (category ? category.toLowerCase() + '.' : '') + identifier;
+        return left + (category ? category.toLowerCase() + '.' : '') + identifier;
       });
 
       var unusedDeps = getUnusedDeps(source, deps);
@@ -4750,7 +4750,11 @@ function build(options, callback) {
         source = source.replace(/\b(lodash\.)(?=templateSettings\s*=)/, 'var ');
 
         // remove the `lodash` namespace from properties
-        source = source.replace(/\blodash\.(?!com|prototype)([$\w]+)\b(?!\s*=)/g, '$1');
+        source = source.replace(/( *)lodash\.([$\w]+\.)?([$\w]+)(\s*=\s*(?:function\([\s\S]+?\n\1\}|.+?);\n)?/g, function(match, indent, property, identifier, right) {
+          return (property || right || identifier == 'com' || identifier == 'prototype')
+            ? match
+            : (indent + identifier);
+        });
 
         // remove all horizontal rule comment separators
         source = source.replace(/^ *\/\*-+\*\/\n/gm, '');
