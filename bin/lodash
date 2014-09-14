@@ -898,6 +898,8 @@ var underscoreFuncs = _.difference(allFuncs, lodashOnlyFuncs, privateFuncs);
  * @returns {string} Returns the modified source.
  */
 function addCommandsToHeader(source, commands) {
+  source = source == null ? '' : String(source);
+
   return source.replace(getHeader(source), function(header) {
     // remove `node path/to/build.js` from `commands`
     if (reNode.test(commands[0])) {
@@ -905,7 +907,7 @@ function addCommandsToHeader(source, commands) {
     }
     // add quotes to commands with spaces or equals signs
     commands = _.map(commands, function(command) {
-      var separator = command.match(/[= ]/);
+      var separator = /[= ]/.exec(command);
       if (separator) {
         separator = separator[0];
         var pair = command.split(separator);
@@ -1769,7 +1771,7 @@ function cleanupSource(source) {
     return source
       // consolidate consecutive horizontal rule comment separators
       .replace(/(?:\s*\/\*-+\*\/\s*){2,}/g, function(separators) {
-        var indent = separators.match(/^\s*/)[0];
+        var indent = /^\s*/.exec(separators)[0];
         return indent + separators.slice(separators.lastIndexOf('/*'));
       })
       // remove unneeded single line comments
@@ -1937,7 +1939,7 @@ function getCategories(identifier, funcDepMap) {
  * @returns {string} Returns the fork.
  */
 function getBaseCreateFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!nativeCreate\b[\s\S]+?\n\1  baseCreate\s*=[\s\S]+?\n\1\}\n/m), 0, '');
+  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(!nativeCreate\b[\s\S]+?\n\1  baseCreate\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
 }
 
 /**
@@ -1948,7 +1950,7 @@ function getBaseCreateFork(source) {
  * @returns {string} Returns the fork.
  */
 function getBufferCloneFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!bufferSlice\b[\s\S]+?\n\1  bufferClone\s*=[\s\S]+?\n\1\}\n/m), 0, '');
+  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(!bufferSlice\b[\s\S]+?\n\1  bufferClone\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
 }
 
 /**
@@ -2058,7 +2060,7 @@ function getDependencies(funcName, funcDepMap, isShallow, stack) {
  * @returns {string} Returns the formatted source.
  */
 function getFunctionSource(func, indent) {
-  var source = func.source || (func + ''),
+  var source = String(func.source || func),
       srcIndent = getIndent(source),
       forceIndent = _.size(source.match(RegExp('^' + srcIndent + '}', 'gm'))) > 1;
 
@@ -2089,7 +2091,7 @@ function getFunctionSource(func, indent) {
  * @returns {string} Returns the fork.
  */
 function getGetDataFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!WeakMap\)\s*\{\n\1  getData\s*=[\s\S]+?\n\1\}\n/m), 0, '');
+  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(!WeakMap\)\s*\{\n\1  getData\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
 }
 
 /**
@@ -2100,6 +2102,7 @@ function getGetDataFork(source) {
  * @returns {string} Returns the copyright/license header.
  */
 function getHeader(source) {
+  source = source == null ? '' : String(source);
   return _.result(/^(?:\s*\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\s*\/\/.*)*\n/.exec(source), 0, '');
 }
 
@@ -2122,7 +2125,7 @@ function getIndent(func) {
  * @returns {string} Returns the fork.
  */
 function getIsArgumentsFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n\1  isArguments\s*=[\s\S]+?\n\1\}\n/m), 0, '');
+  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n\1  isArguments\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
 }
 
 /**
@@ -2146,7 +2149,7 @@ function getIsArrayFork(source) {
  * @returns {string} Returns the fork.
  */
 function getIsElementFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.dom\b[\s\S]+?\n\1  isElement\s*=[\s\S]+?\n\1\}\n/m), 0, '');
+  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.dom\b[\s\S]+?\n\1  isElement\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
 }
 
 /**
@@ -2157,7 +2160,7 @@ function getIsElementFork(source) {
  * @returns {string} Returns the fork.
  */
 function getIsFunctionFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(isFunction\(\/x\/[\s\S]+?\n\1  isFunction\s*=[\s\S]+?\n\1\}\n/m), 0, '');
+  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(isFunction\(\/x\/[\s\S]+?\n\1  isFunction\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
 }
 
 /**
@@ -2168,7 +2171,7 @@ function getIsFunctionFork(source) {
  * @returns {string} Returns the method assignments snippet.
  */
 function getMethodAssignments(source) {
-  return _.result(source.match(/\n\n(?: *\/\/.*\n)* *lodash\.[$\w]+\s*=[\s\S]+lodash\.[$\w]+\s=.+/), 0, '');
+  return _.result(/\n\n(?: *\/\/.*\n)* *lodash\.[$\w]+\s*=[\s\S]+lodash\.[$\w]+\s=.+/.exec(source), 0, '');
 }
 
 /**
@@ -2248,7 +2251,7 @@ function getOption(options, name, defaultValue) {
  * @returns {string} Returns the fork.
  */
 function getParseIntFork(source) {
-  return _.result(source.match(/^(?: *\/\/.*\n)*( *)if\s*\(nativeParseInt\(whitespace\b[\s\S]+?\n\1  parseInt\s*=[\s\S]+?\n\1\}\n/m), 0, '');
+  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(nativeParseInt\(whitespace\b[\s\S]+?\n\1  parseInt\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
 }
 
 /**
@@ -2281,29 +2284,28 @@ function getVars(source) {
   // remove all functions except `runInContext`
   source = source
     .replace(/^( *)function\s+(?!runInContext)[\s\S]+?\{\n[\s\S]+?\n\1\}\n/gm, '')
-    .replace(/^( *)(?:var\s+)?[$\w]+\s*=.*?create[A-Z][a-z]+\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '')
-    .replace(/^( *)(?:var\s+)?[$\w]+\s*=\s*function\b[\s\S]+?\{\n[\s\S]+?\n\1\};\n/gm, '');
+    .replace(/^( *)(?:var\s+)?[$\w]+\s*=\s*function\([\s\S]+?\{\n[\s\S]+?\n\1\};\n/gm, '')
+    .replace(/^( *)(?:var\s+)?[$\w]+\s*=.*?create[A-Z][a-z]+\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '');
 
   var isDeep = reDeepVars.test(source),
       indentA = isDeep ? ' {2,4}' : ' {2}',
       indentB = isDeep ? ' {6,8}' : ' {6}';
 
-  var result = _.reduce([
+  var reAttempts = [
     // match a varaible at the start of a declaration list
-    indentA + 'var\\s+([$\\w]+)\\s*=.+?,\\n(?=\\s*[$\\w]+\\s*=)',
+    ['^(' + indentA + 'var\\s+)([$\\w]+)\\s*=.+?,\\n *', 2, 1],
     // match a variable declaration in a declaration list
-    indentB + '([$\\w]+)\\s*=[\\s\\S]+?[,;]\\n',
+    [',\\n' + multilineComment + indentB + '([$\\w]+)\\s*=[\\s\\S]+?(?=[,;]\\n)', 1, -1],
     // match a variable that is not part of a declaration list
-    '(' + indentA + ')var\\s+([$\\w]+)\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n'
-  ], function(result, reSource) {
-    source = source.replace(RegExp('^' + reSource, 'gm'), function(match, indent, varName) {
-      result.push(typeof varName == 'number' ? indent : varName);
-      return '';
-    });
-    return result;
-  }, []);
+    ['^(' + indentA + ')var\\s+([$\\w]+)\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n', 2, -1]
+  ];
 
-  return _.uniq(result);
+  return _.uniq(_.transform(reAttempts, function(result, data) {
+    source = source.replace(RegExp(data[0], 'gm'), function() {
+      result.push(arguments[data[1]]);
+      return data[2] > -1 ? arguments[data[2]] : '';
+    });
+  }));
 }
 
 /**
@@ -2314,11 +2316,10 @@ function getVars(source) {
  * @returns {boolean} Returns `true` for a function snippet, else `false`.
  */
 function isFunctionSnippet(source) {
+  source = source == null ? '' : String(source);
   var header = getHeader(source);
-  if (header && reFuncTag.test(header)) {
-    return true;
-  }
-  return reFuncSnippet.test(source.replace(header, ''));
+
+  return (header && reFuncTag.test(header)) || reFuncSnippet.test(source.replace(header, ''));
 }
 
 /**
@@ -2341,13 +2342,15 @@ function isPrivate(funcName) {
  * @returns {boolean} Returns `true` if the variable is used, else `false`.
  */
 function isVarUsed(source, varName) {
+  source = source == null ? '' : String(source);
   var snippet = matchVar(source, varName);
+
   if (!snippet) {
     return false;
   }
   // remove the variable assignment from the source
   source = source.replace(snippet, '');
-  return RegExp('[^.$"\'\\w]' + varName + '\\b(?!\\s*=)').test(source);
+  return RegExp('[^.$"\'\\w]' + _.escapeRegExp(varName) + '\\b(?!\\s*=)').test(source);
 }
 
 /**
@@ -2361,29 +2364,26 @@ function isVarUsed(source, varName) {
  * @returns {string} Returns the matched function snippet.
  */
 function matchFunction(source, funcName, leadingComments) {
-  var result = _.reduce([
+  funcName = _.escapeRegExp(funcName);
+
+  var reAttempts = [
     // match a function declaration
-    '( *)function\\s+' + funcName + '\\b[\\s\\S]+?\\n\\3}\\n',
+    '( *)function\\s+' + funcName + '\\([\\s\\S]+?\\n\\3}\\n',
     // match a simple variable declaration
     ' *var\\s+' + funcName + '\\s*=.+?;\\n',
     // match variable declarations using `createAggregator`, or `createCompounder`
     '( *)var\\s+' + funcName + '\\s*=.*?create[A-Z][a-z]+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
     // match a variable declaration with function expression
-    '( *)var\\s+' + funcName + '\\s*=.*?function\\b[\\s\\S]+?\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n'
-  ], function(result, reSource) {
+    '( *)var\\s+' + funcName + '\\s*=.*?function\\([\\s\\S]+?\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n'
+  ];
+
+  return _.reduce(reAttempts, function(result, reSource, index) {
     if (result) {
       return result;
     }
-    return source.match(RegExp(
-      '^(' + multilineComment + ')' +
-      '('  + reSource + ')'
-    , 'm'));
+    result = RegExp('^(' + multilineComment + ')(' + reSource + ')', 'm').exec(source);
+    return (result && isFunctionSnippet(result)) ? result[leadingComments ? 0 : 2] : '';
   }, '');
-
-  if (result && isFunctionSnippet(result[0])) {
-    return (leadingComments ? result[1] : '') + result[2];
-  }
-  return '';
 }
 
 /**
@@ -2397,12 +2397,14 @@ function matchFunction(source, funcName, leadingComments) {
  * @returns {string} Returns the matched property snippet.
  */
 function matchProp(source, propName, leadingComments) {
-  return _.result(source.match(RegExp(
+  propName = _.escapeRegExp(propName);
+
+  return _.result(RegExp(
     '^' + (leadingComments ? multilineComment : '') +
     '(?: {2,4}var\\s+' + propName + '\\b.+|(?:\\s*|.*?=\\s*)lodash\\._?' + propName + '\\s*)=[\\s\\S]+?' +
-    '(?:\\(function\\b[\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
+    '(?:\\(function\\([\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
     '[;}]\\n(?=\\n(?!\\s*\\(func)))'
-  , 'm')), 0, '');
+  , 'm').exec(source), 0, '');
 }
 
 /**
@@ -2416,29 +2418,23 @@ function matchProp(source, propName, leadingComments) {
  * @returns {string} Returns the matched variable snippet.
  */
 function matchVar(source, varName, leadingComments) {
-  leadingComments = leadingComments ? multilineComment : '';
+  varName = _.escapeRegExp(varName);
 
-  var isDeep = reDeepVars.test(source),
-      indentA = isDeep ? ' {2,4}' : ' *',
-      indentB = isDeep ? ' {6,8}' : ' *';
-
-  var reSources = [
+  var reAttempts = [
     // match a varaible at the start of a declaration list
-    ['^(' + indentA + 'var\\s+)(' + varName + '\\s*=.+?,\\n *)', 2],
+    ['^( *var\\s+)(' + varName + '\\s*=.+?,\\n *)', 2, 2],
     // match a variable declaration in a declaration list
-    [',\\n' + leadingComments + indentB + varName + '\\s*=[\\s\\S]+?(?=[,;]\\n)', 0],
+    ['(,\\n' + multilineComment + ')( *' + varName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
     // match a variable that is not part of a declaration list
-    ['^' + leadingComments + '(' + indentA + ')var\\s+' + varName + '\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n', 0]
+    ['^(' + multilineComment + ')(( *)var\\s+' + varName + '\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\3\\S+?));\\n)', 2, 0]
   ];
 
   // match complex variable assignments
   if (_.contains(complexVars, varName)) {
-    reSources = [
-      ['^' + leadingComments + '(' + indentA + ')var\\s+' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\1(?:function\\b|if\\b|lodash\\b|var\\s|/[/*])))', 0]
-    ];
+    reAttempts = [['^(' + multilineComment + ')(( *)var\\s+' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]];
   }
-  return _.reduce(reSources, function(result, data) {
-    return result || _.result(source.match(RegExp(data[0], 'm')), data[1], '');
+  return _.reduce(reAttempts, function(result, data) {
+    return result || _.result(RegExp(data[0], 'm').exec(source), data[leadingComments ? 2 : 1], '');
   }, '');
 }
 
@@ -2463,7 +2459,8 @@ function optionToArray(name, string) {
  * @returns {string|undefined} Returns the option value, else `undefined`.
  */
 function optionToValue(name, string) {
-  var result = string.match(RegExp('^' + name + '(?:=([\\s\\S]+))?$'));
+  var result = RegExp('^' + _.escapeRegExp(name) + '(?:=([\\s\\S]+))?$').exec(string);
+
   if (result) {
     result = _.result(result, 1);
     result = result ? _.trim(result) : true;
@@ -2495,6 +2492,7 @@ function removeAssignments(source) {
  * @returns {string} Returns the modified source.
  */
 function removeBaseCreateFork(source) {
+  source = source == null ? '' : String(source);
   return source.replace(getBaseCreateFork(source), '');
 }
 
@@ -2506,6 +2504,7 @@ function removeBaseCreateFork(source) {
  * @returns {string} Returns the modified source.
  */
 function removeBufferCloneFork(source) {
+  source = source == null ? '' : String(source);
   return source.replace(getBufferCloneFork(source), '');
 }
 
@@ -2524,7 +2523,7 @@ function removeChaining(source) {
   return source
     .replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1\}.+\n/gm, '')
     .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['concat\b[\s\S]+?\n\1\}.+\n/gm, '')
-    .replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.[\s\S]+?;\n/gm, '');
+    .replace(/^(?: *\/\/.*\n)*( *)lodash\.prototype\.[$\w]+\s*=\s*(?:function\([\s\S]+?\n\1\}|.+?);\n/gm, '');
 }
 
 /**
@@ -2535,6 +2534,7 @@ function removeChaining(source) {
  * @returns {string} Returns the modified source.
  */
 function removeComments(source) {
+  source = source == null ? '' : String(source);
   return source.replace(/^ *(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.+)\n/gm, '');
 }
 
@@ -2607,6 +2607,7 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
  * @returns {string} Returns the modified source.
  */
 function removeFunction(source, funcName) {
+  source = source == null ? '' : String(source);
   return (funcName == 'runInContext')
     ? removeRunInContext(source, funcName)
     : source.replace(matchFunction(source, funcName, true), '');
@@ -2651,6 +2652,7 @@ function removeGetCallback(source, funcDepMap) {
  * @returns {string} Returns the modified source.
  */
 function removeGetDataFork(source) {
+  source = source == null ? '' : String(source);
   return source.replace(getGetDataFork(source), '');
 }
 
@@ -2690,6 +2692,7 @@ function removeGetIndexOf(source, funcDepMap) {
  * @returns {string} Returns the modified source.
  */
 function removeHeader(source) {
+  source = source == null ? '' : String(source);
   return source.replace(getHeader(source), '');
 }
 
@@ -2701,6 +2704,7 @@ function removeHeader(source) {
  * @returns {string} Returns the modified source.
  */
 function removeIsArgumentsFork(source) {
+  source = source == null ? '' : String(source);
   return source.replace(getIsArgumentsFork(source), '');
 }
 
@@ -2712,6 +2716,7 @@ function removeIsArgumentsFork(source) {
  * @returns {string} Returns the modified source.
  */
 function removeIsArrayFork(source) {
+  source = source == null ? '' : String(source);
   return source.replace(getIsArrayFork(source), '');
 }
 
@@ -2723,6 +2728,7 @@ function removeIsArrayFork(source) {
  * @returns {string} Returns the modified source.
  */
 function removeIsElementFork(source) {
+  source = source == null ? '' : String(source);
   return source.replace(getIsElementFork(source), '');
 }
 
@@ -2734,6 +2740,7 @@ function removeIsElementFork(source) {
  * @returns {string} Returns the modified source.
  */
 function removeIsFunctionFork(source) {
+  source = source == null ? '' : String(source);
   return source.replace(getIsFunctionFork(source), '');
 }
 
@@ -2746,6 +2753,8 @@ function removeIsFunctionFork(source) {
  * @returns {string} Returns the modified source.
  */
 function removeIsHostObject(source, funcDepMap) {
+  source = source == null ? '' : String(source);
+
   _.each(['baseIsEqual', 'initObjectClone', 'isElement', 'isNative', 'shimIsPlainObject'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isHostObject');
@@ -2779,6 +2788,7 @@ function removeIsHostObject(source, funcDepMap) {
  * @returns {string} Returns the modified source.
  */
 function removeLicenseTag(source) {
+  source = source == null ? '' : String(source);
   return source.replace(/^ \* *@license\n/m, '');
 }
 
@@ -2791,6 +2801,8 @@ function removeLicenseTag(source) {
  * @returns {string} Returns the modified source.
  */
 function removeMethodAssignment(source, methodName) {
+  source = source == null ? '' : String(source);
+
   return source.replace(getMethodAssignments(source), function(match) {
     var reAssignment = RegExp(
       '^( *//.*\\n)* *' +
@@ -2813,6 +2825,7 @@ function removeMethodAssignment(source, methodName) {
  * @returns {string} Returns the modified source.
  */
 function removeMethodAssignments(source) {
+  source = source == null ? '' : String(source);
   return source.replace(getMethodAssignments(source), '');
 }
 
@@ -2824,6 +2837,7 @@ function removeMethodAssignments(source) {
  * @returns {string} Returns the modified source.
  */
 function removeMixinCalls(source) {
+  source = source == null ? '' : String(source);
   return source.replace(/^(?: *\/\/.*\n)*( *)mixin\((?:.+?|[\s\S]+?\1(?:\}.+?)?)\);\n/gm, '');
 }
 
@@ -2835,6 +2849,7 @@ function removeMixinCalls(source) {
  * @returns {string} Returns the modified source.
  */
 function removeNowFork(source) {
+  source = source == null ? '' : String(source);
   return source.replace(getNowFork(source), '');
 }
 
@@ -2846,6 +2861,7 @@ function removeNowFork(source) {
  * @returns {string} Returns the modified source.
  */
 function removeParseIntFork(source) {
+  source = source == null ? '' : String(source);
   return source.replace(getParseIntFork(source), '');
 }
 
@@ -2858,6 +2874,7 @@ function removeParseIntFork(source) {
  * @returns {string} Returns the modified source.
  */
 function removeProp(source, propName) {
+  source = source == null ? '' : String(source);
   return source.replace(matchProp(source, propName, true), '');
 }
 
@@ -2877,7 +2894,7 @@ function removeRunInContext(source) {
   source = source.replace(/\btest\(runInContext\)/, 'test(function() { return this; })');
 
   // remove `runInContext` assignment
-  source = source.replace(/^(?: *\/\/.*\n)* *lodash\.runInContext\\s*=[\s\S]+?;\n/m, '');
+  source = source.replace(/^(?: *\/\/.*\n)* *lodash\.runInContext\s*=[\s\S]+?;\n/m, '');
 
   // remove function scaffolding, leaving most of its content
   source = source.replace(matchFunction(source, 'runInContext', true), function(match) {
@@ -2902,6 +2919,7 @@ function removeRunInContext(source) {
  * @returns {string} Returns the modified source.
  */
 function removeSpliceObjectsFix(source) {
+  source = source == null ? '' : String(source);
   return source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.spliceObjects\b[\s\S]+?(?:\{\s*\}|\n\1\})\n/m, '');
 }
 
@@ -2913,6 +2931,7 @@ function removeSpliceObjectsFix(source) {
  * @returns {string} Returns the modified source.
  */
 function removeStrings(source) {
+  source = source == null ? '' : String(source);
   return source.replace(reStrings, '');
 }
 
@@ -3091,8 +3110,7 @@ function removeSupportOwnLast(source) {
  * @returns {string} Returns the modified source.
  */
 function removeSupportSpliceObjects(source) {
-  source = removeSupportProp(source, 'spliceObjects');
-  return removeSpliceObjectsFix(source);
+  return removeSpliceObjectsFix(removeSupportProp(source, 'spliceObjects'));
 }
 
 /**
@@ -3137,6 +3155,9 @@ function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
  * @returns {string} Returns the modified source.
  */
 function removeSupportProp(source, propName) {
+  source = source == null ? '' : String(source);
+  propName = _.escapeRegExp(propName);
+
   return source.replace(matchProp(source, 'support'), function(match) {
     return match.replace(RegExp(
       '\\n+' + multilineComment +
@@ -3159,6 +3180,8 @@ function removeSupportProp(source, propName) {
  * @returns {string} Returns the modified source.
  */
 function removeVar(source, varName) {
+  source = source == null ? '' : String(source);
+
   _.some([
     function(source) {
       return removeFunction(source, varName);
@@ -3187,6 +3210,8 @@ function removeVar(source, varName) {
  * @returns {string} Returns the modified source.
  */
 function replaceFunction(source, funcName, funcValue) {
+  source = source == null ? '' : String(source);
+
   var checkFuncTag = /^\s*var\s+/.test(funcValue),
       snippet = matchFunction(source, funcName, checkFuncTag);
 
@@ -3216,6 +3241,9 @@ function replaceFunction(source, funcName, funcValue) {
  * @returns {string} Returns the modified source.
  */
 function replaceIIFE(source, iife) {
+  source = source == null ? '' : String(source);
+  iife = iife == null ? '' : String(iife);
+
   var token = '%output%',
       header = getHeader(source),
       index = iife.indexOf(token);
@@ -3239,6 +3267,7 @@ function replaceIIFE(source, iife) {
  * @returns {string} Returns the modified source.
  */
 function replaceIndent(source, from, to) {
+  source = source == null ? '' : String(source);
   return source.replace(RegExp('^(?:  ){' + (from || 1) + '}', 'gm'), _.repeat('  ', to));
 }
 
@@ -3251,6 +3280,9 @@ function replaceIndent(source, from, to) {
  * @returns {string} Returns the modified source.
  */
 function replaceSupportProp(source, propName, propValue) {
+  source = source == null ? '' : String(source);
+  propName = _.escapeRegExp(propName);
+
   return source.replace(RegExp(
     // match a `try` block
     '^(?: *try\\b.+\\n)?' +
@@ -3273,6 +3305,9 @@ function replaceSupportProp(source, propName, propValue) {
  * @returns {string} Returns the modified source.
  */
 function replaceVar(source, varName, varValue) {
+  source = source == null ? '' : String(source);
+  varName = _.escapeRegExp(varName);
+
   // replace a variable that's not part of a declaration list
   var result = source.replace(RegExp(
     '(( *)var\\s+' + varName + '\\s*=)' +
@@ -3305,6 +3340,7 @@ function replaceVar(source, varName, varValue) {
  * @returns {string} Returns the modified source.
  */
 function setUseStrictOption(source, value) {
+  source = source == null ? '' : String(source);
   return source.replace(/^([\s\S]*?function[^{]+\{)(?:\s*'use strict';)?/, '$1' + (value ? "\n  'use strict';" : ''));
 }
 
@@ -3318,8 +3354,9 @@ function setUseStrictOption(source, value) {
  * @returns {string} Returns the modified source.
  */
 function stringFree(source, callback) {
-  var strings = [];
+  source = source == null ? '' : String(source);
 
+  var strings = [];
   source = callback(source.replace(reStrings, function(match) {
     strings.push(match);
     return stringToken;
@@ -3648,7 +3685,7 @@ function build(options, callback) {
           });
           delete varDepMap.root;
         }
-        funcDepMap.main = ['arrayEach', 'lodash', 'lodashWrapper', 'mixin'];
+        funcDepMap.main = ['arrayEach', 'lodash', 'mixin'];
         objDepMap.main = ['support'];
 
         if (isUnderscoreChaining) {
@@ -3758,7 +3795,7 @@ function build(options, callback) {
       if (isUnderscore) {
         // replace `lodash`
         if (!isLodash('lodash')) {
-          _.pull(funcDepMap.lodash, 'isArray');
+          _.pull(funcDepMap.lodash, 'baseSlice', 'isArray');
 
           source = replaceFunction(source, 'lodash', [
             'function lodash(value) {',
