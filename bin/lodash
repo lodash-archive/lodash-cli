@@ -945,23 +945,21 @@ function addCommandsToHeader(source, commands) {
  * @returns {string} Returns the modified source.
  */
 function addUnderscoreChaining(source, funcDepMap, isModularize) {
-  var deps = _.result(funcDepMap, 'mixin', []);
-  _.pull(deps, 'baseFunctions', 'isObject', 'keys').push('functions');
+  var deps = _.result(funcDepMap, 'main', []);
+  deps.push('assign', 'lodashWrapper');
 
-  // replace `lodashWrapper`
-  source = replaceFunction(source, 'lodashWrapper', [
-    'function lodashWrapper(value, chainAll) {',
-    '  this.__chain__ = !!chainAll;',
-    '  this.__wrapped__ = value;',
-    '}'
-  ].join('\n'));
+  if (isModularize) {
+    _.pull(deps, 'baseForOwn', 'baseFunctions', 'isObject', 'keys').push('assign');
+  }
+  else {
+    deps = _.result(funcDepMap, 'wrapperToString', []);
+    _.pull(deps, 'wrapperValueOf');
 
-  // replace `wrapperValueOf`
-  source = replaceFunction(source, 'wrapperValueOf', [
-    'function wrapperValueOf() {',
-    '  return this.__wrapped__;',
-    '}'
-  ].join('\n'));
+    deps = _.result(funcDepMap, 'wrapperValueOf', []);
+    _.pull(deps, 'baseAssign', 'baseForOwn', 'tap', 'thru', 'wrapperToString').push('assign');
+  }
+  deps = _.result(funcDepMap, 'mixin', []);
+  _.pull(deps, 'baseFunctions', 'baseSlice', 'isObject', 'keys').push('functions');
 
   // replace `_.mixin`
   if (isModularize) {
@@ -1000,7 +998,7 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
     ].join('\n'));
   }
   else {
-    _.pull(deps, 'isFunction');
+    _.pull(deps, 'isFunction').push('lodashWrapper');
 
     source = replaceFunction(source, 'mixin', [
       'function mixin(source) {',
@@ -1017,15 +1015,28 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
       '        push.apply(args, arguments);',
       '',
       '        var result = func.apply(lodash, args);',
-      '        return this.__chain__',
-      '          ? new lodashWrapper(result, true)',
-      '          : result;',
+      '        return this.__chain__ ? new lodashWrapper(result, true) : result;',
       '      };',
       '    }());',
       '  }',
       '}'
     ].join('\n'));
   }
+  // replace `lodashWrapper`
+  source = replaceFunction(source, 'lodashWrapper', [
+    'function lodashWrapper(value, chainAll) {',
+    '  this.__chain__ = !!chainAll;',
+    '  this.__wrapped__ = value;',
+    '}'
+  ].join('\n'));
+
+  // replace `wrapperValueOf`
+  source = replaceFunction(source, 'wrapperValueOf', [
+    'function wrapperValueOf() {',
+    '  return this.__wrapped__;',
+    '}'
+  ].join('\n'));
+
   // move `mixin(...)` before `_.VERSION`
   source = source.replace(getMethodAssignments(source), function(match) {
     match = removeMixinCalls(match);
@@ -3674,8 +3685,6 @@ function build(options, callback) {
 
     // names of functions to include in the build
     var buildFuncs = !isTemplate && (function() {
-      var isUnderscoreChaining = _.contains(plusFuncs, 'chain') == !isUnderscore;
-
       source = setUseStrictOption(source, isStrict);
 
       if (isModularize) {
@@ -3685,33 +3694,22 @@ function build(options, callback) {
           });
           delete varDepMap.root;
         }
-        funcDepMap.main = ['arrayEach', 'lodash', 'mixin'];
+        funcDepMap.main = ['arrayEach', 'baseForOwn', 'baseFunctions', 'isObject', 'keys', 'lodash', 'mixin'];
         objDepMap.main = ['support'];
 
-        if (isUnderscoreChaining) {
-          funcDepMap.main.push('assign');
-        } else {
-          funcDepMap.main.push('baseForOwn', 'baseFunctions', 'isObject', 'keys');
-        }
         _.each(placeholderFuncs.concat('mixin'), function(funcName) {
           _.pull(funcDepMap[funcName], 'lodash');
         });
       }
       else {
         funcDepMap.chain.push('wrapperChain');
-        funcDepMap.wrapperValueOf.push('arrayEach','chain', 'mixin');
+        funcDepMap.wrapperToString.push('wrapperValueOf');
+        funcDepMap.wrapperValueOf.push('arrayEach','baseAssign', 'baseForOwn', 'chain', 'mixin', 'tap', 'thru', 'wrapperToString');
         objDepMap.wrapperValueOf = ['support'];
 
         _.each(['chain', 'tap', 'thru', 'wrapperChain'], function(funcName) {
           funcDepMap[funcName].push('wrapperValueOf');
         });
-
-        if (isUnderscoreChaining) {
-          funcDepMap.wrapperValueOf.push('assign');
-        } else {
-          funcDepMap.wrapperToString.push('wrapperValueOf');
-          funcDepMap.wrapperValueOf.push('baseAssign', 'baseForOwn', 'tap', 'thru', 'wrapperToString');
-        }
       }
       if (isModern) {
         source = removeIsFunctionFork(source);
@@ -3736,7 +3734,7 @@ function build(options, callback) {
           ].join('\n'));
         }
       }
-      if (isUnderscoreChaining) {
+      if (_.contains(plusFuncs, 'chain') == !isUnderscore) {
         source = addUnderscoreChaining(source, funcDepMap, isModularize);
       }
       if (isModern || (isUnderscore && _.isEmpty(plusFuncs))) {
