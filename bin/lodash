@@ -2897,20 +2897,17 @@ function removeProp(source, propName) {
  * @returns {string} Returns the modified source.
  */
 function removeRunInContext(source) {
-  // remove local timer variables
   source = removeVar(source, 'clearTimeout');
   source = removeVar(source, 'setTimeout');
+  source = removeMethodAssignment(source, 'runInContext');
 
   // replace `reThis` reference in `support.funcDecomp` assignment
   source = source.replace(/\btest\(runInContext\)/, 'test(function() { return this; })');
 
-  // remove `runInContext` assignment
-  source = source.replace(/^(?: *\/\/.*\n)* *lodash\.runInContext\s*=[\s\S]+?;\n/m, '');
-
   // remove function scaffolding, leaving most of its content
   source = source.replace(matchFunction(source, 'runInContext', true), function(match) {
     match = replaceIndent(match, 2, 1);
-    return match.replace(/^[\s\S]+?function\s+runInContext\b[\s\S]+?context\s*=\s*context.+?\n+| *return\s+lodash\b[\s\S]+$/g, '');
+    return match.replace(/^[\s\S]+?function\s+runInContext\b[\s\S]+?context\s*=\s*context.+?\n+| *return\s+lodash;[\s\S]+$/g, '');
   });
 
   // cleanup adjusted source
