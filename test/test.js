@@ -1645,13 +1645,13 @@ QUnit.module('underscore chaining methods');
         ok(Number(wrapped) !== 1 , '_#valueOf should not be implemented: ' + basename);
 
         wrapped.chain();
-        ok(wrapped.has('x') instanceof lodash, '_#has returns wrapped values when chaining: ' + basename);
-        ok(wrapped.join() instanceof lodash, '_#join returns wrapped values when chaining: ' + basename);
+        ok(wrapped.has('x') instanceof lodash, '_#has returns a wrapped value when chaining: ' + basename);
+        ok(wrapped.join() instanceof lodash, '_#join returns a wrapped value when chaining: ' + basename);
 
-        wrapped = lodash([1, 2, 3]);
-        ok(wrapped.pop() instanceof lodash, '_#pop returns wrapped values: ' + basename);
-        ok(wrapped.shift() instanceof lodash, '_#shift returns wrapped values: ' + basename);
-        deepEqual(wrapped.splice(0, 0).value(), [2], '_#splice returns wrapper: ' + basename);
+        wrapped = lodash([1, 2, 3, 4]);
+        deepEqual(wrapped.pop(), [1, 2, 3], '_#pop returns the unwrapped array: ' + basename);
+        deepEqual(wrapped.shift(), [2, 3], '_#shift returns the unwrapped array: ' + basename);
+        deepEqual(wrapped.splice(0, 1), [3], '_#splice returns the unwrapped array: ' + basename);
 
         start();
       });
