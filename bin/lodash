@@ -295,8 +295,8 @@ var funcDependencyMap = createMap({
   'baseCreate': ['isNative', 'isObject'],
   'baseCurry': ['createWrapper'],
   'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
-  'baseEach': ['baseForOwn', 'toIterable'],
-  'baseEachRight': ['baseForOwnRight', 'toIterable'],
+  'baseEach': ['baseForOwn', 'toObject'],
+  'baseEachRight': ['baseForOwnRight', 'toObject'],
   'baseEvery': ['baseEach'],
   'baseFilter': ['baseEach'],
   'baseFind': [],
@@ -362,7 +362,7 @@ var funcDependencyMap = createMap({
   'shimKeys': ['isArguments', 'isArray', 'isString', 'keysIn'],
   'sortedUniq': [],
   'toIterable': ['isString', 'toObject', 'values'],
-  'toObject': ['isObject'],
+  'toObject': ['isObject', 'isString'],
   'trimmedLeftIndex': ['isWhitespace'],
   'trimmedRightIndex': ['isWhitespace'],
   'unescapeHtmlChar': []
@@ -382,7 +382,8 @@ var objDependencyMap = createMap({
   'shimKeys': ['support'],
   'template': ['templateSettings'],
   'toArray': ['support'],
-  'toIterable': ['support']
+  'toIterable': ['support'],
+  'toObject': ['support']
 });
 
 /** Used to track variable dependencies of identifiers */
@@ -3131,7 +3132,7 @@ function removeSupportSpliceObjects(source) {
  * @returns {string} Returns the modified source.
  */
 function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
-  _.each(['toIterable', 'toArray'], function(funcName) {
+  _.each(['toIterable', 'toArray', 'toObject'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isString');
 
@@ -3141,9 +3142,11 @@ function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
 
   source = removeSupportProp(source, 'unindexedChars');
 
-  // remove `support.unindexedChars` from `toIterable`
-  source = source.replace(matchFunction(source, 'toIterable'), function(match) {
-    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(support\.unindexedChars\b[\s\S]+?\n\1\}\n/m, '');
+  // remove `support.unindexedChars` from `toIterable` and `toObject`
+  _.each(['toIterable', 'toObject'], function(funcName) {
+    source = source.replace(matchFunction(source, funcName), function(match) {
+      return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(support\.unindexedChars\b[\s\S]+?\n\1\}\n/m, '');
+    });
   });
 
   // remove `support.unindexedChars` from `_.toArray`
