@@ -2378,13 +2378,13 @@ function matchFunction(source, funcName, leadingComments) {
 
   var reAttempts = [
     // match a function declaration
-    '( *)function\\s+' + funcName + '\\([\\s\\S]+?\\n\\3}\\n',
+    '( *)function\\s+' + funcName + '\\((?:\\)\\s*\\{\\s*|[\\s\\S]+?\\n\\3)\\}\\n',
     // match a simple variable declaration
     ' *var\\s+' + funcName + '\\s*=.+?;\\n',
     // match variable declarations using `createAggregator`, or `createCompounder`
     '( *)var\\s+' + funcName + '\\s*=.*?create[A-Z][a-z]+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
     // match a variable declaration with function expression
-    '( *)var\\s+' + funcName + '\\s*=.*?function\\([\\s\\S]+?\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n'
+    '( *)var\\s+' + funcName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n'
   ];
 
   return _.reduce(reAttempts, function(result, reSource, index) {
