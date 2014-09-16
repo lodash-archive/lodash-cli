@@ -26,7 +26,7 @@ var push = Array.prototype.push;
 var stringToken = '[[lodash@' + _.VERSION + ' token]]';
 
 /** Used to determine if a variable search should be deep */
-var reDeepVars = /\bfunction runInContext\b/;
+var reDeepVars = /^ *function +runInContext\b/m;
 
 /** Used to detect the JSDoc `@type` tag of "Function" */
 var reFuncTag = /^ *\* *@type +Function\b/im;
@@ -42,6 +42,9 @@ var reStrings = /(["'])(?:(?!\1)[^\n\\]|\\.)*\1/g;
 
 /** Used to match string tokens */
 var reStringTokens = RegExp(_.escapeRegExp(stringToken), 'g');
+
+/** Used to detect if a string is a variable declaration snippet */
+var reVarSnippet = /^\s*var\s+/;
 
 /** Shortcut to the `stdout` object */
 var stdout = process.stdout;
@@ -2900,21 +2903,25 @@ function removeRunInContext(source) {
   source = removeVar(source, 'setTimeout');
   source = removeMethodAssignment(source, 'runInContext');
 
-  // replace `reThis` reference in `support.funcDecomp` assignment
-  source = source.replace(/\btest\(runInContext\)/, 'test(function() { return this; })');
-
   // remove function scaffolding, leaving most of its content
   source = source.replace(matchFunction(source, 'runInContext', true), function(match) {
     match = replaceIndent(match, 2, 1);
-    return match.replace(/^[\s\S]+?function\s+runInContext\b[\s\S]+?context\s*=\s*context.+?\n+| *return\s+lodash;[\s\S]+$/g, '');
+    return match
+      // remove function frame
+      .replace(/^[\s\S]+?function\s+runInContext\b[\s\S]+?context\s*=\s*context.+?\n+| *return\s+lodash;[\s\S]+$/g, '')
+      // remove native constructor references
+      .replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)? *var\s+Array\s*=[\s\S]+?;\n/m, '')
+      // replace `reThis` reference in `support.funcDecomp` assignment
+      .replace(/\btest\(runInContext\)/, 'test(function() { return this; })')
+      // replace `context` references with `root`
+      .replace(/\bcontext\b/g, 'root');
   });
 
-  // cleanup adjusted source
   return source
-    .replace(/\bcontext\b/g, 'root')
-    .replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)? *var\s+Array\s*=[\s\S]+?;\n/m, '')
-    .replace(/(\breturn\s+|=\s*)_([;)])/g, '$1lodash$2')
-    .replace(/^(?: *\/\/.*\n)* *var\s+_\s*=\s*runInContext\b.+\n+/m, '');
+    // remove `_` assignment
+    .replace(/^(?: *\/\/.*\n)* *var\s+_\s*=\s*runInContext\b.+\n+/m, '')
+    // replace `_` references with `lodash`
+    .replace(/(\breturn\s+|=\s*)_([;)])/g, '$1lodash$2');
 }
 
 /**
@@ -3226,7 +3233,7 @@ function removeVar(source, varName) {
 function replaceFunction(source, funcName, funcValue) {
   source = source == null ? '' : String(source);
 
-  var checkFuncTag = /^\s*var\s+/.test(funcValue),
+  var checkFuncTag = reVarSnippet.test(funcValue),
       snippet = matchFunction(source, funcName, checkFuncTag);
 
   if (!snippet) {
