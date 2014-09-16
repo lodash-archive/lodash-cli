@@ -1051,9 +1051,8 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
   });
 
   // replace wrapper `Array` method assignments
-  source = source.replace(/^(?:(?: *\/\/.*\n)*( *)(?:if\s*\([^{]+\{\n\1( *))?arrayEach\(\['concat\b[\s\S]+?\n\1\2\}\);(?:\n\1\})?\n+)+/m, function(match, indent) {
+  source = source.replace(/^( *)arrayEach\(\['concat\b[\s\S]+?\n\1\}\);/m, function(match, indent) {
     return indent + [
-      '// add `Array.prototype` functions',
       "arrayEach(['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
       '  var func = arrayProto[methodName],',
       '      retValue = !/concat|join|slice/.test(methodName),',
@@ -1074,7 +1073,6 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
       '    return this.__chain__ ? new lodashWrapper(result, true) : result;',
       '  };',
       '});',
-      ''
     ].join('\n' + indent);
   });
 
@@ -2415,7 +2413,7 @@ function matchProp(source, propName, leadingComments) {
     '^' + (leadingComments ? commentPattern : '') +
     '(?: {2,4}var\\s+' + propName + '\\b.+|(?:\\s*|.*?=\\s*)lodash\\._?' + propName + '\\s*)=[\\s\\S]+?' +
     '(?:\\(function\\([\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
-    '[;}]\\n(?=\\n(?!\\s*\\(func)))'
+    '[;}]\\n(?=\\n(?!\\s*\\(function\\b)))'
   , 'm').exec(source), 0, '');
 }
 
@@ -2533,8 +2531,7 @@ function removeChaining(source) {
 
   // remove all `lodash.prototype` additions
   return source
-    .replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(lodash,[\s\S]+?\n\1\}.+\n/gm, '')
-    .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['concat\b[\s\S]+?\n\1\}.+\n/gm, '')
+    .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['concat\b[\s\S]+?\n\1\}\);\n/m, '')
     .replace(/^(?: *\/\/.*\n)*( *)lodash\.prototype\.[$\w]+\s*=\s*(?:function\([\s\S]+?\n\1\}|.+?);\n/gm, '');
 }
 
@@ -2899,6 +2896,7 @@ function removeProp(source, propName) {
  */
 function removeRunInContext(source) {
   source = removeVar(source, 'clearTimeout');
+  source = removeVar(source, 'contextProps');
   source = removeVar(source, 'setTimeout');
   source = removeMethodAssignment(source, 'runInContext');
 
@@ -2929,7 +2927,12 @@ function removeRunInContext(source) {
  */
 function removeSpliceObjectsFix(source) {
   source = source == null ? '' : String(source);
-  return source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.spliceObjects\b[\s\S]+?(?:\{\s*\}|\n\1\})\n/m, '');
+
+  return source.replace(/^( *)arrayEach\(\['concat\b[\s\S]+?\n\1\}\);/m, function(match) {
+    match = removeVar(match, 'fixObjects');
+    match = removeVar(match, 'func');
+    return match.replace(/\barrayFunc\b/g, 'func');
+  });
 }
 
 /**
