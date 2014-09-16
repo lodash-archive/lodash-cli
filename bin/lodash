@@ -13,17 +13,17 @@ var _ = require('lodash/lodash.js'),
 var fs = util.fs,
     path = util.path;
 
+/** Used to create regexes that detect single and multi-line comment blocks */
+var commentPattern = '(?: *(?:/\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/|\/\/.*)\\n)*';
+
 /** The current working directory */
 var cwd = process.cwd();
 
 /** Native method references */
 var push = Array.prototype.push;
 
-/** Used to create regexes that may detect multi-line comment blocks */
-var multilineComment = '(?: */\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/\\n)?';
-
 /** Used to replace string literals with tokens */
-var stringToken = '__lodash@' + _.VERSION + '__token__';
+var stringToken = '[[lodash@' + _.VERSION + ' token]]';
 
 /** Used to determine if a variable search should be deep */
 var reDeepVars = /\bfunction runInContext\b/;
@@ -41,7 +41,7 @@ var reNode = RegExp('(?:^|' + path.sepEscaped + ')node(?:\\.exe)?$', 'i');
 var reStrings = /(["'])(?:(?!\1)[^\n\\]|\\.)*\1/g;
 
 /** Used to match string tokens */
-var reStringTokens = RegExp(stringToken.replace(/\./g, '\\$&'), 'g');
+var reStringTokens = RegExp(_.escapeRegExp(stringToken), 'g');
 
 /** Shortcut to the `stdout` object */
 var stdout = process.stdout;
@@ -2306,7 +2306,7 @@ function getVars(source) {
     // match a varaible at the start of a declaration list
     ['^(' + indentA + 'var\\s+)([$\\w]+)\\s*=.+?,\\n *', 2, 1],
     // match a variable declaration in a declaration list
-    [',\\n' + multilineComment + indentB + '([$\\w]+)\\s*=[\\s\\S]+?(?=[,;]\\n)', 1, -1],
+    [',\\n' + commentPattern + indentB + '([$\\w]+)\\s*=[\\s\\S]+?(?=[,;]\\n)', 1, -1],
     // match a variable that is not part of a declaration list
     ['^(' + indentA + ')var\\s+([$\\w]+)\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n', 2, -1]
   ];
@@ -2392,7 +2392,7 @@ function matchFunction(source, funcName, leadingComments) {
     if (result) {
       return result;
     }
-    result = RegExp('^(' + multilineComment + ')(' + reSource + ')', 'm').exec(source);
+    result = RegExp('^(' + commentPattern + ')(' + reSource + ')', 'm').exec(source);
     return (result && isFunctionSnippet(result)) ? result[leadingComments ? 0 : 2] : '';
   }, '');
 }
@@ -2411,7 +2411,7 @@ function matchProp(source, propName, leadingComments) {
   propName = _.escapeRegExp(propName);
 
   return _.result(RegExp(
-    '^' + (leadingComments ? multilineComment : '') +
+    '^' + (leadingComments ? commentPattern : '') +
     '(?: {2,4}var\\s+' + propName + '\\b.+|(?:\\s*|.*?=\\s*)lodash\\._?' + propName + '\\s*)=[\\s\\S]+?' +
     '(?:\\(function\\([\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
     '[;}]\\n(?=\\n(?!\\s*\\(func)))'
@@ -2435,14 +2435,14 @@ function matchVar(source, varName, leadingComments) {
     // match a varaible at the start of a declaration list
     ['^( *var\\s+)(' + varName + '\\s*=.+?,\\n *)', 2, 2],
     // match a variable declaration in a declaration list
-    ['(,\\n' + multilineComment + ')( *' + varName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
+    ['(,\\n' + commentPattern + ')( *' + varName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
     // match a variable that is not part of a declaration list
-    ['^(' + multilineComment + ')(( *)var\\s+' + varName + '\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\3\\S+?));\\n)', 2, 0]
+    ['^(' + commentPattern + ')(( *)var\\s+' + varName + '\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\3\\S+?));\\n)', 2, 0]
   ];
 
   // match complex variable assignments
   if (_.contains(complexVars, varName)) {
-    reAttempts = [['^(' + multilineComment + ')(( *)var\\s+' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]];
+    reAttempts = [['^(' + commentPattern + ')(( *)var\\s+' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]];
   }
   return _.reduce(reAttempts, function(result, data) {
     return result || _.result(RegExp(data[0], 'm').exec(source), data[leadingComments ? 2 : 1], '');
@@ -3168,7 +3168,7 @@ function removeSupportProp(source, propName) {
 
   return source.replace(matchProp(source, 'support'), function(match) {
     return match.replace(RegExp(
-      '\\n+' + multilineComment +
+      '\\n+' + commentPattern +
       // match a `try` block
       '(?:( *)try\\b.+\\n)?' +
       // match the `support` property assignment
