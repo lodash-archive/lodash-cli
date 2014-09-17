@@ -3783,7 +3783,7 @@ function build(options, callback) {
             '  var keyIndex,',
             '      Ctor = object.constructor,',
             '      index = -1,',
-            '      isProto = Ctor && object === Ctor.prototype,',
+            '      isProto = Ctor && Ctor.prototype == object,',
             '      maxIndex = length - 1,',
             '      result = Array(length),',
             '      skipIndexes = length > 0;',
