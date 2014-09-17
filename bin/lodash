@@ -3101,7 +3101,9 @@ function removeSupportNonEnumStrings(source, funcDepMap) {
 
   // remove `support.nonEnumStrings` from `shimKeys`
   return source.replace(matchFunction(source, 'shimKeys'), function(match) {
-    return match.replace(/\s*\|\|\s*\(support\.nonEnumStrings\b[\s\S]+?\)\)/, '');
+    return match.replace(/\s*\|\|\s*\(support\.nonEnumStrings\b[\s\S]+?\)\)(\s*\|\|\s*)?/, function(match, postlude) {
+      return postlude ? postlude.replace(/\s+$/, ' ') : '';
+    });
   });
 }
 
