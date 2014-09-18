@@ -193,7 +193,7 @@ var funcDependencyMap = createMap({
   'isString': [],
   'isUndefined': [],
   'kebabCase': ['createCompounder'],
-  'keys': ['isNative', 'shimKeys', 'toObject'],
+  'keys': ['isObject', 'isNative', 'shimKeys'],
   'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isString'],
   'last': [],
   'lastIndexOf': ['sortedLastIndex'],
@@ -210,7 +210,7 @@ var funcDependencyMap = createMap({
   'noConflict': [],
   'noop': [],
   'now': ['isNative'],
-  'omit': ['baseDifference', 'baseFlatten', 'arrayMap', 'getCallback', 'keysIn', 'pickByArray', 'pickByCallback', 'toObject'],
+  'omit': ['baseDifference', 'baseFlatten', 'arrayMap', 'getCallback', 'keysIn', 'pickByArray', 'pickByCallback'],
   'once': ['before', 'partial'],
   'pad': ['createPad'],
   'padLeft': ['createPad'],
@@ -220,7 +220,7 @@ var funcDependencyMap = createMap({
   'partial': ['basePartial', 'lodash', 'replaceHolders', 'slice'],
   'partialRight': ['basePartial', 'lodash', 'replaceHolders', 'slice'],
   'partition': ['createAggregator'],
-  'pick': ['baseFlatten', 'getCallback', 'pickByArray', 'pickByCallback', 'toObject'],
+  'pick': ['baseFlatten', 'getCallback', 'pickByArray', 'pickByCallback'],
   'pluck': ['map', 'property'],
   'property': [],
   'pull': ['getIndexOf'],
@@ -312,7 +312,7 @@ var funcDependencyMap = createMap({
   'baseFunctions': ['isFunction'],
   'baseIndexOf': [],
   'baseInvoke': ['baseEach'],
-  'baseIsEqual': ['isArguments', 'isFunction', 'isHostObject', 'keys'],
+  'baseIsEqual': ['isArguments', 'isHostObject', 'keys'],
   'baseMap': ['baseEach'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isArrayLike', 'isPlainObject'],
   'basePartial': ['createWrapper', 'getData'],
@@ -351,17 +351,17 @@ var funcDependencyMap = createMap({
   'getData': ['noop'],
   'getIndexOf': ['baseIndexOf', 'indexOf'],
   'initArrayClone': [],
-  'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isFunction', 'isHostObject'],
+  'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isHostObject'],
   'isArrayLike': [],
   'isHostObject': [],
   'isStrictComparable': ['isObject'],
   'isWhitespace': [],
   'lodashWrapper': [],
-  'pickByArray': [],
+  'pickByArray': ['toObject'],
   'pickByCallback': ['baseForIn'],
   'replaceHolders': [],
   'setData': ['baseSetData', 'now'],
-  'shimIsPlainObject': ['baseForIn', 'isArguments', 'isFunction', 'isHostObject'],
+  'shimIsPlainObject': ['baseForIn', 'isArguments', 'isHostObject'],
   'shimKeys': ['isArguments', 'isArray', 'isString', 'keysIn'],
   'sortedUniq': [],
   'toIterable': ['isObject', 'isString', 'values'],
@@ -4171,7 +4171,6 @@ function build(options, callback) {
         if (!isLodash('keys') && !isLodash('keysIn')) {
           source = removeSupportNonEnumArgs(source);
 
-          _.pull(funcDepMap.keys, 'toObject').push('isObject');
           _.pull(funcDepMap.keysIn, 'isArguments', 'isArray', 'isString').push('isObject');
           _.pull(funcDepMap.shimKeys, 'isArguments', 'isArray', 'isString');
 
