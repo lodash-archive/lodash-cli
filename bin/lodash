@@ -1058,8 +1058,8 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
     return indent + [
       "arrayEach(['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
       '  var func = arrayProto[methodName],',
-      '      retValue = !/concat|join|slice/.test(methodName),',
-      '      fixObjects = !support.spliceObjects && /pop|shift|splice/.test(methodName);',
+      '      retValue = !/^(?:concat|join|slice)$/.test(methodName),',
+      '      fixObjects = !support.spliceObjects && /^(?:pop|shift|splice)$/.test(methodName);',
       '',
       '  lodash.prototype[methodName] = function() {',
       '    var value = this.__wrapped__,',
