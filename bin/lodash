@@ -194,7 +194,7 @@ var funcDependencyMap = createMap({
   'isUndefined': [],
   'kebabCase': ['createCompounder'],
   'keys': ['isObject', 'isNative', 'shimKeys'],
-  'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isString'],
+  'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isObject', 'isString'],
   'last': [],
   'lastIndexOf': ['sortedLastIndex'],
   'lodash': ['baseSlice', 'isArray', 'lodashWrapper'],
@@ -3774,6 +3774,9 @@ function build(options, callback) {
             '  if (object == null) {',
             '    return [];',
             '  }',
+            '  if (!isObject(object)) {',
+            '    object = Object(object);',
+            '  }',
             '  var length = object.length;',
             "  length = (typeof length == 'number' && length > 0 &&",
             '    (isArray(object) || (support.nonEnumArgs && isArguments(object))) && length) >>> 0;',
@@ -4170,7 +4173,7 @@ function build(options, callback) {
         if (!isLodash('keys') && !isLodash('keysIn')) {
           source = removeSupportNonEnumArgs(source);
 
-          _.pull(funcDepMap.keysIn, 'isArguments', 'isArray', 'isString').push('isObject');
+          _.pull(funcDepMap.keysIn, 'arrayEach', 'isArguments', 'isArray', 'isString');
           _.pull(funcDepMap.shimKeys, 'isArguments', 'isArray', 'isString');
 
           _.each(['keys', 'keysIn', 'shimKeys'], function(funcName) {
