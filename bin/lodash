@@ -3784,7 +3784,7 @@ function build(options, callback) {
             '  var keyIndex,',
             '      Ctor = object.constructor,',
             '      index = -1,',
-            '      isProto = Ctor && Ctor.prototype == object,',
+            "      isProto = typeof Ctor == 'function' && Ctor.prototype == object,",
             '      maxIndex = length - 1,',
             '      result = Array(length),',
             '      skipIndexes = length > 0;',
