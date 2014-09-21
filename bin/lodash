@@ -1346,7 +1346,7 @@ function buildModule(state, onComplete) {
       source = source.replace(/^(?: *\/\/.*\n)* *lodash\.[$\w]+\s*=[^;]+;\n/m, function(match) {
         var code = [
           '  // wrap `_.mixin` so it works when provided only one argument',
-          '  mixin = (function(func) {'
+          (isES6 ? 'var ' : '') + 'mixin = (function(func) {'
         ];
 
         if (isUnderscore) {
@@ -1378,7 +1378,7 @@ function buildModule(state, onComplete) {
         }
         code.push(
           '    };',
-          '  }(mixin));',
+          '  }(' + (isES6 ? '_' : '') + 'mixin));',
           '',
           match
         );
@@ -1430,8 +1430,12 @@ function buildModule(state, onComplete) {
       deps = _.difference(deps, unusedDeps);
       removedDeps.main = unusedDeps;
 
+      var depNames = categoryDeps.concat(deps);
+      if (isES6) {
+        // avoid an ES6 syntax error caused by reassigning `mixin` by naming it `_mixin` instead
+        depNames[_.indexOf(depNames, 'mixin')] = '_mixin';
+      }
       var iife = [],
-          depNames = categoryDeps.concat(deps),
           depArgs = depNames.join(', '),
           depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath, funcDepMap));
 
@@ -2053,7 +2057,7 @@ function getDependencies(funcName, funcDepMap, isShallow, stack) {
   }
   stack || (stack = []);
 
-  // recursively accumulate the dependencies of the `funcName` function, and
+  // recursively accumulate the dependencies of the `funcName` function,
   // the dependencies of its dependencies, and so on
   return _.uniq(_.transform(depNames, function(result, otherName) {
     if (!_.contains(stack, otherName)) {
