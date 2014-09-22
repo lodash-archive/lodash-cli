@@ -3859,7 +3859,7 @@ function build(options, callback) {
         }
         // replace `_.clone`
         if (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep')) {
-          _.pull(funcDepMap.clone, 'baseClone', 'baseCallback').push('assign', 'baseSlice', 'isArray', 'isIterateeCall', 'isObject');
+          _.pull(funcDepMap.clone, 'baseClone', 'baseCallback', 'isIterateeCall').push('assign', 'baseSlice', 'isArray', 'isObject');
 
           source = replaceFunction(source, 'clone', [
             'function clone(value) {',
