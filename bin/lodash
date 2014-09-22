@@ -3785,7 +3785,7 @@ function build(options, callback) {
             '  }',
             '  var length = object.length;',
             "  length = (typeof length == 'number' && length > 0 &&",
-            '    (isArray(object) || (support.nonEnumArgs && isArguments(object))) && length) >>> 0;',
+            '    (isArray(object) || (support.nonEnumArgs && isArguments(object))) && length) || 0;',
             '',
             '  var keyIndex,',
             '      Ctor = object.constructor,',
