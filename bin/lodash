@@ -121,7 +121,7 @@ var funcDependencyMap = createMap({
   'capitalize': [],
   'chain': ['lodash'],
   'chunk': ['slice'],
-  'clone': ['baseCallback', 'baseClone'],
+  'clone': ['baseCallback', 'baseClone', 'isIterateeCall'],
   'cloneDeep': ['baseCallback', 'baseClone'],
   'compact': [],
   'constant': [],
@@ -201,10 +201,10 @@ var funcDependencyMap = createMap({
   'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
   'mapValues': ['baseForOwn', 'getCallback'],
   'matches': ['baseClone', 'baseIsEqual', 'isStrictComparable', 'keys'],
-  'max': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isString', 'toIterable'],
+  'max': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
   'memoize': ['isFunction'],
   'merge': ['baseMerge', 'createAssigner'],
-  'min': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isString', 'toIterable'],
+  'min': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
   'mixin': ['baseFunctions', 'baseSlice', 'isFunction', 'isObject', 'keys', 'lodash'],
   'negate': ['isFunction'],
   'noConflict': [],
@@ -225,8 +225,8 @@ var funcDependencyMap = createMap({
   'property': [],
   'pull': ['getIndexOf'],
   'pullAt': ['baseFlatten', 'basePullAt'],
-  'random': ['baseRandom'],
-  'range': [],
+  'random': ['baseRandom', 'isIterateeCall'],
+  'range': ['isIterateeCall'],
   'reduce': ['arrayReduce', 'baseEach', 'baseReduce', 'getCallback', 'isArray'],
   'reduceRight': ['arrayReduceRight', 'baseEachRight', 'baseReduce', 'getCallback', 'isArray'],
   'reject': ['arrayFilter', 'baseFilter', 'getCallback', 'isArray'],
@@ -238,10 +238,10 @@ var funcDependencyMap = createMap({
   'sample': ['baseRandom', 'shuffle', 'toIterable'],
   'shuffle': ['baseRandom', 'toIterable'],
   'size': ['keys'],
-  'slice': ['baseSlice'],
+  'slice': ['baseSlice', 'isIterateeCall'],
   'snakeCase': ['createCompounder'],
   'some': ['arraySome', 'baseSome', 'getCallback', 'isArray'],
-  'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'getCallback', 'isArray'],
+  'sortBy': ['baseEach', 'compareAscending', 'compareMultipleAscending', 'getCallback', 'isArray', 'isIterateeCall'],
   'sortedIndex': ['baseSortedIndex', 'getCallback', 'identity'],
   'sortedLastIndex': ['baseSortedIndex', 'getCallback', 'identity'],
   'startsWith': [],
@@ -250,7 +250,7 @@ var funcDependencyMap = createMap({
   'takeRightWhile': ['getCallback', 'slice'],
   'takeWhile': ['getCallback', 'slice'],
   'tap': [],
-  'template': ['assign', 'assignOwnDefaults', 'attempt', 'escape', 'escapeStringChar', 'isError', 'keys', 'values'],
+  'template': ['assign', 'assignOwnDefaults', 'attempt', 'escape', 'escapeStringChar', 'isError', 'isIterateeCall', 'keys', 'values'],
   'throttle': ['debounce', 'isFunction', 'isObject'],
   'thru': [],
   'times': ['baseCallback'],
@@ -262,7 +262,7 @@ var funcDependencyMap = createMap({
   'trunc': ['isObject', 'isRegExp'],
   'unescape': ['unescapeHtmlChar'],
   'union': ['baseFlatten', 'baseUniq'],
-  'uniq': ['baseUniq', 'getCallback', 'getIndexOf', 'sortedUniq'],
+  'uniq': ['baseUniq', 'getCallback', 'getIndexOf', 'isIterateeCall', 'sortedUniq'],
   'uniqueId': [],
   'unzip': ['isObject', 'max', 'pluck'],
   'values': ['baseValues', 'keys'],
@@ -335,7 +335,7 @@ var funcDependencyMap = createMap({
   'composeArgs': [],
   'composeArgsRight': [],
   'createAggregator': ['baseEach', 'getCallback', 'isArray'],
-  'createAssigner': ['baseCallback'],
+  'createAssigner': ['baseCallback', 'isIterateeCall'],
   'createBindWrapper': ['createCtorWrapper'],
   'createCtorWrapper': ['baseCreate', 'isObject'],
   'createHybridWrapper': ['composeArgs', 'composeArgsRight', 'createCtorWrapper', 'replaceHolders', 'setData'],
@@ -354,6 +354,7 @@ var funcDependencyMap = createMap({
   'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isHostObject'],
   'isArrayLike': [],
   'isHostObject': [],
+  'isIterateeCall': [],
   'isStrictComparable': ['isObject'],
   'isWhitespace': [],
   'lodashWrapper': [],
@@ -858,6 +859,7 @@ var privateFuncs = [
   'initObjectClone',
   'isArrayLike',
   'isHostObject',
+  'isIterateeCall',
   'isStrictComparable',
   'isWhitespace',
   'lodashWrapper',
@@ -3822,7 +3824,7 @@ function build(options, callback) {
         }
         // replace `_.assign`
         if (!isLodash('assign')) {
-          _.pull(funcDepMap.assign, 'createAssigner');
+          _.pull(funcDepMap.assign, 'createAssigner').push('isIterateeCall');
 
           source = replaceFunction(source, 'assign', [
             'function assign(object) {',
@@ -3831,10 +3833,9 @@ function build(options, callback) {
             '  }',
             '  var args = arguments,',
             '      index = 0,',
-            '      length = args.length,',
-            '      type = typeof args[2];',
+            '      length = args.length;',
             '',
-            "  if ((type == 'number' || type == 'string') && args[3] && args[3][args[2]] === args[1]) {",
+            "  if (isIterateeCall(args[1], args[2], args[3])) {",
             '    length = 2;',
             '  }',
             '  while (++index < length) {',
@@ -3858,7 +3859,7 @@ function build(options, callback) {
         }
         // replace `_.clone`
         if (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep')) {
-          _.pull(funcDepMap.clone, 'baseClone', 'baseCallback').push('assign', 'baseSlice', 'isArray', 'isObject');
+          _.pull(funcDepMap.clone, 'baseClone', 'baseCallback').push('assign', 'baseSlice', 'isArray', 'isIterateeCall', 'isObject');
 
           source = replaceFunction(source, 'clone', [
             'function clone(value) {',
@@ -3885,7 +3886,7 @@ function build(options, callback) {
         }
         // replace `_.defaults`
         if (!isLodash('defaults')) {
-          _.pull(funcDepMap.defaults, 'assign', 'assignDefaults', 'baseSlice');
+          _.pull(funcDepMap.defaults, 'assign', 'assignDefaults', 'baseSlice').push('isIterateeCall');
 
           source = replaceFunction(source, 'defaults', [
             'function defaults(object) {',
@@ -3894,10 +3895,9 @@ function build(options, callback) {
             '  }',
             '  var args = arguments,',
             '      index = 0,',
-            '      length = args.length,',
-            '      type = typeof args[2];',
+            '      length = args.length;',
             '',
-            "  if ((type == 'number' || type == 'string') && args[3] && args[3][args[2]] === args[1]) {",
+            "  if (isIterateeCall(args[1], args[2], args[3])) {",
             '    length = 2;',
             '  }',
             '  while (++index < length) {',
@@ -4268,10 +4268,11 @@ function build(options, callback) {
         }
         // replace `_.random`
         if (!isLodash('random')) {
-          _.pull(funcDepMap.random, 'baseRandom');
+          _.pull(funcDepMap.random, 'baseRandom', 'isIterateeCall');
 
           source = replaceFunction(source, 'random', [
-            'function random(min, max) {',
+            'function random(min, max, guard) {',
+            '  max = guard ? null : max;',
             '  if (min == null && max == null) {',
             '    max = 1;',
             '  }',
@@ -4316,10 +4317,16 @@ function build(options, callback) {
 
           source = replaceFunction(source, 'sortBy', [
             'function sortBy(collection, iteratee, thisArg) {',
+            '  if (isIterateeCall(collection, iteratee, thisArg)) {',
+            '    iteratee = null;',
+            '  }',
             '  var index = -1,',
-            '      length = collection && collection.length,',
-            '      result = Array(length < 0 ? 0 : length >>> 0);',
+            '      length = collection ? collection.length : 0,',
+            '      result = [];',
             '',
+            "  if (typeof length == 'number' && length > -1 && length <= MAX_SAFE_INTEGER) {",
+            '    result.length = length;',
+            '  }',
             '  iteratee = getCallback(iteratee, thisArg, 3);',
             '  baseEach(collection, function(value, key, collection) {',
             '    result[++index] = {',
@@ -4362,6 +4369,9 @@ function build(options, callback) {
             '  var _ = lodash,',
             '      settings = _.templateSettings;',
             '',
+            '  if (isIterateeCall(string, options, otherOptions)) {',
+            '    options = otherOptions = null;',
+            '  }',
             "  string = String(string == null ? '' : string);",
             '  options = defaults({}, otherOptions || options, settings);',
             '',
