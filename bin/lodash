@@ -4960,7 +4960,7 @@ function build(options, callback) {
     });
 
     // remove placeholder assignments of removed functions and modify for modularized builds
-    source = source.replace(/^( *\/\/.*\n)*( *)(arrayEach\(\[')bind\b[\s\S]+?('\][\s\S]+?\n\2\}\))/m, function(match, comment, indent, prelude, postlude) {
+    source = source.replace(/^((?: *\/\/.*\n)*)( *)(arrayEach\(\[')bind\b[\s\S]+?('\][\s\S]+?\n\2\}\))/m, function(match, comment, indent, prelude, postlude) {
       var funcNames = _.reject(isUnderscore ? ['partial'] : placeholderFuncs, isExcluded),
           length = funcNames.length;
 
