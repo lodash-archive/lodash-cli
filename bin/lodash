@@ -3881,8 +3881,9 @@ function build(options, callback) {
             '',
             "  if (!(typeof length == 'number' && length > -1 && length <= MAX_SAFE_INTEGER)) {",
             '    collection = values(collection);',
+            '    length = collection.length;',
             '  }',
-            '  return getIndexOf(collection, target) > -1;',
+            '  return length ? (getIndexOf(collection, target) > -1) : false;',
             '}'
           ].join('\n'));
         }
