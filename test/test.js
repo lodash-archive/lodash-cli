@@ -1481,7 +1481,7 @@ QUnit.module('underscore modifier');
       deepEqual(_.keys(actual), ['0'], '_.pick should coerce property names to strings: ' + basename);
 
       actual = lodash.random(2, 4, true);
-      ok(!(actual % 1) && actual >= 2 && actual <= 4, '_.random should ignore `floating`: ' + basename);
+      ok(!(actual % 1), '_.random should not support the `floating` argument: ' + basename);
 
       deepEqual(lodash.range(1, 4, 0), [1, 2, 3], '_.range should not support a `step` of `0`');
       strictEqual(lodash.result({}, 'a', 1), undefined, '_.result should ignore `defaultValue`: ' + basename);
