@@ -3837,7 +3837,7 @@ function build(options, callback) {
             '      index = 0,',
             '      length = args.length;',
             '',
-            "  if (isIterateeCall(args[1], args[2], args[3])) {",
+            "  if (length > 3 && isIterateeCall(args[1], args[2], args[3])) {",
             '    length = 2;',
             '  }',
             '  while (++index < length) {',
@@ -3900,7 +3900,7 @@ function build(options, callback) {
             '      index = 0,',
             '      length = args.length;',
             '',
-            "  if (isIterateeCall(args[1], args[2], args[3])) {",
+            "  if (length > 3 && isIterateeCall(args[1], args[2], args[3])) {",
             '    length = 2;',
             '  }',
             '  while (++index < length) {',
@@ -3910,7 +3910,6 @@ function build(options, callback) {
             '        object[key] = source[key];',
             '      }',
             '    }',
-
             '  }',
             '  return object;',
             '}'
