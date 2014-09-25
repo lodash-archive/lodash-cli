@@ -4559,6 +4559,14 @@ function build(options, callback) {
             return match.replace(/\s*else\s+if\s*\(fromIndex\b[^}]+\}/, '');
           });
 
+          source = source.replace(matchFunction(source, 'indexOf'), function(match) {
+            return match.replace(/(\s*else\s+if\s*\(fromIndex\)\s*\{)([^}]+)(?=\})/, function(match, prelude, block) {
+              return prelude + block.replace(/^( *)return\b[\s\S]+?(?=;\n)/m, function(match, indent) {
+                return indent + 'return value === other ? index : -1';
+              });
+            });
+          });
+
           _.each(['baseIndexOf', 'lastIndexOf'], function(funcName) {
             _.pull(funcDepMap[funcName], 'indexOfNaN');
 
