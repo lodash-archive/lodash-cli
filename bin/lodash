@@ -4529,14 +4529,6 @@ function build(options, callback) {
             return match.replace(/\s*\|\|\s*\(typeof value\b[\s\S]+?\)\)/, '');
           });
         }
-        // remove `_.sortedLastIndex` support from `_.lastIndexOf`
-        if (!isLodash('lastIndexOf')) {
-          _.pull(funcDepMap.lastIndexOf, 'sortedLastIndex');
-
-          source = source.replace(matchFunction(source, 'lastIndexOf'), function(match) {
-            return match.replace(/\s*else\s+if\s*\(fromIndex\b[^}]+\}/, '');
-          });
-        }
         // remove `_.partialRight` support from `createHybridWrapper` and `createWrapper`
         if (!isLodash('partialRight')) {
           _.each(['createHybridWrapper', 'createWrapper'], function(funcName) {
@@ -4557,16 +4549,24 @@ function build(options, callback) {
             return match.replace(/\bstep\s*==\s*null\b[^;]+/, '+step || 1');
           });
         }
-        // remove reflexive checks from `baseIndexOf` and `_.lastIndexOf`
-        _.each(['baseIndexOf', 'lastIndexOf'], function(funcName) {
-          if (!isLodash(funcName) && !(funcName == 'baseIndexOf' && isLodash(funcName))) {
-            source = source.replace(matchFunction(source, funcName), function(match) {
-              match = removeVar(match, 'isReflexive');
-              return match.replace(/\(isReflexive\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)/, '$1');
-            });
-          }
-        });
+        // remove support for matching `NaN` from functions
+        if (!isLodash('baseIndexOf') && !isLodash('baseSortedIndex') &&
+            !isLodash('indexOf') && !isLodash('lastIndexOf') && !isLodash('sortedIndex')) {
 
+          _.pull(funcDepMap.lastIndexOf, 'sortedLastIndex');
+
+          source = source.replace(matchFunction(source, 'lastIndexOf'), function(match) {
+            return match.replace(/\s*else\s+if\s*\(fromIndex\b[^}]+\}/, '');
+          });
+
+          _.each(['baseIndexOf', 'lastIndexOf'], function(funcName) {
+            _.pull(funcDepMap[funcName], 'indexOfNaN');
+
+            source = source.replace(matchFunction(source, funcName), function(match) {
+              return match.replace(/^( *)if\s*\(value\s*!==\s*value\b[\s\S]+?\n\1\}\n/m, '');
+            });
+          });
+        }
         // remove conditional `charCodeCallback` use from `_.max` and `_.min`
         _.each(['max', 'min'], function(funcName) {
           if (!isLodash(funcName)) {
