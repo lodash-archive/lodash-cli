@@ -2452,7 +2452,7 @@ function matchVar(source, varName, leadingComments) {
 
   // match complex variable assignments
   if (_.contains(complexVars, varName)) {
-    reAttempts = [['^(' + commentPattern + ')(( *)var\\s+' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]];
+    reAttempts.unshift(['^(' + commentPattern + ')(( *)var\\s+' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]);
   }
   return _.reduce(reAttempts, function(result, data) {
     return result || _.result(RegExp(data[0], 'm').exec(source), data[leadingComments ? 2 : 1], '');
@@ -2791,7 +2791,7 @@ function removeIsHostObject(source, funcDepMap) {
   });
 
   source = source.replace(matchFunction(source, 'isElement'), function(match) {
-    return match.replace(/\(support\.nodeClass\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)\)/, '$1');
+    return match.replace(/\(lodash\.support\.nodeClass\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)\)/, '$1');
   });
 
   return source.replace(matchFunction(source, 'isNative'), function(match) {
@@ -2991,13 +2991,13 @@ function removeSupportArgsClass(source, funcDepMap, objDepMap) {
 
   // remove `support.argsClass` from `baseIsEqual`
   source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
-    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.argsClass\b[\s\S]+?\n\1\}\n/m, '');
+    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!lodash\.support\.argsClass\b[\s\S]+?\n\1\}\n/m, '');
   });
 
   // remove `support.argsClass` from `initObjectClone` and `_.isPlainObject`
   _.each(['shimIsPlainObject', 'initObjectClone', 'isPlainObject'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(/\s*\|\|\s*\(!support\.argsClass\b[\s\S]+?\)\)/, '');
+      return match.replace(/\s*\|\|\s*\(!(?:lodash\.)?support\.argsClass\b[\s\S]+?\)\)/, '');
     });
   });
 
@@ -3047,7 +3047,7 @@ function removeSupportEnumPrototypes(source, objDepMap) {
 
   // remove `support.enumPrototypes` from `_.keys`
   return source.replace(matchFunction(source, 'keys'), function(match) {
-    return match.replace(/\s*\|\|\s*\(support\.enumPrototypes\b[\s\S]+?\)/, '');
+    return match.replace(/\s*\|\|\s*\(lodash\.support\.enumPrototypes\b[\s\S]+?\)/, '');
   });
 }
 
@@ -3067,7 +3067,7 @@ function removeSupportNodeClass(source, funcDepMap) {
 
   // remove `support.nodeClass` from `_.isElement`
   return source.replace(matchFunction(source, 'isElement'), function(match) {
-    return match.replace(/\(support\.nodeClass\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)\)/, '$1');
+    return match.replace(/\(lodash\.support\.nodeClass\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)\)/, '$1');
   });
 }
 
@@ -3165,13 +3165,13 @@ function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
   // remove `support.unindexedChars` from `toIterable` and `toObject`
   _.each(['toIterable', 'toObject'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(support\.unindexedChars\b[\s\S]+?\n\1\}\n/m, '');
+      return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(lodash\.support\.unindexedChars\b[\s\S]+?\n\1\}\n/m, '');
     });
   });
 
   // remove `support.unindexedChars` from `_.toArray`
   source = source.replace(matchFunction(source, 'toArray'), function(match) {
-    return match.replace(/\(support\.unindexedChars\b[\s\S]+?:\s*/, '');
+    return match.replace(/\(lodash\.support\.unindexedChars\b[\s\S]+?:\s*/, '');
   });
 
   return source;
@@ -4761,7 +4761,6 @@ function build(options, callback) {
         // unexpose Lo-Dash methods for the Underscore build
         source = source.replace(getMethodAssignments(source), function(match) {
           var unexpose = lodashOnlyFuncs.concat('assign', 'backflow', 'callback', 'flowRight', 'zipObject');
-
           return _.reduce(unexpose, function(result, funcName) {
             if (isLodash(funcName)) {
               return result;
@@ -4772,15 +4771,22 @@ function build(options, callback) {
           }, match);
         });
 
+        // remove `_.templateSettings.imports assignment
         if (!isModularize) {
-          // remove `_.templateSettings.imports assignment
           source = source.replace(/,[^']*'imports':[^}]+\}/, '');
-
-          // unexpose `lodash.support`
-          if (!isLodash('support')) {
-            source = source.replace(/\blodash\.support\s*=\s*/, '');
-          }
         }
+      }
+      // unexpose `lodash.support`
+      if (isModularize || (isUnderscore && !isLodash('support'))) {
+        _.each(['baseCallback', 'keysIn ', 'shimIsPlainObject', 'shimKeys'], function(funcName) {
+          source = source.replace(matchFunction(source, funcName), function(match) {
+            return removeVar(match, 'support');
+          });
+        });
+
+        source = source
+          .replace(/\blodash\.support\s*=\s*/, '')
+          .replace(/\blodash\.(?=support\b)/g, '');
       }
       if (isModularize) {
         // replace the `lodash.templateSettings` property assignment with a variable assignment
