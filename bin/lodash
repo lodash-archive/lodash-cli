@@ -100,14 +100,14 @@ var realToAliasMap = createMap({
 
 /** Used to track function dependencies */
 var funcDependencyMap = createMap({
-  // objects
-  'support': ['isNative'],
-  'templateSettings': ['escape'],
-
   // variables
   'metaMap': ['isNative'],
 
-  // public functions
+  // lodash properties
+  'support': ['isNative'],
+  'templateSettings': ['escape'],
+
+  // lodash methods
   'after': ['isFunction'],
   'assign': ['baseAssign', 'createAssigner'],
   'at': ['baseAt', 'baseFlatten', 'toIterable'],
@@ -271,12 +271,29 @@ var funcDependencyMap = createMap({
   'without': ['baseDifference', 'slice'],
   'words': [],
   'wrap': ['basePartial'],
-  'wrapperChain': ['chain'],
-  'wrapperToString': [],
-  'wrapperValueOf': [],
   'xor': ['baseDifference', 'baseUniq', 'isArguments', 'isArray'],
   'zip': ['unzip'],
   'zipObject': ['isArray'],
+
+  // lazy wrapper functions
+  'LazyWrapper': [],
+  'lazyClone': [],
+  'lazyFirst': [],
+  'lazyMap': [],
+  'lazyTake': [],
+  'lazyValue': [],
+
+  // lodash wrapper functions
+  'LodashWrapper': [],
+  'wrapperChain': ['chain'],
+  'wrapperToString': [],
+  'wrapperValueOf': [],
+
+  // memoize cache functions
+  'MemCache': [],
+  'memGet': [],
+  'memHas': [],
+  'memSet': [],
 
   // private functions
   'arrayEach': [],
@@ -358,7 +375,6 @@ var funcDependencyMap = createMap({
   'isIterateeCall': [],
   'isStrictComparable': ['isObject'],
   'isWhitespace': [],
-  'lodashWrapper': [],
   'pickByArray': ['toObject'],
   'pickByCallback': ['baseForIn'],
   'replaceHolders': [],
@@ -864,7 +880,17 @@ var privateFuncs = [
   'isIterateeCall',
   'isStrictComparable',
   'isWhitespace',
-  'lodashWrapper',
+  'lazyClone',
+  'lazyFirst',
+  'lazyMap',
+  'lazyTake',
+  'lazyValue',
+  'LazyWrapper',
+  'LodashWrapper',
+  'MemCache',
+  'memGet',
+  'memHas',
+  'memSet',
   'replaceHolders',
   'setData',
   'shimIsPlainObject',
