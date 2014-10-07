@@ -146,6 +146,7 @@ var categoryMap = createMap({
     'tap',
     'thru',
     'wrapperChain',
+    'wrapperReverse',
     'wrapperToString',
     'wrapperValueOf'
   ],

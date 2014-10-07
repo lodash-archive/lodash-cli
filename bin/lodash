@@ -197,7 +197,7 @@ var funcDependencyMap = createMap({
   'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isObject', 'isString'],
   'last': [],
   'lastIndexOf': ['indexOfNaN', 'sortedLastIndex'],
-  'lodash': ['baseSlice', 'isArray', 'lodashWrapper'],
+  'lodash': ['baseSlice', 'isArray', 'LodashWrapper'],
   'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
   'mapValues': ['baseForOwn', 'getCallback'],
   'matches': ['baseClone', 'baseIsEqual', 'isStrictComparable', 'keys'],
@@ -277,17 +277,16 @@ var funcDependencyMap = createMap({
 
   // lazy wrapper functions
   'LazyWrapper': [],
-  'lazyClone': [],
-  'lazyFirst': [],
-  'lazyMap': [],
-  'lazyTake': [],
+  'lazyClone': ['LazyWrapper'],
+  'lazyReverse': ['LazyWrapper'],
   'lazyValue': [],
 
   // lodash wrapper functions
   'LodashWrapper': [],
   'wrapperChain': ['chain'],
-  'wrapperToString': [],
-  'wrapperValueOf': [],
+  'wrapperReverse': ['thru'],
+  'wrapperToString': ['wrapperValueOf'],
+  'wrapperValueOf': ['LazyWrapper'],
 
   // memoize cache functions
   'MemCache': [],
@@ -473,6 +472,7 @@ var categoryMap = createMap({
     'tap',
     'thru',
     'wrapperChain',
+    'wrapperReverse',
     'wrapperToString',
     'wrapperValueOf'
   ],
@@ -696,6 +696,7 @@ var backboneDependencies = [
   'values',
   'without',
   'wrapperChain',
+  'wrapperReverse',
   'wrapperValueOf'
 ];
 
@@ -980,17 +981,17 @@ function addCommandsToHeader(source, commands) {
  */
 function addUnderscoreChaining(source, funcDepMap, isModularize) {
   var deps = _.result(funcDepMap, 'main', []);
-  deps.push('assign', 'lodashWrapper');
+  deps.push('assign');
 
   if (isModularize) {
-    _.pull(deps, 'baseForOwn', 'baseFunctions', 'isObject', 'keys').push('assign');
+    _.pull(deps, 'baseForOwn', 'baseFunctions', 'isArray', 'isObject', 'lazyClone', 'lazyReverse', 'lazyValue', 'keys');
   }
   else {
     deps = _.result(funcDepMap, 'wrapperToString', []);
     _.pull(deps, 'wrapperValueOf');
 
     deps = _.result(funcDepMap, 'wrapperValueOf', []);
-    _.pull(deps, 'baseAssign', 'baseForOwn', 'tap', 'thru', 'wrapperToString').push('assign');
+    _.pull(deps, 'baseAssign', 'baseForOwn', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'tap', 'thru', 'wrapperToString').push('assign');
   }
   deps = _.result(funcDepMap, 'mixin', []);
   _.pull(deps, 'baseFunctions', 'baseSlice', 'isObject', 'keys').push('functions');
@@ -1032,7 +1033,7 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
     ].join('\n'));
   }
   else {
-    _.pull(deps, 'isFunction').push('lodashWrapper');
+    _.pull(deps, 'isFunction').push('LodashWrapper');
 
     source = replaceFunction(source, 'mixin', [
       'function mixin(source) {',
@@ -1049,16 +1050,16 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
       '        push.apply(args, arguments);',
       '',
       '        var result = func.apply(lodash, args);',
-      '        return this.__chain__ ? new lodashWrapper(result, true) : result;',
+      '        return this.__chain__ ? new LodashWrapper(result, true) : result;',
       '      };',
       '    }());',
       '  }',
       '}'
     ].join('\n'));
   }
-  // replace `lodashWrapper`
-  source = replaceFunction(source, 'lodashWrapper', [
-    'function lodashWrapper(value, chainAll) {',
+  // replace `LodashWrapper`
+  source = replaceFunction(source, 'LodashWrapper', [
+    'function LodashWrapper(value, chainAll) {',
     '  this.__chain__ = !!chainAll;',
     '  this.__wrapped__ = value;',
     '}'
@@ -1103,7 +1104,7 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
       '    if (retValue) {',
       '      result = value;',
       '    }',
-      '    return this.__chain__ ? new lodashWrapper(result, true) : result;',
+      '    return this.__chain__ ? new LodashWrapper(result, true) : result;',
       '  };',
       '});',
     ].join('\n' + indent);
@@ -3740,7 +3741,7 @@ function build(options, callback) {
           });
           delete varDepMap.root;
         }
-        funcDepMap.main = ['arrayEach', 'baseForOwn', 'baseFunctions', 'isObject', 'keys', 'lodash', 'mixin'];
+        funcDepMap.main = ['arrayEach', 'baseForOwn', 'baseFunctions', 'isArray', 'isObject', 'keys', 'lazyClone', 'lazyReverse', 'lazyValue', 'lodash', 'LodashWrapper', 'mixin'];
         objDepMap.main = ['support'];
 
         _.each(placeholderFuncs.concat('mixin'), function(funcName) {
@@ -3749,11 +3750,10 @@ function build(options, callback) {
       }
       else {
         funcDepMap.chain.push('wrapperChain');
-        funcDepMap.wrapperToString.push('wrapperValueOf');
-        funcDepMap.wrapperValueOf.push('arrayEach','baseAssign', 'baseForOwn', 'chain', 'mixin', 'tap', 'thru', 'wrapperToString');
+        funcDepMap.wrapperValueOf.push('arrayEach','baseAssign', 'baseForOwn', 'chain', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LodashWrapper', 'mixin', 'tap', 'thru', 'wrapperToString');
         objDepMap.wrapperValueOf = ['support'];
 
-        _.each(['chain', 'tap', 'thru', 'wrapperChain'], function(funcName) {
+        _.each(['chain', 'tap', 'thru', 'wrapperChain', 'wrapperReverse', 'wrapperToString'], function(funcName) {
           funcDepMap[funcName].push('wrapperValueOf');
         });
       }
@@ -3846,7 +3846,7 @@ function build(options, callback) {
             'function lodash(value) {',
             '  return (value instanceof lodash)',
             '    ? value',
-            '    : new lodashWrapper(value);',
+            '    : new LodashWrapper(value);',
             '}'
           ].join('\n'));
         }
@@ -4931,8 +4931,8 @@ function build(options, callback) {
   // modify/remove references to removed functions/variables
   if (!isTemplate) {
     if (isExcluded('lodash')) {
-      // remove `lodashWrapper.prototype` assignment
-      source = source.replace(/^(?: *\/\/.*\n)* *lodashWrapper\.prototype\s*=.+\n/m, '');
+      // remove `LodashWrapper.prototype` assignment
+      source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype\s*=.+\n/m, '');
     }
     if (isExcluded(isModularize ? 'main' : 'mixin')) {
       source = removeMixinCalls(source);
