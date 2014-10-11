@@ -1924,7 +1924,7 @@ function displayHelp() {
     '               Use “none” as the module ID to create compiled templates without',
     '               a dependency on Lo-Dash.',
     '',
-    '  All commands except `backbone`, `modern`, & `underscore` may be combined.',
+    '  All commands except `backbone`, `compat`, `modern`, & `underscore` may be combined.',
     '',
     '  The `exports` values “es6” & “npm” may only be used in conjunction with',
     '  the `modularize` command.',
