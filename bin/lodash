@@ -2527,7 +2527,7 @@ function optionToValue(name, string) {
 }
 
 /**
- * Removes all Lo-Dash assignments from `source`.
+ * Removes all Lo-Dash method and property assignments from `source`.
  *
  * @private
  * @param {string} source The source to process.
@@ -2692,7 +2692,8 @@ function removeFunction(source, funcName) {
 }
 
 /**
- * Replaces all references to `getCallback` in `source` with `baseCallback`.
+ * Removes all references to `getGetCallback` from `source` and replaces calls
+ * with `baseCallback`.
  *
  * @private
  * @param {string} source The source to process.
@@ -2709,22 +2710,24 @@ function removeGetCallback(source, funcDepMap) {
     'some', 'sortBy', 'sortedIndex', 'sortedLastIndex', 'takeRightWhile',
     'takeWhile', 'transform', 'uniq', 'createAggregator'
   ], function(funcName) {
-    source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(reGetCallback, function() {
-        var deps = _.result(funcDepMap, funcName, []);
-        _.pull(deps, 'getCallback').push('baseCallback');
-        return 'baseCallback';
+    var deps = _.result(funcDepMap, funcName, []);
+    if (_.contains(deps, 'getCallback')) {
+      _.pull(deps, 'getCallback').push('baseCallback');
+      source = source.replace(matchFunction(source, funcName), function(match) {
+        return match.replace(reGetCallback, 'baseCallback');
       });
-    });
+    }
   });
   return source.replace(getMethodAssignments(source), function(match) {
     _.each(['main', 'wrapperValueOf'], function(funcName) {
       var deps = _.result(funcDepMap, funcName, []);
       if (_.contains(deps, 'getCallback')) {
         _.pull(deps, 'getCallback').push('baseCallback');
+        match = match.replace(reGetCallback, 'baseCallback');
+        return false;
       }
     });
-    return match.replace(reGetCallback, 'baseCallback');
+    return match;
   });
 }
 
@@ -2741,7 +2744,8 @@ function removeGetDataFork(source) {
 }
 
 /**
- * Removes all references to `getIndexOf` from `source`.
+ * Removes all references to `getIndexOf from `source` and replaces calls with
+ * `baseIndexOf`.
  *
  * @private
  * @param {string} source The source to process.
@@ -2752,17 +2756,17 @@ function removeGetIndexOf(source, funcDepMap) {
   source = removeFunction(source, 'getIndexOf');
 
   _.each(['baseDifference', 'baseUniq', 'contains', 'intersection', 'pull', 'uniq'], function(funcName) {
-    source = source.replace(matchFunction(source, funcName), function(match) {
-      // remove "indexOf" comparisons
-      match = match.replace(/\s*&&\s*indexOf(?:\(\))?\s*==\s*baseIndexOf\b/g, '');
-
-      // replace all `getIndexOf` calls with `baseIndexOf`
-      return match.replace(/\bgetIndexOf(?:\(\))?/g, function() {
-        var deps = _.result(funcDepMap, funcName, []);
-        _.pull(deps, 'getIndexOf').push('baseIndexOf');
-        return 'baseIndexOf';
+    var deps = _.result(funcDepMap, funcName, []);
+    if (_.contains(deps, 'getIndexOf')) {
+      _.pull(deps, 'getIndexOf').push('baseIndexOf');
+      source = source.replace(matchFunction(source, funcName), function(match) {
+        return match
+          // remove "indexOf" comparisons
+          .replace(/\s*&&\s*indexOf(?:\(\))?\s*==\s*baseIndexOf\b/g, '')
+          // replace all `getIndexOf` calls with `baseIndexOf`
+          .replace(/\bgetIndexOf(?:\(\))?/g, 'baseIndexOf');
       });
-    });
+    }
   });
   return source;
 }
@@ -2901,7 +2905,7 @@ function removeMethodAssignment(source, methodName) {
 }
 
 /**
- * Removes the Lo-Dash method assignments snippet from `source`.
+ * Removes all Lo-Dash method assignments from `source`.
  *
  * @private
  * @param {string} source The source to process.
