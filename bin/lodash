@@ -202,7 +202,7 @@ var funcDependencyMap = createMap({
   'mapValues': ['baseForOwn', 'getCallback'],
   'matches': ['baseClone', 'baseIsEqual', 'isStrictComparable', 'keys'],
   'max': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
-  'memoize': ['isFunction'],
+  'memoize': ['isFunction', 'MemCache', 'memGet', 'memHas', 'memSet'],
   'merge': ['baseMerge', 'createAssigner'],
   'min': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
   'mixin': ['baseFunctions', 'baseSlice', 'isFunction', 'isObject', 'keys', 'lodash'],
@@ -211,7 +211,7 @@ var funcDependencyMap = createMap({
   'noop': [],
   'now': ['isNative'],
   'omit': ['baseDifference', 'baseFlatten', 'arrayMap', 'getCallback', 'keysIn', 'pickByArray', 'pickByCallback'],
-  'once': ['before', 'partial'],
+  'once': ['before', 'basePartial'],
   'pad': ['createPad'],
   'padLeft': ['createPad'],
   'padRight': ['createPad'],
@@ -285,7 +285,7 @@ var funcDependencyMap = createMap({
   'LodashWrapper': [],
   'wrapperChain': ['chain'],
   'wrapperReverse': ['thru'],
-  'wrapperToString': ['wrapperValueOf'],
+  'wrapperToString': [],
   'wrapperValueOf': ['LazyWrapper'],
 
   // memoize cache functions
@@ -696,7 +696,6 @@ var backboneDependencies = [
   'values',
   'without',
   'wrapperChain',
-  'wrapperReverse',
   'wrapperValueOf'
 ];
 
@@ -760,6 +759,10 @@ var lodashOnlyFuncs = [
   'isPlainObject',
   'kebabCase',
   'keysIn',
+  'LazyWrapper',
+  'lazyClone',
+  'lazyReverse',
+  'lazyValue',
   'mapValues',
   'merge',
   'pad',
@@ -788,6 +791,7 @@ var lodashOnlyFuncs = [
   'unzip',
   'valuesIn',
   'words',
+  'wrapperReverse',
   'wrapperToString',
   'xor'
 ];
@@ -987,11 +991,8 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
     _.pull(deps, 'baseForOwn', 'baseFunctions', 'isArray', 'isObject', 'lazyClone', 'lazyReverse', 'lazyValue', 'keys');
   }
   else {
-    deps = _.result(funcDepMap, 'wrapperToString', []);
-    _.pull(deps, 'wrapperValueOf');
-
     deps = _.result(funcDepMap, 'wrapperValueOf', []);
-    _.pull(deps, 'baseAssign', 'baseForOwn', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'tap', 'thru', 'wrapperToString').push('assign');
+    _.pull(deps, 'baseAssign', 'baseForOwn', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'tap', 'thru', 'wrapperReverse', 'wrapperToString').push('assign');
   }
   deps = _.result(funcDepMap, 'mixin', []);
   _.pull(deps, 'baseFunctions', 'baseSlice', 'isObject', 'keys').push('functions');
@@ -1065,6 +1066,9 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
     '}'
   ].join('\n'));
 
+  deps = _.result(funcDepMap, 'wrapperValueOf', []);
+  _.pull(deps, 'LazyWrapper');
+
   // replace `wrapperValueOf`
   source = replaceFunction(source, 'wrapperValueOf', [
     'function wrapperValueOf() {',
@@ -1110,14 +1114,26 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
     ].join('\n' + indent);
   });
 
-  // remove `value` aliases
+  // remove bulk `LazyWrapper.prototype` assignments
+  source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial)\b[\s\S]+?\n\1\}\);\n/gm, '');
+
+  // remove `LazyWrapper#dropWhile` and `LazyWrapper#reject` assignments
+  source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:dropWhile|reject)\s*=[\s\S]+?\n\1\};\n/gm, '');
+
+  // remove other `LazyWrapper.prototype` assignments
+  source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.[$\w]+\s*=.+?;\n/gm, '');
+
+  // remove `LazyWrapper` additions to `LodashWrapper`
+  source = source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(LazyWrapper\.prototype\b[\s\S]+?\n\1\}\);\n/m, '');
+
+  // remove `lodash#value` aliases
   source = source.replace(/\blodash\.prototype\.(?:toJSON|valueOf)\s*=\s*/gm, '');
 
-  // remove `lodash.prototype.sample` assignment
-  source = source.replace(/^( *)lodash\.prototype\.sample\s*=[\s\S]+?\n\1\};\n/m, '');
+  // remove `lodash#sample` assignment
+  source = source.replace(/^(?: *\/\/.*\n)*( *)lodash\.prototype\.sample\s*=[\s\S]+?\n\1\};\n/m, '');
 
-  // remove `lodash.prototype.toString` assignment
-  return source.replace(/^ *lodash\.prototype\.toString\s*=[\s\S]+?;\n/m, '');
+  // remove other `lodash.prototype` assignments
+  return source.replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.(?:collect|head|reverse|select|tail|toString)\s*=.+?;\n/gm, '');
 }
 
 /**
@@ -3750,7 +3766,7 @@ function build(options, callback) {
       }
       else {
         funcDepMap.chain.push('wrapperChain');
-        funcDepMap.wrapperValueOf.push('arrayEach','baseAssign', 'baseForOwn', 'chain', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LodashWrapper', 'mixin', 'tap', 'thru', 'wrapperToString');
+        funcDepMap.wrapperValueOf.push('arrayEach','baseAssign', 'baseForOwn', 'chain', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LodashWrapper', 'mixin', 'tap', 'thru', 'wrapperReverse', 'wrapperToString');
         objDepMap.wrapperValueOf = ['support'];
 
         _.each(['chain', 'tap', 'thru', 'wrapperChain', 'wrapperReverse', 'wrapperToString'], function(funcName) {
@@ -3985,6 +4001,8 @@ function build(options, callback) {
         }
         // replace `_.initial`
         if (!isLodash('initial')) {
+          _.pull(funcDepMap.initial, 'dropRight').push('slice');
+
           source = replaceFunction(source, 'initial', [
             'function initial(array, n, guard) {',
             '  var length = array ? array.length : 0;',
@@ -4064,7 +4082,7 @@ function build(options, callback) {
             '}'
           ].join('\n'));
         }
-        // replace `_.isEqual`
+        // replace `_.isEqual` and `baseIsEqual`
         if (!isLodash('baseIsEqual') && !isLodash('isEqual')) {
           _.pull(funcDepMap.isEqual, 'baseCallback', 'isStrictComparable');
           _.pull(funcDepMap.baseIsEqual, 'isArguments', 'isHostObject');
@@ -4294,6 +4312,30 @@ function build(options, callback) {
             '}'
           ].join('\n'));
         }
+        // replace `_.memoize`
+        if (!isLodash('memoize')) {
+          _.pull(funcDepMap.memoize, 'MemCache', 'memGet', 'memHas', 'memSet');
+
+          source = replaceFunction(source, 'memoize', [
+            'function memoize(func, resolver) {',
+            '  if (!isFunction(func) || (resolver && !isFunction(resolver))) {',
+            '    throw new TypeError(FUNC_ERROR_TEXT);',
+            '  }',
+            '  var memoized = function() {',
+            '    var key = resolver ? resolver.apply(this, arguments) : arguments[0];',
+            "    if (key == '__proto__') {",
+            '      return func.apply(this, arguments);',
+            '    }',
+            '    var cache = memoized.cache;',
+            '    return hasOwnProperty.call(cache, key)',
+            '      ? cache[key]',
+            '      : (cache[key] = func.apply(this, arguments));',
+            '  };',
+            '  memoized.cache = {};',
+            '  return memoized;',
+            '}'
+          ].join('\n'));
+        }
         // replace `_.random`
         if (!isLodash('random')) {
           _.pull(funcDepMap.random, 'baseRandom', 'isIterateeCall');
@@ -4317,6 +4359,8 @@ function build(options, callback) {
         }
         // replace `_.rest`
         if (!isLodash('rest')) {
+          _.pull(funcDepMap.rest, 'drop').push('slice');
+
           source = replaceFunction(source, 'rest', [
             'function rest(array, n, guard) {',
             '  if (n == null || guard) {',
@@ -4933,6 +4977,13 @@ function build(options, callback) {
     if (isExcluded('lodash')) {
       // remove `LodashWrapper.prototype` assignment
       source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype\s*=.+\n/m, '');
+    }
+    if (isExcluded('MemCache')) {
+      // remove `memoize.Cache` assignment
+      source = source.replace(/^(?: *\/\/.*\n)* *memoize\.Cache\s*=.+?;\n/m, '');
+
+      // remove `MemCache.prototype` assignments
+      source = source.replace(/^(?: *\/\/.*\n)* *MemCache\.prototype\.[$\w]+\s*=.+?;\n/gm, '');
     }
     if (isExcluded(isModularize ? 'main' : 'mixin')) {
       source = removeMixinCalls(source);
