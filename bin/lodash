@@ -4870,10 +4870,12 @@ function build(options, callback) {
       }
       // unexpose `lodash.support`
       if (isModularize || (isUnderscore && !isLodash('support'))) {
-        _.each(['baseCallback', 'keysIn ', 'shimIsPlainObject', 'shimKeys'], function(funcName) {
-          source = source.replace(matchFunction(source, funcName), function(match) {
-            return removeVar(match, 'support');
-          });
+        _.forOwn(objDependencyMap, function(deps, funcName) {
+          if (_.contains(deps, 'support')) {
+            source = source.replace(matchFunction(source, funcName), function(match) {
+              return removeVar(match, 'support');
+            });
+          }
         });
 
         source = source
