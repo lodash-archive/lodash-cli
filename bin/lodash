@@ -34,6 +34,9 @@ var reFuncTag = /^ *\* *@type +Function\b/im;
 /** Used to detect if a string is a function snippet */
 var reFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|create[A-Z][a-z]+)\(/;
 
+/** Used to match `getCallback` references */
+var reGetCallback = /\bgetCallback(?:\(\))?/g;
+
 /** Used to detect the Node.js executable in command-line arguments */
 var reNode = RegExp('(?:^|' + path.sepEscaped + ')node(?:\\.exe)?$', 'i');
 
@@ -759,10 +762,10 @@ var lodashOnlyFuncs = [
   'isPlainObject',
   'kebabCase',
   'keysIn',
-  'LazyWrapper',
   'lazyClone',
   'lazyReverse',
   'lazyValue',
+  'LazyWrapper',
   'mapValues',
   'merge',
   'pad',
@@ -953,12 +956,10 @@ function addCommandsToHeader(source, commands) {
         command = pair[0] + separator + '"' + pair[1] + '"';
       }
       // escape newlines, carriage returns, multi-line comment end tokens
-      command = command
+      return command
         .replace(/\n/g, '\\n')
         .replace(/\r/g, '\\r')
         .replace(/\*\//g, '*\\/');
-
-      return command;
     });
 
     // add build commands to copyright/license header
@@ -988,12 +989,14 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
   deps.push('assign');
 
   if (isModularize) {
-    _.pull(deps, 'baseForOwn', 'baseFunctions', 'isArray', 'isObject', 'lazyClone', 'lazyReverse', 'lazyValue', 'keys');
+    _.pull(deps, 'baseFunctions', 'isObject', 'keys');
   }
   else {
     deps = _.result(funcDepMap, 'wrapperValueOf', []);
-    _.pull(deps, 'baseAssign', 'baseForOwn', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'tap', 'thru', 'wrapperReverse', 'wrapperToString').push('assign');
+    _.pull(deps, 'tap', 'thru', 'wrapperReverse', 'wrapperToString').push('assign');
   }
+  _.pull(deps, 'baseForOwn', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper');
+
   deps = _.result(funcDepMap, 'mixin', []);
   _.pull(deps, 'baseFunctions', 'baseSlice', 'isObject', 'keys').push('functions');
 
@@ -1076,64 +1079,54 @@ function addUnderscoreChaining(source, funcDepMap, isModularize) {
     '}'
   ].join('\n'));
 
-  // move `mixin(...)` before `_.VERSION`
-  source = source.replace(getMethodAssignments(source), function(match) {
+  return source.replace(getMethodAssignments(source), function(match) {
     match = removeMixinCalls(match);
-    return match.replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)?( *)lodash\.VERSION\b/m, function(match, indent) {
+    match = removeLazyChaining(match);
+
+    // move `mixin(...)` before `_.VERSION`
+    match = match.replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)?( *)lodash\.VERSION\b/m, function(match, indent) {
       return indent + [
         '// add functions to `lodash.prototype`',
         'mixin(assign({}, lodash));',
       ].join('\n' + indent) +
       '\n\n' + match
     });
+
+    // replace wrapper `Array` method assignments
+    match = match.replace(/^( *)arrayEach\(\['concat\b[\s\S]+?\n\1\}\);/m, function(match, indent) {
+      return indent + [
+        "arrayEach(['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
+        '  var func = arrayProto[methodName],',
+        '      retValue = !/^(?:concat|join|slice)$/.test(methodName),',
+        '      fixObjects = !support.spliceObjects && /^(?:pop|shift|splice)$/.test(methodName);',
+        '',
+        '  lodash.prototype[methodName] = function() {',
+        '    var value = this.__wrapped__,',
+        '        result = func.apply(value, arguments);',
+        '',
+        '    // avoid array-like object bugs with `Array#shift` and `Array#splice` in',
+        '    // IE < 9, Firefox < 10, and RingoJS',
+        '    if (fixObjects && value.length === 0) {',
+        '      delete value[0];',
+        '    }',
+        '    if (retValue) {',
+        '      result = value;',
+        '    }',
+        '    return this.__chain__ ? new LodashWrapper(result, true) : result;',
+        '  };',
+        '});',
+      ].join('\n' + indent);
+    });
+
+    // remove `lodash#sample` assignment
+    match = match.replace(/^(?: *\/\/.*\n)*( *)lodash\.prototype\.sample\s*=[\s\S]+?\n\1\};\n/m, '');
+
+    // remove other `lodash.prototype` assignments
+    match = match.replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.(?:reverse|toString)\s*=.+?;\n/gm, '');
+
+    // remove `lodash#value` aliases
+    return match.replace(/\blodash\.prototype\.(?:toJSON|valueOf)\s*=\s*/gm, '');
   });
-
-  // replace wrapper `Array` method assignments
-  source = source.replace(/^( *)arrayEach\(\['concat\b[\s\S]+?\n\1\}\);/m, function(match, indent) {
-    return indent + [
-      "arrayEach(['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
-      '  var func = arrayProto[methodName],',
-      '      retValue = !/^(?:concat|join|slice)$/.test(methodName),',
-      '      fixObjects = !support.spliceObjects && /^(?:pop|shift|splice)$/.test(methodName);',
-      '',
-      '  lodash.prototype[methodName] = function() {',
-      '    var value = this.__wrapped__,',
-      '        result = func.apply(value, arguments);',
-      '',
-      '    // avoid array-like object bugs with `Array#shift` and `Array#splice` in',
-      '    // IE < 9, Firefox < 10, and RingoJS',
-      '    if (fixObjects && value.length === 0) {',
-      '      delete value[0];',
-      '    }',
-      '    if (retValue) {',
-      '      result = value;',
-      '    }',
-      '    return this.__chain__ ? new LodashWrapper(result, true) : result;',
-      '  };',
-      '});',
-    ].join('\n' + indent);
-  });
-
-  // remove bulk `LazyWrapper.prototype` assignments
-  source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial)\b[\s\S]+?\n\1\}\);\n/gm, '');
-
-  // remove `LazyWrapper#dropWhile` and `LazyWrapper#reject` assignments
-  source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:dropWhile|reject)\s*=[\s\S]+?\n\1\};\n/gm, '');
-
-  // remove other `LazyWrapper.prototype` assignments
-  source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.[$\w]+\s*=.+?;\n/gm, '');
-
-  // remove `LazyWrapper` additions to `LodashWrapper`
-  source = source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(LazyWrapper\.prototype\b[\s\S]+?\n\1\}\);\n/m, '');
-
-  // remove `lodash#value` aliases
-  source = source.replace(/\blodash\.prototype\.(?:toJSON|valueOf)\s*=\s*/gm, '');
-
-  // remove `lodash#sample` assignment
-  source = source.replace(/^(?: *\/\/.*\n)*( *)lodash\.prototype\.sample\s*=[\s\S]+?\n\1\};\n/m, '');
-
-  // remove other `lodash.prototype` assignments
-  return source.replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.(?:collect|head|reverse|select|tail|toString)\s*=.+?;\n/gm, '');
 }
 
 /**
@@ -1201,7 +1194,6 @@ function buildModule(state, onComplete) {
 
       getInlinees(funcName, result);
     });
-
     return result;
   };
 
@@ -1804,7 +1796,6 @@ function buildTemplate(state) {
     );
   }
   source.push('}.call(this));');
-
   return source.join('\n');
 }
 
@@ -2235,7 +2226,7 @@ function getIsFunctionFork(source) {
  * @returns {string} Returns the method assignments snippet.
  */
 function getMethodAssignments(source) {
-  return _.result(/\n\n(?: *\/\/.*\n)* *lodash\.[$\w]+\s*=[\s\S]+lodash\.[$\w]+\s=.+/.exec(source), 0, '');
+  return _.result(/\n\n(?: *\/\/.*\n)* *lodash(?:\.[$\w]+)+\s*=[\s\S]+lodash(?:\.[$\w]+)+\s=.+/.exec(source), 0, '');
 }
 
 /**
@@ -2580,6 +2571,7 @@ function removeBufferCloneFork(source) {
  * @returns {string} Returns the modified source.
  */
 function removeChaining(source) {
+  source = removeLazyChaining(source);
   source = removeMixinCalls(source);
   source = removeSpliceObjectsFix(source);
 
@@ -2599,6 +2591,30 @@ function removeChaining(source) {
 function removeComments(source) {
   source = source == null ? '' : String(source);
   return source.replace(/^ *(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.+)\n/gm, '');
+}
+
+/**
+ * Removes support for lazy chaining in `source`.
+ *
+ * @private
+ * @param {string} source The source to process.
+ * @returns {string} Returns the modified source.
+ */
+function removeLazyChaining(source) {
+  // remove bulk `LazyWrapper.prototype` assignments
+  source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial)\b[\s\S]+?\n\1\}\);\n/gm, '');
+
+  // remove `LazyWrapper#dropWhile` and `LazyWrapper#reject` assignments
+  source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:dropWhile|reject)\s*=[\s\S]+?\n\1\};\n/gm, '');
+
+  // remove other `LazyWrapper.prototype` assignments
+  source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.[$\w]+\s*=.+?;\n/gm, '');
+
+  // remove `LazyWrapper` additions to `LodashWrapper`
+  source = source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(LazyWrapper\.prototype\b[\s\S]+?\n\1\}\);\n/m, '');
+
+  // remove related `lodash.prototype` method aliases
+  return source.replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.(?:collect|head|select|tail)\s*=.+?;\n/gm, '');
 }
 
 /**
@@ -2656,7 +2672,6 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
         .replace(/^( *return\s+)setData\(([^,]+),[^)]+\)/gm, '$1$2')
     });
   });
-
   return source;
 }
 
@@ -2677,7 +2692,7 @@ function removeFunction(source, funcName) {
 }
 
 /**
- * Removes all references to `getCallback` from `source`.
+ * Replaces all references to `getCallback` in `source` with `baseCallback`.
  *
  * @private
  * @param {string} source The source to process.
@@ -2695,16 +2710,22 @@ function removeGetCallback(source, funcDepMap) {
     'takeWhile', 'transform', 'uniq', 'createAggregator'
   ], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
-      // replace all `getCallback` calls with `baseCallback`
-      return match.replace(/\bgetCallback(?:\(\))?/g, function() {
+      return match.replace(reGetCallback, function() {
         var deps = _.result(funcDepMap, funcName, []);
         _.pull(deps, 'getCallback').push('baseCallback');
         return 'baseCallback';
       });
     });
   });
-
-  return source;
+  return source.replace(getMethodAssignments(source), function(match) {
+    _.each(['main', 'wrapperValueOf'], function(funcName) {
+      var deps = _.result(funcDepMap, funcName, []);
+      if (_.contains(deps, 'getCallback')) {
+        _.pull(deps, 'getCallback').push('baseCallback');
+      }
+    });
+    return match.replace(reGetCallback, 'baseCallback');
+  });
 }
 
 /**
@@ -2743,7 +2764,6 @@ function removeGetIndexOf(source, funcDepMap) {
       });
     });
   });
-
   return source;
 }
 
@@ -2901,7 +2921,7 @@ function removeMethodAssignments(source) {
  */
 function removeMixinCalls(source) {
   source = source == null ? '' : String(source);
-  return source.replace(/^(?: *\/\/.*\n)*( *)mixin\((?:.+?|[\s\S]+?\1(?:\}.+?)?)\);\n/gm, '');
+  return source.replace(/^(?: *\/\/.*\n)*( *)mixin\(.+?(?:\{[\s\S]+?\1\}.+?)?\);\n/gm, '');
 }
 
 /**
@@ -3043,7 +3063,6 @@ function removeSupportArgsClass(source, funcDepMap, objDepMap) {
       return match.replace(/\s*\|\|\s*\(!(?:lodash\.)?support\.argsClass\b[\s\S]+?\)\)/, '');
     });
   });
-
   return source;
 }
 
@@ -3213,11 +3232,9 @@ function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
   });
 
   // remove `support.unindexedChars` from `_.toArray`
-  source = source.replace(matchFunction(source, 'toArray'), function(match) {
+  return source.replace(matchFunction(source, 'toArray'), function(match) {
     return match.replace(/\(lodash\.support\.unindexedChars\b[\s\S]+?:\s*/, '');
   });
-
-  return source;
 }
 
 /**
@@ -3270,7 +3287,6 @@ function removeVar(source, varName) {
       return true;
     }
   });
-
   return source;
 }
 
@@ -3757,7 +3773,7 @@ function build(options, callback) {
           });
           delete varDepMap.root;
         }
-        funcDepMap.main = ['arrayEach', 'baseForOwn', 'baseFunctions', 'isArray', 'isObject', 'keys', 'lazyClone', 'lazyReverse', 'lazyValue', 'lodash', 'LodashWrapper', 'mixin'];
+        funcDepMap.main = ['baseFunctions', 'isObject', 'keys', 'lodash', 'mixin'];
         objDepMap.main = ['support'];
 
         _.each(placeholderFuncs.concat('mixin'), function(funcName) {
@@ -3766,13 +3782,15 @@ function build(options, callback) {
       }
       else {
         funcDepMap.chain.push('wrapperChain');
-        funcDepMap.wrapperValueOf.push('arrayEach','baseAssign', 'baseForOwn', 'chain', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LodashWrapper', 'mixin', 'tap', 'thru', 'wrapperReverse', 'wrapperToString');
+        funcDepMap.wrapperValueOf.push('chain', 'mixin', 'tap', 'thru', 'wrapperReverse', 'wrapperToString');
         objDepMap.wrapperValueOf = ['support'];
 
         _.each(['chain', 'tap', 'thru', 'wrapperChain', 'wrapperReverse', 'wrapperToString'], function(funcName) {
           funcDepMap[funcName].push('wrapperValueOf');
         });
       }
+      funcDepMap[isModularize ? 'main' : 'wrapperValueOf'].push('arrayEach', 'baseForOwn', 'getCallback',  'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'LodashWrapper');
+
       if (isModern) {
         source = removeIsFunctionFork(source);
         source = removeIsArgumentsFork(source);
