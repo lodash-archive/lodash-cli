@@ -1,10 +1,10 @@
 # lodash-cli v3.0.0-pre
 
-The [Lo-Dash](http://lodash.com/) command-line interface for creating custom builds & precompiling templates.
+The [Lo-Dash](https://lodash.com/) command-line interface for creating custom builds & precompiling templates.
 
 ## Dive in
 
-Check out the [Lo-Dash custom builds documentation](http://lodash.com/custom-builds) for build commands & usage examples.<br>
+Check out the [Lo-Dash custom builds documentation](https://lodash.com/custom-builds) for build commands & usage examples.<br>
 The full changelog for this release is available on our [wiki](https://github.com/lodash/lodash-cli/wiki/Changelog).
 
 ## Installation
