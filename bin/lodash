@@ -205,7 +205,7 @@ var funcDependencyMap = createMap({
   'mapValues': ['baseForOwn', 'getCallback'],
   'matches': ['baseClone', 'baseIsEqual', 'isStrictComparable', 'keys'],
   'max': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
-  'memoize': ['isFunction', 'MemCache', 'memGet', 'memHas', 'memSet'],
+  'memoize': ['isFunction', 'MemCache'],
   'merge': ['baseMerge', 'createAssigner'],
   'min': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
   'mixin': ['baseFunctions', 'baseSlice', 'isFunction', 'isObject', 'keys', 'lodash'],
@@ -292,7 +292,7 @@ var funcDependencyMap = createMap({
   'wrapperValueOf': ['LazyWrapper'],
 
   // memoize cache functions
-  'MemCache': [],
+  'MemCache': ['memGet', 'memHas', 'memSet'],
   'memGet': [],
   'memHas': [],
   'memSet': [],
@@ -4336,7 +4336,7 @@ function build(options, callback) {
         }
         // replace `_.memoize`
         if (!isLodash('memoize')) {
-          _.pull(funcDepMap.memoize, 'MemCache', 'memGet', 'memHas', 'memSet');
+          _.pull(funcDepMap.memoize, 'MemCache');
 
           source = replaceFunction(source, 'memoize', [
             'function memoize(func, resolver) {',
@@ -5003,11 +5003,12 @@ function build(options, callback) {
       source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype\s*=.+\n/m, '');
     }
     if (isExcluded('MemCache')) {
-      // remove `memoize.Cache` assignment
-      source = source.replace(/^(?: *\/\/.*\n)* *memoize\.Cache\s*=.+?;\n/m, '');
-
       // remove `MemCache.prototype` assignments
       source = source.replace(/^(?: *\/\/.*\n)* *MemCache\.prototype\.[$\w]+\s*=.+?;\n/gm, '');
+    }
+    if (isExcluded('memoize') || isExcluded('MemCache')) {
+      // remove `memoize.Cache` assignment
+      source = source.replace(/^(?: *\/\/.*\n)* *memoize\.Cache\s*=.+?;\n/m, '');
     }
     if (isExcluded(isModularize ? 'main' : 'mixin')) {
       source = removeMixinCalls(source);
