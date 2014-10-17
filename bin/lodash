@@ -203,7 +203,7 @@ var funcDependencyMap = createMap({
   'lodash': ['baseSlice', 'isArray', 'LodashWrapper'],
   'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
   'mapValues': ['baseForOwn', 'getCallback'],
-  'matches': ['baseClone', 'baseIsEqual', 'isStrictComparable', 'keys'],
+  'matches': ['baseClone', 'baseIsEqual', 'clonePassthru', 'isStrictComparable', 'keys'],
   'max': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
   'memoize': ['isFunction', 'MemCache'],
   'merge': ['baseMerge', 'createAssigner'],
@@ -349,6 +349,7 @@ var funcDependencyMap = createMap({
   'charAtCallback': [],
   'charsLeftIndex': [],
   'charsRightIndex': [],
+  'clonePassthru': ['isCloneable'],
   'compareAscending': ['baseCompareAscending'],
   'compareMultipleAscending': ['baseCompareAscending'],
   'composeArgs': [],
@@ -371,8 +372,9 @@ var funcDependencyMap = createMap({
   'getIndexOf': ['baseIndexOf', 'indexOf'],
   'indexOfNaN': [],
   'initArrayClone': [],
-  'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isHostObject'],
+  'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isCloneable'],
   'isArrayLike': [],
+  'isCloneable': ['isHostObject'],
   'isHostObject': [],
   'isIterateeCall': [],
   'isStrictComparable': ['isObject'],
@@ -861,6 +863,7 @@ var privateFuncs = [
   'charAtCallback',
   'charsLeftIndex',
   'charsRightIndex',
+  'clonePassthru',
   'compareAscending',
   'compareMultipleAscending',
   'composeArgs',
@@ -884,6 +887,7 @@ var privateFuncs = [
   'initArrayClone',
   'initObjectClone',
   'isArrayLike',
+  'isCloneable',
   'isHostObject',
   'isIterateeCall',
   'isStrictComparable',
@@ -4305,7 +4309,7 @@ function build(options, callback) {
         }
         // replace `_.matches`
         if (!isLodash('matches')) {
-          _.pull(funcDepMap.matches, 'baseClone', 'baseIsEqual', 'isStrictComparable', 'keys').push('pairs');
+          _.pull(funcDepMap.matches, 'baseClone', 'baseIsEqual', 'clonePassthru', 'isStrictComparable', 'keys').push('pairs');
 
           source = replaceFunction(source, 'matches', [
             'function matches(source) {',
