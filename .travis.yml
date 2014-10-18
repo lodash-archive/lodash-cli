@@ -1,16 +1,21 @@
 language: node_js
 node_js:
-  - "0.8"
   - "0.10"
 env:
   global:
-    - BIN="node" BUILD="compat" EXPORTS="commonjs" OPTION="" OUTPUT_PATH=false TARGET_PATH=false TEST_BUILDS=false 
+    - BIN="node" BUILD="compat" EXPORTS="commonjs" OPTION="" OUTPUT_PATH=false NPM_VERSION="^2.0.0" TARGET_PATH=false TEST_BUILDS=false 
   matrix:
     - BUILD="compat"
     - BUILD="modern"
     - BUILD="modern" EXPORTS="npm" OUTPUT_PATH="./npm/node_modules" TARGET_PATH="../../../npm/index.js"
 matrix:
   include:
+    - node_js: "0.8"
+      env: NPM_VERSION="~1.4.0"
+    - node_js: "0.8"
+      env: BUILD="modern" NPM_VERSION="~1.4.0"
+    - node_js: "0.8"
+      env: BUILD="modern" EXPORTS="npm" OUTPUT_PATH="./npm/node_modules" TARGET_PATH="../../../npm/index.js" NPM_VERSION="~1.4.0"
     - node_js: "0.10"
       env: BIN="rhino" BUILD="compat" OPTION="-require"
     - node_js: "0.10"
@@ -23,6 +28,9 @@ branches:
   only:
     - master
 before_install:
+  - "nvm use $TRAVIS_NODE_VERSION"
+  - "npm config set loglevel error"
+  - "npm i -g npm@\"$NPM_VERSION\""
   - "git clone --depth=10 --branch=master git://github.com/lodash/lodash.git ./node_modules/lodash"
   - "[ $OUTPUT_PATH != false ] || OUTPUT_PATH=\"./$EXPORTS/$BUILD\""
   - "[ $TARGET_PATH != false ] || TARGET_PATH=\"../../../$EXPORTS/$BUILD/index.js\""
