@@ -204,10 +204,10 @@ var funcDependencyMap = createMap({
   'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
   'mapValues': ['baseForOwn', 'getCallback'],
   'matches': ['baseClone', 'baseIsEqual', 'clonePassthru', 'isStrictComparable', 'keys'],
-  'max': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
+  'max': ['arrayMax', 'baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
   'memoize': ['isFunction', 'MemCache'],
   'merge': ['baseMerge', 'createAssigner'],
-  'min': ['baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
+  'min': ['arrayMin', 'baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
   'mixin': ['baseFunctions', 'baseSlice', 'isFunction', 'isObject', 'keys', 'lodash'],
   'negate': ['isFunction'],
   'noConflict': [],
@@ -303,6 +303,8 @@ var funcDependencyMap = createMap({
   'arrayEvery': [],
   'arrayFilter': [],
   'arrayMap': [],
+  'arrayMax': [],
+  'arrayMin': [],
   'arrayReduce': [],
   'arrayReduceRight': [],
   'arraySome': [],
@@ -818,6 +820,8 @@ var privateFuncs = [
   'arrayEvery',
   'arrayFilter',
   'arrayMap',
+  'arrayMax',
+  'arrayMin',
   'arrayReduce',
   'arrayReduceRight',
   'arraySome',
@@ -4674,7 +4678,7 @@ function build(options, callback) {
         // remove conditional `charCodeCallback` use from `_.max` and `_.min`
         _.each(['max', 'min'], function(funcName) {
           if (!isLodash(funcName)) {
-            _.pull(funcDepMap[funcName], 'charAtCallback', 'isArray', 'isString');
+            _.pull(funcDepMap[funcName], 'charAtCallback', 'isString');
 
             source = source.replace(matchFunction(source, funcName), function(match) {
               match = removeVar(match, 'noIteratee');
@@ -4682,8 +4686,9 @@ function build(options, callback) {
               match = removeVar(match, 'isStr');
               return match
                 .replace(/\s*&&\s*\!isStr\b/, '')
-                .replace(/=.+?isStr\b[^:]+:\s*/g, '= ')
-                .replace(/\bnoIteratee\b/, 'iteratee == null');
+                .replace(/\bnoIteratee\b/, 'iteratee == null')
+                .replace(/\bisArr\b/, 'isArray(collection)')
+                .replace(/=.+?isStr\b[^:]+:\s*/g, '= ');
             });
           }
         });
