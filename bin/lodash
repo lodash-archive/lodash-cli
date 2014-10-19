@@ -4419,8 +4419,9 @@ function build(options, callback) {
 
           source = replaceFunction(source, 'sortBy', [
             'function sortBy(collection, iteratee, thisArg) {',
-            '  iteratee = isIterateeCall(collection, iteratee, thisArg) ? null : iteratee;',
-            '',
+            '  if (thisArg && isIterateeCall(collection, iteratee, thisArg)) {',
+            '    iteratee = null;',
+            '  }',
             '  var index = -1,',
             '      length = collection ? collection.length : 0,',
             '      result = [];',
