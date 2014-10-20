@@ -1445,9 +1445,7 @@ QUnit.module('underscore modifier');
 
       array = [[[['a']]], [[['b']]]];
       deepEqual(lodash.flatten(array), ['a', 'b'], '_.flatten should perform a deep flatten by default: ' + basename);
-
-      actual = _.map(array, lodash.flatten);
-      deepEqual(actual, [['a'], ['b']], '_.flatten should perform a deep flatten when used as `callback` for _.map: ' + basename);
+      deepEqual(_.map(array, lodash.flatten), [['a'], ['b']], '_.flatten should perform a deep flatten when used as an iteratee for _.map: ' + basename);
 
       object = { 'length': 0, 'splice': Array.prototype.splice };
       strictEqual(lodash.isEmpty(object), false, '_.isEmpty should return `false` for jQuery/MooTools DOM query collections: ' + basename);
@@ -1466,8 +1464,8 @@ QUnit.module('underscore modifier');
       strictEqual(lodash.min('abc'), Infinity, '_.min should return `Infinity` for strings: ' + basename);
 
       array = [[2, 3, 1], [5, 6, 4], [8, 9, 7]];
-      deepEqual(_.map(array, lodash.max), [3, 6, 9], '_.max should work when used as `callback` for _.map: ' + basename);
-      deepEqual(_.map(array, lodash.min), [1, 4, 7], '_.min should work when used as `callback` for _.map: ' + basename);
+      deepEqual(_.map(array, lodash.max), [3, 6, 9], '_.max should work as an iteratee for _.map: ' + basename);
+      deepEqual(_.map(array, lodash.min), [1, 4, 7], '_.min should work as an iteratee for _.map: ' + basename);
 
       object = {};
       lodash.mixin(object, { 'a': _.noop });
@@ -1488,6 +1486,9 @@ QUnit.module('underscore modifier');
       strictEqual(lodash.result({}, 'a', 1), undefined, '_.result should ignore `defaultValue`: ' + basename);
       strictEqual(lodash.some([false, true, false]), true, '_.some: ' + basename);
 
+      array = [[2, 1, 3], [3, 2, 1]];
+      deepEqual(_.map(array, lodash.sortBy), [[1, 2, 3], [1, 2, 3]], '_.sortBy should work as an iteratee for _.map: ' + basename);
+
       actual = lodash.tap([], function(value) { value.push(this); }, 'a');
       deepEqual(actual, [undefined], '_.tap should ignore `thisArg`: ' + basename);
 
@@ -1495,9 +1496,14 @@ QUnit.module('underscore modifier');
       ok(!('support' in lodash), '_.support should not exist: ' + basename);
       ok(!('imports' in lodash.templateSettings), '_.templateSettings should not have an "imports" property: ' + basename);
 
+      var compiles = _.map(['<%= a %>', '<%- b %>', '<% print(c) %>'], lodash.template);
+      object = { 'a': 'one', 'b': '`two`', 'c': 'three' };
+
+      actual = _.map(compiles, function(compiled) { return compiled(object); });
+      deepEqual(actual, ['one', '&#96;two&#96;', 'three'], '_.template should work as an iteratee for _.map: ' + basename);
+
       array = [[2, 1, 2], [1, 2, 1]];
-      actual = _.map(array, lodash.uniq);
-      deepEqual(actual, [[2, 1], [1, 2]], '_.uniq should perform an unsorted uniq operation when used as `callback` for _.map: ' + basename);
+      deepEqual(_.map(array, lodash.uniq), [[2, 1], [1, 2]], '_.uniq should perform an unsorted uniq operation when used as an iteratee for _.map: ' + basename);
 
       strictEqual(lodash.uniqueId(0), '1', '_.uniqueId should ignore a prefix of `0`: ' + basename);
 
