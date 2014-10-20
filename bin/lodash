@@ -2612,8 +2612,8 @@ function removeLazyChaining(source) {
   // remove bulk `LazyWrapper.prototype` assignments
   source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial)\b[\s\S]+?\n\1\}\);\n/gm, '');
 
-  // remove `LazyWrapper#dropWhile` and `LazyWrapper#reject` assignments
-  source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:dropWhile|reject)\s*=[\s\S]+?\n\1\};\n/gm, '');
+  // remove `LazyWrapper` methods `dropWhile`, `reject`, and `slice` assignments
+  source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:dropWhile|reject|slice)\s*=[\s\S]+?\n\1\};\n/gm, '');
 
   // remove other `LazyWrapper.prototype` assignments
   source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.[$\w]+\s*=.+?;\n/gm, '');
