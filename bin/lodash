@@ -2850,19 +2850,15 @@ function removeIsFunctionFork(source) {
 function removeIsHostObject(source, funcDepMap) {
   source = source == null ? '' : String(source);
 
-  _.each(['baseIsEqual', 'initObjectClone', 'isElement', 'isNative', 'shimIsPlainObject'], function(funcName) {
+  _.each(['baseIsEqual', 'isCloneable', 'isElement', 'isNative', 'shimIsPlainObject'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isHostObject');
   });
 
-  _.each(['baseIsEqual', 'shimIsPlainObject'], function(funcName) {
+  _.each(['baseIsEqual', 'isCloneable', 'shimIsPlainObject'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match.replace(/\s*&&\s*!isHostObject\([^)]+\)/g, '');
     });
-  });
-
-  source = source.replace(matchFunction(source, 'initObjectClone'), function(match) {
-    return match.replace(/\s*\|\|\s*isHostObject\([^)]+\)/g, '');
   });
 
   source = source.replace(matchFunction(source, 'isElement'), function(match) {
