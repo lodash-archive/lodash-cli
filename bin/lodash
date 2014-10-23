@@ -375,7 +375,7 @@ var funcDependencyMap = createMap({
   'indexOfNaN': [],
   'initArrayClone': [],
   'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isCloneable'],
-  'isArrayLike': ['isLength'],
+  'isArrayLike': ['isArguments', 'isLength'],
   'isCloneable': ['isHostObject'],
   'isHostObject': [],
   'isIterateeCall': ['isLength', 'isObject'],
@@ -402,6 +402,7 @@ var objDependencyMap = createMap({
   'baseIsEqual': ['support'],
   'initObjectClone': ['support'],
   'isArguments': ['support'],
+  'isArrayLike': ['support'],
   'isElement': ['support'],
   'isPlainObject': ['support'],
   'keys': ['support'],
@@ -3045,14 +3046,14 @@ function removeStrings(source) {
  * @returns {string} Returns the modified source.
  */
 function removeSupportArgsClass(source, funcDepMap, objDepMap) {
-  _.each(['isArguments', 'isPlainObject'], function(funcName) {
-    var deps = _.result(objDepMap, funcName, []);
-    _.pull(deps, 'support');
-  });
-
-  _.each(['baseIsEqual', 'initObjectClone', 'isPlainObject', 'shimIsPlainObject'], function(funcName) {
+  _.each(['baseIsEqual', 'isArguments', 'isArrayLike', 'isPlainObject', 'initObjectClone', 'shimIsPlainObject'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isArguments');
+
+    if (funcName != 'shimIsPlainObject') {
+      deps = _.result(objDepMap, funcName, []);
+      _.pull(deps, 'support');
+    }
   });
 
   source = removeSupportProp(source, 'argsClass');
@@ -3067,8 +3068,8 @@ function removeSupportArgsClass(source, funcDepMap, objDepMap) {
     return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!lodash\.support\.argsClass\b[\s\S]+?\n\1\}\n/m, '');
   });
 
-  // remove `support.argsClass` from `initObjectClone` and `_.isPlainObject`
-  _.each(['shimIsPlainObject', 'initObjectClone', 'isPlainObject'], function(funcName) {
+  // remove `support.argsClass` from others
+  _.each(['shimIsPlainObject', 'initObjectClone', 'isArrayLike', 'isPlainObject'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match.replace(/\s*\|\|\s*\(!(?:lodash\.)?support\.argsClass\b[\s\S]+?\)\)/, '');
     });
@@ -3838,9 +3839,7 @@ function build(options, callback) {
         source = removeSupportOwnLast(source);
         source = removeSupportUnindexedChars(source, funcDepMap, objDepMap);
 
-        _.each(['baseIsEqual', 'initObjectClone', 'shimIsPlainObject'], function(funcName) {
-          _.pull(objDepMap[funcName], 'support');
-        });
+        _.pull(objDepMap.shimIsPlainObject, 'support');
       }
       if (isModern || isUnderscore) {
         // replace `_.keysIn`
