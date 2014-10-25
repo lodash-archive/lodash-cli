@@ -557,7 +557,7 @@ var categoryMap = createMap({
     'isPlainObject',
     'isRegExp',
     'isString',
-    'isUndefined',
+    'isUndefined'
   ],
   'Object': [
     'assign',
@@ -645,69 +645,6 @@ var topLevel = createMap({
   'support': true
 });
 
-/** List of Backbone's Lo-Dash dependencies */
-var backboneDependencies = [
-  'bind',
-  'bindAll',
-  'chain',
-  'clone',
-  'contains',
-  'countBy',
-  'defaults',
-  'difference',
-  'escape',
-  'every',
-  'extend',
-  'filter',
-  'find',
-  'first',
-  'forEach',
-  'groupBy',
-  'has',
-  'indexBy',
-  'indexOf',
-  'initial',
-  'invert',
-  'invoke',
-  'isArray',
-  'isEmpty',
-  'isEqual',
-  'isFunction',
-  'isObject',
-  'isRegExp',
-  'isString',
-  'keys',
-  'last',
-  'lastIndexOf',
-  'lodash',
-  'map',
-  'max',
-  'min',
-  'mixin',
-  'omit',
-  'once',
-  'pairs',
-  'pick',
-  'reduce',
-  'reduceRight',
-  'reject',
-  'rest',
-  'result',
-  'sample',
-  'shuffle',
-  'size',
-  'some',
-  'sortBy',
-  'sortedIndex',
-  'toArray',
-  'uniqueId',
-  'value',
-  'values',
-  'without',
-  'wrapperChain',
-  'wrapperValueOf'
-];
-
 /** List of all function categories */
 var allCategories = _.keys(categoryMap);
 
@@ -731,78 +668,6 @@ var complexVars = [
   'support',
   'reWords',
   'whitespace'
-];
-
-/** List of Lo-Dash only functions */
-var lodashOnlyFuncs = [
-  'at',
-  'attempt',
-  'bindKey',
-  'camelCase',
-  'capitalize',
-  'chunk',
-  'cloneDeep',
-  'create',
-  'curry',
-  'curryRight',
-  'deburr',
-  'dropRight',
-  'dropRightWhile',
-  'dropWhile',
-  'endsWith',
-  'escapeRegExp',
-  'findIndex',
-  'findKey',
-  'findLast',
-  'findLastIndex',
-  'findLastKey',
-  'flattenDeep',
-  'flow',
-  'forEachRight',
-  'forIn',
-  'forInRight',
-  'forOwn',
-  'forOwnRight',
-  'isError',
-  'isNative',
-  'isPlainObject',
-  'kebabCase',
-  'keysIn',
-  'lazyClone',
-  'lazyReverse',
-  'lazyValue',
-  'LazyWrapper',
-  'mapValues',
-  'merge',
-  'pad',
-  'padLeft',
-  'padRight',
-  'parseInt',
-  'partialRight',
-  'pull',
-  'pullAt',
-  'remove',
-  'repeat',
-  'runInContext',
-  'slice',
-  'snakeCase',
-  'sortedLastIndex',
-  'startsWith',
-  'takeRight',
-  'takeRightWhile',
-  'takeWhile',
-  'thru',
-  'transform',
-  'trunc',
-  'trim',
-  'trimLeft',
-  'trimRight',
-  'unzip',
-  'valuesIn',
-  'words',
-  'wrapperReverse',
-  'wrapperToString',
-  'xor'
 ];
 
 /** List of functions that support argument placeholders */
@@ -937,9 +802,6 @@ var allFuncs = _.filter(_.difference(_.keys(funcDependencyMap), objDependencies,
 /** List of Lo-Dash functions */
 var lodashFuncs = _.difference(allFuncs, privateFuncs);
 
-/** List of Underscore functions */
-var underscoreFuncs = _.difference(allFuncs, lodashOnlyFuncs, privateFuncs);
-
 /*----------------------------------------------------------------------------*/
 
 /**
@@ -987,160 +849,6 @@ function addCommandsToHeader(source, commands) {
 }
 
 /**
- * Adds support for Underscore style chaining to `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @param {Object} [funcDepMap] The dependency map to modify.
- * @param {boolean} [isModularize=false] A flag to specify a modularize build
- * @returns {string} Returns the modified source.
- */
-function addUnderscoreChaining(source, funcDepMap, isModularize) {
-  var deps = _.result(funcDepMap, 'main', []);
-  deps.push('assign');
-
-  if (isModularize) {
-    _.pull(deps, 'baseFunctions', 'isObject', 'keys');
-  }
-  else {
-    deps = _.result(funcDepMap, 'wrapperValueOf', []);
-    _.pull(deps, 'tap', 'thru', 'wrapperReverse', 'wrapperToString').push('assign');
-  }
-  _.pull(deps, 'baseForOwn', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper');
-
-  deps = _.result(funcDepMap, 'mixin', []);
-  _.pull(deps, 'baseFunctions', 'baseSlice', 'isObject', 'keys').push('functions');
-
-  // replace `_.mixin`
-  if (isModularize) {
-    source = replaceFunction(source, 'mixin', [
-      'function mixin(object, source) {',
-      '  if (!source) {',
-      '    source = object;',
-      '    object = lodash;',
-      '  }',
-      '  var index = -1,',
-      '      isFunc = isFunction(object),',
-      '      methodNames = functions(source),',
-      '      length = methodNames.length;',
-      '',
-      '  while (++index < length) {',
-      '    var methodName = methodNames[index],',
-      '        func = object[methodName] = source[methodName];',
-      '',
-      '    if (isFunc) {',
-      '      object.prototype[methodName] = (function(func) {',
-      '        return function() {',
-      '          var args = [this.__wrapped__];',
-      '          push.apply(args, arguments);',
-      '',
-      '          var result = func.apply(object, args);',
-      '          if (this.__chain__) {',
-      '            result = new object(result);',
-      '            result.__chain__ = true;',
-      '          }',
-      '          return result;',
-      '        };',
-      '      }(func));',
-      '    }',
-      '  }',
-      '}'
-    ].join('\n'));
-  }
-  else {
-    _.pull(deps, 'isFunction').push('LodashWrapper');
-
-    source = replaceFunction(source, 'mixin', [
-      'function mixin(source) {',
-      '  var index = -1,',
-      '      methodNames = functions(source),',
-      '      length = methodNames.length;',
-      '',
-      '  while (++index < length) {',
-      '    var methodName = methodNames[index];',
-      '    lodash.prototype[methodName] = (function() {',
-      '      var func = lodash[methodName] = source[methodName];',
-      '      return function() {',
-      '        var args = [this.__wrapped__];',
-      '        push.apply(args, arguments);',
-      '',
-      '        var result = func.apply(lodash, args);',
-      '        return this.__chain__ ? new LodashWrapper(result, true) : result;',
-      '      };',
-      '    }());',
-      '  }',
-      '}'
-    ].join('\n'));
-  }
-  // replace `LodashWrapper`
-  source = replaceFunction(source, 'LodashWrapper', [
-    'function LodashWrapper(value, chainAll) {',
-    '  this.__chain__ = !!chainAll;',
-    '  this.__wrapped__ = value;',
-    '}'
-  ].join('\n'));
-
-  deps = _.result(funcDepMap, 'wrapperValueOf', []);
-  _.pull(deps, 'LazyWrapper');
-
-  // replace `wrapperValueOf`
-  source = replaceFunction(source, 'wrapperValueOf', [
-    'function wrapperValueOf() {',
-    '  return this.__wrapped__;',
-    '}'
-  ].join('\n'));
-
-  return source.replace(getMethodAssignments(source), function(match) {
-    match = removeMixinCalls(match);
-    match = removeLazyChaining(match);
-
-    // move `mixin(...)` before `_.VERSION`
-    match = match.replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)?( *)lodash\.VERSION\b/m, function(match, indent) {
-      return indent + [
-        '// add functions to `lodash.prototype`',
-        'mixin(assign({}, lodash));',
-      ].join('\n' + indent) +
-      '\n\n' + match
-    });
-
-    // replace wrapper `Array` method assignments
-    match = match.replace(/^( *)arrayEach\(\['concat\b[\s\S]+?\n\1\}\);/m, function(match, indent) {
-      return indent + [
-        "arrayEach(['concat', 'join', 'pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(methodName) {",
-        '  var func = arrayProto[methodName],',
-        '      retValue = !/^(?:concat|join|slice)$/.test(methodName),',
-        '      fixObjects = !support.spliceObjects && /^(?:pop|shift|splice)$/.test(methodName);',
-        '',
-        '  lodash.prototype[methodName] = function() {',
-        '    var value = this.__wrapped__,',
-        '        result = func.apply(value, arguments);',
-        '',
-        '    // avoid array-like object bugs with `Array#shift` and `Array#splice` in',
-        '    // IE < 9, Firefox < 10, and RingoJS',
-        '    if (fixObjects && value.length === 0) {',
-        '      delete value[0];',
-        '    }',
-        '    if (retValue) {',
-        '      result = value;',
-        '    }',
-        '    return this.__chain__ ? new LodashWrapper(result, true) : result;',
-        '  };',
-        '});',
-      ].join('\n' + indent);
-    });
-
-    // remove `lodash#sample` assignment
-    match = match.replace(/^(?: *\/\/.*\n)*( *)lodash\.prototype\.sample\s*=[\s\S]+?\n\1\};\n/m, '');
-
-    // remove other `lodash.prototype` assignments
-    match = match.replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.(?:reverse|toString)\s*=.+?;\n/gm, '');
-
-    // remove `lodash#value` aliases
-    return match.replace(/\blodash\.prototype\.(?:toJSON|valueOf)\s*=\s*/gm, '');
-  });
-}
-
-/**
  * Creates modules based on the provided build state.
  *
  * @private
@@ -1156,10 +864,8 @@ function buildModule(state, onComplete) {
       isAMD = state.isAMD,
       isCommonJS = state.isCommonJS,
       isES6 = state.isES6,
-      isNode = state.isNode,
       isNpm = state.isNpm,
       isSilent = state.isSilent,
-      isUnderscore = state.isUnderscore,
       objDepMap = state.objDepMap,
       outputPath = state.outputPath,
       varDepMap = state.varDepMap;
@@ -1399,34 +1105,21 @@ function buildModule(state, onComplete) {
           (isES6 ? 'var ' : '') + 'mixin = (function(func) {'
         ];
 
-        if (isUnderscore) {
-          code.push(
-            '    return function(object, source) {',
-            '      if (!source) {',
-            '        source = object;',
-            '        object = lodash;',
-            '      }',
-            '      return func(object, source);'
-          );
-        } else {
-          code.push(
-            '    return function(object, source, options) {',
-            '      var isObj = isObject(source),',
-            '          noOpts = options == null,',
-            '          props = noOpts && isObj && keys(source),',
-            '          methodNames = props && baseFunctions(source, props);',
-            '',
-            '      if ((props && props.length && !methodNames.length) || (noOpts && !isObj)) {',
-            '        if (noOpts) {',
-            '          options = source;',
-            '        }',
-            '        source = object;',
-            '        object = this;',
-            '      }',
-            '      return func(object, source, options);'
-          );
-        }
         code.push(
+          '    return function(object, source, options) {',
+          '      var isObj = isObject(source),',
+          '          noOpts = options == null,',
+          '          props = noOpts && isObj && keys(source),',
+          '          methodNames = props && baseFunctions(source, props);',
+          '',
+          '      if ((props && props.length && !methodNames.length) || (noOpts && !isObj)) {',
+          '        if (noOpts) {',
+          '          options = source;',
+          '        }',
+          '        source = object;',
+          '        object = this;',
+          '      }',
+          '      return func(object, source, options);',
           '    };',
           '  }(' + (isES6 ? '_' : '') + 'mixin));',
           '',
@@ -1438,7 +1131,7 @@ function buildModule(state, onComplete) {
 
       // add `lodash.support`, `lodash.templateSettings`, placeholder assignments
       source = source.replace(/^ *lodash\.VERSION\b.+\n/m, function(match) {
-        var funcNames = _.intersection(buildFuncs, isUnderscore ? ['partial'] : placeholderFuncs);
+        var funcNames = _.intersection(buildFuncs, placeholderFuncs);
 
         var code = [
           '',
@@ -1907,11 +1600,9 @@ function displayHelp() {
     '',
     'Commands:',
     '',
-    '  backbone     Build with only functions required by Backbone',
     '  compat       Build with support for old & new environments (default)',
     '  modern       Build tailored for newer environments with ES5 support',
     '  strict       Build with ES5 strict mode enabled',
-    '  underscore   Build tailored for projects already using Underscore',
     '  modularize   Splits Lo-Dash into modules',
     '',
     '  include=..   Comma separated function/category names to include in the build',
@@ -1921,7 +1612,7 @@ function displayHelp() {
     '  plus=..      Comma separated function/category names to add to the build',
     '',
     '  category=..  Comma separated categories of functions to include in the build',
-    '               (i.e. “array”, “chain”, “collection”, “function”, “object”,',
+    '               (i.e. “array”, “chain”, “collection”, “function”, “lang”, “object”,',
     '               “string”, & “utility”)',
     '',
     '  exports=..   Comma separated names of ways to export the `lodash` function.',
@@ -1942,7 +1633,7 @@ function displayHelp() {
     '               Use “none” as the module ID to create compiled templates without',
     '               a dependency on Lo-Dash.',
     '',
-    '  All commands except `backbone`, `compat`, `modern`, & `underscore` may be combined.',
+    '  All commands except `compat`, & `modern` may be combined.',
     '',
     '  The `exports` values “es6” & “npm” may only be used in conjunction with',
     '  the `modularize` command.',
@@ -2149,16 +1840,6 @@ function getFunctionSource(func, indent) {
   });
 }
 
-/**
- * Gets the `getData` fork from `source`.
- *
- * @private
- * @param {string} source The source to inspect.
- * @returns {string} Returns the fork.
- */
-function getGetDataFork(source) {
-  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(!WeakMap\)\s*\{\n\1  getData\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
-}
 
 /**
  * Gets the copyright/license header of `source`.
@@ -2740,18 +2421,6 @@ function removeGetCallback(source, funcDepMap) {
     });
     return match;
   });
-}
-
-/**
- * Removes the `getData` fork from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeGetDataFork(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(getGetDataFork(source), '');
 }
 
 /**
@@ -3507,17 +3176,6 @@ function build(options, callback) {
     return _.every(arguments, _.negate(_.partial(_.contains, buildFuncs, _, 0)));
   };
 
-  var isLodash = function(funcName) {
-    funcName = getRealName(funcName);
-
-    var funcNames = (isUnderscore && ((/^(?:assign|zipObject)$/.test(funcName) || _.contains(lodashOnlyFuncs, funcName))))
-      ? _.difference(_.union(includeFuncs, plusFuncs), minusFuncs)
-      : _.difference(plusFuncs, minusFuncs);
-
-    var result = _.contains(funcNames, funcName);
-    return isUnderscore ? result : !result;
-  };
-
   if (state) {
     var buildFuncs = state.buildFuncs,
         filePath = state.filePath,
@@ -3559,9 +3217,6 @@ function build(options, callback) {
         : _.clone(_.templateSettings);
     }());
 
-    // flag to specify a Backbone build
-    var isBackbone = getOption(options, 'backbone');
-
     // flag to specify only creating the development build
     var isDevelopment = getOption(options, '-d') || getOption(options, '--development');
 
@@ -3593,9 +3248,6 @@ function build(options, callback) {
     // flag to specify a template build
     var isTemplate = !!templatePattern;
 
-    // flag to specify an Underscore build
-    var isUnderscore = isBackbone || getOption(options, 'underscore');
-
     // used to specify the ways to export the `lodash` function
     var exportsOptions = (function() {
       var result = getOption(options, 'exports', isModularize ? ['amd'] : defaultExports);
@@ -3603,7 +3255,7 @@ function build(options, callback) {
     }());
 
     // used to specify the AMD module ID of Lo-Dash used by precompiled templates
-    var moduleId = getOption(options, 'moduleId', isUnderscore ? 'underscore' : null);
+    var moduleId = getOption(options, 'moduleId', null);
 
     // used as the output path for the build
     var outputPath = _.reduce(options, function(result, value, index) {
@@ -3614,7 +3266,7 @@ function build(options, callback) {
 
     // flag to specify creating a custom build
     var isCustom = !isModularize && (
-      isMapped || isModern || isStrict || isTemplate || isUnderscore || outputPath ||
+      isMapped || isModern || isStrict || isTemplate || outputPath ||
       getOption(options, 'compat') ||
       /\b(?:category|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
       !_.isEqual(exportsOptions, defaultExports)
@@ -3656,18 +3308,10 @@ function build(options, callback) {
       var categories = _.intersection(funcNames, allCategories);
 
       _.each(categories, function(category) {
-        var otherFuncs = _.filter(getNamesByCategory(category), function(key) {
+        push.apply(funcNames, _.filter(getNamesByCategory(category), function(key) {
           var type = typeof _[key];
           return type == 'function' || type == 'undefined';
-        });
-
-        // limit function names to those available for specific builds
-        if (isBackbone) {
-          otherFuncs = _.intersection(otherFuncs, backboneDependencies);
-        } else if (isUnderscore) {
-          otherFuncs = _.intersection(otherFuncs, underscoreFuncs);
-        }
-        push.apply(funcNames, otherFuncs);
+        }));
       });
     });
 
@@ -3688,12 +3332,10 @@ function build(options, callback) {
         return true;
       }
       var result = _.contains([
-        'backbone',
         'compat',
         'modern',
         'modularize',
         'strict',
-        'underscore',
         '-c', '--stdout',
         '-d', '--development',
         '-h', '--help',
@@ -3716,7 +3358,7 @@ function build(options, callback) {
       warnings.push('Invalid argument' + (_.size(invalidArgs) > 1 ? 's' : '') + ' passed: ' + invalidArgs.join(', '));
     }
     // report invalid command combinations
-    invalidArgs = _.intersection(options, ['backbone', 'compat', 'modern', 'underscore']);
+    invalidArgs = _.intersection(options, ['compat', 'modern']);
 
     if (isTemplate) {
       invalidArgs.push('template');
@@ -3815,20 +3457,15 @@ function build(options, callback) {
         });
 
         // replace `_.isRegExp`
-        if (isLodash('isRegExp')) {
-          _.pull(funcDepMap.isRegExp, 'isObject');
+        _.pull(funcDepMap.isRegExp, 'isObject');
 
-          source = replaceFunction(source, 'isRegExp', [
-            'function isRegExp(value) {',
-            "  return (value && typeof value == 'object' && toString.call(value) == regexpClass) || false;",
-            '}'
-          ].join('\n'));
-        }
+        source = replaceFunction(source, 'isRegExp', [
+          'function isRegExp(value) {',
+          "  return (value && typeof value == 'object' && toString.call(value) == regexpClass) || false;",
+          '}'
+        ].join('\n'));
       }
-      if (_.contains(plusFuncs, 'chain') == !isUnderscore) {
-        source = addUnderscoreChaining(source, funcDepMap, isModularize);
-      }
-      if (isModern || (isUnderscore && _.isEmpty(plusFuncs))) {
+      if (isModern) {
         source = removeIsHostObject(source, funcDepMap);
         source = removeSupportArgsClass(source, funcDepMap, objDepMap);
         source = removeSupportEnumErrorProps(source);
@@ -3841,902 +3478,50 @@ function build(options, callback) {
 
         _.pull(objDepMap.shimIsPlainObject, 'support');
       }
-      if (isModern || isUnderscore) {
+      if (isModern) {
         // replace `_.keysIn`
-        if (isLodash('keysIn') == !isUnderscore) {
-          _.pull(funcDepMap.keysIn, 'arrayEach', 'isString');
+        _.pull(funcDepMap.keysIn, 'arrayEach', 'isString');
 
-          source = replaceFunction(source, 'keysIn', [
-            'function keysIn(object) {',
-            '  if (object == null) {',
-            '    return [];',
-            '  }',
-            '  if (!isObject(object)) {',
-            '    object = Object(object);',
-            '  }',
-            '  var length = object.length;',
-            "  length = (typeof length == 'number' && length > 0 &&",
-            '    (isArray(object) || (support.nonEnumArgs && isArguments(object))) && length) || 0;',
-            '',
-            '  var keyIndex,',
-            '      Ctor = object.constructor,',
-            '      index = -1,',
-            "      isProto = typeof Ctor == 'function' && Ctor.prototype == object,",
-            '      maxIndex = length - 1,',
-            '      result = Array(length),',
-            '      skipIndexes = length > 0;',
-            '',
-            '  while (++index < length) {',
-            '    result[index] = String(index);',
-            '  }',
-            '  for (var key in object) {',
-            "    if (!(isProto && key == 'constructor') &&",
-            '        !(skipIndexes && (keyIndex = +key, keyIndex > -1 && keyIndex <= maxIndex && keyIndex % 1 == 0))) {',
-            '      result.push(key);',
-            '    }',
-            '  }',
-            '  return result;',
-            '}'
-          ].join('\n'));
-        }
-      }
-      if (isUnderscore) {
-        // replace `lodash`
-        if (!isLodash('lodash')) {
-          _.pull(funcDepMap.lodash, 'baseSlice', 'isArray');
-
-          source = replaceFunction(source, 'lodash', [
-            'function lodash(value) {',
-            '  return (value instanceof lodash)',
-            '    ? value',
-            '    : new LodashWrapper(value);',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.assign`
-        if (!isLodash('assign')) {
-          _.pull(funcDepMap.assign, 'createAssigner').push('isIterateeCall');
-
-          source = replaceFunction(source, 'assign', [
-            'function assign(object) {',
-            '  if (object == null) {',
-            '    return object;',
-            '  }',
-            '  var args = arguments,',
-            '      index = 0,',
-            '      length = args.length;',
-            '',
-            "  if (length > 3 && isIterateeCall(args[1], args[2], args[3])) {",
-            '    length = 2;',
-            '  }',
-            '  while (++index < length) {',
-            '    baseAssign(object, args[index]);',
-            '  }',
-            '  return object;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.bind`
-        if (!isLodash('bind')) {
-          _.pull(funcDepMap.bind, 'replaceHolders');
-
-          source = replaceFunction(source, 'bind', [
-            'function bind(func, thisArg) {',
-            '  return arguments.length < 3',
-            '    ? createWrapper(func, BIND_FLAG, null, thisArg)',
-            '    : basePartial(func, BIND_FLAG | PARTIAL_FLAG, slice(arguments, 2), [], thisArg);',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.clone`
-        if (!isLodash('baseClone') && !isLodash('clone') && !isLodash('cloneDeep')) {
-          _.pull(funcDepMap.clone, 'baseClone', 'baseCallback', 'isIterateeCall').push('assign', 'baseSlice', 'isArray', 'isObject');
-
-          source = replaceFunction(source, 'clone', [
-            'function clone(value) {',
-            '  return isObject(value)',
-            '    ? (isArray(value) ? baseSlice(value) : assign({}, value))',
-            '    : value;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.contains`
-        if (!isLodash('contains')) {
-          _.pull(funcDepMap.contains, 'isArray', 'isNative', 'isString');
-
-          source = replaceFunction(source, 'contains', [
-            'function contains(collection, target) {',
-            '  var length = collection ? collection.length : 0;',
-            '',
-            "  if (!isLength(length)) {",
-            '    collection = values(collection);',
-            '    length = collection.length;',
-            '  }',
-            '  return length ? (getIndexOf(collection, target) > -1) : false;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.defaults`
-        if (!isLodash('defaults')) {
-          _.pull(funcDepMap.defaults, 'assign', 'assignDefaults', 'baseSlice').push('isIterateeCall');
-
-          source = replaceFunction(source, 'defaults', [
-            'function defaults(object) {',
-            '  if (object == null) {',
-            '    return object;',
-            '  }',
-            '  var args = arguments,',
-            '      index = 0,',
-            '      length = args.length;',
-            '',
-            "  if (length > 3 && isIterateeCall(args[1], args[2], args[3])) {",
-            '    length = 2;',
-            '  }',
-            '  while (++index < length) {',
-            '    var source = args[index];',
-            '    for (var key in source) {',
-            "      if (typeof object[key] == 'undefined') {",
-            '        object[key] = source[key];',
-            '      }',
-            '    }',
-            '  }',
-            '  return object;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `baseDifference`
-        if (!isLodash('baseDifference') && !isLodash('difference')) {
-          _.pull(funcDepMap.baseDifference, 'cacheIndexOf', 'createCache');
-
-          source = replaceFunction(source, 'baseDifference', [
-            'function baseDifference(array, values) {',
-            '  var length = array ? array.length : 0;',
-            '  if (!length) {',
-            '    return [];',
-            '  }',
-            '  var index = -1,',
-            '      indexOf = getIndexOf(),',
-            '      result = [];',
-            '',
-            '  while (++index < length) {',
-            '    var value = array[index];',
-            '    if (indexOf(values, value) < 0) {',
-            '      result.push(value);',
-            '    }',
-            '  }',
-            '  return result;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.drop`
-        if (!isLodash('drop')) {
-          funcDepMap.drop = ['rest'];
-          source = replaceFunction(source, 'drop', 'var drop = rest;');
-        }
-        // replace `_.first`
-        if (!isLodash('first')) {
-          funcDepMap.first.push('slice');
-
-          source = replaceFunction(source, 'first', [
-            'function first(array, n, guard) {',
-            '  if (n == null || guard) {',
-            '    return array ? array[0] : undefined;',
-            '  }',
-            '  return slice(array, 0, n < 0 ? 0 : n);',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.initial`
-        if (!isLodash('initial')) {
-          _.pull(funcDepMap.initial, 'dropRight').push('slice');
-
-          source = replaceFunction(source, 'initial', [
-            'function initial(array, n, guard) {',
-            '  var length = array ? array.length : 0;',
-            '  if (n == null || guard) {',
-            '    n = 1;',
-            '  }',
-            '  n = length - (n || 0);',
-            '  return slice(array, 0, n < 0 ? 0 : n);',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.intersection`
-        if (!isLodash('intersection')) {
-          _.pull(funcDepMap.intersection, 'cacheIndexOf', 'createCache');
-
-          source = replaceFunction(source, 'intersection', [
-            'function intersection() {',
-            '  var args = [],',
-            '      argsIndex = -1,',
-            '      argsLength = arguments.length;',
-            '',
-            '  while (++argsIndex < argsLength) {',
-            '    var value = arguments[argsIndex];',
-            '     if (isArray(value) || isArguments(value)) {',
-            '       args.push(value);',
-            '     }',
-            '  }',
-            '  argsLength = args.length;',
-            '  var array = args[0],',
-            '      index = -1,',
-            '      indexOf = getIndexOf(),',
-            '      length = array ? array.length : 0,',
-            '      result = [];',
-            '',
-            '  outer:',
-            '  while (++index < length) {',
-            '    value = array[index];',
-            '    if (indexOf(result, value) < 0) {',
-            '      var argsIndex = argsLength;',
-            '      while (--argsIndex) {',
-            '        if (indexOf(args[argsIndex], value) < 0) {',
-            '          continue outer;',
-            '        }',
-            '      }',
-            '      result.push(value);',
-            '    }',
-            '  }',
-            '  return result;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.invert`
-        if (!isLodash('invert')) {
-          source = replaceFunction(source, 'invert', [
-            'function invert(object) {',
-            '  var index = -1,',
-            '      props = keys(object),',
-            '      length = props.length,',
-            '      result = {};',
-            '',
-            '  while (++index < length) {',
-            '    var key = props[index];',
-            '    result[object[key]] = key;',
-            '  }',
-            '  return result;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.isElement`
-        if (!isLodash('isElement')) {
-          source = removeSupportDom(source, objDepMap);
-          funcDepMap.isElement = [];
-
-          source = replaceFunction(source, 'isElement', [
-            'function isElement(value) {',
-            '  return (value && value.nodeType === 1) || false;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.isEqual` and `baseIsEqual`
-        if (!isLodash('baseIsEqual') && !isLodash('isEqual')) {
-          _.pull(funcDepMap.isEqual, 'baseCallback', 'isStrictComparable');
-          _.pull(funcDepMap.baseIsEqual, 'isArguments', 'isHostObject');
-          _.pull(objDepMap.baseIsEqual, 'support');
-
-          source = replaceFunction(source, 'isEqual', [
-            'function isEqual(value, other) {',
-            '  return baseIsEqual(value, other);',
-            '}'
-          ].join('\n'));
-
-          source = replaceFunction(source, 'baseIsEqual', [
-            'function baseIsEqual(value, other, stackA, stackB) {',
-            '  if (value === other) {',
-            '    return value !== 0 || (1 / value == 1 / other);',
-            '  }',
-            '  var valType = typeof value,',
-            '      othType = typeof other;',
-            '',
-            '  if (value === value && (value == null || other == null ||',
-            "      (valType != 'function' && valType != 'object' && othType != 'function' && othType != 'object'))) {",
-            '    return false;',
-            '  }',
-            '  var valClass = toString.call(value),',
-            '      othClass = toString.call(other);',
-            '',
-            '  if (valClass != othClass) {',
-            '    return false;',
-            '  }',
-            '  switch (valClass) {',
-            '    case boolClass:',
-            '    case dateClass:',
-            '      return +value == +other;',
-            '',
-            '    case numberClass:',
-            '      return value != +value',
-            '        ? other != +other',
-            '        : (value == 0 ? (1 / value == 1 / other) : value == +other);',
-            '',
-            '    case regexpClass:',
-            '    case stringClass:',
-            '      return value == String(other);',
-            '  }',
-            '  var isArr = arrayLikeClasses[valClass];',
-            '  if (!isArr) {',
-            '    if (valClass != objectClass) {',
-            '      return false;',
-            '    }',
-            "    var valWrapped = hasOwnProperty.call(value, '__wrapped__'),",
-            "        othWrapped = hasOwnProperty.call(other, '__wrapped__');",
-            '',
-            '    if (valWrapped || othWrapped) {',
-            '      return baseIsEqual(valWrapped ? value.__wrapped__ : value, othWrapped ? other.__wrapped__ : other, stackA, stackB);',
-            '    }',
-            "    var hasValCtor = hasOwnProperty.call(value, 'constructor'),",
-            "        hasOthCtor = hasOwnProperty.call(other, 'constructor');",
-            '',
-            '    if (hasValCtor != hasOthCtor) {',
-            '      return false;',
-            '    }',
-            '    if (!hasValCtor) {',
-            '      var valCtor = value.constructor,',
-            '          othCtor = other.constructor;',
-            '',
-            "      if (valCtor != othCtor && ('constructor' in value && 'constructor' in other) &&",
-            "          !(typeof valCtor == 'function' && valCtor instanceof valCtor &&",
-            "            typeof othCtor == 'function' && othCtor instanceof othCtor)) {",
-            '        return false;',
-            '      }',
-            '    }',
-            '  }',
-            '  stackA || (stackA = []);',
-            '  stackB || (stackB = []);',
-            '',
-            '  var length = stackA.length;',
-            '  while (length--) {',
-            '    if (stackA[length] == value) {',
-            '      return stackB[length] == other;',
-            '    }',
-            '  }',
-            '  stackA.push(value);',
-            '  stackB.push(other);',
-            '',
-            '  if (isArr) {',
-            '    length = value.length;',
-            '    var result = length == other.length;',
-            '',
-            '    if (result) {',
-            '      while (length--) {',
-            '        result = baseIsEqual(value[length], other[length], stackA, stackB);',
-            '        if (!result) {',
-            '          break;',
-            '        }',
-            '      }',
-            '    }',
-            '  }',
-            '  else {',
-            '    var props = keys(value);',
-            '    length = props.length;',
-            '    result = length == keys(other).length;',
-            '',
-            '    if (result) {',
-            '      while (length--) {',
-            '        var key = props[length];',
-            '        result = hasOwnProperty.call(other, key) && baseIsEqual(value[key], other[key], stackA, stackB);',
-            '        if (!result) {',
-            '          break;',
-            '        }',
-            '      }',
-            '    }',
-            '  }',
-            '  stackA.pop();',
-            '  stackB.pop();',
-            '',
-            '  return result;',
-            '}'
-          ].join('\n'));
-
-           // replace complex lodash wrapper checks with simpler ones
-          if (!isModularize) {
-            source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
-              return match.replace(/hasOwnProperty\.call\(([$\w]+),\s*'__wrapped__'\)/g, '$1 instanceof lodash')
-            });
-          }
-        }
-        // replace `_.isFinite`
-        if (!isLodash('isFinite')) {
-          _.pull(funcDepMap.isFinite, 'isNative');
-
-          source = replaceFunction(source, 'isFinite', [
-            'function isFinite(value) {',
-            '  value = parseFloat(nativeIsFinite(value) && value);',
-            '  return value == value;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.keys`, `_.keysIn`, and `shimKeys`
-        if (!isLodash('keys') && !isLodash('keysIn')) {
-          source = removeSupportNonEnumArgs(source);
-
-          _.pull(funcDepMap.keysIn, 'arrayEach', 'isArguments', 'isArray', 'isString');
-          _.pull(funcDepMap.shimKeys, 'isArguments', 'isArray', 'isString');
-
-          _.each(['keys', 'keysIn', 'shimKeys'], function(funcName) {
-            _.pull(objDepMap[funcName], 'support');
-          });
-
-          source = replaceFunction(source, 'keys', [
-            'var keys = !nativeKeys ? shimKeys : function(object) {',
-            '  return isObject(object) ? nativeKeys(object) : [];',
-            '};'
-          ].join('\n'));
-
-          source = replaceFunction(source, 'keysIn', [
-            'function keysIn(object) {',
-            '  var result = [];',
-            '  if (!isObject(object)) {',
-            '    return result;',
-            '  }',
-            '  for (var key in object) {',
-            '    result.push(key);',
-            '  }',
-            '  return result;',
-            '}'
-          ].join('\n'));
-
-          source = replaceFunction(source, 'shimKeys', [
-            'function shimKeys(object) {',
-            '  var index = -1,',
-            '      props = keysIn(object),',
-            '      length = props.length,',
-            '      result = [];',
-            '',
-            '  while (++index < length) {',
-            '    var key = props[index];',
-            '    if (hasOwnProperty.call(object, key)) {',
-            '      result.push(key);',
-            '    }',
-            '  }',
-            '  return result;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.last`
-        if (!isLodash('last')) {
-          funcDepMap.last.push('slice');
-
-          source = replaceFunction(source, 'last', [
-            'function last(array, n, guard) {',
-            '  var length = array ? array.length : 0;',
-            '  if (n == null || guard) {',
-            '    return array ? array[length - 1] : undefined;',
-            '  }',
-            '  n = length - (n || 0);',
-            '  return slice(array, n < 0 ? 0 : n);',
-            '}'
-            ].join('\n'));
-        }
-        // replace `_.matches`
-        if (!isLodash('matches')) {
-          _.pull(funcDepMap.matches, 'baseClone', 'baseIsEqual', 'clonePassthru', 'isStrictComparable', 'keys').push('pairs');
-
-          source = replaceFunction(source, 'matches', [
-            'function matches(source) {',
-            '  var keyVals = pairs(source),',
-            '      length = keyVals.length;',
-            '',
-            '  return function(object) {',
-            '    var index = length;',
-            '    if (object == null) {',
-            '      return !index;',
-            '    }',
-            '    while (index--) {',
-            '      var keyVal = keyVals[index];',
-            '      if (object[keyVal[0]] !== keyVal[1]) {',
-            '        return false',
-            '      }',
-            '    }',
-            '    index = length;',
-            '    while (index--) {',
-            '      if (!hasOwnProperty.call(object, keyVals[index][0])) {',
-            '        return false',
-            '      }',
-            '    }',
-            '    return true;',
-            '  };',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.memoize`
-        if (!isLodash('memoize')) {
-          _.pull(funcDepMap.memoize, 'MemCache');
-
-          source = replaceFunction(source, 'memoize', [
-            'function memoize(func, resolver) {',
-            '  if (!isFunction(func) || (resolver && !isFunction(resolver))) {',
-            '    throw new TypeError(FUNC_ERROR_TEXT);',
-            '  }',
-            '  var memoized = function() {',
-            '    var key = resolver ? resolver.apply(this, arguments) : arguments[0];',
-            "    if (key == '__proto__') {",
-            '      return func.apply(this, arguments);',
-            '    }',
-            '    var cache = memoized.cache;',
-            '    return hasOwnProperty.call(cache, key)',
-            '      ? cache[key]',
-            '      : (cache[key] = func.apply(this, arguments));',
-            '  };',
-            '  memoized.cache = {};',
-            '  return memoized;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.random`
-        if (!isLodash('random')) {
-          _.pull(funcDepMap.random, 'baseRandom', 'isIterateeCall');
-
-          source = replaceFunction(source, 'random', [
-            'function random(min, max, guard) {',
-            '  max = guard ? null : max;',
-            '  if (min == null && max == null) {',
-            '    max = 1;',
-            '  }',
-            '  min = +min || 0;',
-            '  if (max == null) {',
-            '    max = min;',
-            '    min = 0;',
-            '  } else {',
-            '    max = +max || 0;',
-            '  }',
-            '  return min + floor(nativeRandom() * (max - min + 1));',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.rest`
-        if (!isLodash('rest')) {
-          _.pull(funcDepMap.rest, 'drop').push('slice');
-
-          source = replaceFunction(source, 'rest', [
-            'function rest(array, n, guard) {',
-            '  if (n == null || guard) {',
-            '    n = 1;',
-            '  } else {',
-            '    n = n < 0 ? 0 : n;',
-            '  }',
-            '  return slice(array, n);',
-            '}'
-            ].join('\n'));
-        }
-        // replace `_.result`
-        if (!isLodash('result')) {
-          source = replaceFunction(source, 'result', [
-            'function result(object, key) {',
-            '  if (object != null) {',
-            '    var value = object[key];',
-            '    return isFunction(value) ? object[key]() : value;',
-            '  }',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.sortBy`
-        if (!isLodash('sortBy')) {
-          _.pull(funcDepMap.sortBy, 'compareMultipleAscending', 'isArray');
-
-          source = replaceFunction(source, 'sortBy', [
-            'function sortBy(collection, iteratee, thisArg) {',
-            '  if (thisArg && isIterateeCall(collection, iteratee, thisArg)) {',
-            '    iteratee = null;',
-            '  }',
-            '  var index = -1,',
-            '      length = collection ? collection.length : 0,',
-            '      result = [];',
-            '',
-            "  if (isLength(length)) {",
-            '    result.length = length;',
-            '  }',
-            '  iteratee = getCallback(iteratee, thisArg, 3);',
-            '  baseEach(collection, function(value, key, collection) {',
-            '    result[++index] = {',
-            "      'criteria': iteratee(value, key, collection),",
-            "      'index': index,",
-            "      'value': value",
-            '    };',
-            '  });',
-            '',
-            '  length = result.length;',
-            '  result.sort(compareAscending);',
-            '  while (length--) {',
-            '    result[length] = result[length].value;',
-            '  }',
-            '  return result;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.take`
-        if (!isLodash('take')) {
-          funcDepMap.take = ['first'];
-          source = replaceFunction(source, 'take', 'var take = first;');
-        }
-        // replace `_.tap`
-        if (!isLodash('tap')) {
-          source = replaceFunction(source, 'tap', [
-            'function tap(value, interceptor) {',
-            '  interceptor(value);',
-            '  return value;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.template`
-        if (!isLodash('template')) {
-          _.pull(funcDepMap.template, 'assign', 'assignOwnDefaults', 'keys', 'values').push('defaults');
-          _.pull(varDepMap.template, 'reInterpolate');
-
-          source = replaceFunction(source, 'template', [
-            'function template(string, options, otherOptions) {',
-            '  var _ = lodash,',
-            '      settings = _.templateSettings;',
-            '',
-            '  if (isIterateeCall(string, options, otherOptions)) {',
-            '    options = otherOptions = null;',
-            '  }',
-            "  string = String(string == null ? '' : string);",
-            '  options = defaults({}, otherOptions || options, settings);',
-            '',
-            '  var index = 0,',
-            '      source = "__p += \'",',
-            '      variable = options.variable;',
-            '',
-            '  var reDelimiters = RegExp(',
-            "    (options.escape || reNoMatch).source + '|' +",
-            "    (options.interpolate || reNoMatch).source + '|' +",
-            "    (options.evaluate || reNoMatch).source + '|$'",
-            "  , 'g');",
-            '',
-            '  string.replace(reDelimiters, function(match, escapeValue, interpolateValue, evaluateValue, offset) {',
-            '    source += string.slice(index, offset).replace(reUnescapedString, escapeStringChar);',
-            '    if (escapeValue) {',
-            '      source += "\' +\\n_.escape(" + escapeValue + ") +\\n\'";',
-            '    }',
-            '    if (evaluateValue) {',
-            '      source += "\';\\n" + evaluateValue + ";\\n__p += \'";',
-            '    }',
-            '    if (interpolateValue) {',
-            '      source += "\' +\\n((__t = (" + interpolateValue + ")) == null ? \'\' : __t) +\\n\'";',
-            '    }',
-            '    index = offset + match.length;',
-            '    return match;',
-            '  });',
-            '',
-            '  source += "\';\\n";',
-            '  if (!variable) {',
-            "    source = 'with (obj || {}) {\\n' + source + '\\n}\\n';",
-            '  }',
-            "  source = 'function(' + (variable || 'obj') + ') {\\n' +",
-            '    "var __t, __p = \'\', __j = Array.prototype.join;\\n" +',
-            '    "function print() { __p += __j.call(arguments, \'\') }\\n" +',
-            '    source +',
-            "    'return __p\\n}';",
-            '',
-            '  var result = attempt(function() {',
-            "    return Function('_', 'return ' + source)(_);",
-            '  });',
-            '',
-            '  result.source = source;',
-            '  if (isError(result)) {',
-            '    throw result;',
-            '  }',
-            '  return result;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.throttle`
-        if (!isLodash('throttle')) {
-          source = replaceFunction(source, 'throttle', [
-            'function throttle(func, wait, options) {',
-            '  var leading = true,',
-            '      trailing = true;',
-            '',
-            '  if (!isFunction(func)) {',
-            '    throw new TypeError(funcErrorText);',
-            '  }',
-            '  if (options === false) {',
-            '    leading = false;',
-            '  } else if (isObject(options)) {',
-            "    leading = 'leading' in options ? options.leading : leading;",
-            "    trailing = 'trailing' in options ? options.trailing : trailing;",
-            '  }',
-            '  return debounce(func, wait, {',
-            "    'leading': leading,",
-            "    'maxWait': wait,",
-            "    'trailing': trailing",
-            '  });',
-            '}'
-          ].join('\n'));
-        }
-        // replace `baseUniq`
-        if (!isLodash('baseUniq') && !isLodash('uniq')) {
-          _.pull(funcDepMap.baseUniq, 'cacheIndexOf', 'createCache');
-
-          source = replaceFunction(source, 'baseUniq', [
-            'function baseUniq(array, iteratee) {',
-            '  var index = -1,',
-            '      indexOf = getIndexOf(),',
-            '      length = array.length,',
-            '      result = [],',
-            '      seen = iteratee ? [] : result;',
-            '',
-            '  while (++index < length) {',
-            '    var value = array[index],',
-            '        computed = iteratee ? iteratee(value, index, array) : value;',
-            '',
-            '    if (indexOf(seen, computed) < 0) {',
-            '      if (iteratee) {',
-            '        seen.push(computed);',
-            '      }',
-            '      result.push(value);',
-            '    }',
-            '  }',
-            '  return result;',
-            '}'
-          ].join('\n'));
-        }
-        // replace `_.uniqueId`
-        if (!isLodash('uniqueId')) {
-          source = replaceFunction(source, 'uniqueId', [
-            'function uniqueId(prefix) {',
-            "  var id = ++idCounter + '';",
-            '  return prefix ? prefix + id : id;',
-            '}'
-          ].join('\n'));
-        }
-        // replace decimal NCRs with hexadecimal NCRs in `htmlEscapes`
-        if (!isLodash('escape')) {
-          _.each(['htmlEscapes', 'htmlUnescapes', 'reEscapedHtml'], function(varName) {
-            source = source.replace(matchVar(source, varName), function(match) {
-              return match.replace(/#39/g, '#x27');
-            });
-          });
-        }
-        // replace `isDeep` with `!isDeep` in `_.flatten`
-        if (!isLodash('flatten')) {
-          source = source.replace(matchFunction(source, 'flatten'), function(match) {
-            return match.replace(/\b(baseFlatten\([^)]+?)\bfalse\s*:\s*isDeep\b/, '$1true : !isDeep');
-          });
-        }
-        // remove `_.prototype.toString`
-        if (!isModularize && !isLodash('chain')) {
-          _.pull(funcDepMap.wrapperValueOf, 'wrapperToString');
-        }
-        // remove `_.bindKey` support from `createHybridWrapper` and `createWrapper`
-        if (!isLodash('bindKey')) {
-          source = source.replace(matchFunction(source, 'createHybridWrapper'), function(match) {
-            return match.replace(/^( *)if\s*\(isBindKey\b[\s\S]+?\n\1\}\n/m, '');
-          });
-
-          source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
-            return match
-              .replace(/!isBindKey\s*&&\s*/, '')
-              .replace(/\bisBindKey\s*\?[^:]+:\s*/, '');
-          });
-        }
-        // remove `_.curry` support from `createHybridWrapper`
-        if (!isLodash('curry')) {
-          _.pull(funcDepMap.createHybridWrapper, 'replaceHolders');
-
-          source = source.replace(matchFunction(source, 'createHybridWrapper'), function(match) {
-            return match.replace(/^( *)if\s*\(isCurry\b[\s\S]+?\n\1\}\n/gm, '');
-          });
-        }
-        // remove extended array-like object support from `_.isEmpty`
-        if (!isLodash('isEmpty')) {
-          _.pull(funcDepMap.isEmpty, 'isFunction');
-
-          source = source.replace(matchFunction(source, 'isEmpty'), function(match) {
-            return match.replace(/\s*\|\|\s*\(typeof value\b[\s\S]+?\)\)/, '');
-          });
-        }
-        // remove `_.partialRight` support from `createHybridWrapper` and `createWrapper`
-        if (!isLodash('partialRight')) {
-          _.each(['createHybridWrapper', 'createWrapper'], function(funcName) {
-            _.pull(funcDepMap[funcName], 'composeArgsRight');
-
-            source = source.replace(matchFunction(source, funcName), function(match) {
-              match = removeVar(match, 'isPartialRight');
-              match = removeVar(match, 'partialRightHolders');
-              return match
-                .replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:isPartialRight|partialRightArgs)\b[\s\S]+?\n\1\}\n/gm, '')
-                .replace(/^(?: *\/\/.*\n)*( *)funcArgs\s*=\s*data\[6\][\s\S]+?\n\1\}\n/m, '');
-            });
-          });
-        }
-        // remove support for a `step` of `0` in `_.range`
-        if (!isLodash('range')) {
-          source = source.replace(matchFunction(source, 'range'), function(match) {
-            return match.replace(/\bstep\s*==\s*null\b[^;]+/, '+step || 1');
-          });
-        }
-        // remove support for matching `NaN` from functions
-        if (!isLodash('baseIndexOf') && !isLodash('baseSortedIndex') &&
-            !isLodash('indexOf') && !isLodash('lastIndexOf') && !isLodash('sortedIndex')) {
-
-          _.pull(funcDepMap.lastIndexOf, 'sortedLastIndex');
-
-          source = source.replace(matchFunction(source, 'lastIndexOf'), function(match) {
-            return match.replace(/\s*else\s+if\s*\(fromIndex\b[^}]+\}/, '');
-          });
-
-          source = source.replace(matchFunction(source, 'indexOf'), function(match) {
-            return match.replace(/(\s*else\s+if\s*\(fromIndex\)\s*\{)([^}]+)(?=\})/, function(match, prelude, block) {
-              return prelude + block.replace(/^( *)return\b[\s\S]+?(?=;\n)/m, function(match, indent) {
-                return indent + 'return value === other ? index : -1';
-              });
-            });
-          });
-
-          _.each(['baseIndexOf', 'lastIndexOf'], function(funcName) {
-            _.pull(funcDepMap[funcName], 'indexOfNaN');
-
-            source = source.replace(matchFunction(source, funcName), function(match) {
-              return match.replace(/^( *)if\s*\(value\s*!==\s*value\b[\s\S]+?\n\1\}\n/m, '');
-            });
-          });
-        }
-        // remove conditional `charCodeCallback` use from `_.max` and `_.min`
-        _.each(['max', 'min'], function(funcName) {
-          if (!isLodash(funcName)) {
-            _.pull(funcDepMap[funcName], 'charAtCallback', 'isString');
-
-            source = source.replace(matchFunction(source, funcName), function(match) {
-              match = removeVar(match, 'noIteratee');
-              match = removeVar(match, 'isArr');
-              match = removeVar(match, 'isStr');
-              return match
-                .replace(/\s*&&\s*\!isStr\b/, '')
-                .replace(/\bnoIteratee\b/, 'iteratee == null')
-                .replace(/\bisArr\b/, 'isArray(collection)')
-                .replace(/=.+?isStr\b[^:]+:\s*/g, '= ');
-            });
-          }
-        });
-
-        // unexpose "exit early" feature from functions
-        if (!isLodash('forEach') && !isLodash('forEachRight') &&
-            !isLodash('forIn') && !isLodash('forInRight') &&
-            !isLodash('forOwn') && !isLodash('forOwnRight')) {
-
-          source = source.replace(matchVar(source, 'VERSION'), function(match) {
-            return match + [
-              '',
-              '  /** Used by methods to exit iteration */',
-              "  var BREAK_INDICATOR = '__lodash_breaker__';",
-              ''
-            ].join('\n');
-          });
-
-          source = source.replace(matchFunction(source, 'baseEvery'), function(match) {
-            return match.replace(/^( *)result\s*=[\s\S]+?;\n\1return\s+result\b/gm, '$& || BREAK_INDICATOR');
-          });
-
-          source = source.replace(matchFunction(source, 'baseSome'), function(match) {
-            return match.replace(/^(( *)result\s*=[\s\S]+?;\n\2return\s*)!result\b/m, '$1result && BREAK_INDICATOR');
-          });
-
-          source = source.replace(matchFunction(source, 'transform'), function(match) {
-            return match.replace(/\breturn\s+iteratee[^)]+\)/, '$& === false && BREAK_INDICATOR');
-          });
-
-          _.each(['arrayEach', 'arrayEachRight', 'baseEach', 'baseEachRight', 'baseFor', 'baseForRight'], function(funcName) {
-            source = source.replace(matchFunction(source, funcName), function(match) {
-              return match.replace(/===\s*false\b/g, '=== BREAK_INDICATOR');
-            });
-          });
-
-          _.each(['baseFind', 'shimIsPlainObject'], function(funcName) {
-            source = source.replace(matchFunction(source, funcName), function(match) {
-              return match.replace(/\breturn\s+false\b/, 'return BREAK_INDICATOR');
-            });
-          });
-        }
+        source = replaceFunction(source, 'keysIn', [
+          'function keysIn(object) {',
+          '  if (object == null) {',
+          '    return [];',
+          '  }',
+          '  if (!isObject(object)) {',
+          '    object = Object(object);',
+          '  }',
+          '  var length = object.length;',
+          "  length = (typeof length == 'number' && length > 0 &&",
+          '    (isArray(object) || (support.nonEnumArgs && isArguments(object))) && length) || 0;',
+          '',
+          '  var keyIndex,',
+          '      Ctor = object.constructor,',
+          '      index = -1,',
+          "      isProto = typeof Ctor == 'function' && Ctor.prototype == object,",
+          '      maxIndex = length - 1,',
+          '      result = Array(length),',
+          '      skipIndexes = length > 0;',
+          '',
+          '  while (++index < length) {',
+          '    result[index] = String(index);',
+          '  }',
+          '  for (var key in object) {',
+          "    if (!(isProto && key == 'constructor') &&",
+          '        !(skipIndexes && (keyIndex = +key, keyIndex > -1 && keyIndex <= maxIndex && keyIndex % 1 == 0))) {',
+          '      result.push(key);',
+          '    }',
+          '  }',
+          '  return result;',
+          '}'
+        ].join('\n'));
       }
       if (isModularize) {
         source = removeGetIndexOf(source, funcDepMap);
       }
-      if (isModularize || !isLodash('callback')) {
+      if (isModularize) {
         source = removeGetCallback(source, funcDepMap);
       }
-      if (isNpm || isUnderscore) {
+      if (isNpm) {
         source = removeMetadata(source, funcDepMap, objDepMap, varDepMap);
       }
       // remove "_.pluck" or "_.where" style callback support from `baseCallback`
@@ -4758,16 +3543,8 @@ function build(options, callback) {
         var result = includeFuncs;
       }
       // add default function names
-      if (_.isEmpty(includeObjs) && _.isEmpty(includeVars)) {
-        if (isBackbone && !result) {
-          result = backboneDependencies;
-        }
-        else if (isUnderscore && !result) {
-          result = underscoreFuncs;
-        }
-        if (!result) {
-          result = lodashFuncs.slice();
-        }
+      if (_.isEmpty(includeObjs) && _.isEmpty(includeVars) && !result) {
+        result = lodashFuncs.slice();
       }
       // remove special "none" entry
       if (result == 'none') {
@@ -4856,27 +3633,8 @@ function build(options, callback) {
       });
     }
     else {
-      if (isUnderscore) {
-        // unexpose Lo-Dash methods for the Underscore build
-        source = source.replace(getMethodAssignments(source), function(match) {
-          var unexpose = lodashOnlyFuncs.concat('assign', 'backflow', 'callback', 'flowRight', 'zipObject');
-          return _.reduce(unexpose, function(result, funcName) {
-            if (isLodash(funcName)) {
-              return result;
-            }
-            return result.replace(RegExp('^( *//.*\\n)* *lodash\\.' + funcName + '\\s*=[\\s\\S]+?;\\n(\\n)?', 'gm'), function(match, comment, newline) {
-              return (!newline && comment) || newline || '';
-            });
-          }, match);
-        });
-
-        // remove `_.templateSettings.imports assignment
-        if (!isModularize) {
-          source = source.replace(/,[^']*'imports':[^}]+\}/, '');
-        }
-      }
       // unexpose `lodash.support`
-      if (isModularize || (isUnderscore && !isLodash('support'))) {
+      if (isModularize) {
         _.forOwn(objDependencyMap, function(deps, funcName) {
           if (_.contains(deps, 'support')) {
             source = source.replace(matchFunction(source, funcName), function(match) {
@@ -4914,12 +3672,6 @@ function build(options, callback) {
         });
 
         source = source.replace(matchFunction(source, 'template'), function(match) {
-          if (isUnderscore) {
-            // assign `_` using `template.imports`
-            return match
-              .replace(/(_\s*=\s*)lodash\b/, '$1templateSettings.imports._')
-              .replace(/=\s*_\.templateSettings(?=[,;])/, '$& || templateSettings');
-          }
           // assign `settings` using `template.imports`
           match = match.replace(/=\s*templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings');
 
@@ -4989,7 +3741,6 @@ function build(options, callback) {
         'isSilent': isSilent,
         'isStdOut': isStdOut,
         'isStrict': isStrict,
-        'isUnderscore': isUnderscore,
         'lodash': lodash,
         'objDepMap': objDepMap,
         'options': options,
@@ -5085,7 +3836,7 @@ function build(options, callback) {
 
     // remove placeholder assignments of removed functions and modify for modularized builds
     source = source.replace(/^((?: *\/\/.*\n)*)( *)(arrayEach\(\[')bind\b[\s\S]+?('\][\s\S]+?\n\2\}\))/m, function(match, comment, indent, prelude, postlude) {
-      var funcNames = _.reject(isUnderscore ? ['partial'] : placeholderFuncs, isExcluded),
+      var funcNames = _.reject(placeholderFuncs, isExcluded),
           length = funcNames.length;
 
       if (!length) {

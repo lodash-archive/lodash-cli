@@ -292,144 +292,8 @@ var categoryMap = createMap({
   ]
 });
 
-/** List of Backbone's Lo-Dash dependencies */
-var backboneDependencies = [
-  'bind',
-  'bindAll',
-  'chain',
-  'clone',
-  'contains',
-  'countBy',
-  'defaults',
-  'difference',
-  'escape',
-  'every',
-  'extend',
-  'filter',
-  'find',
-  'first',
-  'forEach',
-  'groupBy',
-  'has',
-  'indexBy',
-  'indexOf',
-  'initial',
-  'invert',
-  'invoke',
-  'isArray',
-  'isEmpty',
-  'isEqual',
-  'isFunction',
-  'isObject',
-  'isRegExp',
-  'isString',
-  'keys',
-  'last',
-  'lastIndexOf',
-  'lodash',
-  'map',
-  'max',
-  'min',
-  'mixin',
-  'omit',
-  'once',
-  'pairs',
-  'pick',
-  'reduce',
-  'reduceRight',
-  'reject',
-  'rest',
-  'result',
-  'sample',
-  'shuffle',
-  'size',
-  'some',
-  'sortBy',
-  'sortedIndex',
-  'toArray',
-  'uniqueId',
-  'value',
-  'values',
-  'without',
-  'wrapperChain',
-  'wrapperValueOf'
-];
-
-/** List of Lo-Dash only functions */
-var lodashOnlyFuncs = [
-  'at',
-  'attempt',
-  'bindKey',
-  'camelCase',
-  'capitalize',
-  'chunk',
-  'cloneDeep',
-  'create',
-  'curry',
-  'curryRight',
-  'deburr',
-  'dropRight',
-  'dropRightWhile',
-  'dropWhile',
-  'endsWith',
-  'escapeRegExp',
-  'findIndex',
-  'findKey',
-  'findLast',
-  'findLastIndex',
-  'findLastKey',
-  'flattenDeep',
-  'flow',
-  'forEachRight',
-  'forIn',
-  'forInRight',
-  'forOwn',
-  'forOwnRight',
-  'isError',
-  'isNative',
-  'isPlainObject',
-  'kebabCase',
-  'keysIn',
-  'mapValues',
-  'merge',
-  'pad',
-  'padLeft',
-  'padRight',
-  'parseInt',
-  'partialRight',
-  'pull',
-  'pullAt',
-  'remove',
-  'repeat',
-  'runInContext',
-  'slice',
-  'snakeCase',
-  'sortedLastIndex',
-  'startsWith',
-  'takeRight',
-  'takeRightWhile',
-  'takeWhile',
-  'thru',
-  'transform',
-  'trunc',
-  'trim',
-  'trimLeft',
-  'trimRight',
-  'unzip',
-  'valuesIn',
-  'words',
-  'wrapperToString',
-  'xor'
-];
-
 /** List of all functions */
 var allFuncs = _.reject(_.functions(_), _.bind(RegExp.prototype.test, /^_/)).sort();
-
-/** List of Underscore functions */
-var underscoreFuncs = _.filter(_.difference(allFuncs, lodashOnlyFuncs), function(funcName, index, array) {
-  var realName = aliasToRealMap[funcName];
-  return !realName || _.contains(array, realName);
-});
 
 /*----------------------------------------------------------------------------*/
 
@@ -650,7 +514,7 @@ QUnit.module('build command checks');
 
   var commands = [
     'node.EXE build -s modern',
-    '-s strict underscore'
+    '-s strict compat'
   ];
 
   _.each(commands, function(command) {
@@ -668,11 +532,7 @@ QUnit.module('build command checks');
     'csp',
     'exports=es6',
     'exports=npm',
-    'legacy',
-    'mobile',
-    'modern backbone',
-    'modern template=./*.jst',
-    'modern underscore'
+    'modern template=./*.jst'
   ];
 
   _.each(commands, function(command) {
@@ -1057,7 +917,7 @@ QUnit.module('independent builds');
 
     asyncTest('development custom build using `' + option + '`', function() {
       var start = _.once(QUnit.start);
-      build([option, '-s', 'backbone'], function(data) {
+      build([option, '-s', 'modern'], function(data) {
         var comment = _.result(data.source.match(reLicense), 0, '');
         ok(_.contains(comment, 'Custom Build'));
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
@@ -1083,7 +943,7 @@ QUnit.module('independent builds');
 
     asyncTest('production custom build using `' + option + '`', function() {
       var start = _.once(QUnit.start);
-      build([option, '-s', 'backbone'], function(data) {
+      build([option, '-s', 'modern'], function(data) {
         var comment = _.result(data.source.match(reLicense), 0, '');
         ok(_.contains(comment, 'Custom Build'));
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
@@ -1352,313 +1212,6 @@ QUnit.module('strict modifier');
         });
 
         ok(actual, basename);
-
-        start();
-      });
-    });
-  });
-}());
-
-/*----------------------------------------------------------------------------*/
-
-QUnit.module('underscore modifier');
-
-(function() {
-  asyncTest('modified methods should work correctly', function() {
-    var start = _.after(2, _.once(QUnit.start));
-
-    build(['-s', 'underscore'], function(data) {
-      var basename = path.basename(data.outputPath, '.js'),
-          context = createContext();
-
-      vm.runInContext(data.source, context);
-
-      var lodash = context._;
-
-      var object = {
-        'fn': lodash.bind(function(foo) {
-          return foo + this.bar;
-        }, { 'bar': 1 }, 1)
-      };
-
-      strictEqual(object.fn(), 2, '_.bind: ' + basename);
-
-      var array = [{ 'a': 1, 'b': 2 }, { 'a': 2, 'b': 2 }];
-
-      var actual = lodash.clone('a', function() {
-        return this.a;
-      }, { 'a': 'A' });
-
-      strictEqual(actual, 'a', '_.clone should ignore `callback` and `thisArg`: ' + basename);
-      strictEqual(lodash.clone(array, true)[0], array[0], '_.clone should ignore `deep`: ' + basename);
-
-      strictEqual(lodash.contains({ 'a': 1, 'b': 2 }, 1), true, '_.contains should work with objects: ' + basename);
-      strictEqual(lodash.contains([1, 2, 3], 1, 2), true, '_.contains should ignore `fromIndex`: ' + basename);
-      strictEqual(lodash.every([true, false, true]), false, '_.every: ' + basename);
-
-      function Foo() {}
-      Foo.prototype = { 'a': 1 };
-
-      deepEqual(lodash.defaults({}, new Foo), Foo.prototype, '_.defaults should assign inherited `source` properties: ' + basename);
-
-      var callback = function(a, b) {
-        return this[b];
-      };
-
-      actual = lodash.extend({}, { 'a': 0 }, callback, [2]);
-      strictEqual(actual.a, 0, '_.extend should ignore `callback` and `thisArg`: ' + basename);
-
-      var expected = { 'a': 1, 'b': 2, 'c': 3};
-      array = [{ 'b': 2 }, { 'c': 3 }];
-
-      actual = _.reduce(array, lodash.extend, { 'a': 1});
-      deepEqual(actual, expected, '_.extend should work with _.reduce: ' + basename);
-
-      actual = _.reduce(array, lodash.defaults, { 'a': 1});
-      deepEqual(actual, expected, '_.defaults should work with _.reduce: ' + basename);
-
-      array = [{ 'a': 1, 'b': 2 }, { 'a': 2, 'b': 2 }];
-      actual = lodash.find(array, function(value) {
-        return 'a' in value;
-      });
-
-      strictEqual(actual, _.first(array), '_.find: ' + basename);
-
-      var last;
-      actual = lodash.forEach(array, function(value) {
-        last = value;
-        return false;
-      });
-
-      strictEqual(last, _.last(array), '_.forEach should not exit early: ' + basename);
-
-      callback = function(value, index) {
-        actual = this[index];
-      };
-
-      actual = undefined;
-      lodash.forEach([1], callback, [2]);
-      strictEqual(actual, 2, '_.forEach supports the `thisArg` argument when iterating arrays: ' + basename);
-
-      lodash.forEach({ 'a': 1 }, callback, { 'a': 2 });
-      strictEqual(actual, 2, '_.forEach supports the `thisArg` argument when iterating objects: ' + basename);
-
-      array = [[[['a']]], [[['b']]]];
-      deepEqual(lodash.flatten(array), ['a', 'b'], '_.flatten should perform a deep flatten by default: ' + basename);
-      deepEqual(_.map(array, lodash.flatten), [['a'], ['b']], '_.flatten should perform a deep flatten when used as an iteratee for _.map: ' + basename);
-
-      object = { 'length': 0, 'splice': Array.prototype.splice };
-      strictEqual(lodash.isEmpty(object), false, '_.isEmpty should return `false` for jQuery/MooTools DOM query collections: ' + basename);
-
-      object = { 'a': 1, 'b': 2, 'c': 3 };
-      strictEqual(lodash.isEqual(object, { 'a': 1, 'b': 0, 'c': 3 }), false, '_.isEqual: ' + basename);
-
-      actual = lodash.isEqual('a', 'b', function(a, b) {
-        return this[a] === this[b];
-      }, { 'a': 1, 'b': 1 });
-
-      strictEqual(actual, false, '_.isEqual should ignore `callback` and `thisArg`: ' + basename);
-      strictEqual(lodash.lastIndexOf([3, 2, 1], 3, true), 0, '_.lastIndexOf should not support binary search: ' + basename);
-
-      strictEqual(lodash.max('abc'), -Infinity, '_.max should return `-Infinity` for strings: ' + basename);
-      strictEqual(lodash.min('abc'), Infinity, '_.min should return `Infinity` for strings: ' + basename);
-
-      array = [[2, 3, 1], [5, 6, 4], [8, 9, 7]];
-      deepEqual(_.map(array, lodash.max), [3, 6, 9], '_.max should work as an iteratee for _.map: ' + basename);
-      deepEqual(_.map(array, lodash.min), [1, 4, 7], '_.min should work as an iteratee for _.map: ' + basename);
-
-      object = {};
-      lodash.mixin(object, { 'a': _.noop });
-      ok(!('a' in object), '_.mixin should not accept a destination object: ' + basename);
-
-      // avoid comparing objects created by `lodash` methods with `deepEqual`
-      // because QUnit has problems comparing objects from different realms
-      actual = lodash.omit({ '0': 'a' }, 0);
-      deepEqual(_.keys(actual), [], '_.omit should coerce property names to strings: ' + basename);
-
-      actual = lodash.pick({ '0': 'a', '1': 'b' }, 0);
-      deepEqual(_.keys(actual), ['0'], '_.pick should coerce property names to strings: ' + basename);
-
-      actual = lodash.random(2, 4, true);
-      ok(!(actual % 1), '_.random should not support the `floating` argument: ' + basename);
-
-      deepEqual(lodash.range(1, 4, 0), [1, 2, 3], '_.range should not support a `step` of `0`');
-      strictEqual(lodash.result({}, 'a', 1), undefined, '_.result should ignore `defaultValue`: ' + basename);
-      strictEqual(lodash.some([false, true, false]), true, '_.some: ' + basename);
-
-      array = [[2, 1, 3], [3, 2, 1]];
-      deepEqual(_.map(array, lodash.sortBy), [[1, 2, 3], [1, 2, 3]], '_.sortBy should work as an iteratee for _.map: ' + basename);
-
-      actual = lodash.tap([], function(value) { value.push(this); }, 'a');
-      deepEqual(actual, [undefined], '_.tap should ignore `thisArg`: ' + basename);
-
-      strictEqual(lodash.template('${a}')(object), '${a}', '_.template should ignore ES6 delimiters: ' + basename);
-      ok(!('support' in lodash), '_.support should not exist: ' + basename);
-      ok(!('imports' in lodash.templateSettings), '_.templateSettings should not have an "imports" property: ' + basename);
-
-      var compiles = _.map(['<%= a %>', '<%- b %>', '<% print(c) %>'], lodash.template);
-      object = { 'a': 'one', 'b': '`two`', 'c': 'three' };
-
-      actual = _.map(compiles, function(compiled) { return compiled(object); });
-      deepEqual(actual, ['one', '&#96;two&#96;', 'three'], '_.template should work as an iteratee for _.map: ' + basename);
-
-      array = [[2, 1, 2], [1, 2, 1]];
-      deepEqual(_.map(array, lodash.uniq), [[2, 1], [1, 2]], '_.uniq should perform an unsorted uniq operation when used as an iteratee for _.map: ' + basename);
-
-      strictEqual(lodash.uniqueId(0), '1', '_.uniqueId should ignore a prefix of `0`: ' + basename);
-
-      var collection = [{ 'a': { 'b': 1, 'c': 2 } }];
-      deepEqual(lodash.where(collection, { 'a': { 'b': 1 } }), [], '_.where performs shallow comparisons: ' + basename);
-
-      deepEqual(lodash.difference([NaN], [NaN]), [NaN], '_.difference should not match `NaN`: ' + basename);
-      strictEqual(lodash.indexOf([NaN], NaN), -1, '_.indexOf should not match `NaN`: ' + basename);
-      deepEqual(lodash.intersection([NaN], [NaN]), [], '_.intersection should not match `NaN`: ' + basename);
-      strictEqual(lodash.lastIndexOf([NaN], NaN), -1, '_.lastIndexOf should not match `NaN`: ' + basename);
-      deepEqual(lodash.uniq([NaN, NaN]), [NaN, NaN], '_.uniq should treat `NaN` as unique: ' + basename);
-
-      _.each(['difference', 'intersection', 'unique'], function(methodName) {
-        try {
-          var actual = lodash[methodName]();
-        } catch(e) {}
-        deepEqual(actual, [], '_.' + methodName + ' should return an empty array when no `array` argument is provided: ' + basename);
-      });
-
-      start();
-    });
-  });
-
-  asyncTest('should have AMD support', function() {
-    var start = _.after(2, _.once(QUnit.start));
-
-    build(['-s', 'underscore'], function(data) {
-      var actualId,
-          basename = path.basename(data.outputPath, '.js'),
-          context = createContext();
-
-      context.define = function(id, factory) {
-        actualId = id;
-        context._ = factory();
-      };
-
-      context.define.amd = {};
-      vm.runInContext(data.source, context);
-
-      strictEqual(actualId, 'underscore', basename);
-      ok(_.isFunction(context._), basename);
-
-      start();
-    });
-  });
-
-  asyncTest('should not have any Lo-Dash-only methods', function() {
-    var start = _.after(2, _.once(QUnit.start));
-
-    build(['-s', 'underscore'], function(data) {
-      var basename = path.basename(data.outputPath, '.js'),
-          context = createContext();
-
-      vm.runInContext(data.source, context);
-
-      var lodash = context._;
-
-      _.each(lodashOnlyFuncs.concat('assign'), function(funcName) {
-        ok(!(funcName in lodash), '_.' + funcName + ' should not exist: ' + basename);
-      });
-
-      start();
-    });
-  });
-
-  asyncTest('`lodash underscore include=partial`', function() {
-    var start = _.after(2, _.once(QUnit.start));
-
-    build(['-s', 'underscore', 'include=partial'], function(data) {
-      var basename = path.basename(data.outputPath, '.js'),
-          context = createContext();
-
-      vm.runInContext(data.source, context);
-
-      var lodash = context._;
-      strictEqual(lodash.partial(_.identity, 2)(), 2, '_.partial: ' + basename);
-
-      start();
-    });
-  });
-
-  var commands = [
-    'plus=clone',
-    'plus=cloneDeep'
-  ];
-
-  _.each(commands, function(command, index) {
-    asyncTest('`lodash underscore ' + command +'`', function() {
-      var start = _.after(2, _.once(QUnit.start));
-
-      build(['-s', 'underscore', command], function(data) {
-        var array = [{ 'value': 1 }],
-            basename = path.basename(data.outputPath, '.js'),
-            context = createContext();
-
-        vm.runInContext(data.source, context, true);
-
-        var lodash = context._;
-
-        _.each(index ? ['clone','cloneDeep'] : ['clone'], function(funcName) {
-          var clone = (funcName == 'clone')
-            ? lodash.clone(array, true)
-            : lodash.cloneDeep(array);
-
-          ok(_.isEqual(array, clone), basename);
-          notEqual(array[0], clone[0], basename);
-        });
-
-        start();
-      });
-    });
-  });
-}());
-
-/*----------------------------------------------------------------------------*/
-
-QUnit.module('underscore chaining methods');
-
-(function() {
-  var commands = [
-    'backbone',
-    'underscore',
-    'modern plus=chain'
-  ];
-
-  _.each(commands, function(command) {
-    asyncTest('`lodash ' + command +'`', function() {
-      var start = _.after(2, _.once(QUnit.start));
-
-      build(['-s'].concat(command.split(' ')), function(data) {
-        var basename = path.basename(data.outputPath, '.js'),
-            context = createContext();
-
-        vm.runInContext(data.source, context);
-
-        var lodash = context._,
-            array = ['abc'];
-
-        ok(lodash.chain(array).first().first() instanceof lodash, '_.chain: ' + basename);
-        ok(lodash(array).chain().first().first() instanceof lodash, '_#chain: ' + basename);
-
-        var wrapped = lodash(1);
-        strictEqual(wrapped.identity(), 1, '_(...) wrapped values are not chainable by default: ' + basename);
-        ok(JSON.stringify(wrapped) !== '1' , '_#toJSON should not be implemented: ' + basename);
-        ok(String(wrapped) !== '1', '_#toString should not be implemented: ' + basename);
-        ok(Number(wrapped) !== 1 , '_#valueOf should not be implemented: ' + basename);
-
-        wrapped.chain();
-        ok(wrapped.has('x') instanceof lodash, '_#has returns a wrapped value when chaining: ' + basename);
-        ok(wrapped.join() instanceof lodash, '_#join returns a wrapped value when chaining: ' + basename);
-
-        wrapped = lodash([1, 2, 3, 4]);
-        deepEqual(wrapped.pop(), [1, 2, 3], '_#pop returns the unwrapped array: ' + basename);
-        deepEqual(wrapped.shift(), [2, 3], '_#shift returns the unwrapped array: ' + basename);
-        deepEqual(wrapped.splice(0, 1), [3], '_#splice returns the unwrapped array: ' + basename);
 
         start();
       });
@@ -2028,153 +1581,12 @@ QUnit.module('stdout option');
 
 /*----------------------------------------------------------------------------*/
 
-QUnit.module('underscore builds with lodash methods');
-
-(function() {
-  var funcNames = [
-    'assign',
-    'bindKey',
-    'clone',
-    'contains',
-    'defaults',
-    'difference',
-    'every',
-    'filter',
-    'find',
-    'findIndex',
-    'findKey',
-    'findLast',
-    'findLastIndex',
-    'findLastKey',
-    'first',
-    'flatten',
-    'forEach',
-    'forEachRight',
-    'forIn',
-    'forInRight',
-    'forOwn',
-    'forOwnRight',
-    'intersection',
-    'initial',
-    'isEmpty',
-    'isEqual',
-    'isPlainObject',
-    'isRegExp',
-    'last',
-    'map',
-    'max',
-    'memoize',
-    'min',
-    'omit',
-    'partial',
-    'partialRight',
-    'pick',
-    'pluck',
-    'reduce',
-    'reduceRight',
-    'reject',
-    'result',
-    'rest',
-    'some',
-    'sortedIndex',
-    'tap',
-    'template',
-    'throttle',
-    'times',
-    'toArray',
-    'transform',
-    'uniq',
-    'uniqueId',
-    'value',
-    'zip'
-  ];
-
-  var tested = createMap();
-
-  function strip(value) {
-    return String(value)
-      .replace(/^ *\/\/.*/gm, '')
-      .replace(/\bcontext\b/g, '')
-      .replace(/[\s;]/g, '');
-  }
-
-  _.each(funcNames, function(funcName) {
-    _.times(2, function(index) {
-      var command = 'underscore plus=' + funcName,
-          expected = true;
-
-      if (funcName != 'chain' && _.contains(categoryMap.Chain.concat('mixin'), funcName)) {
-        if (funcName != 'tap') {
-          expected = !!index;
-        }
-        if (index) {
-          command += ',chain';
-        }
-      }
-      if (_.contains([
-            'every', 'filter', 'find', 'findIndex', 'findKey', 'findLast',
-            'findLastIndex', 'findLastKey', 'map', 'max', 'min', 'omit', 'pick',
-            'reduce', 'reduceRight', 'reject', 'some', 'sortedIndex', 'transform',
-            'uniq'
-          ], funcName)) {
-        expected = !!index;
-        if (index) {
-          command += ',callback,forOwn';
-        }
-      }
-      if (tested[command]) {
-        return;
-      }
-      tested[command] = true;
-
-      asyncTest('`lodash ' + command +'`', function() {
-        var start = _.after(2, _.once(QUnit.start));
-
-        build(['-s'].concat(command.split(' ')), function(data) {
-          var basename = path.basename(data.outputPath, '.js'),
-              context = createContext();
-
-          vm.runInContext(data.source, context, true);
-
-          var lodash = context._,
-              func = lodash[funcName],
-              array = [1, 2, 3],
-              object = { 'a': 1, 'b': 2, 'c': 3 },
-              result = [];
-
-          if (/^for(?:Each|In|Own)(?:Right)?$/.test(funcName)) {
-            func(/^forEach/.test(funcName) ? array : object, function(value) {
-              result.push(value);
-              return false;
-            });
-
-            strictEqual(result.length, 1, basename);
-          }
-          if (!/\.min$/.test(basename)) {
-            var srcFnValue = strip(func),
-                bldFnValue = strip(_[funcName]);
-
-            strictEqual(srcFnValue === bldFnValue, expected, '\n' + srcFnValue + '\n' + bldFnValue);
-          }
-          testMethod(lodash, funcName, basename);
-
-          start();
-        });
-      });
-    });
-  });
-}());
-
-/*----------------------------------------------------------------------------*/
-
 QUnit.module('lodash build');
 
 (function() {
   var commands = [
-    'backbone',
     'modern',
     'strict',
-    'underscore',
     'category=array',
     'category=chain',
     'category=collection',
@@ -2185,23 +1597,20 @@ QUnit.module('lodash build');
     'include=each,filter,map',
     'include=once plus=bind,Chain',
     'category=collection,function',
-    'backbone category=utility minus=first,last',
     'compat include=defer',
     'strict category=function exports=amd,global plus=pick,uniq',
-    'modern strict include=isArguments,isArray,isFunction,isPlainObject,keys',
-    'underscore include=debounce,throttle plus=after minus=throttle'
+    'modern strict include=isArguments,isArray,isFunction,isPlainObject,keys'
   ];
 
   push.apply(commands, _.map(allFuncs, function(funcName) {
     return 'include=' + funcName;
   }));
 
-  var reNonCombinable = /\b(?:backbone|compat|modern|underscore)\b/;
+  var reNonCombinable = /\b(?:compat|modern)\b/;
 
   _.each(commands, function(origCommand) {
-    _.each(['', 'modern', 'underscore'], function(otherCommand) {
-      if ((otherCommand && reNonCombinable.test(origCommand)) ||
-          (otherCommand == 'underscore' && /\bcategory\b/.test(origCommand))) {
+    _.each(['', 'modern'], function(otherCommand) {
+      if (otherCommand && reNonCombinable.test(origCommand)) {
         return;
       }
       var command = _.trim(otherCommand + ' ' + origCommand);
@@ -2211,11 +1620,7 @@ QUnit.module('lodash build');
 
         build(['--silent'].concat(command.split(' ')), function(data) {
           var basename = path.basename(data.outputPath, '.js'),
-              context = createContext(),
-              isBackbone = /\bbackbone\b/.test(command),
-              isUnderscore = isBackbone || /\bunderscore\b/.test(command),
-              exposeAssign = !isUnderscore,
-              exposeZipObject = !isUnderscore;
+              context = createContext();
 
           try {
             vm.runInContext(data.source, context);
@@ -2230,18 +1635,6 @@ QUnit.module('lodash build');
             var categories = command.match(/\bcategory=(\S*)/)[1].split(/, */);
             funcNames || (funcNames = []);
             push.apply(funcNames, _.map(categories, _.compose(_.capitalize, _.partial(_.result, _, 'toLowerCase'))));
-          }
-          // add function names required by Backbone and Underscore builds
-          if (/\bbackbone\b/.test(command) && !funcNames) {
-            funcNames = backboneDependencies.slice();
-          }
-          if (isUnderscore) {
-            if (funcNames) {
-              exposeAssign = _.contains(funcNames, 'assign');
-              exposeZipObject = _.contains(funcNames, 'zipObject');
-            } else {
-              funcNames = underscoreFuncs.slice();
-            }
           }
           if (!funcNames) {
             funcNames = allFuncs.slice();
@@ -2262,11 +1655,7 @@ QUnit.module('lodash build');
             });
 
             // limit function names to those available for specific builds
-            otherNames = _.intersection(otherNames,
-              isBackbone ? backboneDependencies :
-              isUnderscore ? underscoreFuncs :
-              allFuncs
-            );
+            otherNames = _.intersection(otherNames, allFuncs);
 
             if (!_.isEmpty(otherNames)) {
               _.pull(funcNames, category);
@@ -2277,12 +1666,6 @@ QUnit.module('lodash build');
           // expand aliases and remove nonexistent and duplicate function names
           funcNames = _.uniq(_.intersection(expandFuncNames(funcNames), allFuncs));
 
-          if (!exposeAssign) {
-            _.pull(funcNames, 'assign');
-          }
-          if (!exposeZipObject) {
-            _.pull(funcNames, 'zipObject');
-          }
           var lodash = context._ || {};
           _.each(funcNames, _.partial(testMethod, lodash, _, basename));
 
