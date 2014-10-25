@@ -1584,6 +1584,8 @@ QUnit.module('stdout option');
 QUnit.module('lodash build');
 
 (function() {
+  var reNonCombinable = /\b(?:compat|modern)\b/;
+
   var commands = [
     'modern',
     'strict',
@@ -1605,8 +1607,6 @@ QUnit.module('lodash build');
   push.apply(commands, _.map(allFuncs, function(funcName) {
     return 'include=' + funcName;
   }));
-
-  var reNonCombinable = /\b(?:compat|modern)\b/;
 
   _.each(commands, function(origCommand) {
     _.each(['', 'modern'], function(otherCommand) {
