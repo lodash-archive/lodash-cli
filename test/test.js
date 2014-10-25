@@ -638,7 +638,7 @@ QUnit.module('template builds');
   ];
 
   _.each(commands, function(command) {
-    var expectedId = /underscore/.test(command) ? 'underscore' : 'lodash';
+    var expectedId = _.result(/underscore/.exec(command), 0, 'lodash');
 
     asyncTest('`lodash exports=amd' + (command ? ' ' + command + '`' : '` using the default `moduleId`'), function() {
       var start = _.after(2, _.once(QUnit.start));
@@ -801,8 +801,8 @@ QUnit.module('template builds');
     'moduleId=none'
   ];
 
-  _.each(idCommands, function(command, index) {
-    var expectedId = /underscore/.test(command) ? 'underscore' : '';
+  _.each(idCommands, function(command) {
+    var expectedId = _.result(/underscore/.exec(command), 0, '');
 
     asyncTest('should work with `' + command + '`', function() {
       var start = _.after(2, _.once(QUnit.start));
@@ -1475,8 +1475,8 @@ QUnit.module('moduleId command');
     'moduleId=lodash exports=amd'
   ];
 
-  _.each(commands, function(command, index) {
-    var expectedId = /underscore/.test(command) ? 'underscore' : 'lodash';
+  _.each(commands, function(command) {
+    var expectedId = _.result(/underscore/.exec(command), 0, 'lodash');
 
     asyncTest('`lodash ' + command +'`', function() {
       var start = _.after(2, _.once(QUnit.start));
