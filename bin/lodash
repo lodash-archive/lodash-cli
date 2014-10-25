@@ -3438,6 +3438,10 @@ function build(options, callback) {
         funcDepMap.wrapperValueOf.push('chain', 'mixin', 'tap', 'thru', 'wrapperReverse', 'wrapperToString');
         objDepMap.wrapperValueOf = ['support'];
 
+        _.each(['bind', 'bindKey', 'curry', 'curryRight', 'partial', 'partialRight'], function(funcName) {
+          funcDepMap[funcName].push('arrayEach');
+        });
+
         _.each(['chain', 'tap', 'thru', 'wrapperChain', 'wrapperReverse', 'wrapperToString'], function(funcName) {
           funcDepMap[funcName].push('wrapperValueOf');
         });
@@ -3834,24 +3838,24 @@ function build(options, callback) {
       }
     });
 
-    // remove placeholder assignments of removed functions and modify for modularized builds
-    source = source.replace(/^((?: *\/\/.*\n)*)( *)(arrayEach\(\[')bind\b[\s\S]+?('\][\s\S]+?\n\2\}\))/m, function(match, comment, indent, prelude, postlude) {
-      var funcNames = _.reject(placeholderFuncs, isExcluded),
-          length = funcNames.length;
-
-      if (!length) {
-        return '';
-      }
-      return length > 1
-        ? (comment + indent + prelude + funcNames.join("', '") + postlude)
-        : (comment + indent + funcNames[0] + '.placeholder = ') + (isModularize ? '{}' : 'lodash');
-    });
-
     // remove unneeded property dependencies
     _.each(objDependencies, function(propName) {
       if (!_.contains(includeObjs, propName)) {
         source = removeProp(source, propName);
       }
+    });
+
+    // remove placeholder assignments of removed functions
+    source = source.replace(/^((?: *\/\/.*\n)*)( *)(arrayEach\(\[')bind\b[\s\S]+?('\][\s\S]+?\n\2\}\))/m, function(match, comment, indent, prelude, postlude) {
+      var funcNames = _.reject(placeholderFuncs, isExcluded),
+          length = funcNames.length;
+
+      if (length > 1) {
+        return (comment + indent + prelude + funcNames.join("', '") + postlude);
+      }
+      return length
+        ? (comment + indent + funcNames[0] + '.placeholder = ') + (isModularize ? '{}' : 'lodash')
+        : '';
     });
 
     // remove code used to resolve unneeded `support` properties
