@@ -1358,7 +1358,7 @@ function buildTemplate(state) {
     "    'object': true",
     '  };',
     '',
-    '  var root = (objectTypes[typeof window] && window) || this;',
+    '  var root = (objectTypes[typeof window] && window !== (this && this.window)) ? window : this;',
     '',
     '  var freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;',
     '',
