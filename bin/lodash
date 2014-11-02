@@ -280,7 +280,7 @@ var funcDependencyMap = createMap({
 
   // lazy wrapper functions
   'LazyWrapper': [],
-  'lazyClone': ['LazyWrapper'],
+  'lazyClone': ['baseSlice', 'LazyWrapper'],
   'lazyReverse': ['LazyWrapper'],
   'lazyValue': ['getView'],
 
