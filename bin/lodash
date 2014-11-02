@@ -282,7 +282,7 @@ var funcDependencyMap = createMap({
   'LazyWrapper': [],
   'lazyClone': ['LazyWrapper'],
   'lazyReverse': ['LazyWrapper'],
-  'lazyValue': [],
+  'lazyValue': ['getView'],
 
   // lodash wrapper functions
   'LodashWrapper': [],
@@ -372,6 +372,7 @@ var funcDependencyMap = createMap({
   'getCallback': ['baseCallback', 'callback'],
   'getData': ['noop'],
   'getIndexOf': ['baseIndexOf', 'indexOf'],
+  'getView': [],
   'indexOfNaN': [],
   'initArrayClone': [],
   'initObjectClone': ['baseAssign', 'bufferClone', 'isArguments', 'isCloneable'],
@@ -754,6 +755,7 @@ var privateFuncs = [
   'getCallback',
   'getData',
   'getIndexOf',
+  'getView',
   'indexOfNaN',
   'initArrayClone',
   'initObjectClone',
