@@ -116,7 +116,7 @@ var funcDependencyMap = createMap({
   'at': ['baseAt', 'baseFlatten', 'isLength', 'toIterable'],
   'attempt': ['isError'],
   'before': ['isFunction'],
-  'bind': ['basePartial', 'createWrapper', 'lodash', 'replaceHolders', 'slice'],
+  'bind': ['createWrapper', 'lodash', 'replaceHolders', 'slice'],
   'bindAll': ['baseBindAll', 'baseFlatten', 'functions'],
   'bindKey': ['createWrapper', 'lodash', 'replaceHolders', 'slice'],
   'callback': ['baseCallback'],
@@ -131,8 +131,8 @@ var funcDependencyMap = createMap({
   'contains': ['getIndexOf', 'isArray', 'isLength', 'isString', 'values'],
   'countBy': ['createAggregator'],
   'create': ['baseAssign', 'baseCreate'],
-  'curry': ['baseCurry', 'lodash'],
-  'curryRight': ['baseCurry', 'lodash'],
+  'curry': ['createWrapper', 'lodash'],
+  'curryRight': ['createWrapper', 'lodash'],
   'debounce': ['isFunction', 'isObject', 'now'],
   'deburr': ['deburrLetter'],
   'defaults': ['assign', 'assignDefaults', 'baseSlice'],
@@ -214,14 +214,14 @@ var funcDependencyMap = createMap({
   'noop': [],
   'now': ['isNative'],
   'omit': ['baseDifference', 'baseFlatten', 'arrayMap', 'getCallback', 'keysIn', 'pickByArray', 'pickByCallback'],
-  'once': ['before', 'basePartial'],
+  'once': ['before', 'createWrapper'],
   'pad': ['createPad'],
   'padLeft': ['createPad'],
   'padRight': ['createPad'],
   'pairs': ['keys'],
   'parseInt': ['trim'],
-  'partial': ['basePartial', 'lodash', 'replaceHolders', 'slice'],
-  'partialRight': ['basePartial', 'lodash', 'replaceHolders', 'slice'],
+  'partial': ['createWrapper', 'lodash', 'replaceHolders', 'slice'],
+  'partialRight': ['createWrapper', 'lodash', 'replaceHolders', 'slice'],
   'partition': ['createAggregator'],
   'pick': ['baseFlatten', 'getCallback', 'pickByArray', 'pickByCallback'],
   'pluck': ['map', 'property'],
@@ -274,7 +274,7 @@ var funcDependencyMap = createMap({
   'where': ['filter', 'matches'],
   'without': ['baseDifference', 'slice'],
   'words': [],
-  'wrap': ['basePartial'],
+  'wrap': ['createWrapper'],
   'xor': ['baseDifference', 'baseUniq', 'isArguments', 'isArray'],
   'zip': ['unzip'],
   'zipObject': ['isArray'],
@@ -318,7 +318,6 @@ var funcDependencyMap = createMap({
   'baseClone': ['arrayEach', 'baseForOwn', 'initArrayClone', 'initObjectClone', 'isArray', 'isObject'],
   'baseCompareAscending': [],
   'baseCreate': ['isNative', 'isObject'],
-  'baseCurry': ['createWrapper'],
   'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseEach': ['baseForOwn', 'isLength', 'toObject'],
   'baseEachRight': ['baseForOwnRight', 'isLength', 'toObject'],
@@ -337,7 +336,6 @@ var funcDependencyMap = createMap({
   'baseIsEqual': ['isArguments', 'isHostObject', 'keys'],
   'baseMap': ['baseEach'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isArrayLike', 'isPlainObject'],
-  'basePartial': ['createWrapper', 'getData'],
   'basePullAt': ['baseAt', 'baseCompareAscending'],
   'baseRandom': [],
   'baseReduce': [],
@@ -705,7 +703,6 @@ var privateFuncs = [
   'baseClone',
   'baseCompareAscending',
   'baseCreate',
-  'baseCurry',
   'baseDifference',
   'baseEach',
   'baseEvery',
@@ -722,7 +719,6 @@ var privateFuncs = [
   'baseInvoke',
   'baseIsEqual',
   'baseMerge',
-  'basePartial',
   'basePick',
   'basePullAt',
   'baseRandom',
@@ -2326,10 +2322,7 @@ function removeLazyChaining(source) {
  * @returns {string} Returns the modified source.
  */
 function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
-  var deps = _.result(funcDepMap, 'basePartial', []);
-  _.pull(deps, 'getData');
-
-  deps = _.result(funcDepMap, 'createWrapper', []);
+  var deps = _.result(funcDepMap, 'createWrapper', []);
   _.pull(deps, 'baseSlice', 'composeArgs', 'composeArgsRight', 'replaceHolders');
 
   deps = _.result(objDepMap, 'baseCallback', []);
@@ -2347,12 +2340,6 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
   source = removeSupportProp(source, 'funcNames');
 
   // remove metadata related code
-  source = source.replace(matchFunction(source, 'basePartial'), function(match) {
-    match = removeVar(match, 'data');
-    match = replaceVar(match, 'arity', 'func.length');
-    return match;
-  });
-
   source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
     match = removeVar(match, 'setter');
     return match.replace(/^( *return\s+)setter\(([^,]+),[^)]+\)/gm, '$1$2');
@@ -2363,9 +2350,9 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
     _.pull(deps, 'baseSetData', 'getData', 'setData');
 
     source = source.replace(matchFunction(source, funcName), function(match) {
+      match = removeVar(match, 'data');
       return match
-        .replace(/^(?: *\/\/.*\n)*( *)var\s+data\s*=[\s\S]+?\n\1\}\n/m, '')
-        .replace(/^(?: *\/\/.*\n)*( *)if\s*\(data\b[\s\S]+?\n\1\}\n/m, '')
+        .replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:typeof\s+)?data\b[\s\S]+?\n\1\}\n/m, '')
         .replace(/^(?: *\/\/.*\n)* *setData.+\n/m, '')
         .replace(/^( *return\s+)setData\(([^,]+),[^)]+\)/gm, '$1$2')
     });
