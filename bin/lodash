@@ -359,7 +359,7 @@ var funcDependencyMap = createMap({
   'createAssigner': ['baseCallback', 'isIterateeCall'],
   'createBindWrapper': ['createCtorWrapper'],
   'createCtorWrapper': ['baseCreate', 'isObject'],
-  'createHybridWrapper': ['composeArgs', 'composeArgsRight', 'createCtorWrapper', 'replaceHolders', 'setData'],
+  'createHybridWrapper': ['composeArgs', 'composeArgsRight', 'createCtorWrapper', 'defer', 'replaceHolders', 'setData'],
   'createPartialWrapper': ['createCtorWrapper'],
   'createWrapper': ['baseSetData', 'baseSlice', 'composeArgs', 'composeArgsRight', 'createBindWrapper', 'createHybridWrapper', 'createPartialWrapper', 'getData', 'isFunction', 'reorderArgs', 'replaceHolders', 'setData'],
   'createCache': ['isNative'],
