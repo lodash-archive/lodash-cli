@@ -2336,27 +2336,31 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
     _.pull(deps, 'isNative');
   });
 
+  _.each(['baseCallback', 'createHybridWrapper', 'createWrapper'], function(funcName) {
+    var deps = _.result(funcDepMap, funcName, []);
+    _.pull(deps, 'baseSetData', 'getData', 'setData');
+  });
+
   source = removeSupportProp(source, 'funcDecomp');
   source = removeSupportProp(source, 'funcNames');
 
   // remove metadata related code
   source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
     match = removeVar(match, 'setter');
-    return match.replace(/^( *return\s+)setter\(([^,]+),[^)]+\)/gm, '$1$2');
+    return match.replace(/^( *return\s+)setter\(([^,]+),[^)]+\)/m, '$1$2');
   });
 
-  _.each(['baseCallback', 'createHybridWrapper', 'createWrapper'], function(funcName) {
-    var deps = _.result(funcDepMap, funcName, []);
-    _.pull(deps, 'baseSetData', 'getData', 'setData');
+  source = source.replace(matchFunction(source, 'createHybridWrapper'), function(match) {
+    return match.replace(/^ *defer\([^)]+\);\n/m, '');
+  });
 
+  _.each(['baseCallback', 'createWrapper'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       match = removeVar(match, 'data');
-      return match
-        .replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:typeof\s+)?data\b[\s\S]+?\n\1\}\n/m, '')
-        .replace(/^(?: *\/\/.*\n)* *setData.+\n/m, '')
-        .replace(/^( *return\s+)setData\(([^,]+),[^)]+\)/gm, '$1$2')
+      return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:typeof\s+)?data\b[\s\S]+?\n\1\}\n/gm, '');
     });
   });
+
   return source;
 }
 
