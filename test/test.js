@@ -198,6 +198,7 @@ var categoryMap = createMap({
     'once',
     'partial',
     'partialRight',
+    'rearg',
     'throttle',
     'wrap'
   ],
@@ -222,7 +223,7 @@ var categoryMap = createMap({
     'isPlainObject',
     'isRegExp',
     'isString',
-    'isUndefined',
+    'isUndefined'
   ],
   'Object': [
     'assign',
@@ -283,6 +284,7 @@ var categoryMap = createMap({
     'now',
     'parseInt',
     'property',
+    'propertyOf',
     'random',
     'range',
     'result',
