@@ -274,7 +274,7 @@ var funcDependencyMap = createMap({
   'where': ['filter', 'matches'],
   'without': ['baseDifference', 'slice'],
   'words': [],
-  'wrap': ['createWrapper'],
+  'wrap': ['createWrapper', 'identity'],
   'xor': ['baseDifference', 'baseUniq', 'isArguments', 'isArray'],
   'zip': ['unzip'],
   'zipObject': ['isArray'],
