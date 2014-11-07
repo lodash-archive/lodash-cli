@@ -138,6 +138,7 @@ lodash.partition = require('lodash.partition');
 lodash.pick = require('lodash.pick');
 lodash.pluck = require('lodash.pluck');
 lodash.property = require('lodash.property');
+lodash.propertyOf = require('lodash.propertyof');
 lodash.pull = require('lodash.pull');
 lodash.pullAt = require('lodash.pullat');
 lodash.random = require('lodash.random');
