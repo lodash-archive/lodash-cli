@@ -142,6 +142,7 @@ lodash.pull = require('lodash.pull');
 lodash.pullAt = require('lodash.pullat');
 lodash.random = require('lodash.random');
 lodash.range = require('lodash.range');
+lodash.rearg = require('lodash.rearg');
 lodash.reduce = require('lodash.reduce');
 lodash.reduceRight = require('lodash.reduceright');
 lodash.reject = require('lodash.reject');
