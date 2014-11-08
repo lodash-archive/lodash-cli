@@ -360,7 +360,7 @@ var funcDependencyMap = createMap({
   'createAssigner': ['baseCallback', 'isIterateeCall'],
   'createBindWrapper': ['createCtorWrapper'],
   'createCtorWrapper': ['baseCreate', 'isObject'],
-  'createHybridWrapper': ['arrayReduceRight', 'composeArgs', 'composeArgsRight', 'createCtorWrapper', 'defer', 'reorder', 'replaceHolders', 'setData'],
+  'createHybridWrapper': ['arrayReduceRight', 'composeArgs', 'composeArgsRight', 'createCtorWrapper', 'reorder', 'replaceHolders'],
   'createPartialWrapper': ['createCtorWrapper'],
   'createWrapper': ['baseSetData', 'baseSlice', 'composeArgs', 'composeArgsRight', 'createBindWrapper', 'createHybridWrapper', 'createPartialWrapper', 'getData', 'isFunction', 'replaceHolders', 'setData'],
   'createCache': ['isNative'],
@@ -2338,7 +2338,7 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
     _.pull(deps, 'isNative');
   });
 
-  _.each(['baseCallback', 'createHybridWrapper', 'createWrapper'], function(funcName) {
+  _.each(['baseCallback', 'createWrapper'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'baseSetData', 'getData', 'setData');
   });
@@ -2350,10 +2350,6 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
   source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
     match = removeVar(match, 'setter');
     return match.replace(/^( *return\s+)setter\(([^,]+),[^)]+\)/m, '$1$2');
-  });
-
-  source = source.replace(matchFunction(source, 'createHybridWrapper'), function(match) {
-    return match.replace(/^ *defer\([^)]+\);\n/m, '');
   });
 
   _.each(['baseCallback', 'createWrapper'], function(funcName) {
