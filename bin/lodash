@@ -3444,7 +3444,6 @@ function build(options, callback) {
       funcDepMap[isModularize ? 'main' : 'wrapperValueOf'].push('arrayEach', 'baseForOwn', 'getCallback',  'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'LodashWrapper');
 
       if (isModern) {
-        source = removeIsFunctionFork(source);
         source = removeIsArgumentsFork(source);
         source = removeSupportSpliceObjects(source);
 
