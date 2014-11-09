@@ -682,7 +682,7 @@ QUnit.module('template builds');
         vm.runInContext(data.source, context);
 
         strictEqual(actualId, expectedId, basename);
-        strictEqual(_.templates.f({ 'name': 'mustache' }), 'hall\xE5 mustache!', basename);
+        strictEqual(_.templates.f({ 'name': 'mustache' }), 'hall\xe5 mustache!', basename);
 
         delete _.templates;
         start();
