@@ -299,6 +299,12 @@ var funcDependencyMap = createMap({
   'memHas': [],
   'memSet': [],
 
+  // Set cache functions
+  'SetCache': ['cachePush', 'isNative'],
+  'cacheIndexOf': [],
+  'cachePush': [],
+  'createCache': ['isNative', 'noop', 'SetCache'],
+
   // private functions
   'arrayEach': [],
   'arrayEachRight': [],
@@ -347,7 +353,6 @@ var funcDependencyMap = createMap({
   'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseValues': [],
   'bufferClone': ['identity', 'isNative'],
-  'cacheIndexOf': [],
   'charAtCallback': [],
   'charsLeftIndex': [],
   'charsRightIndex': [],
@@ -363,7 +368,6 @@ var funcDependencyMap = createMap({
   'createHybridWrapper': ['arrayReduceRight', 'composeArgs', 'composeArgsRight', 'createCtorWrapper', 'reorder', 'replaceHolders'],
   'createPartialWrapper': ['createCtorWrapper'],
   'createWrapper': ['baseSetData', 'baseSlice', 'composeArgs', 'composeArgsRight', 'createBindWrapper', 'createHybridWrapper', 'createPartialWrapper', 'getData', 'isFunction', 'replaceHolders', 'setData'],
-  'createCache': ['isNative'],
   'createCompounder': ['deburr', 'words'],
   'createPad': ['repeat'],
   'deburrLetter': [],
@@ -434,6 +438,7 @@ var varDependencyMap = createMap({
   'pad': ['root'],
   'parseInt': ['root'],
   'repeat': ['root'],
+  'SetCache': ['root'],
   'support': ['root'],
   'template': ['reInterpolate'],
   'templateSettings': ['reEscape', 'reEvaluate', 'reInterpolate'],
@@ -735,6 +740,7 @@ var privateFuncs = [
   'baseValues',
   'bufferClone',
   'cacheIndexOf',
+  'cachePush',
   'charAtCallback',
   'charsLeftIndex',
   'charsRightIndex',
@@ -782,6 +788,7 @@ var privateFuncs = [
   'memSet',
   'reorder',
   'replaceHolders',
+  'SetCache',
   'setData',
   'shimIsPlainObject',
   'shimKeys',
@@ -3754,13 +3761,16 @@ function build(options, callback) {
 
   // modify/remove references to removed functions/variables
   if (!isTemplate) {
+    _.each(['MemCache', 'SetCache'], function(funcName) {
+      if (isExcluded(funcName)) {
+        // remove prototype assignments
+        source = source.replace(RegExp('^(?: *\\/\\/.*\\n)* *' + funcName + '\\.prototype\\.[$\\w]+\\s*=.+?;\\n', 'gm'), '');
+      }
+    });
+
     if (isExcluded('lodash')) {
       // remove `LodashWrapper.prototype` assignment
       source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype\s*=.+\n/m, '');
-    }
-    if (isExcluded('MemCache')) {
-      // remove `MemCache.prototype` assignments
-      source = source.replace(/^(?: *\/\/.*\n)* *MemCache\.prototype\.[$\w]+\s*=.+?;\n/gm, '');
     }
     if (isExcluded('memoize') || isExcluded('MemCache')) {
       // remove `memoize.Cache` assignment
