@@ -205,7 +205,7 @@ var funcDependencyMap = createMap({
   'mapValues': ['baseForOwn', 'getCallback'],
   'matches': ['baseClone', 'baseIsEqual', 'clonePassthru', 'isStrictComparable', 'keys'],
   'max': ['arrayMax', 'baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
-  'memoize': ['isFunction', 'MemCache'],
+  'memoize': ['isFunction', 'MapCache'],
   'merge': ['baseMerge', 'createAssigner'],
   'min': ['arrayMin', 'baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
   'mixin': ['baseFunctions', 'baseSlice', 'isFunction', 'isObject', 'keys', 'lodash'],
@@ -293,17 +293,17 @@ var funcDependencyMap = createMap({
   'wrapperToString': [],
   'wrapperValueOf': ['LazyWrapper'],
 
-  // memoize cache functions
-  'MemCache': ['memGet', 'memHas', 'memSet'],
-  'memGet': [],
-  'memHas': [],
-  'memSet': [],
+  // `Map` cache functions
+  'MapCache': ['mapGet', 'mapHas', 'mapSet'],
+  'mapGet': [],
+  'mapHas': [],
+  'mapSet': [],
 
-  // Set cache functions
+  // `Set` cache functions
   'SetCache': ['cachePush', 'isNative'],
   'cacheIndexOf': [],
   'cachePush': [],
-  'createCache': ['isNative', 'noop', 'SetCache'],
+  'createCache': ['constant', 'isNative', 'SetCache'],
 
   // private functions
   'arrayEach': [],
@@ -782,10 +782,10 @@ var privateFuncs = [
   'lazyValue',
   'LazyWrapper',
   'LodashWrapper',
-  'MemCache',
-  'memGet',
-  'memHas',
-  'memSet',
+  'MapCache',
+  'mapGet',
+  'mapHas',
+  'mapSet',
   'reorder',
   'replaceHolders',
   'SetCache',
@@ -3761,7 +3761,7 @@ function build(options, callback) {
 
   // modify/remove references to removed functions/variables
   if (!isTemplate) {
-    _.each(['MemCache', 'SetCache'], function(funcName) {
+    _.each(['MapCache', 'SetCache'], function(funcName) {
       if (isExcluded(funcName)) {
         // remove prototype assignments
         source = source.replace(RegExp('^(?: *\\/\\/.*\\n)* *' + funcName + '\\.prototype\\.[$\\w]+\\s*=.+?;\\n', 'gm'), '');
@@ -3772,7 +3772,7 @@ function build(options, callback) {
       // remove `LodashWrapper.prototype` assignment
       source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype\s*=.+\n/m, '');
     }
-    if (isExcluded('memoize') || isExcluded('MemCache')) {
+    if (isExcluded('memoize') || isExcluded('MapCache')) {
       // remove `memoize.Cache` assignment
       source = source.replace(/^(?: *\/\/.*\n)* *memoize\.Cache\s*=.+?;\n/m, '');
     }
