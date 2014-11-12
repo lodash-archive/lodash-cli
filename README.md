@@ -18,7 +18,7 @@ lodash -h
 
 ## Support
 
-lodash-cli has been tested in at least Node.js 0.8.26~0.10.32.
+lodash-cli has been tested in at least Node.js 0.8.26~0.10.33.
 
 **Note:** Node.js 0.10.8-0.10.11 [have](https://github.com/joyent/node/issues/5622) [bugs](https://github.com/joyent/node/issues/5688) preventing minified builds.
 
