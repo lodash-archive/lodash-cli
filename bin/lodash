@@ -2307,7 +2307,7 @@ function removeComments(source) {
  */
 function removeLazyChaining(source) {
   // remove bulk `LazyWrapper.prototype` assignments
-  source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial)\b[\s\S]+?\n\1\}\);\n/gm, '');
+  source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial|pluck)\b[\s\S]+?\n\1\}\);\n/gm, '');
 
   // remove `LazyWrapper` methods `dropWhile`, `reject`, and `slice` assignments
   source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:dropWhile|reject|slice)\s*=[\s\S]+?\n\1\};\n/gm, '');
