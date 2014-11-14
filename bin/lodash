@@ -3450,7 +3450,7 @@ function build(options, callback) {
           funcDepMap[funcName].push('wrapperValueOf');
         });
       }
-      funcDepMap[isModularize ? 'main' : 'wrapperValueOf'].push('arrayEach', 'baseForOwn', 'getCallback',  'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'LodashWrapper');
+      funcDepMap[isModularize ? 'main' : 'wrapperValueOf'].push('arrayEach', 'baseForOwn', 'getCallback',  'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'LodashWrapper', 'matches', 'property');
 
       if (isModern) {
         source = removeIsArgumentsFork(source);
