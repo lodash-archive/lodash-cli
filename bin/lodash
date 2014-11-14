@@ -352,7 +352,7 @@ var funcDependencyMap = createMap({
   'baseSortedIndex': [],
   'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseValues': [],
-  'bufferClone': ['identity', 'isNative'],
+  'bufferClone': ['constant', 'isNative'],
   'charAtCallback': [],
   'charsLeftIndex': [],
   'charsRightIndex': [],
