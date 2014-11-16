@@ -1,19 +1,19 @@
 'use strict';
 
-/** Load Node.js modules */
+/** Load Node.js modules. */
 var vm = require('vm');
 
-/** Load other modules */
+/** Load other modules. */
 var _ = require('lodash/lodash.js'),
     build = require('../bin/lodash'),
     minify = require('../lib/minify.js'),
     util = require('../lib/util.js');
 
-/** Module references */
+/** Module references. */
 var fs = util.fs,
     path = util.path;
 
-/** The unit testing framework */
+/** The unit testing framework. */
 var QUnit = (
   global.addEventListener = Function.prototype,
   global.QUnit = require('qunitjs'),
@@ -22,25 +22,25 @@ var QUnit = (
   global.QUnit
 );
 
-/** Used to avoid `noglobal` false positives caused by `errno` leaked in Node.js */
+/** Used to avoid `noglobal` false positives caused by `errno` leaked in Node.js. */
 global.errno = true;
 
-/** The current working directory */
+/** The current working directory. */
 var cwd = process.cwd();
 
-/** Used to indicate if running in Windows */
+/** Used to indicate if running in Windows. */
 var isWindows = process.platform == 'win32';
 
-/** Used to prefix relative paths from the current directory */
+/** Used to prefix relative paths from the current directory. */
 var relativePrefix = '.' + path.sep;
 
-/** Used to match the copyright header in builds */
+/** Used to match the copyright header in builds. */
 var reHeader = /^\/\**[\s\S]+?\*\/\n/;
 
-/** Shortcut used to push arrays of values to an array */
+/** Shortcut used to push arrays of values to an array. */
 var push = Array.prototype.push;
 
-/** The time limit for the tests to run (milliseconds) */
+/** The time limit for the tests to run (milliseconds). */
 var timeLimit = _.reduce(process.argv, function(result, value, index) {
   if (/--time-limit/.test(value)) {
     return parseInt(process.argv[index + 1].replace(/(\d+h)?(\d+m)?(\d+s)?/, function(match, h, m, s) {
@@ -52,7 +52,7 @@ var timeLimit = _.reduce(process.argv, function(result, value, index) {
   return result;
 }, 0);
 
-/** Used to map aliases with their real names */
+/** Used to map aliases with their real names. */
 var aliasToRealMap = createMap({
   'all': 'every',
   'any': 'some',
@@ -78,7 +78,7 @@ var aliasToRealMap = createMap({
   'value': 'wrapperValueOf'
 });
 
-/** Used to map real names with their aliases */
+/** Used to map real names with their aliases. */
 var realToAliasMap = createMap({
   'assign': ['extend'],
   'callback': ['iteratee'],
@@ -101,7 +101,7 @@ var realToAliasMap = createMap({
   'zipObject': ['object']
 });
 
-/** Used to track the category of identifiers */
+/** Used to track the category of identifiers. */
 var categoryMap = createMap({
   'Array': [
     'chunk',
@@ -294,7 +294,7 @@ var categoryMap = createMap({
   ]
 });
 
-/** List of all functions */
+/** List of all functions. */
 var allFuncs = _.reject(_.functions(_), _.bind(RegExp.prototype.test, /^_/)).sort();
 
 /*----------------------------------------------------------------------------*/
@@ -560,7 +560,7 @@ QUnit.module('minified AMD snippet');
     var start = _.after(2, _.once(QUnit.start));
 
     build(['-s', 'minus='], function(data) {
-      // uses the same regexp from the r.js build optimizer
+      // Test using the same regexp from the r.js build optimizer.
       var basename = path.basename(data.outputPath, '.js'),
           defineHasRegExp = /typeof\s+define\s*==(=)?\s*['"]function['"]\s*&&\s*typeof\s+define\.amd\s*==(=)?\s*['"]object['"]\s*&&\s*define\.amd/g;
 
@@ -709,7 +709,7 @@ QUnit.module('template builds');
         process.chdir(templatePath);
       }
       if (!isWindows) {
-        // manually create template `'".jst` to avoid issues in Windows
+        // Manually create template `'".jst` to avoid issues in Windows.
         fs.writeFileSync(quotesTemplatePath, 'hello <%= name %>', 'utf8');
       }
       build(['-s', command], function(data) {
@@ -970,7 +970,7 @@ QUnit.module('compat modifier');
     }));
 
     var callback = function(data) {
-      // remove copyright header before adding to `sources`
+      // Remove copyright header before adding to `sources`.
       sources.push(data.source.replace(reHeader, ''));
       check();
     };
@@ -1629,7 +1629,7 @@ QUnit.module('lodash build');
           } catch(e) {
             console.log(e);
           }
-          // add function names explicitly
+          // Add function names explicitly.
           if (/\binclude=/.test(command)) {
             var funcNames = command.match(/\binclude=(\S*)/)[1].split(/, */);
           }
@@ -1649,14 +1649,14 @@ QUnit.module('lodash build');
             otherNames = command.match(/\bminus=(\S*)/)[1].split(/, */);
             funcNames = _.difference(funcNames, expandFuncNames(otherNames));
           }
-          // expand categories to function names
+          // Expand categories to function names.
           _.each(funcNames.slice(), function(category) {
             var otherNames = _.filter(categoryMap[category], function(key) {
               var type = typeof _[key];
               return type == 'function' || type == 'undefined';
             });
 
-            // limit function names to those available for specific builds
+            // Limit function names to those available for specific builds.
             otherNames = _.intersection(otherNames, allFuncs);
 
             if (!_.isEmpty(otherNames)) {
@@ -1665,7 +1665,7 @@ QUnit.module('lodash build');
             }
           });
 
-          // expand aliases and remove nonexistent and duplicate function names
+          // Expand aliases and remove nonexistent and duplicate function names.
           funcNames = _.uniq(_.intersection(expandFuncNames(funcNames), allFuncs));
 
           var lodash = context._ || {};
