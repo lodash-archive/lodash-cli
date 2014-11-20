@@ -37,9 +37,6 @@ var reFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|create[A-Z][a-z]+)\(/;
 /** Used to match `getCallback` references */
 var reGetCallback = /\bgetCallback(?:\(\))?/g;
 
-/** Used to detect the Node.js executable in command-line arguments */
-var reNode = RegExp('(?:^|' + path.sepEscaped + ')node(?:\\.exe)?$', 'i');
-
 /** Used to match string literals */
 var reStrings = /(["'])(?:(?!\1)[^\n\\]|\\.)*\1/g;
 
@@ -829,10 +826,6 @@ function addCommandsToHeader(source, commands) {
   source = source == null ? '' : String(source);
 
   return source.replace(getHeader(source), function(header) {
-    // Remove `node path/to/build.js` from `commands`.
-    if (reNode.test(commands[0])) {
-      commands.splice(0, 2);
-    }
     // Add quotes to commands with spaces or equals signs.
     commands = _.map(commands, function(command) {
       var separator = /[= ]/.exec(command);
@@ -3330,7 +3323,7 @@ function build(options, callback) {
     var warnings = [];
 
     // Used to detect invalid command-line arguments.
-    var invalidArgs = _.reject(options.slice(reNode.test(options[0]) ? 2 : 0), function(value, index, options) {
+    var invalidArgs = _.reject(options, function(value, index, options) {
       if (/^(?:-o|--output)$/.test(options[index - 1]) ||
           /^(?:category|exports|iife|include|moduleId|minus|plus|settings|template)=[\s\S]*$/.test(value)) {
         return true;
@@ -4013,6 +4006,6 @@ if (module != require.main) {
   module.exports = build;
 }
 // Handle invoking `build` by the command-line.
-else {
-  build(process.argv);
+else if (_.size(process.argv) > 2) {
+  build(process.argv.slice(2));
 }
