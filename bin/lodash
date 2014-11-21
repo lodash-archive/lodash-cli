@@ -364,7 +364,7 @@ var funcDependencyMap = createMap({
   'createCtorWrapper': ['baseCreate', 'isObject'],
   'createHybridWrapper': ['arrayReduceRight', 'composeArgs', 'composeArgsRight', 'createCtorWrapper', 'reorder', 'replaceHolders'],
   'createPartialWrapper': ['createCtorWrapper'],
-  'createWrapper': ['baseSetData', 'baseSlice', 'composeArgs', 'composeArgsRight', 'createBindWrapper', 'createHybridWrapper', 'createPartialWrapper', 'getData', 'isFunction', 'mergeData', 'replaceHolders', 'setData'],
+  'createWrapper': ['baseSetData', 'createBindWrapper', 'createHybridWrapper', 'createPartialWrapper', 'getData', 'isFunction', 'mergeData', 'setData'],
   'createCompounder': ['deburr', 'words'],
   'createPad': ['repeat'],
   'deburrLetter': [],
@@ -385,7 +385,7 @@ var funcDependencyMap = createMap({
   'isLength': [],
   'isStrictComparable': ['isObject'],
   'isWhitespace': [],
-  'mergeData': [],
+  'mergeData': ['baseSlice', 'composeArgs', 'composeArgsRight', 'replaceHolders'],
   'pickByArray': ['toObject'],
   'pickByCallback': ['baseForIn'],
   'reorder': ['baseSlice', 'isIndex'],
@@ -2329,7 +2329,7 @@ function removeLazyChaining(source) {
  */
 function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
   var deps = _.result(funcDepMap, 'createWrapper', []);
-  _.pull(deps, 'baseSlice', 'composeArgs', 'composeArgsRight', 'replaceHolders');
+  _.pull(deps, 'mergeData');
 
   deps = _.result(objDepMap, 'baseCallback', []);
   _.pull(deps, 'support');
@@ -2352,7 +2352,7 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
 
   // Remove metadata related code.
   source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
-    match = removeVar(match, 'setter');
+    match = _.reduce(['data', 'funcBitmask', 'funcIsPartialed', 'setter'], removeVar, match);
     return match.replace(/^( *return\s+)setter\(([^,]+),[^)]+\)/m, '$1$2');
   });
 
