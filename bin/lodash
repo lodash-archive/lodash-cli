@@ -673,7 +673,7 @@ var complexVars = [
   'ctorByClass',
   'freeGlobal',
   'nonEnumProps',
-  'shadowedProps',
+  'shadowProps',
   'support',
   'reWords',
   'whitespace'
