@@ -59,6 +59,7 @@ var aliasToRealMap = createMap({
   'backflow': 'flowRight',
   'collect': 'map',
   'compose': 'flowRight',
+  'contains': 'includes',
   'detect': 'find',
   'each': 'forEach',
   'eachRight': 'forEachRight',
@@ -66,7 +67,7 @@ var aliasToRealMap = createMap({
   'foldl': 'reduce',
   'foldr': 'reduceRight',
   'head': 'first',
-  'include': 'contains',
+  'include': 'includes',
   'inject': 'reduce',
   'iteratee': 'callback',
   'methods': 'functions',
@@ -82,7 +83,6 @@ var aliasToRealMap = createMap({
 var realToAliasMap = createMap({
   'assign': ['extend'],
   'callback': ['iteratee'],
-  'contains': ['include'],
   'every': ['all'],
   'filter': ['select'],
   'find': ['detect'],
@@ -91,6 +91,7 @@ var realToAliasMap = createMap({
   'forEach': ['each'],
   'forEachRight': ['eachRight'],
   'functions': ['methods'],
+  'includes': ['contains', 'include'],
   'map': ['collect'],
   'reduce': ['foldl', 'inject'],
   'reduceRight': ['foldr'],
@@ -152,7 +153,6 @@ var categoryMap = createMap({
   ],
   'Collection': [
     'at',
-    'contains',
     'countBy',
     'every',
     'filter',
@@ -162,6 +162,7 @@ var categoryMap = createMap({
     'forEach',
     'forEachRight',
     'groupBy',
+    'includes',
     'indexBy',
     'invoke',
     'map',
@@ -410,7 +411,7 @@ function testMethod(lodash, methodName, message) {
       func = lodash[methodName];
 
   try {
-    if (_.contains(categoryMap.Array, methodName)) {
+    if (_.includes(categoryMap.Array, methodName)) {
       if (methodName == 'range') {
         func(2, 4);
       } else if (/^(?:difference|intersection|union|uniq|zip)/.test(methodName)) {
@@ -421,10 +422,10 @@ function testMethod(lodash, methodName, message) {
         func(array);
       }
     }
-    else if (_.contains(categoryMap.Chain, methodName)) {
+    else if (_.includes(categoryMap.Chain, methodName)) {
       lodash(array)[methodName](_.noop);
     }
-    else if (_.contains(categoryMap.Collection, methodName)) {
+    else if (_.includes(categoryMap.Collection, methodName)) {
       if (methodName == 'at') {
         func(array, 0, 2);
         func(object, 'a', 'c');
@@ -447,7 +448,7 @@ function testMethod(lodash, methodName, message) {
         func(object, _.noop, object);
       }
     }
-    else if (_.contains(categoryMap.Function, methodName)) {
+    else if (_.includes(categoryMap.Function, methodName)) {
       if (methodName == 'bindAll') {
         func({ 'noop': _.noop });
       } else if (methodName == 'bindKey') {
@@ -464,7 +465,7 @@ function testMethod(lodash, methodName, message) {
         func(_.noop);
       }
     }
-    else if (_.contains(categoryMap.Object, methodName)) {
+    else if (_.includes(categoryMap.Object, methodName)) {
       if (methodName == 'clone') {
         func(object);
         func(object, true);
@@ -480,7 +481,7 @@ function testMethod(lodash, methodName, message) {
         func(object);
       }
     }
-    else if (_.contains(categoryMap.Utility, methodName)) {
+    else if (_.includes(categoryMap.Utility, methodName)) {
       if (methodName == 'mixin') {
         func({});
       } else if (methodName == 'result') {
@@ -619,7 +620,7 @@ QUnit.module('template builds');
         context._ = _;
         vm.runInContext(data.source, context);
 
-        ok(_.contains(basename, 'lodash.templates'), basename);
+        ok(_.includes(basename, 'lodash.templates'), basename);
 
         var actual = _.templates.a(object.a);
         strictEqual(actual.replace(/[\r\n]+/g, ''), '<ul><li>fred</li><li>barney</li><li>pebbles</li></ul>', basename);
@@ -921,7 +922,7 @@ QUnit.module('independent builds');
       var start = _.once(QUnit.start);
       build([option, '-s', 'modern'], function(data) {
         var comment = _.result(data.source.match(reLicense), 0, '');
-        ok(_.contains(comment, 'Custom Build'));
+        ok(_.includes(comment, 'Custom Build'));
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
 
         start();
@@ -947,7 +948,7 @@ QUnit.module('independent builds');
       var start = _.once(QUnit.start);
       build([option, '-s', 'modern'], function(data) {
         var comment = _.result(data.source.match(reLicense), 0, '');
-        ok(_.contains(comment, 'Custom Build'));
+        ok(_.includes(comment, 'Custom Build'));
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
 
         start();
@@ -1159,7 +1160,7 @@ QUnit.module('source-map modifier');
         process.chdir(__dirname);
 
         outputCommand = outputCommand ? outputCommand.split(' ') : [];
-        if (!_.contains(outputCommand, '-p')) {
+        if (!_.includes(outputCommand, '-p')) {
           callback = _.after(2, callback);
         }
         build(['-s'].concat(mapCommand.split(' '), outputCommand), callback);
@@ -1525,7 +1526,7 @@ QUnit.module('output option');
   _.each(commands, function(command) {
     asyncTest('`lodash ' + command +'`', function() {
       var counter = 0,
-          dirs = _.contains(command, 'c.js'),
+          dirs = _.includes(command, 'c.js'),
           expected = /(\w+)(?=\.js$)/.exec(command)[0];
 
       var start = _.after(2, _.once(function() {

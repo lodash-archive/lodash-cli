@@ -56,6 +56,7 @@ var aliasToRealMap = createMap({
   'backflow': 'flowRight',
   'collect': 'map',
   'compose': 'flowRight',
+  'contains': 'includes',
   'detect': 'find',
   'each': 'forEach',
   'eachRight': 'forEachRight',
@@ -63,7 +64,7 @@ var aliasToRealMap = createMap({
   'foldl': 'reduce',
   'foldr': 'reduceRight',
   'head': 'first',
-  'include': 'contains',
+  'include': 'includes',
   'inject': 'reduce',
   'iteratee': 'callback',
   'methods': 'functions',
@@ -79,7 +80,6 @@ var aliasToRealMap = createMap({
 var realToAliasMap = createMap({
   'assign': ['extend'],
   'callback': ['iteratee'],
-  'contains': ['include'],
   'every': ['all'],
   'filter': ['select'],
   'find': ['detect'],
@@ -88,6 +88,7 @@ var realToAliasMap = createMap({
   'forEach': ['each'],
   'forEachRight': ['eachRight'],
   'functions': ['methods'],
+  'includes': ['contains', 'include'],
   'map': ['collect'],
   'reduce': ['foldl', 'inject'],
   'reduceRight': ['foldr'],
@@ -125,7 +126,6 @@ var funcDependencyMap = createMap({
   'cloneDeep': ['baseCallback', 'baseClone'],
   'compact': [],
   'constant': [],
-  'contains': ['getIndexOf', 'isArray', 'isLength', 'isString', 'values'],
   'countBy': ['createAggregator'],
   'create': ['baseAssign', 'baseCreate'],
   'curry': ['createWrapper', 'lodash'],
@@ -167,6 +167,7 @@ var funcDependencyMap = createMap({
   'groupBy': ['createAggregator'],
   'has': [],
   'identity': [],
+  'includes': ['getIndexOf', 'isArray', 'isLength', 'isString', 'values'],
   'indexBy': ['createAggregator'],
   'indexOf': ['baseIndexOf', 'sortedIndex'],
   'initial': ['dropRight'],
@@ -494,7 +495,6 @@ var categoryMap = createMap({
   ],
   'Collection': [
     'at',
-    'contains',
     'countBy',
     'every',
     'filter',
@@ -504,6 +504,7 @@ var categoryMap = createMap({
     'forEach',
     'forEachRight',
     'groupBy',
+    'includes',
     'indexBy',
     'invoke',
     'map',
@@ -1022,9 +1023,9 @@ function buildModule(state, onComplete) {
             ? []
             : ['functional', 'lodash', 'lodash-modularized', 'server', 'util'];
 
-          var type = _.contains(objDependencies, identifier)
+          var type = _.includes(objDependencies, identifier)
             ? 'object'
-            : (_.contains(varDependencies, identifier) ? 'variable' : 'function');
+            : (_.includes(varDependencies, identifier) ? 'variable' : 'function');
 
           var moduleDesc = 'The ' +
             (isInternal ? 'internal ' : '') +
@@ -1065,7 +1066,7 @@ function buildModule(state, onComplete) {
 
   // Create main module.
   (function() {
-    if (isNpm || !_.contains(buildFuncs, 'lodash')) {
+    if (isNpm || !_.includes(buildFuncs, 'lodash')) {
       return;
     }
     var basename = 'lodash',
@@ -1146,7 +1147,7 @@ function buildModule(state, onComplete) {
           '  lodash.support = support;'
         ];
 
-        if (_.contains(identifiers, 'templateSettings')) {
+        if (_.includes(identifiers, 'templateSettings')) {
           code.push('  (lodash.templateSettings = ' + categoryToPluralMap.String.toLowerCase() + '.templateSettings).imports._ = lodash;');
         }
         if (!_.isEmpty(funcNames)) {
@@ -1170,7 +1171,7 @@ function buildModule(state, onComplete) {
 
       // Add category namespaces to each lodash function assignment.
       source = source.replace(/(lodash(?:\.prototype)?\.[$\w]+\s*=\s*)([$\w]+)/g, function(match, left, identifier) {
-        if (_.contains(deps, identifier)) {
+        if (_.includes(deps, identifier)) {
           return match;
         }
         var category = categoryToPluralMap[_.first(getCategories(identifier, funcDepMap))];
@@ -1215,7 +1216,7 @@ function buildModule(state, onComplete) {
             var depName = depNames[index];
             return result + (result ? ',\n    ' : 'var ') +
               depName + " = require('" + depPath + "')" +
-              (isCommonJS && !_.contains(categoryDepPaths, depPath) ? '.' + depName : '');
+              (isCommonJS && !_.includes(categoryDepPaths, depPath) ? '.' + depName : '');
           }, '') + ';',
           '%output%',
           (isCommonJS ? 'exports._' : 'module.exports') + ' = lodash;'
@@ -1689,7 +1690,7 @@ function getCategories(identifier, funcDepMap) {
   identifier = getRealName(identifier, funcDepMap);
 
   _.forOwn(categoryMap, function(identifiers, category) {
-    if (_.contains(identifiers, identifier)) {
+    if (_.includes(identifiers, identifier)) {
       result.push(category);
     }
   });
@@ -1770,8 +1771,8 @@ function getDependants(funcName, funcDepMap, isShallow, stack) {
 
   // Iterate over the dependency map, adding names of functions that have `funcName` as a dependency.
   return _.uniq(_.transform(funcDepMap, function(result, depNames, otherName) {
-    if (!_.contains(stack, otherName) &&
-        _.some(funcNames, _.partial(_.contains, depNames, _, 0))) {
+    if (!_.includes(stack, otherName) &&
+        _.some(funcNames, _.partial(_.includes, depNames, _, 0))) {
       result.push(otherName);
       if (!isShallow) {
         stack.push(otherName);
@@ -1808,7 +1809,7 @@ function getDependencies(funcName, funcDepMap, isShallow, stack) {
   // Recursively accumulate the dependencies of the `funcName` function,
   // the dependencies of its dependencies, and so on.
   return _.uniq(_.transform(depNames, function(result, otherName) {
-    if (!_.contains(stack, otherName)) {
+    if (!_.includes(stack, otherName)) {
       stack.push(otherName);
       result.push(otherName);
       push.apply(result, getDependencies(otherName, funcDepMap, isShallow, stack));
@@ -1842,7 +1843,7 @@ function getFunctionSource(func, indent) {
     var prelude = '\n' + indent;
     match = match.slice(1);
     if (forceIndent) {
-      prelude += (match == '}' && !_.contains(source, '}', index + 2) ? '' : '  ');
+      prelude += (match == '}' && !_.includes(source, '}', index + 2) ? '' : '  ');
     }
     return prelude + match;
   });
@@ -2085,7 +2086,7 @@ function isFunctionSnippet(source) {
  * @returns {boolean} Returns `true` if the function is private, else `false`.
  */
 function isPrivate(funcName) {
-  return _.contains(privateFuncs, funcName);
+  return _.includes(privateFuncs, funcName);
 }
 
 /**
@@ -2185,7 +2186,7 @@ function matchVar(source, varName, leadingComments) {
   ];
 
   // Match complex variable assignments.
-  if (_.contains(complexVars, varName)) {
+  if (_.includes(complexVars, varName)) {
     reAttempts.unshift(['^(' + commentPattern + ')(( *)var\\s+' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]);
   }
   return _.reduce(reAttempts, function(result, data) {
@@ -2402,7 +2403,7 @@ function removeGetCallback(source, funcDepMap) {
     'takeWhile', 'transform', 'uniq', 'createAggregator'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
-    if (_.contains(deps, 'getCallback')) {
+    if (_.includes(deps, 'getCallback')) {
       _.pull(deps, 'getCallback').push('baseCallback');
       source = source.replace(matchFunction(source, funcName), function(match) {
         return match.replace(reGetCallback, 'baseCallback');
@@ -2412,7 +2413,7 @@ function removeGetCallback(source, funcDepMap) {
   return source.replace(getMethodAssignments(source), function(match) {
     _.each(['main', 'wrapperValueOf'], function(funcName) {
       var deps = _.result(funcDepMap, funcName, []);
-      if (_.contains(deps, 'getCallback')) {
+      if (_.includes(deps, 'getCallback')) {
         _.pull(deps, 'getCallback').push('baseCallback');
         match = match.replace(reGetCallback, 'baseCallback');
         return false;
@@ -2434,9 +2435,9 @@ function removeGetCallback(source, funcDepMap) {
 function removeGetIndexOf(source, funcDepMap) {
   source = removeFunction(source, 'getIndexOf');
 
-  _.each(['baseDifference', 'baseUniq', 'contains', 'intersection', 'pull', 'uniq'], function(funcName) {
+  _.each(['baseDifference', 'baseUniq', 'includes', 'intersection', 'pull', 'uniq'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
-    if (_.contains(deps, 'getIndexOf')) {
+    if (_.includes(deps, 'getIndexOf')) {
       _.pull(deps, 'getIndexOf').push('baseIndexOf');
       source = source.replace(matchFunction(source, funcName), function(match) {
         return match
@@ -3172,7 +3173,7 @@ function build(options, callback) {
   var state = _.isPlainObject(options) && options;
 
   var isExcluded = function() {
-    return _.every(arguments, _.negate(_.partial(_.contains, buildFuncs, _, 0)));
+    return _.every(arguments, _.negate(_.partial(_.includes, buildFuncs, _, 0)));
   };
 
   if (state) {
@@ -3272,12 +3273,12 @@ function build(options, callback) {
     );
 
     // Flags to specify export options.
-    var isAMD = _.contains(exportsOptions, 'amd'),
-        isCommonJS = _.contains(exportsOptions, 'commonjs'),
-        isES6 = _.contains(exportsOptions, 'es6'),
-        isGlobal = _.contains(exportsOptions, 'global'),
-        isNpm = _.contains(exportsOptions, 'npm'),
-        isNode = isNpm || _.contains(exportsOptions, 'node');
+    var isAMD = _.includes(exportsOptions, 'amd'),
+        isCommonJS = _.includes(exportsOptions, 'commonjs'),
+        isES6 = _.includes(exportsOptions, 'es6'),
+        isGlobal = _.includes(exportsOptions, 'global'),
+        isNpm = _.includes(exportsOptions, 'npm'),
+        isNode = isNpm || _.includes(exportsOptions, 'node');
 
     // The lodash.js source.
     var source = fs.readFileSync(filePath, 'utf8');
@@ -3330,7 +3331,7 @@ function build(options, callback) {
           /^(?:category|exports|iife|include|moduleId|minus|plus|settings|template)=[\s\S]*$/.test(value)) {
         return true;
       }
-      var result = _.contains([
+      var result = _.includes([
         'compat',
         'modern',
         'modularize',
@@ -3526,7 +3527,7 @@ function build(options, callback) {
       }
       // Remove "_.pluck" or "_.where" style callback support from `baseCallback`.
       _.each(['pluck', 'where'], function(funcName) {
-        if (_.contains(minusFuncs, funcName)) {
+        if (_.includes(minusFuncs, funcName)) {
           _.pull(funcDepMap.baseCallback, funcName);
           funcDepMap.baseCallback.push('identity');
 
@@ -3570,7 +3571,7 @@ function build(options, callback) {
       function expand(includes, allDeps, depMap, funcNames, stack) {
         stack || (stack = []);
         _.each(funcNames || buildFuncs, function(funcName) {
-          if (_.contains(stack, funcName)) {
+          if (_.includes(stack, funcName)) {
             return;
           }
           stack.push(funcName);
@@ -3582,7 +3583,7 @@ function build(options, callback) {
                 push.apply(result, depNames || []);
               });
 
-              push.apply(validDeps, _.filter(depNames, _.partial(_.contains, allDeps, _, 0)));
+              push.apply(validDeps, _.filter(depNames, _.partial(_.includes, allDeps, _, 0)));
 
               var otherNames = _.transform(validDeps, function(result, depName) {
                 push.apply(result, getDependencies(funcDepMap[depName], funcDepMap));
@@ -3595,7 +3596,7 @@ function build(options, callback) {
           });
         });
       }
-      if (_.contains(buildFuncs, 'lodash')) {
+      if (_.includes(buildFuncs, 'lodash')) {
         push.apply(buildFuncs, getDependencies(funcDepMap.main, funcDepMap));
         push.apply(includeObjs, objDepMap.main);
         push.apply(includeVars, varDepMap.main);
@@ -3636,7 +3637,7 @@ function build(options, callback) {
       // Unexpose `lodash.support`.
       if (isModularize) {
         _.forOwn(objDependencyMap, function(deps, funcName) {
-          if (_.contains(deps, 'support')) {
+          if (_.includes(deps, 'support')) {
             source = source.replace(matchFunction(source, funcName), function(match) {
               return removeVar(match, 'support');
             });
@@ -3811,7 +3812,7 @@ function build(options, callback) {
     }
     // Remove functions from the build.
     _.each(allFuncs, function(funcName) {
-      if (!_.contains(buildFuncs, funcName) &&
+      if (!_.includes(buildFuncs, funcName) &&
           !(funcName == 'lodash' && !isModularize)) {
         source = removeFunction(source, funcName);
         if (!isModularize) {
@@ -3839,7 +3840,7 @@ function build(options, callback) {
 
     // Remove unneeded property dependencies.
     _.each(objDependencies, function(propName) {
-      if (!_.contains(includeObjs, propName)) {
+      if (!_.includes(includeObjs, propName)) {
         source = removeProp(source, propName);
       }
     });
@@ -3882,14 +3883,14 @@ function build(options, callback) {
     });
 
     // Remove unneeded variable dependencies.
-    if (!_.contains(includeVars, 'root')) {
+    if (!_.includes(includeVars, 'root')) {
       source = removeVar(source, 'freeGlobal');
     }
     if (isModularize) {
       _.each(varDependencies, function(varName) {
-        if (!_.contains(includeFuncs, varName) &&
-            !_.contains(includeObjs, varName) &&
-            !_.contains(includeVars, varName)) {
+        if (!_.includes(includeFuncs, varName) &&
+            !_.includes(includeObjs, varName) &&
+            !_.includes(includeVars, varName)) {
           source = removeVar(source, varName);
         }
       });
