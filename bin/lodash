@@ -3683,7 +3683,7 @@ function build(options, callback) {
           // Remove `sourceURL` from `_.template`.
           match = removeVar(match, 'sourceURL');
           match = match.replace(/^(?: *\/\/.*\n)* *sourceURL\s*=[^;]+;\n+/m, '');
-          return match.replace(/\s*\+\s*sourceURL(?=\))/, '');
+          return match.replace(/\bsourceURL\s*\+\s*/, '');
         });
 
         if (isNode) {
