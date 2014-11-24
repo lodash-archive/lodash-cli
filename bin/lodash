@@ -1,55 +1,55 @@
 #!/usr/bin/env node
 'use strict';
 
-/** Load Node.js modules */
+/** Load Node.js modules. */
 var vm = require('vm');
 
-/** Load other modules */
+/** Load other modules. */
 var _ = require('lodash/lodash.js'),
     minify = require('../lib/minify.js'),
     util = require('../lib/util.js');
 
-/** Module references */
+/** Module references. */
 var fs = util.fs,
     path = util.path;
 
-/** Used to create regexes that detect single and multi-line comment blocks */
+/** Used to create regexes that detect single and multi-line comment blocks. */
 var commentPattern = '(?: *(?:/\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/|\/\/.*)\\n)*';
 
-/** The current working directory */
+/** The current working directory. */
 var cwd = process.cwd();
 
-/** Native method references */
+/** Native method references. */
 var push = Array.prototype.push;
 
-/** Used to replace string literals with tokens */
+/** Used to replace string literals with tokens. */
 var stringToken = '[[lodash@' + _.VERSION + ' token]]';
 
-/** Used to determine if a variable search should be deep */
+/** Used to determine if a variable search should be deep. */
 var reDeepVars = /^ *function +runInContext\b/m;
 
-/** Used to detect the JSDoc `@type` tag of "Function" */
+/** Used to detect the JSDoc `@type` tag of "Function". */
 var reFuncTag = /^ *\* *@type +Function\b/im;
 
-/** Used to detect if a string is a function snippet */
+/** Used to detect if a string is a function snippet. */
 var reFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|create[A-Z][a-z]+)\(/;
 
-/** Used to match `getCallback` references */
+/** Used to match `getCallback` references. */
 var reGetCallback = /\bgetCallback(?:\(\))?/g;
 
-/** Used to match string literals */
+/** Used to match string literals. */
 var reStrings = /(["'])(?:(?!\1)[^\n\\]|\\.)*\1/g;
 
-/** Used to match string tokens */
+/** Used to match string tokens. */
 var reStringTokens = RegExp(_.escapeRegExp(stringToken), 'g');
 
-/** Used to detect if a string is a variable declaration snippet */
+/** Used to detect if a string is a variable declaration snippet. */
 var reVarSnippet = /^\s*var\s+/;
 
-/** Shortcut to the `stdout` object */
+/** Shortcut to the `stdout` object. */
 var stdout = process.stdout;
 
-/** Used to map aliases with their real names */
+/** Used to map aliases with their real names. */
 var aliasToRealMap = createMap({
   'all': 'every',
   'any': 'some',
@@ -76,7 +76,7 @@ var aliasToRealMap = createMap({
   'value': 'wrapperValueOf'
 });
 
-/** Used to map real names with their aliases */
+/** Used to map real names with their aliases. */
 var realToAliasMap = createMap({
   'assign': ['extend'],
   'callback': ['iteratee'],
@@ -99,7 +99,7 @@ var realToAliasMap = createMap({
   'zipObject': ['object']
 });
 
-/** Used to track function dependencies */
+/** Used to track function dependencies. */
 var funcDependencyMap = createMap({
   // Dependencies of variables.
   'metaMap': ['isNative'],
@@ -402,7 +402,7 @@ var funcDependencyMap = createMap({
   'unescapeHtmlChar': []
 });
 
-/** Used to track Lo-Dash object dependencies of identifiers */
+/** Used to track Lo-Dash object dependencies of identifiers. */
 var objDependencyMap = createMap({
   'baseCallback': ['support'],
   'baseIsEqual': ['support'],
@@ -421,7 +421,7 @@ var objDependencyMap = createMap({
   'toObject': ['support']
 });
 
-/** Used to track variable dependencies of identifiers */
+/** Used to track variable dependencies of identifiers. */
 var varDependencyMap = createMap({
   'after': ['root'],
   'baseCreate': ['root'],
@@ -444,7 +444,7 @@ var varDependencyMap = createMap({
   'times': ['root']
 });
 
-/** Used to track the category of identifiers */
+/** Used to track the category of identifiers. */
 var categoryMap = createMap({
   'Array': [
     'chunk',
@@ -637,7 +637,7 @@ var categoryMap = createMap({
   ]
 });
 
-/* Used to map categories with their plural form */
+/* Used to map categories with their plural form. */
 var categoryToPluralMap = createMap({
   'Array': 'Array',
   'Chain': 'Chain',
@@ -649,16 +649,16 @@ var categoryToPluralMap = createMap({
   'Utility': 'Utility'
 });
 
-/* Used to enforce dependencies at the top level */
+/* Used to enforce dependencies at the top level. */
 var topLevel = createMap({
   'main': true,
   'support': true
 });
 
-/** List of all function categories */
+/** List of all function categories. */
 var allCategories = _.keys(categoryMap);
 
-/** List of the default ways to export the `lodash` function */
+/** List of the default ways to export the `lodash` function. */
 var defaultExports = [
   'amd',
   'commonjs',
@@ -666,7 +666,7 @@ var defaultExports = [
   'node'
 ];
 
-/** List of variables with complex assignments */
+/** List of variables with complex assignments. */
 var complexVars = [
   'arrayLikeClasses',
   'cloneableClasses',
@@ -680,7 +680,7 @@ var complexVars = [
   'whitespace'
 ];
 
-/** List of functions that support argument placeholders */
+/** List of functions that support argument placeholders. */
 var placeholderFuncs = [
   'bind',
   'bindKey',
@@ -690,7 +690,7 @@ var placeholderFuncs = [
   'partialRight'
 ];
 
-/** List of private functions */
+/** List of private functions. */
 var privateFuncs = [
   'arrayEach',
   'arrayEachRight',
@@ -800,19 +800,19 @@ var privateFuncs = [
   'unescapeHtmlChar'
 ];
 
-/** List of all property dependencies */
+/** List of all property dependencies. */
 var objDependencies = _.uniq(_.transform(objDependencyMap, _.bind(push.apply, push), []));
 
-/** List of all variable dependencies */
+/** List of all variable dependencies. */
 var varDependencies = _.uniq(_.transform(varDependencyMap, _.bind(push.apply, push), []));
 
-/** List of all functions */
+/** List of all functions. */
 var allFuncs = _.filter(_.difference(_.keys(funcDependencyMap), objDependencies, varDependencies), function(key) {
   var type = typeof _[key];
   return type == 'function' || type == 'undefined';
 });
 
-/** List of Lo-Dash functions */
+/** List of Lo-Dash functions. */
 var lodashFuncs = _.difference(allFuncs, privateFuncs);
 
 /*----------------------------------------------------------------------------*/
