@@ -158,6 +158,7 @@ lodash.slice = require('lodash.slice');
 lodash.snakeCase = require('lodash.snakecase');
 lodash.some = require('lodash.some');
 lodash.sortBy = require('lodash.sortby');
+lodash.sortByMultiple = require('lodash.sortbymultiple');
 lodash.sortedIndex = require('lodash.sortedindex');
 lodash.sortedLastIndex = require('lodash.sortedlastindex');
 lodash.startsWith = require('lodash.startswith');
