@@ -178,7 +178,7 @@ var categoryMap = createMap({
     'size',
     'some',
     'sortBy',
-    'sortByMultiple',
+    'sortByAll',
     'toArray',
     'where'
   ],
