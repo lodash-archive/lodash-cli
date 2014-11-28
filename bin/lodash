@@ -71,9 +71,9 @@ var aliasToRealMap = createMap({
   'object': 'zipObject',
   'select': 'filter',
   'tail': 'rest',
-  'toJSON': 'wrapperValueOf',
+  'toJSON': 'wrapperValue',
   'unique': 'uniq',
-  'value': 'wrapperValueOf'
+  'valueOf': 'wrapperValue'
 });
 
 /** Used to map real names with their aliases. */
@@ -95,7 +95,7 @@ var realToAliasMap = createMap({
   'rest': ['tail'],
   'some': ['any'],
   'uniq': ['unique'],
-  'wrapperValueOf': ['toJSON', 'value'],
+  'wrapperValue': ['toJSON', 'valueOf'],
   'zipObject': ['object']
 });
 
@@ -283,14 +283,14 @@ var funcDependencyMap = createMap({
   'LazyWrapper': [],
   'lazyClone': ['baseSlice', 'LazyWrapper'],
   'lazyReverse': ['LazyWrapper'],
-  'lazyValue': ['getView'],
+  'lazyValue': ['baseWrapperValue', 'getView', 'isArray'],
 
   // Dependencies of Lo-Dash wrapper functions.
   'LodashWrapper': [],
   'wrapperChain': ['chain'],
   'wrapperReverse': ['LazyWrapper', 'LodashWrapper', 'thru'],
   'wrapperToString': [],
-  'wrapperValueOf': ['LazyWrapper'],
+  'wrapperValue': ['baseWrapperValue'],
 
   // Dependencies of `Map` cache functions.
   'MapCache': ['mapGet', 'mapHas', 'mapSet'],
@@ -352,6 +352,7 @@ var funcDependencyMap = createMap({
   'baseSortedIndex': [],
   'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseValues': [],
+  'baseWrapperValue': ['LazyWrapper'],
   'bufferClone': ['constant', 'isNative'],
   'charAtCallback': [],
   'charsLeftIndex': [],
@@ -493,7 +494,7 @@ var categoryMap = createMap({
     'wrapperChain',
     'wrapperReverse',
     'wrapperToString',
-    'wrapperValueOf'
+    'wrapperValue'
   ],
   'Collection': [
     'at',
@@ -741,6 +742,7 @@ var privateFuncs = [
   'baseSortedIndex',
   'baseUniq',
   'baseValues',
+  'baseWrapperValue',
   'bufferClone',
   'cacheIndexOf',
   'cachePush',
@@ -2415,7 +2417,7 @@ function removeGetCallback(source, funcDepMap) {
     }
   });
   return source.replace(getMethodAssignments(source), function(match) {
-    _.each(['main', 'wrapperValueOf'], function(funcName) {
+    _.each(['main', 'wrapperValue'], function(funcName) {
       var deps = _.result(funcDepMap, funcName, []);
       if (_.includes(deps, 'getCallback')) {
         _.pull(deps, 'getCallback').push('baseCallback');
@@ -3439,18 +3441,18 @@ function build(options, callback) {
       }
       else {
         funcDepMap.chain.push('wrapperChain');
-        funcDepMap.wrapperValueOf.push('chain', 'mixin', 'tap', 'thru', 'wrapperReverse', 'wrapperToString');
-        objDepMap.wrapperValueOf = ['support'];
+        funcDepMap.wrapperValue.push('chain', 'mixin', 'tap', 'thru', 'wrapperReverse', 'wrapperToString');
+        objDepMap.wrapperValue = ['support'];
 
         _.each(['bind', 'bindKey', 'curry', 'curryRight', 'partial', 'partialRight'], function(funcName) {
           funcDepMap[funcName].push('arrayEach');
         });
 
         _.each(['chain', 'tap', 'thru', 'wrapperChain', 'wrapperReverse', 'wrapperToString'], function(funcName) {
-          funcDepMap[funcName].push('wrapperValueOf');
+          funcDepMap[funcName].push('wrapperValue');
         });
       }
-      funcDepMap[isModularize ? 'main' : 'wrapperValueOf'].push('arrayEach', 'baseForOwn', 'getCallback',  'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'LodashWrapper', 'matches', 'property');
+      funcDepMap[isModularize ? 'main' : 'wrapperValue'].push('arrayEach', 'baseForOwn', 'getCallback',  'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'LodashWrapper', 'matches', 'property');
 
       if (isModern) {
         source = removeIsArgumentsFork(source);
@@ -3779,7 +3781,7 @@ function build(options, callback) {
     if (isExcluded(isModularize ? 'main' : 'mixin')) {
       source = removeMixinCalls(source);
     }
-    if (isExcluded(isModularize ? 'main' : 'wrapperValueOf')) {
+    if (isExcluded(isModularize ? 'main' : 'wrapperValue')) {
       source = removeChaining(source);
     }
     if (isModularize) {
@@ -3810,7 +3812,7 @@ function build(options, callback) {
         source = removeSupportNonEnumArgs(source);
         source = removeSupportNonEnumStrings(source);
       }
-      if (isExcluded('wrapperValueOf')) {
+      if (isExcluded('wrapperValue')) {
         source = removeChaining(source);
       }
     }
