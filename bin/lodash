@@ -293,7 +293,8 @@ var funcDependencyMap = createMap({
   'wrapperValue': ['baseWrapperValue'],
 
   // Dependencies of `Map` cache functions.
-  'MapCache': ['mapGet', 'mapHas', 'mapSet'],
+  'MapCache': ['mapDelete', 'mapGet', 'mapHas', 'mapSet'],
+  'mapDelete': [],
   'mapGet': [],
   'mapHas': [],
   'mapSet': [],
@@ -788,6 +789,7 @@ var privateFuncs = [
   'LazyWrapper',
   'LodashWrapper',
   'MapCache',
+  'mapDelete',
   'mapGet',
   'mapHas',
   'mapSet',
