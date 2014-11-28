@@ -3768,7 +3768,7 @@ function build(options, callback) {
     _.each(['MapCache', 'SetCache'], function(funcName) {
       if (isExcluded(funcName)) {
         // Remove prototype assignments.
-        source = source.replace(RegExp('^(?: *\\/\\/.*\\n)* *' + funcName + '\\.prototype\\.[$\\w]+\\s*=.+?;\\n', 'gm'), '');
+        source = source.replace(RegExp('^(?: *\\/\\/.*\\n)* *' + funcName + '\\.prototype(?:\\.[$\\w]+|\\[\'[^\']+\'\\])\\s*=.+?;\\n', 'gm'), '');
       }
     });
 
