@@ -865,37 +865,6 @@ function addCommandsToHeader(source, commands) {
   });
 }
 
-// Expand properties, variables, and their function dependencies to include in the build.
-function expand(identifiers, funcNames, funcDepMap, objDepMap, varDepMap, stack) {
-  stack || (stack = []);
-  _.each(funcNames, function(funcName) {
-    if (_.includes(stack, funcName)) {
-      return;
-    }
-    stack.push(funcName);
-    _.each([varDepMap, objDepMap], function(depMap) {
-      var depNames = _.slice(depMap[funcName]);
-      if (_.isEmpty(depNames)) {
-        return;
-      }
-      _.reduce(depNames, function(result, depName) {
-        push.apply(result, [depName].concat(depMap[depName] || []));
-        return result;
-      }, identifiers);
-
-      _.reduce(identifiers, function(result, depName) {
-        push.apply(result, getDependencies(funcDepMap[depName], funcDepMap));
-        return result;
-      }, funcNames);
-
-      push.apply(funcNames, identifiers);
-
-      expand(identifiers, funcNames, funcDepMap, objDepMap, varDepMap, stack);
-    });
-  });
-}
-
-
 /**
  * Creates modules based on the provided build state.
  *
@@ -956,21 +925,24 @@ function buildModule(state, onComplete) {
           moduleName = isNpm ? 'lodash.' + (isInternal ? '_' : '') + identifier.toLowerCase() : identifier,
           modulePath = isNpm ? moduleName : getModulePath(identifier, category, funcDepMap);
 
-      var inlinees = [identifier],
-          inlineFuncs = _.includes(allFuncs, identifier) ? inlinees : [],
-          inlineObjs = _.includes(includeObjs, identifier) ? inlinees : [],
-          inlineVars = _.includes(includeVars, identifier) ? inlinees : [];
-
-      var depNames = _.difference(_.reduce(inlinees, function(result, identifier) {
-        return _.union(result,
-          getDependencies(identifier, funcDepMap, true),
+      if (isNpm) {
+        var depNames = [],
+            inlinees = expand([identifier], funcDepMap, objDepMap, varDepMap),
+            inlineFuncs = _.intersection(allFuncs, inlinees),
+            inlineObjs = _.intersection(objDependencies, inlinees),
+            inlineVars = _.intersection(varDependencies, inlinees);
+      } else {
+        depNames = _.union(
+          getDependencies(identifier, funcDepMap),
           objDepMap[identifier],
           varDepMap[identifier]
-        );
-      }, []), inlinees);
+        ).sort();
 
-      depNames.sort();
-
+        inlinees = [identifier];
+        inlineFuncs = _.includes(allFuncs, identifier) ? inlinees : [];
+        inlineObjs = _.includes(objDependencies, identifier) ? inlinees : [];
+        inlineVars = _.includes(varDependencies, identifier) ? inlinees : [];
+      }
       state.outputPath = path.join(outputPath, modulePath, (isNpm ? 'index' : identifier) + '.js');
       state.buildFuncs = state.includeFuncs = inlineFuncs;
       state.includeObjs = inlineObjs;
@@ -1083,7 +1055,7 @@ function buildModule(state, onComplete) {
       return './' + category.toLowerCase();
     });
 
-    var deps = getDependencies('main', funcDepMap, true)
+    var deps = getDependencies('main', funcDepMap)
       .concat(objDepMap.main || [])
       .concat(varDepMap.main || [])
       .sort();
@@ -1663,6 +1635,32 @@ function displayHelp() {
   ].join('\n'));
 }
 
+// Expand properties, variables, and their function dependencies to include in the build.
+function expand(identifiers, funcDepMap, objDepMap, varDepMap, stack) {
+  var result = stack ? identifiers : _.slice(identifiers);
+  stack || (stack = []);
+
+  _.each(identifiers, function(identifier) {
+    if (_.includes(stack, identifier)) {
+      return;
+    }
+    stack.push(identifier);
+    _.each([funcDepMap, objDepMap, varDepMap], function(depMap) {
+      var depNames = _.slice(depMap[identifier]);
+      if (_.isEmpty(depNames)) {
+        return;
+      }
+      _.each(depNames, function(depName) {
+        result.push(depName);
+        push.apply(result, getDependencies(depName, funcDepMap, true));
+      });
+
+      expand(result, funcDepMap, objDepMap, varDepMap, stack);
+    });
+  });
+  return result;
+}
+
 /**
  * Gets the aliases associated with a given function name.
  *
@@ -1758,14 +1756,13 @@ function getDepPaths(depNames, fromPath, funcDepMap) {
  *
  * @private
  * @param {string} funcName A function name or array of function names.
- * @param {Object} [funcDepMap] The dependency map used to look up dependants.
- * @param {boolean} [isShallow=false] A flag to specify getting only the immediate dependants.
+ * @param {Object} funcDepMap The dependency map used to look up dependants.
+ * @param {boolean} [isDeep=false] A flag to specify getting nested dependants.
  * @param- {Array} [stackA=[]] Internally used track queried function names.
  * @returns {Array} Returns an array of function dependants.
  */
-function getDependants(funcName, funcDepMap, isShallow, stack) {
+function getDependants(funcName, funcDepMap, isDeep, stack) {
   var funcNames = _.isArray(funcName) ? funcName : [funcName];
-  funcDepMap || (funcDepMap = funcDependencyMap);
   stack || (stack = []);
 
   // Iterate over the dependency map, adding names of functions that have `funcName` as a dependency.
@@ -1773,9 +1770,9 @@ function getDependants(funcName, funcDepMap, isShallow, stack) {
     if (!_.includes(stack, otherName) &&
         _.some(funcNames, _.partial(_.includes, depNames, _, 0))) {
       result.push(otherName);
-      if (!isShallow) {
+      if (isDeep) {
         stack.push(otherName);
-        push.apply(result, getDependants(otherName, funcDepMap, isShallow, stack));
+        push.apply(result, getDependants(otherName, funcDepMap, isDeep, stack));
       }
     }
   }, []));
@@ -1788,19 +1785,17 @@ function getDependants(funcName, funcDepMap, isShallow, stack) {
  *
  * @private
  * @param {string|string[]} funcName A function name or array of dependencies to query.
- * @param {Object} [funcDepMap] The dependency map used to look up dependants.
- * @param {boolean} [isShallow=false] A flag to specify getting only the immediate dependencies.
+ * @param {Object} funcDepMap The dependency map used to look up dependants.
+ * @param {boolean} [isDeep=false] A flag to specify getting nested dependencies.
  * @param- {Array} [stackA=[]] Internally used track queried function names.
  * @returns {Array} Returns an array of function dependencies.
  */
-function getDependencies(funcName, funcDepMap, isShallow, stack) {
+function getDependencies(funcName, funcDepMap, isDeep, stack) {
   var depNames = _.isArray(funcName) ? funcName : funcDepMap[funcName];
-  funcDepMap || (funcDepMap = funcDependencyMap);
-
   if (!_.size(depNames)) {
     return [];
   }
-  if (isShallow) {
+  if (!isDeep) {
     return depNames.slice();
   }
   stack || (stack = []);
@@ -1811,7 +1806,7 @@ function getDependencies(funcName, funcDepMap, isShallow, stack) {
     if (!_.includes(stack, otherName)) {
       stack.push(otherName);
       result.push(otherName);
-      push.apply(result, getDependencies(otherName, funcDepMap, isShallow, stack));
+      push.apply(result, getDependencies(otherName, funcDepMap, isDeep, stack));
     }
   }));
 }
@@ -3557,26 +3552,22 @@ function build(options, callback) {
         result = _.union(result, plusFuncs);
       }
       if (!_.isEmpty(minusFuncs)) {
-        result = _.difference(result, minusFuncs.concat(getDependants(minusFuncs, funcDepMap)));
+        result = _.difference(result, minusFuncs.concat(getDependants(minusFuncs, funcDepMap, true)));
       }
       if (isModularize) {
         _.pull(result, 'runInContext');
       }
-      return getDependencies(result, funcDepMap);
+      return getDependencies(result, funcDepMap, true);
     }());
 
     // Expand properties, variables, and their function dependencies to include in the build.
-    if (_.includes(buildFuncs, 'lodash')) {
-      push.apply(buildFuncs, getDependencies(funcDepMap.main, funcDepMap));
-      push.apply(includeObjs, objDepMap.main);
-      push.apply(includeVars, varDepMap.main);
+    if (isModularize && _.includes(buildFuncs, 'lodash')) {
+      buildFuncs.push('main');
     }
-    expand(includeObjs, buildFuncs, funcDepMap, objDepMap, varDepMap);
-    expand(includeVars, buildFuncs, funcDepMap, objDepMap, varDepMap);
-
-    buildFuncs = _.intersection(allFuncs, buildFuncs);
-    includeObjs = _.intersection(objDependencies, includeObjs);
-    includeVars = _.intersection(varDependencies, includeVars);
+    var depNames = expand(buildFuncs, funcDepMap, objDepMap, varDepMap);
+    buildFuncs = _.intersection(allFuncs, depNames);
+    includeObjs = _.intersection(objDependencies, depNames);
+    includeVars = _.intersection(varDependencies, depNames);
 
     /*------------------------------------------------------------------------*/
 
