@@ -865,6 +865,37 @@ function addCommandsToHeader(source, commands) {
   });
 }
 
+// Expand properties, variables, and their function dependencies to include in the build.
+function expand(identifiers, funcNames, funcDepMap, objDepMap, varDepMap, stack) {
+  stack || (stack = []);
+  _.each(funcNames, function(funcName) {
+    if (_.includes(stack, funcName)) {
+      return;
+    }
+    stack.push(funcName);
+    _.each([varDepMap, objDepMap], function(depMap) {
+      var depNames = _.slice(depMap[funcName]);
+      if (_.isEmpty(depNames)) {
+        return;
+      }
+      _.reduce(depNames, function(result, depName) {
+        push.apply(result, [depName].concat(depMap[depName] || []));
+        return result;
+      }, identifiers);
+
+      _.reduce(identifiers, function(result, depName) {
+        push.apply(result, getDependencies(funcDepMap[depName], funcDepMap));
+        return result;
+      }, funcNames);
+
+      push.apply(funcNames, identifiers);
+
+      expand(identifiers, funcNames, funcDepMap, objDepMap, varDepMap, stack);
+    });
+  });
+}
+
+
 /**
  * Creates modules based on the provided build state.
  *
@@ -903,48 +934,12 @@ function buildModule(state, onComplete) {
     defaultBuildCallback(data);
   };
 
-  var getInlinees = function(identifier, result) {
-    var privateDeps = _.filter(funcDepMap[identifier], isPrivate);
-    result || (result = []);
-
-    _.each(privateDeps, function(funcName) {
-      var dependants = getDependants(funcName, funcDepMap, true);
-
-      // Only inline functions if they have one dependent or all dependants are inlined.
-      if (!(_.size(dependants) == 1 || _.isEmpty(_.difference(dependants, result)))) {
-        return;
-      }
-      result.push(funcName);
-
-      // Inline object and variable dependencies if all dependants are inlined.
-      _.each([objDepMap, varDepMap], function(depMap, index) {
-        _.each(depMap[funcName], function(depName) {
-          var dependants = getDependants(depName, depMap, true);
-          if (_.isEmpty(_.difference(dependants, result))) {
-            result.push(depName);
-          }
-        });
-      });
-
-      getInlinees(funcName, result);
-    });
-    return result;
-  };
-
   var getUnusedDeps = function(source, depNames) {
     source = cleanupSource(removeStrings(removeComments(source)));
     return _.reject(depNames, function(depName) {
       return RegExp('\\b' + depName + '\\b').test(source);
     });
   };
-
-  // Create map of private identifiers to be inlined.
-  var inlineMap = _.transform(_.difference(buildFuncs, privateFuncs), function(result, funcName) {
-    var inlinees = getInlinees(funcName);
-    if (!_.isEmpty(inlinees)) {
-      result[funcName] = inlinees;
-    }
-  }, createMap());
 
   // Exclude `_.noConflict` when exporting for npm.
   if (isNpm) {
@@ -961,12 +956,10 @@ function buildModule(state, onComplete) {
           moduleName = isNpm ? 'lodash.' + (isInternal ? '_' : '') + identifier.toLowerCase() : identifier,
           modulePath = isNpm ? moduleName : getModulePath(identifier, category, funcDepMap);
 
-      var inlinees = [identifier];
-      push.apply(inlinees, inlineMap[identifier]);
-
-      var inlineFuncs = _.intersection(allFuncs, inlinees),
-          inlineObjs = _.intersection(includeObjs, inlinees),
-          inlineVars = _.intersection(includeVars, inlinees);
+      var inlinees = [identifier],
+          inlineFuncs = _.includes(allFuncs, identifier) ? inlinees : [],
+          inlineObjs = _.includes(includeObjs, identifier) ? inlinees : [],
+          inlineVars = _.includes(includeVars, identifier) ? inlinees : [];
 
       var depNames = _.difference(_.reduce(inlinees, function(result, identifier) {
         return _.union(result,
@@ -3573,47 +3566,17 @@ function build(options, callback) {
     }());
 
     // Expand properties, variables, and their function dependencies to include in the build.
-    (function() {
-      function expand(includes, allDeps, depMap, funcNames, stack) {
-        stack || (stack = []);
-        _.each(funcNames || buildFuncs, function(funcName) {
-          if (_.includes(stack, funcName)) {
-            return;
-          }
-          stack.push(funcName);
-          _.each([varDepMap, objDepMap], function(otherDepMap) {
-            var depNames = otherDepMap[funcName];
-            if (depNames) {
-              var validDeps = _.transform(depNames, function(result, depName) {
-                var depNames = depMap[depName];
-                push.apply(result, depNames || []);
-              });
+    if (_.includes(buildFuncs, 'lodash')) {
+      push.apply(buildFuncs, getDependencies(funcDepMap.main, funcDepMap));
+      push.apply(includeObjs, objDepMap.main);
+      push.apply(includeVars, varDepMap.main);
+    }
+    expand(includeObjs, buildFuncs, funcDepMap, objDepMap, varDepMap);
+    expand(includeVars, buildFuncs, funcDepMap, objDepMap, varDepMap);
 
-              push.apply(validDeps, _.filter(depNames, _.partial(_.includes, allDeps, _, 0)));
-
-              var otherNames = _.transform(validDeps, function(result, depName) {
-                push.apply(result, getDependencies(funcDepMap[depName], funcDepMap));
-              });
-
-              push.apply(includes, validDeps);
-              push.apply(buildFuncs, otherNames);
-              expand(includes, allDeps, depMap, otherNames, stack);
-            }
-          });
-        });
-      }
-      if (_.includes(buildFuncs, 'lodash')) {
-        push.apply(buildFuncs, getDependencies(funcDepMap.main, funcDepMap));
-        push.apply(includeObjs, objDepMap.main);
-        push.apply(includeVars, varDepMap.main);
-      }
-      expand(includeObjs, objDependencies, objDepMap);
-      expand(includeVars, varDependencies, varDepMap);
-
-      buildFuncs = _.uniq(buildFuncs);
-      includeObjs = _.union(includeObjs, _.intersection(objDependencies, includeVars));
-      includeVars = _.union(includeVars, _.intersection(varDependencies, includeObjs));
-    }());
+    buildFuncs = _.intersection(allFuncs, buildFuncs);
+    includeObjs = _.intersection(objDependencies, includeObjs);
+    includeVars = _.intersection(varDependencies, includeVars);
 
     /*------------------------------------------------------------------------*/
 
@@ -3774,7 +3737,7 @@ function build(options, callback) {
       // Remove `LodashWrapper.prototype` assignment.
       source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype\s*=.+\n/m, '');
     }
-    if (isExcluded('memoize') || isExcluded('MapCache')) {
+    if (isExcluded('memoize')) {
       // Remove `memoize.Cache` assignment.
       source = source.replace(/^(?: *\/\/.*\n)* *memoize\.Cache\s*=.+?;\n/m, '');
     }
