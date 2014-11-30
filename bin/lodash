@@ -642,16 +642,16 @@ var categoryMap = createMap({
   ]
 });
 
-/* Used to map categories with their plural form. */
-var categoryToPluralMap = createMap({
-  'Array': 'Array',
-  'Chain': 'Chain',
-  'Collection': 'Collection',
-  'Function': 'Func',
-  'Lang': 'Lang',
-  'Object': 'Object',
-  'String': 'String',
-  'Utility': 'Utility'
+/* Used to map categories with their dependency name. */
+var categoryToDepName = createMap({
+  'Array': 'array',
+  'Chain': 'chain',
+  'Collection': 'collection',
+  'Function': 'func',
+  'Lang': 'lang',
+  'Object': 'object',
+  'String': 'string',
+  'Utility': 'utility'
 });
 
 /* Used to enforce dependencies at the top level. */
@@ -808,7 +808,7 @@ var privateFuncs = [
   'unescapeHtmlChar'
 ];
 
-/** List of all property dependencies. */
+/** List of all object property dependencies. */
 var objDependencies = _.uniq(_.transform(objDependencyMap, _.bind(push.apply, push), []));
 
 /** List of all variable dependencies. */
@@ -1084,9 +1084,7 @@ function buildModule(state, onComplete) {
       return _.first(getCategories(identifier, funcDepMap));
     }))).sort();
 
-    var categoryDeps = _.map(categories, function(category) {
-      return categoryToPluralMap[category].toLowerCase();
-    });
+    var categoryDeps = _.map(categories, _.propertyOf(categoryToDepName));
 
     var categoryDepPaths = _.map(categories, function(category) {
       return './' + category.toLowerCase();
@@ -1156,7 +1154,7 @@ function buildModule(state, onComplete) {
         ];
 
         if (_.includes(identifiers, 'templateSettings')) {
-          code.push('  (lodash.templateSettings = ' + categoryToPluralMap.String.toLowerCase() + '.templateSettings).imports._ = lodash;');
+          code.push('  (lodash.templateSettings = ' + categoryToDepName.String + '.templateSettings).imports._ = lodash;');
         }
         if (!_.isEmpty(funcNames)) {
           code.push(
@@ -1182,8 +1180,8 @@ function buildModule(state, onComplete) {
         if (_.includes(deps, identifier)) {
           return match;
         }
-        var category = categoryToPluralMap[_.first(getCategories(identifier, funcDepMap))];
-        return left + (category ? category.toLowerCase() + '.' : '') + identifier;
+        var category = categoryToDepName[_.first(getCategories(identifier, funcDepMap))];
+        return left + (category ? category + '.' : '') + identifier;
       });
 
       var unusedDeps = getUnusedDeps(source, deps);
