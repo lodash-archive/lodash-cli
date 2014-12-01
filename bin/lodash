@@ -934,8 +934,8 @@ function buildModule(state, onComplete) {
       } else {
         depNames = _.union(
           getDependencies(identifier, funcDepMap),
-          objDepMap[identifier],
-          varDepMap[identifier]
+          getDependencies(identifier, objDepMap),
+          getDependencies(identifier, varDepMap)
         ).sort();
 
         inlinees = [identifier];
@@ -1055,10 +1055,11 @@ function buildModule(state, onComplete) {
       return './' + category.toLowerCase();
     });
 
-    var deps = getDependencies('main', funcDepMap)
-      .concat(objDepMap.main || [])
-      .concat(varDepMap.main || [])
-      .sort();
+    var deps = _.union(
+      getDependencies('main', funcDepMap),
+      getDependencies('main', objDepMap),
+      getDependencies('main', varDepMap)
+    ).sort();
 
     if (isAMD) {
       basename = 'main';
@@ -1636,6 +1637,17 @@ function displayHelp() {
 }
 
 // Expand properties, variables, and their function dependencies to include in the build.
+
+/**
+ * Gets an array of dependencies for the given identifier(s).
+ *
+ * @private
+ * @param {string|string[]} identifier The identifier or array of identifiers to query.
+ * @param {Object} depMap The dependency map used to look up dependants.
+ * @param {boolean} [isDeep=false] A flag to specify getting nested dependencies.
+ * @param- {Array} [stackA=[]] Internally used track queried identifiers.
+ * @returns {Array} Returns an array of identifier dependencies.
+ */
 function expand(identifiers, funcDepMap, objDepMap, varDepMap, stack) {
   var result = stack ? identifiers : _.slice(identifiers);
   stack || (stack = []);
@@ -1645,20 +1657,13 @@ function expand(identifiers, funcDepMap, objDepMap, varDepMap, stack) {
       return;
     }
     stack.push(identifier);
-    _.each([funcDepMap, objDepMap, varDepMap], function(depMap) {
-      var depNames = _.slice(depMap[identifier]);
-      if (_.isEmpty(depNames)) {
-        return;
-      }
-      _.each(depNames, function(depName) {
-        result.push(depName);
-        push.apply(result, getDependencies(depName, funcDepMap, true));
-      });
 
-      expand(result, funcDepMap, objDepMap, varDepMap, stack);
-    });
+    push.apply(result, getDependencies(identifier, funcDepMap));
+    push.apply(result, getDependencies(identifier, objDepMap));
+    push.apply(result, getDependencies(identifier, varDepMap));
+    expand(result, funcDepMap, objDepMap, varDepMap, stack);
   });
-  return result;
+  return stack ? result : _.uniq(result);
 }
 
 /**
@@ -1752,61 +1757,56 @@ function getDepPaths(depNames, fromPath, funcDepMap) {
 }
 
 /**
- * Gets an array of depenants for the given function name(s).
+ * Gets an array of depenants for the given identifier(s).
  *
  * @private
- * @param {string} funcName A function name or array of function names.
- * @param {Object} funcDepMap The dependency map used to look up dependants.
+ * @param {string} identifier The identifier or array of identifiers to query.
+ * @param {Object} depMap The dependency map used to look up dependants.
  * @param {boolean} [isDeep=false] A flag to specify getting nested dependants.
- * @param- {Array} [stackA=[]] Internally used track queried function names.
- * @returns {Array} Returns an array of function dependants.
+ * @param- {Array} [stackA=[]] Internally used track queried identifiers.
+ * @returns {Array} Returns an array of identifier dependants.
  */
-function getDependants(funcName, funcDepMap, isDeep, stack) {
-  var funcNames = _.isArray(funcName) ? funcName : [funcName];
+function getDependants(identifier, depMap, isDeep, stack) {
+  var identifiers = _.isArray(identifier) ? identifier : [identifier];
   stack || (stack = []);
 
-  // Iterate over the dependency map, adding names of functions that have `funcName` as a dependency.
-  return _.uniq(_.transform(funcDepMap, function(result, depNames, otherName) {
+  // Iterate over the dependency map, adding names of functions that have `identifier` as a dependency.
+  return _.uniq(_.transform(depMap, function(result, depNames, otherName) {
     if (!_.includes(stack, otherName) &&
-        _.some(funcNames, _.partial(_.includes, depNames, _, 0))) {
+        _.some(identifiers, _.partial(_.includes, depNames, _, 0))) {
       result.push(otherName);
       if (isDeep) {
         stack.push(otherName);
-        push.apply(result, getDependants(otherName, funcDepMap, isDeep, stack));
+        push.apply(result, getDependants(otherName, depMap, isDeep, stack));
       }
     }
   }, []));
 }
 
 /**
- * Gets an array of dependencies for a given function name. If an array of
- * dependencies is provided, it will return an array containing the given
- * dependencies plus any additional detected sub-dependencies.
+ * Gets an array of dependencies for the given identifier(s).
  *
  * @private
- * @param {string|string[]} funcName A function name or array of dependencies to query.
- * @param {Object} funcDepMap The dependency map used to look up dependants.
+ * @param {string|string[]} identifier The identifier or array of identifiers to query.
+ * @param {Object} depMap The dependency map used to look up dependants.
  * @param {boolean} [isDeep=false] A flag to specify getting nested dependencies.
- * @param- {Array} [stackA=[]] Internally used track queried function names.
- * @returns {Array} Returns an array of function dependencies.
+ * @param- {Array} [stackA=[]] Internally used track queried identifiers.
+ * @returns {Array} Returns an array of identifier dependencies.
  */
-function getDependencies(funcName, funcDepMap, isDeep, stack) {
-  var depNames = _.isArray(funcName) ? funcName : funcDepMap[funcName];
-  if (!_.size(depNames)) {
-    return [];
-  }
+function getDependencies(identifier, depMap, isDeep, stack) {
+  var depNames = _.isArray(identifier) ? identifier : depMap[identifier];
   if (!isDeep) {
-    return depNames.slice();
+    return _.slice(depNames);
   }
   stack || (stack = []);
 
-  // Recursively accumulate the dependencies of the `funcName` function,
+  // Recursively accumulate the dependencies of the `identifier` function,
   // the dependencies of its dependencies, and so on.
   return _.uniq(_.transform(depNames, function(result, otherName) {
     if (!_.includes(stack, otherName)) {
       stack.push(otherName);
       result.push(otherName);
-      push.apply(result, getDependencies(otherName, funcDepMap, isDeep, stack));
+      push.apply(result, getDependencies(otherName, depMap, isDeep, stack));
     }
   }));
 }
