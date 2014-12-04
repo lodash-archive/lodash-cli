@@ -110,6 +110,7 @@ var funcDependencyMap = createMap({
 
   // Dependencies of Lo-Dash methods.
   'after': ['isFunction'],
+  'ary': ['createWrapper', 'isIterateeCall'],
   'assign': ['baseAssign', 'createAssigner'],
   'at': ['baseAt', 'baseFlatten', 'isLength', 'toIterable'],
   'attempt': ['isError'],
@@ -530,6 +531,7 @@ var categoryMap = createMap({
   ],
   'Function': [
     'after',
+    'ary',
     'before',
     'bind',
     'bindAll',

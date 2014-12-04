@@ -74,9 +74,9 @@ var aliasToRealMap = createMap({
   'object': 'zipObject',
   'select': 'filter',
   'tail': 'rest',
-  'toJSON': 'wrapperValueOf',
+  'toJSON': 'wrapperValue',
   'unique': 'uniq',
-  'value': 'wrapperValueOf'
+  'valueOf': 'wrapperValue'
 });
 
 /** Used to map real names with their aliases. */
@@ -98,7 +98,7 @@ var realToAliasMap = createMap({
   'rest': ['tail'],
   'some': ['any'],
   'uniq': ['unique'],
-  'wrapperValueOf': ['toJSON', 'value'],
+  'wrapperValue': ['toJSON', 'valueOf'],
   'zipObject': ['object']
 });
 
@@ -149,7 +149,7 @@ var categoryMap = createMap({
     'wrapperChain',
     'wrapperReverse',
     'wrapperToString',
-    'wrapperValueOf'
+    'wrapperValue'
   ],
   'Collection': [
     'at',
@@ -184,6 +184,7 @@ var categoryMap = createMap({
   ],
   'Function': [
     'after',
+    'ary',
     'before',
     'bind',
     'bindAll',

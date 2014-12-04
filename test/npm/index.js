@@ -27,6 +27,7 @@ mixin = (function(func) {
 
 // add functions
 lodash.after = require('lodash.after');
+lodash.ary = require('lodash.ary');
 lodash.assign = require('lodash.assign');
 lodash.at = require('lodash.at');
 lodash.attempt = require('lodash.attempt');
