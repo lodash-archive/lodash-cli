@@ -3469,7 +3469,7 @@ function build(options, callback) {
         });
 
         // Replace `_.isRegExp`.
-        _.pull(funcDepMap.isRegExp, 'isObject');
+        _.pull(funcDepMap.isRegExp, 'isObject').push('isObjectLike');
 
         source = replaceFunction(source, 'isRegExp', [
           'function isRegExp(value) {',
