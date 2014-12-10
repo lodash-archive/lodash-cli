@@ -342,7 +342,7 @@ var funcDependencyMap = createMap({
   'baseFunctions': ['isFunction'],
   'baseIndexOf': ['indexOfNaN'],
   'baseInvoke': ['baseEach', 'isLength'],
-  'baseIsEqual': ['isArguments', 'isHostObject', 'keys'],
+  'baseIsEqual': ['isArguments', 'isArray', 'isHostObject', 'keys'],
   'baseMap': ['baseEach'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isArrayLike', 'isPlainObject'],
   'basePullAt': ['baseAt', 'baseCompareAscending', 'isIndex'],
