@@ -2064,7 +2064,7 @@ function getVars(source) {
     // Match a variable declaration in a declaration list.
     [',\\n' + commentPattern + indentB + '([$\\w]+)\\s*=[\\s\\S]+?(?=[,;]\\n)', 1, -1],
     // Match a variable that is not part of a declaration list.
-    ['^(' + indentA + ')var\\s+([$\\w]+)\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n', 2, -1]
+    ['^(' + indentA + ')var\\s+([$\\w]+)\\s*(?:|=\\s*(?:.+?(?:[&+]\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n', 2, -1]
   ];
 
   return _.uniq(_.transform(reAttempts, function(result, data) {
@@ -2193,7 +2193,7 @@ function matchVar(source, varName, leadingComments) {
     // Match a variable declaration in a declaration list.
     ['(,\\n' + commentPattern + ')( *' + varName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
     // Match a variable that is not part of a declaration list.
-    ['^(' + commentPattern + ')(( *)var\\s+' + varName + '\\s*(?:|=\\s*(?:.+?(?:&&\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\3\\S+?));\\n)', 2, 0]
+    ['^(' + commentPattern + ')(( *)var\\s+' + varName + '\\s*(?:|=\\s*(?:.+?(?:[&+]\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\3\\S+?));\\n)', 2, 0]
   ];
 
   // Match complex variable assignments.
@@ -3653,10 +3653,10 @@ function build(options, callback) {
           // Assign `settings` using `template.imports`.
           match = match.replace(/=\s*templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings');
 
-          // Remove `sourceURL` from `_.template`.
-          match = removeVar(match, 'sourceURL');
-          match = match.replace(/^(?: *\/\/.*\n)* *sourceURL\s*=[^;]+;\n+/m, '');
-          return match.replace(/\bsourceURL\s*\+\s*/, '');
+          // Remove default `sourceURL` value.
+          return match.replace(matchVar(match, 'sourceURL'), function(match) {
+            return match.replace(/=[\s\S]+?(?=;\n$)/, "= 'sourceURL' in options ? '//# sourceURL=' + options.sourceURL + '\\n' : ''");
+          });
         });
 
         if (isNode) {
