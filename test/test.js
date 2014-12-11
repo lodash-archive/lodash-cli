@@ -298,7 +298,7 @@ var categoryMap = createMap({
 });
 
 /** List of all functions. */
-var allFuncs = _.reject(_.functions(_), _.bind(RegExp.prototype.test, /^_/)).sort();
+var allFuncs = _.reject(_.functions(_).sort(), _.partial(_.startsWith, _, '_', 0));
 
 /*----------------------------------------------------------------------------*/
 
