@@ -307,6 +307,7 @@ var funcDependencyMap = createMap({
   'createCache': ['constant', 'isNative', 'SetCache'],
 
   // Dependencies of private functions.
+  'argsToObject': [],
   'arrayEach': [],
   'arrayEachRight': [],
   'arrayEvery': [],
@@ -342,7 +343,8 @@ var funcDependencyMap = createMap({
   'baseFunctions': ['isFunction'],
   'baseIndexOf': ['indexOfNaN'],
   'baseInvoke': ['baseEach', 'isLength'],
-  'baseIsEqual': ['isArguments', 'isArray', 'isHostObject', 'keys'],
+  'baseIsEqual': ['baseIsEqualDeep'],
+  'baseIsEqualDeep': ['argsToObject', 'baseIsEqual', 'equalArrays', 'equalByClass', 'equalObjects', 'isArguments', 'isArray', 'isHostObject'],
   'baseMap': ['baseEach'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isArrayLike', 'isPlainObject'],
   'basePullAt': ['baseAt', 'baseCompareAscending', 'isIndex'],
@@ -377,6 +379,9 @@ var funcDependencyMap = createMap({
   'deburrLetter': [],
   'escapeHtmlChar': [],
   'escapeStringChar': [],
+  'equalArrays': ['baseIsEqual'],
+  'equalByClass': [],
+  'equalObjects': ['baseIsEqual', 'keys'],
   'getCallback': ['baseCallback', 'callback'],
   'getData': ['noop'],
   'getIndexOf': ['baseIndexOf', 'indexOf'],
@@ -412,7 +417,7 @@ var funcDependencyMap = createMap({
 /** Used to track Lo-Dash object dependencies of identifiers. */
 var objDependencyMap = createMap({
   'baseCallback': ['support'],
-  'baseIsEqual': ['support'],
+  'baseIsEqualDeep': ['support'],
   'initObjectClone': ['support'],
   'isArguments': ['support'],
   'isArrayLike': ['support'],
@@ -701,6 +706,7 @@ var placeholderFuncs = [
 
 /** List of private functions. */
 var privateFuncs = [
+  'argsToObject',
   'arrayEach',
   'arrayEachRight',
   'arrayEvery',
@@ -736,6 +742,7 @@ var privateFuncs = [
   'baseIndexOf',
   'baseInvoke',
   'baseIsEqual',
+  'baseIsEqualDeep',
   'baseMerge',
   'basePick',
   'basePullAt',
@@ -770,6 +777,9 @@ var privateFuncs = [
   'createPartialWrapper',
   'createWrapper',
   'deburrLetter',
+  'equalArrays',
+  'equalByClass',
+  'equalObjects',
   'escapeHtmlChar',
   'escapeStringChar',
   'getCallback',
@@ -2533,12 +2543,12 @@ function removeIsFunctionFork(source) {
 function removeIsHostObject(source, funcDepMap) {
   source = source == null ? '' : String(source);
 
-  _.each(['baseIsEqual', 'isCloneable', 'isElement', 'isNative', 'shimIsPlainObject'], function(funcName) {
+  _.each(['baseIsEqualDeep', 'isCloneable', 'isElement', 'isNative', 'shimIsPlainObject'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isHostObject');
   });
 
-  _.each(['baseIsEqual', 'isCloneable', 'shimIsPlainObject'], function(funcName) {
+  _.each(['baseIsEqualDeep', 'isCloneable', 'shimIsPlainObject'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match.replace(/\s*&&\s*!isHostObject\([^)]+\)/g, '');
     });
@@ -2726,7 +2736,7 @@ function removeStrings(source) {
  * @returns {string} Returns the modified source.
  */
 function removeSupportArgsClass(source, funcDepMap, objDepMap) {
-  _.each(['baseIsEqual', 'isArguments', 'isArrayLike', 'isPlainObject', 'initObjectClone', 'shimIsPlainObject'], function(funcName) {
+  _.each(['baseIsEqualDeep', 'isArguments', 'isArrayLike', 'isPlainObject', 'initObjectClone', 'shimIsPlainObject'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isArguments');
 
@@ -2743,8 +2753,8 @@ function removeSupportArgsClass(source, funcDepMap, objDepMap) {
     return match.replace(/!support\.argsClass/g, '!isArguments(arguments)');
   });
 
-  // Remove `support.argsClass` from `baseIsEqual`.
-  source = source.replace(matchFunction(source, 'baseIsEqual'), function(match) {
+  // Remove `support.argsClass` from `baseIsEqualDeep`.
+  source = source.replace(matchFunction(source, 'baseIsEqualDeep'), function(match) {
     return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!lodash\.support\.argsClass\b[\s\S]+?\n\1\}\n/m, '');
   });
 
@@ -3761,14 +3771,14 @@ function build(options, callback) {
       }
     }
     else {
+      if (isExcluded('baseIsEqualDeep', 'initObjectClone', 'isArguments', 'isPlainObject')) {
+        source = removeSupportArgsClass(source);
+      }
       if (isExcluded('clone', 'isElement', 'isEqual', 'isPlainObject')) {
         source = removeSupportNodeClass(source);
       }
       if (isExcluded('isArguments')) {
         source = replaceSupportProp(source, 'argsClass', 'true');
-      }
-      if (isExcluded('baseIsEqual', 'initObjectClone', 'isArguments', 'isPlainObject')) {
-        source = removeSupportArgsClass(source);
       }
       if (isExcluded('isElement')) {
         source = removeSupportDom(source);
