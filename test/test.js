@@ -70,11 +70,13 @@ var aliasToRealMap = createMap({
   'iteratee': 'callback',
   'methods': 'functions',
   'object': 'zipObject',
+  'reverse': 'wrapperReverse',
   'select': 'filter',
   'tail': 'rest',
   'toJSON': 'wrapperValue',
   'unique': 'uniq',
-  'valueOf': 'wrapperValue'
+  'valueOf': 'wrapperValue',
+  'value': 'wrapperValue'
 });
 
 /** Used to map real names with their aliases. */
@@ -96,7 +98,8 @@ var realToAliasMap = createMap({
   'rest': ['tail'],
   'some': ['any'],
   'uniq': ['unique'],
-  'wrapperValue': ['toJSON', 'valueOf'],
+  'wrapperReverse': ['reverse'],
+  'wrapperValue': ['toJSON', 'value', 'valueOf'],
   'zipObject': ['object']
 });
 

@@ -69,11 +69,13 @@ var aliasToRealMap = createMap({
   'iteratee': 'callback',
   'methods': 'functions',
   'object': 'zipObject',
+  'reverse': 'wrapperReverse',
   'select': 'filter',
   'tail': 'rest',
   'toJSON': 'wrapperValue',
   'unique': 'uniq',
-  'valueOf': 'wrapperValue'
+  'valueOf': 'wrapperValue',
+  'value': 'wrapperValue'
 });
 
 /** Used to map real names with their aliases. */
@@ -95,7 +97,8 @@ var realToAliasMap = createMap({
   'rest': ['tail'],
   'some': ['any'],
   'uniq': ['unique'],
-  'wrapperValue': ['toJSON', 'valueOf'],
+  'wrapperReverse': ['reverse'],
+  'wrapperValue': ['toJSON', 'value', 'valueOf'],
   'zipObject': ['object']
 });
 
@@ -840,7 +843,7 @@ var varDependencies = _.uniq(_.transform(varDependencyMap, _.bind(push.apply, pu
 
 /** List of all functions. */
 var allFuncs = _.filter(_.difference(_.keys(funcDependencyMap), objDependencies, varDependencies), function(key) {
-  var type = typeof _[key];
+  var type = typeof _.prototype[key];
   return type == 'function' || type == 'undefined';
 });
 
