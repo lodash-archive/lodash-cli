@@ -940,14 +940,14 @@ function buildModule(state, onComplete) {
     });
   };
 
-  // List of identifiers that keep their copyright/license headers.
-  var includeHeaders = _.difference(_.union(includeFuncs, plusFuncs), minusFuncs);
-  if (_.isEmpty(includeHeaders)) {
-    includeHeaders = ['lodash'];
-  }
   // Exclude `_.noConflict` when exporting for npm.
   if (isNpm) {
     identifiers = _.without(identifiers, 'noConflict');
+  }
+  // List of identifiers that keep their copyright/license headers.
+  var includeHeaders = isNpm ? identifiers : _.difference(_.union(includeFuncs, plusFuncs), minusFuncs);
+  if (_.isEmpty(includeHeaders)) {
+    includeHeaders = ['lodash'];
   }
   // Create modules for each identifier.
   _.each(identifiers, function(identifier) {
