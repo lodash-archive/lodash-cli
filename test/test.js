@@ -15,10 +15,8 @@ var fs = util.fs,
 
 /** The unit testing framework. */
 var QUnit = (
-  global.addEventListener = Function.prototype,
   global.QUnit = require('qunitjs'),
   require('qunit-extras').runInContext(global),
-  delete global.addEventListener,
   global.QUnit
 );
 
@@ -1690,4 +1688,4 @@ if (timeLimit > 0) {
 }
 QUnit.config.hidepassed = true;
 QUnit.config.noglobals = true;
-QUnit.start();
+QUnit.load();
