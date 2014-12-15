@@ -516,22 +516,6 @@ QUnit.module('build command checks');
       write = process.stderr.write;
 
   var commands = [
-    'node.EXE build -s modern',
-    '-s strict compat'
-  ];
-
-  _.each(commands, function(command) {
-    asyncTest('`lodash ' + command +'` is valid', function() {
-      var start = _.after(2, _.once(function() {
-        ok(true, 'should be valid');
-        QUnit.start();
-      }));
-
-      build(command.split(' '), start);
-    });
-  });
-
-  commands = [
     'csp',
     'exports=es6',
     'exports=npm',
