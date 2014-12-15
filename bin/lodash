@@ -903,6 +903,7 @@ function addCommandsToHeader(source, commands) {
 function buildModule(state, onComplete) {
   var buildFuncs = state.buildFuncs,
       funcDepMap = state.funcDepMap,
+      includeFuncs = state.includeFuncs,
       includeObjs = state.includeObjs,
       includeVars = state.includeVars,
       isAMD = state.isAMD,
@@ -910,8 +911,10 @@ function buildModule(state, onComplete) {
       isES6 = state.isES6,
       isNpm = state.isNpm,
       isSilent = state.isSilent,
+      minusFuncs = state.minusFuncs,
       objDepMap = state.objDepMap,
       outputPath = state.outputPath,
+      plusFuncs = state.plusFuncs,
       varDepMap = state.varDepMap;
 
   var templatePath = fs.realpathSync(path.join(__dirname, '..', 'template')),
@@ -937,6 +940,11 @@ function buildModule(state, onComplete) {
     });
   };
 
+  // List of identifiers that keep their copyright/license headers.
+  var includeHeaders = _.difference(_.union(includeFuncs, plusFuncs), minusFuncs);
+  if (_.isEmpty(includeHeaders)) {
+    includeHeaders = ['lodash'];
+  }
   // Exclude `_.noConflict` when exporting for npm.
   if (isNpm) {
     identifiers = _.without(identifiers, 'noConflict');
@@ -1057,7 +1065,10 @@ function buildModule(state, onComplete) {
         if (!isAMD) {
           source = trimIndent(source);
         }
-        source = removeLicenseTag(source);
+        source = _.includes(includeHeaders, identifier)
+          ? removeLicenseTag(source)
+          : removeHeader(source);
+
         source = replaceIIFE(source, iife.join('\n'));
 
         data.source = source;
@@ -1068,10 +1079,11 @@ function buildModule(state, onComplete) {
 
   // Create main module.
   (function() {
-    if (isNpm || !_.includes(buildFuncs, 'lodash')) {
+    var identifier = 'lodash';
+    if (isNpm || !_.includes(buildFuncs, identifier)) {
       return;
     }
-    var basename = 'lodash',
+    var basename = identifier,
         modulePath = getModulePath('main', funcDepMap);
 
     var categories = _.uniq(_.compact(_.map(identifiers, function(identifier) {
@@ -1226,6 +1238,9 @@ function buildModule(state, onComplete) {
       if (!isAMD) {
         source = trimIndent(source);
       }
+      if (!_.includes(includeHeaders, identifier)) {
+        source = removeHeader(source);
+      }
       source = replaceIIFE(source, iife.join('\n'));
 
       data.source = source;
@@ -1317,7 +1332,7 @@ function buildModule(state, onComplete) {
         if (!isAMD) {
           source = trimIndent(source);
         }
-        source = removeLicenseTag(source);
+        source = removeHeader(source);
         source = replaceIIFE(source, iife.join('\n'));
 
         data.source = source;
@@ -3733,9 +3748,11 @@ function build(options, callback) {
         'isStdOut': isStdOut,
         'isStrict': isStrict,
         'lodash': lodash,
+        'minusFuncs': minusFuncs,
         'objDepMap': objDepMap,
         'options': options,
         'outputPath': outputPath,
+        'plusFuncs': plusFuncs,
         'source': source,
         'varDepMap': varDepMap
       }, callback);
