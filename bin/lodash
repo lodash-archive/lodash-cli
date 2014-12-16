@@ -539,6 +539,9 @@ var categoryMap = createMap({
     'toArray',
     'where'
   ],
+  'Date': [
+    'now'
+  ],
   'Function': [
     'after',
     'ary',
@@ -585,6 +588,9 @@ var categoryMap = createMap({
     'isString',
     'isUndefined'
   ],
+  'Number': [
+    'random'
+  ],
   'Object': [
     'assign',
     'create',
@@ -605,6 +611,7 @@ var categoryMap = createMap({
     'omit',
     'pairs',
     'pick',
+    'result',
     'transform',
     'values',
     'valuesIn'
@@ -620,6 +627,7 @@ var categoryMap = createMap({
     'pad',
     'padLeft',
     'padRight',
+    'parseInt',
     'repeat',
     'snakeCase',
     'startsWith',
@@ -641,13 +649,9 @@ var categoryMap = createMap({
     'mixin',
     'noConflict',
     'noop',
-    'now',
-    'parseInt',
     'property',
     'propertyOf',
-    'random',
     'range',
-    'result',
     'runInContext',
     'times',
     'uniqueId'
@@ -659,9 +663,11 @@ var categoryToDepName = createMap({
   'Array': 'array',
   'Chain': 'chain',
   'Collection': 'collection',
+  'Date': 'date',
   'Function': 'func',
   'Lang': 'lang',
   'Object': 'object',
+  'Number': 'number',
   'String': 'string',
   'Utility': 'utility'
 });

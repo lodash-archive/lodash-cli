@@ -33,7 +33,7 @@ var isWindows = process.platform == 'win32';
 var relativePrefix = '.' + path.sep;
 
 /** Used to match the copyright header in builds. */
-var reHeader = /^\/\**[\s\S]+?\*\/\n/;
+var reHeader = /^\/\*[\s\S]+?\*\/\n/;
 
 /** Shortcut used to push arrays of values to an array. */
 var push = Array.prototype.push;
@@ -183,6 +183,9 @@ var categoryMap = createMap({
     'toArray',
     'where'
   ],
+  'Date': [
+    'now'
+  ],
   'Function': [
     'after',
     'ary',
@@ -229,6 +232,9 @@ var categoryMap = createMap({
     'isString',
     'isUndefined'
   ],
+  'Number': [
+    'random'
+  ],
   'Object': [
     'assign',
     'create',
@@ -249,6 +255,7 @@ var categoryMap = createMap({
     'omit',
     'pairs',
     'pick',
+    'result',
     'transform',
     'values',
     'valuesIn'
@@ -264,6 +271,7 @@ var categoryMap = createMap({
     'pad',
     'padLeft',
     'padRight',
+    'parseInt',
     'repeat',
     'snakeCase',
     'startsWith',
@@ -285,13 +293,9 @@ var categoryMap = createMap({
     'mixin',
     'noConflict',
     'noop',
-    'now',
-    'parseInt',
     'property',
     'propertyOf',
-    'random',
     'range',
-    'result',
     'runInContext',
     'times',
     'uniqueId'
