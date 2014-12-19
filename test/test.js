@@ -222,6 +222,7 @@ var categoryMap = createMap({
     'isError',
     'isFinite',
     'isFunction',
+    'isMatch',
     'isNaN',
     'isNative',
     'isNull',

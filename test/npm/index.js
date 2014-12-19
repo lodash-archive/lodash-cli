@@ -101,6 +101,7 @@ lodash.isEqual = require('lodash.isequal');
 lodash.isError = require('lodash.iserror');
 lodash.isFinite = require('lodash.isfinite');
 lodash.isFunction = require('lodash.isfunction');
+lodash.isMatch = require('lodash.ismatch');
 lodash.isNaN = require('lodash.isnan');
 lodash.isNative = require('lodash.isnative');
 lodash.isNull = require('lodash.isnull');
