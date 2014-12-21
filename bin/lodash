@@ -844,6 +844,7 @@ var uninlinables = [
   'reEscape',
   'reEvaluate',
   'reInterpolate',
+  'support',
   'templateSettings'
 ];
 
