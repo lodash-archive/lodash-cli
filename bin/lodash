@@ -918,21 +918,29 @@ function buildModule(state, onComplete) {
           moduleName = isNpm ? 'lodash.' + (isInternal ? '_' : '') + identifier.toLowerCase() : identifier,
           modulePath = isNpm ? moduleName : getModulePath(identifier, category, funcDepMap);
 
+      var depNames = _.union(
+        getDependencies(identifier, funcDepMap),
+        getDependencies(identifier, objDepMap),
+        getDependencies(identifier, varDepMap)
+      ).sort();
+
       if (isNpm) {
-        var allDeps = getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap),
-            depNames = _.intersection(_.without(uninlinables, identifier), allDeps).sort(),
-            inlinees = _.difference(allDeps, depNames),
-            inlineFuncs = _.intersection(allFuncs, inlinees),
+        var inlinees = _.difference(depNames, uninlinables);
+        depNames = _.intersection(uninlinables, depNames);
+
+        inlinees = _.union(_.transform(inlinees, function(result, identifier) {
+          push.apply(result, getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap));
+          return result;
+        }));
+
+        depNames = _.union(depNames, _.intersection(uninlinables, inlinees));
+        inlinees = _.difference(inlinees, depNames).concat(identifier);
+
+        var inlineFuncs = _.intersection(allFuncs, inlinees),
             inlineObjs = _.intersection(objDependencies, inlinees),
             inlineVars = _.intersection(varDependencies, inlinees);
       }
       else {
-        depNames = _.union(
-          getDependencies(identifier, funcDepMap),
-          getDependencies(identifier, objDepMap),
-          getDependencies(identifier, varDepMap)
-        ).sort();
-
         inlinees = [identifier];
         inlineFuncs = _.includes(allFuncs, identifier) ? inlinees : [];
         inlineObjs = _.includes(objDependencies, identifier) ? inlinees : [];
