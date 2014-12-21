@@ -898,9 +898,11 @@ function buildModule(state, onComplete) {
     });
   };
 
-  // Exclude `_.noConflict` when exporting for npm.
+  // Exclude "Chain" methods & most internal functions when exporting for npm.
   if (isNpm) {
-    identifiers = _.without(identifiers, 'noConflict');
+    identifiers = _.reject(_.difference(identifiers, categoryMap.Chain), function(identifier) {
+      return isPrivate(identifier) && !_.includes(uninlinables, identifier) && !_.includes(includeFuncs, identifier);
+    });
   }
   // List of identifiers that keep their copyright/license headers.
   var includeHeaders = isNpm ? identifiers : _.difference(_.union(includeFuncs, plusFuncs), minusFuncs);
@@ -3570,7 +3572,7 @@ function build(options, callback) {
         result = _.difference(result, minusFuncs.concat(getDependants(minusFuncs, funcDepMap, true)));
       }
       if (isModularize) {
-        _.pull(result, 'runInContext');
+        _.pull(result, 'noConflict', 'runInContext');
       }
       return getDependencies(result, funcDepMap, true);
     }());
