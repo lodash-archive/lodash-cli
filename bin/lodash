@@ -188,7 +188,7 @@ var funcDependencyMap = createMap({
   'isError': ['isObjectLike'],
   'isFinite': ['isNative'],
   'isFunction': ['isNative'],
-  'isMatch': ['baseIsMatch', 'baseValues', 'isStrictComparable', 'keys'],
+  'isMatch': ['baseCallback', 'baseIsMatch', 'baseValues', 'isStrictComparable', 'keys'],
   'isNaN': ['isNumber'],
   'isNative': ['escapeRegExp', 'isHostObject', 'isObjectLike'],
   'isNull': [],
