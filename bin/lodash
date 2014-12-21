@@ -1363,7 +1363,7 @@ function buildModule(state, onComplete) {
     });
   }());
 
-  if (!isSilent) {
+  if (!isNpm && !isSilent) {
     // Warn of removed dependencies.
     _.forOwn(removedDeps, function(depNames, identifier) {
       if (!_.isEmpty(depNames)) {
