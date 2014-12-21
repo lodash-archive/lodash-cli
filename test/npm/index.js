@@ -1,7 +1,6 @@
 var baseFunctions = require('lodash._basefunctions'),
     isObject = require('lodash.isobject'),
     keys = require('lodash.keys'),
-    lodash = require('lodash.lodash'),
     mixin = require('lodash.mixin'),
     support = require('lodash.support'),
     templateSettings = require('lodash.templatesettings');
@@ -24,6 +23,9 @@ mixin = (function(func) {
     return func(object, source, options);
   };
 }(mixin));
+
+// namespace
+var lodash = function() {};
 
 // add functions
 lodash.after = require('lodash.after');
