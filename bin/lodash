@@ -1072,7 +1072,7 @@ function buildModule(state, onComplete) {
             'description': moduleDesc,
             'keywords': keywords,
             'dependencies': _.transform(depPaths, function(result, depPath) {
-              result[depPath] = '~' + version;
+              result[depPath] = '^' + version;
             }, {})
           };
 
