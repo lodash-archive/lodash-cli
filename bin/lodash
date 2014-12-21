@@ -682,8 +682,33 @@ var topLevel = createMap({
   'support': true
 });
 
+/** List of all object property dependencies. */
+var objDependencies = _.uniq(_.transform(objDependencyMap, _.bind(push.apply, push), []));
+
+/** List of all variable dependencies. */
+var varDependencies = _.uniq(_.transform(varDependencyMap, _.bind(push.apply, push), []));
+
 /** List of all function categories. */
 var allCategories = _.keys(categoryMap);
+
+/** List of all functions. */
+var allFuncs = _.filter(_.difference(_.keys(funcDependencyMap), objDependencies, varDependencies), function(key) {
+  var type = typeof _.prototype[key];
+  return type == 'function' || type == 'undefined';
+});
+
+/** List of Lo-Dash functions. */
+var lodashFuncs = _.intersection(allFuncs, _.union(
+  _.functions(_),
+  _.functions(_.prototype), [
+  'wrapperChain',
+  'wrapperReverse',
+  'wrapperToString',
+  'wrapperValue'
+]));
+
+/** List of private functions. */
+var privateFuncs = _.difference(allFuncs, lodashFuncs);
 
 /** List of the default ways to export the `lodash` function. */
 var defaultExports = [
@@ -717,25 +742,17 @@ var placeholderFuncs = [
   'partialRight'
 ];
 
-/** List of private functions. */
-var privateFuncs = [
-  'argsToObject',
+/** List of uninlinables dependencies. */
+var uninlinables = _.union(
+  _.without(lodashFuncs, 'identity', 'isObject', 'noop'),
+  _.keys(_.support),
+  _.keys(_.templateSettings), [
   'arrayEach',
-  'arrayEachRight',
   'arrayEvery',
   'arrayFilter',
   'arrayMap',
-  'arrayMax',
-  'arrayMin',
-  'arrayReduce',
-  'arrayReduceRight',
-  'arraySome',
-  'assignDefaults',
-  'assignOwnDefaults',
   'baseAssign',
   'baseAt',
-  'baseBinaryIndex',
-  'baseBindAll',
   'baseCallback',
   'baseClone',
   'baseCompareAscending',
@@ -744,23 +761,15 @@ var privateFuncs = [
   'baseDifference',
   'baseEach',
   'baseEachRight',
-  'baseEvery',
   'baseFilter',
   'baseFind',
   'baseFlatten',
   'baseFor',
-  'baseForIn',
-  'baseForOwn',
-  'baseForOwnRight',
   'baseForRight',
   'baseFunctions',
   'baseIndexOf',
-  'baseInvoke',
   'baseIsEqual',
-  'baseIsEqualDeep',
   'baseIsMatch',
-  'baseMap',
-  'baseMerge',
   'basePullAt',
   'baseRandom',
   'baseReduce',
@@ -770,103 +779,34 @@ var privateFuncs = [
   'baseSortBy',
   'baseUniq',
   'baseValues',
-  'baseWrapperValue',
-  'binaryIndex',
-  'bufferClone',
   'cacheIndexOf',
   'cachePush',
-  'charAtCallback',
   'charsLeftIndex',
   'charsRightIndex',
-  'clonePassthru',
-  'compareAscending',
-  'compareMultipleAscending',
-  'composeArgs',
-  'composeArgsRight',
   'createAggregator',
   'createAssigner',
-  'createBindWrapper',
   'createCache',
   'createCompounder',
-  'createCtorWrapper',
-  'createHybridWrapper',
   'createPad',
-  'createPartialWrapper',
   'createWrapper',
-  'deburrLetter',
-  'equalArrays',
-  'equalByClass',
-  'equalObjects',
-  'escapeHtmlChar',
-  'escapeStringChar',
-  'getCallback',
-  'getData',
-  'getIndexOf',
-  'getView',
-  'indexOfNaN',
-  'initArrayClone',
-  'initObjectClone',
   'isArrayLike',
   'isCloneable',
-  'isHostObject',
   'isIterateeCall',
-  'isLength',
-  'isObjectLike',
-  'isStrictComparable',
-  'isWhitespace',
-  'lazyClone',
-  'lazyFirst',
-  'lazyMap',
-  'lazyReverse',
-  'lazyTake',
-  'lazyValue',
-  'LazyWrapper',
-  'LodashWrapper',
-  'MapCache',
-  'mapDelete',
-  'mapGet',
-  'mapHas',
-  'mapSet',
-  'mergeData',
   'pickByArray',
   'pickByCallback',
-  'reorder',
+  'reInterpolate',
+  'reEscape',
+  'reEvaluate',
   'replaceHolders',
   'SetCache',
   'setData',
-  'shimIsPlainObject',
-  'shimKeys',
-  'sortedUniq',
+  'support',
+  'templateSettings',
   'toIterable',
   'toObject',
   'trimmedLeftIndex',
-  'trimmedRightIndex',
-  'unescapeHtmlChar'
-];
-
-/** List of uninlinables dependencies. */
-var uninlinables = [
-  'reEscape',
-  'reEvaluate',
-  'reInterpolate',
-  'support',
-  'templateSettings'
-];
-
-/** List of all object property dependencies. */
-var objDependencies = _.uniq(_.transform(objDependencyMap, _.bind(push.apply, push), []));
-
-/** List of all variable dependencies. */
-var varDependencies = _.uniq(_.transform(varDependencyMap, _.bind(push.apply, push), []));
-
-/** List of all functions. */
-var allFuncs = _.filter(_.difference(_.keys(funcDependencyMap), objDependencies, varDependencies), function(key) {
-  var type = typeof _.prototype[key];
-  return type == 'function' || type == 'undefined';
-});
-
-/** List of Lo-Dash functions. */
-var lodashFuncs = _.difference(allFuncs, privateFuncs);
+  'trimmedRightIndex'
+]);
 
 /*----------------------------------------------------------------------------*/
 
