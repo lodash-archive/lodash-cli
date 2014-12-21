@@ -1832,7 +1832,7 @@ function getDependants(identifier, depMap, isDeep, stack) {
 function getDependencies(identifier, depMap, isDeep, stack) {
   var depNames = _.isArray(identifier) ? identifier : depMap[identifier];
   if (!isDeep) {
-    return _.slice(depNames);
+    return _.clone(depNames);
   }
   stack || (stack = []);
 
@@ -1862,7 +1862,7 @@ function getDependencies(identifier, depMap, isDeep, stack) {
 function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack) {
   var result = identifier;
   if (!_.isArray(stack)) {
-    result = _.isArray(identifier) ? _.slice(identifier) : [identifier];
+    result = _.isArray(identifier) ? _.clone(identifier) : [identifier];
     stack = [];
   }
   _.each(result, function(identifier) {
@@ -3606,7 +3606,7 @@ function build(options, callback) {
       }
       // Add default function names.
       if (_.isEmpty(includeObjs) && _.isEmpty(includeVars) && !result) {
-        result = lodashFuncs.slice();
+        result = _.clone(lodashFuncs);
       }
       // Remove special "none" entry.
       if (result == 'none') {
