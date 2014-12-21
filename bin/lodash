@@ -1008,11 +1008,15 @@ function buildModule(state, onComplete) {
             source = data.source,
             unusedDeps = getUnusedDeps(source, depNames);
 
-        depNames = _.difference(depNames, unusedDeps);
+        var toDepName = !isNpm ? _.identity : function(value) {
+          return 'lodash.' + (isPrivate(value) ? '_' : '') + value.toLowerCase();
+        };
+
+        depNames = _.sortBy(_.difference(depNames, unusedDeps), toDepName);
         removedDeps[identifier] = unusedDeps;
 
         var depPaths = isNpm
-          ? _.map(depNames, function(depName) { return 'lodash.' + (isPrivate(depName) ? '_' : '') + depName.toLowerCase(); })
+          ? _.map(depNames, toDepName)
           : getDepPaths(depNames, modulePath, funcDepMap);
 
         if (isAMD) {
