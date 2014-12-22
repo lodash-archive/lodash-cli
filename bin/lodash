@@ -259,7 +259,7 @@ var funcDependencyMap = createMap({
   'takeRightWhile': ['getCallback', 'slice'],
   'takeWhile': ['getCallback', 'slice'],
   'tap': [],
-  'template': ['assign', 'assignOwnDefaults', 'attempt', 'escape', 'escapeStringChar', 'isError', 'isIterateeCall', 'keys', 'values'],
+  'template': ['assign', 'assignOwnDefaults', 'attempt', 'escapeStringChar', 'isError', 'isIterateeCall', 'keys', 'values'],
   'throttle': ['debounce', 'isFunction', 'isObject'],
   'thru': [],
   'times': ['baseCallback'],
