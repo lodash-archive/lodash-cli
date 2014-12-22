@@ -331,7 +331,7 @@ var funcDependencyMap = createMap({
   'baseCallback': ['baseSetData', 'getData', 'identity', 'isNative', 'matches', 'property'],
   'baseClone': ['arrayEach', 'baseForOwn', 'initArrayClone', 'initObjectClone', 'isArray', 'isObject'],
   'baseCompareAscending': [],
-  'baseCreate': ['isNative', 'isObject'],
+  'baseCreate': ['isObject'],
   'baseDelay': ['isFunction', 'slice'],
   'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
   'baseEach': ['baseForOwn', 'isLength', 'toObject'],
@@ -1682,17 +1682,6 @@ function getCategories(identifier, funcDepMap) {
 }
 
 /**
- * Gets the `baseCreate` fork from `source`.
- *
- * @private
- * @param {string} source The source to inspect.
- * @returns {string} Returns the fork.
- */
-function getBaseCreateFork(source) {
-  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(!nativeCreate\b[\s\S]+?\n\1  baseCreate\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
-}
-
-/**
  * Gets the `bufferClone` fork from `source`.
  *
  * @private
@@ -2245,18 +2234,6 @@ function removeAssignments(source) {
   // Remove method and intermediate assignments.
   source = removeMethodAssignments(source);
   return source.replace(/(=\s*)lodash\.[$\w]+\s*=\s*/g, '$1');
-}
-
-/**
- * Removes the `baseCreate` fork from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeBaseCreateFork(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(getBaseCreateFork(source), '');
 }
 
 /**
@@ -3798,7 +3775,6 @@ function build(options, callback) {
 
     // Remove forks of removed functions.
     _.forOwn({
-      'baseCreate': removeBaseCreateFork,
       'bufferClone': removeBufferCloneFork,
       'isArguments': removeIsArgumentsFork,
       'isArray': removeIsArrayFork,
