@@ -744,7 +744,7 @@ var placeholderFuncs = [
 
 /** List of uninlinables dependencies. */
 var uninlinables = _.union(
-  _.without(lodashFuncs, 'attempt', 'escapeRegExp', 'identity', 'isObject', 'noop'),
+  _.without(lodashFuncs, 'attempt', 'escapeRegExp', 'identity', 'isObject', 'noop', 'values'),
   _.keys(_.support),
   _.keys(_.templateSettings), [
   'arrayEach',
@@ -770,11 +770,9 @@ var uninlinables = _.union(
   'baseIndexOf',
   'baseIsEqual',
   'baseIsMatch',
-  'basePullAt',
   'baseRandom',
   'baseReduce',
   'baseSlice',
-  'baseSome',
   'baseSortBy',
   'baseUniq',
   'baseValues',
@@ -799,7 +797,6 @@ var uninlinables = _.union(
   'support',
   'templateSettings',
   'toIterable',
-  'toObject',
   'trimmedLeftIndex',
   'trimmedRightIndex'
 ]);
