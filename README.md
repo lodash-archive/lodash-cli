@@ -9,7 +9,7 @@ The full changelog for this release is available on our [wiki](https://github.co
 
 ## Installation
 
-Using [`npm`](http://npmjs.org/):
+Using [`npm`](https://www.npmjs.com/):
 
 ```bash
 $ {sudo} npm i -g lodash-cli
