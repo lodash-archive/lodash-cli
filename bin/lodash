@@ -927,7 +927,7 @@ function buildModule(state, onComplete) {
         depNames = _.intersection(uninlinables, depNames);
 
         inlinees = _.union(_.transform(inlinees, function(result, identifier) {
-          push.apply(result, getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap));
+          push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinables)));
           return result;
         }));
 
