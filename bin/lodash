@@ -402,8 +402,8 @@ var funcDependencyMap = createMap({
   'isIterateeCall': ['isIndex', 'isLength', 'isObject'],
   'isLength': [],
   'isObjectLike': [],
+  'isSpace': [],
   'isStrictComparable': ['isObject'],
-  'isWhitespace': [],
   'mergeData': ['baseSlice', 'composeArgs', 'composeArgsRight', 'replaceHolders'],
   'pickByArray': ['toObject'],
   'pickByCallback': ['baseForIn'],
@@ -415,8 +415,8 @@ var funcDependencyMap = createMap({
   'sortedUniq': [],
   'toIterable': ['isLength', 'isObject', 'isString', 'values'],
   'toObject': ['isObject', 'isString'],
-  'trimmedLeftIndex': ['isWhitespace'],
-  'trimmedRightIndex': ['isWhitespace'],
+  'trimmedLeftIndex': ['isSpace'],
+  'trimmedRightIndex': ['isSpace'],
   'unescapeHtmlChar': []
 });
 
