@@ -676,7 +676,12 @@ var categoryToDepName = createMap({
   'Utility': 'utility'
 });
 
-/* Used to enforce dependencies at the top level. */
+/* Used to force inlining of uninlinables per identifier. */
+var forceInlineMap = createMap({
+  'keys': ['keysIn']
+});
+
+/* Used to designate dependencies at the top level. */
 var topLevel = createMap({
   'main': true,
   'support': true
@@ -920,15 +925,17 @@ function buildModule(state, onComplete) {
       ).sort();
 
       if (isNpm) {
-        var inlinees = _.difference(depNames, uninlinables);
-        depNames = _.intersection(uninlinables, depNames);
+        var uninlinees = _.difference(uninlinables, forceInlineMap[identifier]),
+            inlinees = _.difference(depNames, uninlinees);
+
+        depNames = _.intersection(uninlinees, depNames);
 
         inlinees = _.union(_.transform(inlinees, function(result, identifier) {
-          push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinables)));
+          push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinees)));
           return result;
         }));
 
-        depNames = _.union(depNames, _.intersection(uninlinables, inlinees));
+        depNames = _.union(depNames, _.intersection(uninlinees, inlinees));
         inlinees = _.difference(inlinees, depNames).concat(identifier);
 
         var inlineFuncs = _.intersection(allFuncs, inlinees),
