@@ -188,7 +188,7 @@ var funcDependencyMap = createMap({
   'isError': ['isObjectLike'],
   'isFinite': ['isNative'],
   'isFunction': ['isNative'],
-  'isMatch': ['baseCallback', 'baseIsMatch', 'baseValues', 'isStrictComparable', 'keys'],
+  'isMatch': ['baseCallback', 'baseIsMatch', 'isStrictComparable', 'keys'],
   'isNaN': ['isNumber'],
   'isNative': ['escapeRegExp', 'isHostObject', 'isObjectLike'],
   'isNull': [],
@@ -206,7 +206,7 @@ var funcDependencyMap = createMap({
   'lodash': ['baseSlice', 'isArray', 'isObjectLike', 'LodashWrapper'],
   'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
   'mapValues': ['baseForOwn', 'getCallback'],
-  'matches': ['baseClone', 'baseIsMatch', 'clonePassthru', 'isStrictComparable', 'keys'],
+  'matches': ['baseMatches'],
   'max': ['arrayMax', 'baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
   'memoize': ['isFunction', 'MapCache'],
   'merge': ['baseMerge', 'createAssigner'],
@@ -328,7 +328,7 @@ var funcDependencyMap = createMap({
   'baseAt': ['isIndex', 'isLength'],
   'baseBinaryIndex': ['identity'],
   'baseBindAll': ['createWrapper'],
-  'baseCallback': ['baseSetData', 'getData', 'identity', 'isNative', 'matches', 'property'],
+  'baseCallback': ['baseProperty', 'baseMatches', 'bindCallback', 'getData', 'identity', 'setCallbackData'],
   'baseClone': ['arrayEach', 'baseForOwn', 'initArrayClone', 'initObjectClone', 'isArray', 'isObject'],
   'baseCompareAscending': [],
   'baseCreate': ['isObject'],
@@ -352,6 +352,7 @@ var funcDependencyMap = createMap({
   'baseIsEqualDeep': ['argsToObject', 'equalArrays', 'equalByClass', 'equalObjects', 'isArguments', 'isArray', 'isHostObject'],
   'baseIsMatch': ['baseIsEqual'],
   'baseMap': ['baseEach'],
+  'baseMatches': ['baseClone', 'baseIsMatch', 'clonePassthru', 'isStrictComparable', 'keys'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'isArray', 'isArrayLike', 'isPlainObject'],
   'baseProperty': [],
   'basePullAt': ['baseAt', 'baseCompareAscending', 'isIndex'],
@@ -365,6 +366,7 @@ var funcDependencyMap = createMap({
   'baseValues': [],
   'baseWrapperValue': ['LazyWrapper'],
   'binaryIndex': ['baseBinaryIndex'],
+  'bindCallback': [],
   'bufferClone': ['constant', 'isNative'],
   'charAtCallback': [],
   'charsLeftIndex': [],
@@ -411,6 +413,7 @@ var funcDependencyMap = createMap({
   'reorder': ['baseSlice', 'isIndex'],
   'replaceHolders': [],
   'setData': ['baseSetData', 'now'],
+  'setCallbackData': ['baseSetData', 'isNative'],
   'shimIsPlainObject': ['baseForIn', 'isArguments', 'isHostObject', 'isObjectLike'],
   'shimKeys': ['isArguments', 'isArray', 'isIndex', 'isLength', 'isString', 'keysIn'],
   'sortedUniq': [],
@@ -423,7 +426,6 @@ var funcDependencyMap = createMap({
 
 /** Used to track Lo-Dash object dependencies of identifiers. */
 var objDependencyMap = createMap({
-  'baseCallback': ['support'],
   'baseIsEqualDeep': ['support'],
   'initObjectClone': ['support'],
   'isArguments': ['support'],
@@ -432,6 +434,7 @@ var objDependencyMap = createMap({
   'isPlainObject': ['support'],
   'keys': ['support'],
   'keysIn': ['support'],
+  'setCallbackData': ['support'],
   'shimIsPlainObject': ['support'],
   'shimKeys': ['support'],
   'template': ['templateSettings'],
@@ -2334,19 +2337,17 @@ function removeLazyChaining(source) {
  * @returns {string} Returns the modified source.
  */
 function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
-  var deps = _.result(funcDepMap, 'createWrapper', []);
+  var deps = _.result(funcDepMap, 'baseCallback', []);
+  _.pull(deps, 'setCallbackData');
+
+  deps = _.result(funcDepMap, 'createWrapper', []);
   _.pull(deps, 'mergeData');
 
-  deps = _.result(objDepMap, 'baseCallback', []);
-  _.pull(deps, 'support');
+  deps = _.result(funcDepMap, 'support', []);
+  _.pull(deps, 'isNative');
 
   deps = _.result(varDepMap, 'support', []);
   _.pull(deps, 'root');
-
-  _.each(['baseCallback', 'support'], function(identifier) {
-    var deps = _.result(funcDepMap, identifier, []);
-    _.pull(deps, 'isNative');
-  });
 
   _.each(['baseCallback', 'createWrapper'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
@@ -2357,6 +2358,11 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
   source = removeSupportProp(source, 'funcNames');
 
   // Remove metadata related code.
+  source = source.replace(matchFunction(source, 'baseCallback'), function(match) {
+    match = removeVar(match, 'data');
+    return match.replace(/^( *return\s+)\(data\b[^:]+:\s*/m, '$1');
+  });
+
   source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
     match = _.reduce(['data', 'funcBitmask', 'funcIsPartialed', 'setter'], removeVar, match);
     return match.replace(/^( *return\s+)setter\(([^,]+),[^)]+\)/m, '$1$2');
@@ -2364,7 +2370,6 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
 
   _.each(['baseCallback', 'createWrapper'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
-      match = removeVar(match, 'data');
       return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:typeof\s+)?data\b[\s\S]+?\n\1\}\n/gm, '');
     });
   });
@@ -3537,9 +3542,9 @@ function build(options, callback) {
           funcDepMap.baseCallback.push('identity');
 
           source = source.replace(matchFunction(source, 'baseCallback'), function(match) {
-            var otherName = funcName == 'where' ? 'matches' : 'property';
+            var otherName = funcName == 'where' ? 'baseMatches' : 'baseProperty';
             _.pull(funcDepMap.baseCallback, otherName);
-            return match.replace(RegExp('\\b' + otherName + '\\([^)]+\\)', 'm'), 'identity');
+            return match.replace(RegExp('\\b' + otherName + '\\([\\s\\S]+?\\)(?=[;\\n])', 'm'), 'identity');
           });
         }
       });
