@@ -273,7 +273,7 @@ var funcDependencyMap = createMap({
   'union': ['baseFlatten', 'baseUniq'],
   'uniq': ['baseUniq', 'getCallback', 'getIndexOf', 'isIterateeCall', 'sortedUniq'],
   'uniqueId': [],
-  'unzip': ['arrayMap', 'arrayMax', 'property'],
+  'unzip': ['arrayMap', 'arrayMax', 'baseProperty'],
   'values': ['baseValues', 'keys'],
   'valuesIn': ['baseValues', 'keysIn'],
   'where': ['filter', 'matches'],
