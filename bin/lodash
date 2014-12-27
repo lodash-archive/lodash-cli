@@ -682,7 +682,8 @@ var categoryToDepName = createMap({
 
 /* Used to force inlining of uninlinables per identifier. */
 var forceInlineMap = createMap({
-  'keys': ['keysIn']
+  'keys': ['keysIn'],
+  'slice': ['baseSlice', 'isIterateeCall']
 });
 
 /* Used to designate dependencies at the top level. */
@@ -797,12 +798,14 @@ var uninlinables = _.union(
   'baseIsEqual',
   'baseIsMatch',
   'baseMatches',
+  'baseProperty',
   'baseRandom',
   'baseReduce',
   'baseSlice',
   'baseSortBy',
   'baseUniq',
   'baseValues',
+  'bindCallback',
   'cacheIndexOf',
   'charsLeftIndex',
   'charsRightIndex',
