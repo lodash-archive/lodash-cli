@@ -2401,11 +2401,11 @@ function removeGetCallback(source, funcDepMap) {
   source = removeFunction(source, 'getCallback');
 
   _.each([
-    'dropRightWhile', 'dropWhile', 'every', 'filter', 'find', 'findIndex',
-    'findLastIndex', 'findKey', 'findLast', 'findLastKey', 'map', 'mapValues',
-    'max', 'min', 'omit', 'pick', 'reduce', 'reduceRight', 'reject', 'remove',
-    'some', 'sortBy', 'sortedIndex', 'sortedLastIndex', 'takeRightWhile',
-    'takeWhile', 'transform', 'uniq', 'createAggregator'
+    'createAggregator', 'dropRightWhile', 'dropWhile', 'every', 'filter', 'find',
+    'findIndex', 'findKey', 'findLast', 'findLastIndex', 'findLastKey', 'map',
+    'mapValues', 'max', 'min', 'reduce', 'reduceRight', 'reject', 'remove', 'some',
+    'sortBy', 'sortedIndex', 'sortedLastIndex', 'takeRightWhile', 'takeWhile',
+    'transform', 'uniq'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'getCallback').push('baseCallback');
@@ -2420,10 +2420,10 @@ function removeGetCallback(source, funcDepMap) {
     _.pull(deps, 'identity');
 
     source = source.replace(matchFunction(source, funcName), function(match) {
-      match = replaceVar('noIteratee', 'iteratee == null');
+      match = replaceVar(match, 'noIteratee', 'iteratee == null');
       return match
-        .replace(/\biteratee\s*=\b/, '$& iteratee == null ? iteratee :')
-        .replace(/^( *)if\s*\(iteratee\s*===[\s\S]+?\n\1\}\n/, '')
+        .replace(/\biteratee\s*=(?=\s*baseCallback\b)/, '$& iteratee == null ? iteratee :')
+        .replace(/^( *)if\s*\(iteratee\s*==[\s\S]+?\n\1\}\n/m, '')
         .replace(/\biteratee\s*===.*?:\s*/, '')
     });
   });
