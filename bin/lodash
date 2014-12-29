@@ -2619,7 +2619,7 @@ function removeMethodAssignments(source) {
  */
 function removeMixinCalls(source) {
   source = source == null ? '' : String(source);
-  return source.replace(/^(?: *\/\/.*\n)*( *)mixin\(.+?(?:\{[\s\S]+?\1\}.+?)?\);\n/gm, '');
+  return source.replace(/^(?: *\/\/.*\n)*( *)mixin\(.+?(?:\{[\s\S]+?\n\1\}.+?)?\);\n/gm, '');
 }
 
 /**
