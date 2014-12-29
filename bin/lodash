@@ -207,16 +207,16 @@ var funcDependencyMap = createMap({
   'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
   'mapValues': ['baseForOwn', 'getCallback'],
   'matches': ['baseMatches'],
-  'max': ['arrayMax', 'baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
+  'max': ['arrayMax', 'baseEach', 'charAtCallback', 'getCallback', 'identity', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
   'memoize': ['isFunction', 'MapCache'],
   'merge': ['baseMerge', 'createAssigner'],
-  'min': ['arrayMin', 'baseEach', 'charAtCallback', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
+  'min': ['arrayMin', 'baseEach', 'charAtCallback', 'getCallback', 'identity', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
   'mixin': ['baseFunctions', 'baseSlice', 'isFunction', 'isObject', 'keys', 'lodash'],
   'negate': ['isFunction'],
   'noConflict': [],
   'noop': [],
   'now': ['isNative'],
-  'omit': ['baseDifference', 'baseFlatten', 'arrayMap', 'getCallback', 'keysIn', 'pickByArray', 'pickByCallback'],
+  'omit': ['arrayMap', 'baseDifference', 'baseFlatten', 'bindCallback', 'keysIn', 'pickByArray', 'pickByCallback'],
   'once': ['before'],
   'pad': ['createPad'],
   'padLeft': ['createPad'],
@@ -226,7 +226,7 @@ var funcDependencyMap = createMap({
   'partial': ['createWrapper', 'lodash', 'replaceHolders', 'slice'],
   'partialRight': ['createWrapper', 'lodash', 'replaceHolders', 'slice'],
   'partition': ['createAggregator'],
-  'pick': ['baseFlatten', 'getCallback', 'pickByArray', 'pickByCallback'],
+  'pick': ['baseFlatten', 'bindCallback', 'pickByArray', 'pickByCallback'],
   'pluck': ['map', 'property'],
   'property': ['baseProperty'],
   'propertyOf': [],
@@ -251,8 +251,8 @@ var funcDependencyMap = createMap({
   'some': ['arraySome', 'baseSome', 'getCallback', 'isArray'],
   'sortBy': ['baseEach', 'baseSortBy', 'compareAscending', 'getCallback', 'isIterateeCall', 'isLength'],
   'sortByAll': ['baseEach', 'baseFlatten', 'baseSortBy', 'compareMultipleAscending', 'isIterateeCall', 'isLength'],
-  'sortedIndex': ['binaryIndex', 'getCallback'],
-  'sortedLastIndex': ['binaryIndex', 'getCallback'],
+  'sortedIndex': ['binaryIndex', 'getCallback', 'identity'],
+  'sortedLastIndex': ['binaryIndex', 'getCallback', 'identity'],
   'startsWith': [],
   'take': ['isIterateeCall', 'slice'],
   'takeRight': ['isIterateeCall', 'slice'],
@@ -271,7 +271,7 @@ var funcDependencyMap = createMap({
   'trunc': ['isIterateeCall', 'isObject', 'isRegExp'],
   'unescape': ['unescapeHtmlChar'],
   'union': ['baseFlatten', 'baseUniq'],
-  'uniq': ['baseUniq', 'getCallback', 'getIndexOf', 'isIterateeCall', 'sortedUniq'],
+  'uniq': ['baseUniq', 'getCallback', 'getIndexOf', 'identity', 'isIterateeCall', 'sortedUniq'],
   'uniqueId': [],
   'unzip': ['arrayMap', 'arrayMax', 'baseProperty'],
   'values': ['baseValues', 'keys'],
@@ -2408,13 +2408,26 @@ function removeGetCallback(source, funcDepMap) {
     'takeWhile', 'transform', 'uniq', 'createAggregator'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
-    if (_.includes(deps, 'getCallback')) {
-      _.pull(deps, 'getCallback').push('baseCallback');
-      source = source.replace(matchFunction(source, funcName), function(match) {
-        return match.replace(reGetCallback, 'baseCallback');
-      });
-    }
+    _.pull(deps, 'getCallback').push('baseCallback');
+
+    source = source.replace(matchFunction(source, funcName), function(match) {
+      return match.replace(reGetCallback, 'baseCallback');
+    });
   });
+
+  _.each(['max', 'min', 'sortedIndex', 'sortedLastIndex', 'uniq'], function(funcName) {
+    var deps = _.result(funcDepMap, funcName, []);
+    _.pull(deps, 'identity');
+
+    source = source.replace(matchFunction(source, funcName), function(match) {
+      match = replaceVar('noIteratee', 'iteratee == null');
+      return match
+        .replace(/\biteratee\s*=\b/, '$& iteratee == null ? iteratee :')
+        .replace(/^( *)if\s*\(iteratee\s*===[\s\S]+?\n\1\}\n/, '')
+        .replace(/\biteratee\s*===.*?:\s*/, '')
+    });
+  });
+
   return source.replace(getMethodAssignments(source), function(match) {
     _.each(['main', 'wrapperValue'], function(funcName) {
       var deps = _.result(funcDepMap, funcName, []);
