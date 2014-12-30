@@ -682,6 +682,8 @@ var categoryToDepName = createMap({
 
 /* Used to force inlining of uninlinables per identifier. */
 var forceInlineMap = createMap({
+  'isArray': ['isNative'],
+  'isFunction': ['isNative'],
   'keys': ['keysIn'],
   'slice': ['baseSlice', 'isIterateeCall']
 });
