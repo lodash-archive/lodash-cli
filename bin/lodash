@@ -123,7 +123,7 @@ var funcDependencyMap = createMap({
   'bindKey': ['createWrapper', 'lodash', 'replaceHolders', 'slice'],
   'callback': ['baseCallback', 'isIterateeCall'],
   'camelCase': ['createCompounder'],
-  'capitalize': [],
+  'capitalize': ['toString'],
   'chain': ['lodash'],
   'chunk': ['isIterateeCall', 'slice'],
   'clone': ['baseClone', 'bindCallback', 'isIterateeCall'],
@@ -135,7 +135,7 @@ var funcDependencyMap = createMap({
   'curry': ['createWrapper', 'isIterateeCall', 'lodash'],
   'curryRight': ['createWrapper', 'isIterateeCall', 'lodash'],
   'debounce': ['isFunction', 'isObject', 'now'],
-  'deburr': ['deburrLetter'],
+  'deburr': ['deburrLetter', 'toString'],
   'defaults': ['assign', 'assignDefaults', 'baseSlice'],
   'defer': ['baseDelay'],
   'delay': ['baseDelay'],
@@ -144,9 +144,9 @@ var funcDependencyMap = createMap({
   'dropRight': ['isIterateeCall', 'slice'],
   'dropRightWhile': ['getCallback', 'slice'],
   'dropWhile': ['getCallback', 'slice'],
-  'endsWith': [],
-  'escape': ['escapeHtmlChar'],
-  'escapeRegExp': [],
+  'endsWith': ['toString'],
+  'escape': ['escapeHtmlChar', 'toString'],
+  'escapeRegExp': ['toString'],
   'every': ['arrayEvery', 'baseEvery', 'getCallback', 'isArray'],
   'filter': ['arrayFilter', 'baseFilter', 'getCallback', 'isArray'],
   'find': ['baseEach', 'baseFind', 'getCallback', 'findIndex', 'isArray'],
@@ -218,9 +218,9 @@ var funcDependencyMap = createMap({
   'now': ['isNative'],
   'omit': ['arrayMap', 'baseDifference', 'baseFlatten', 'bindCallback', 'keysIn', 'pickByArray', 'pickByCallback'],
   'once': ['before'],
-  'pad': ['createPad'],
-  'padLeft': ['createPad'],
-  'padRight': ['createPad'],
+  'pad': ['createPad', 'toString'],
+  'padLeft': ['createPad', 'toString'],
+  'padRight': ['createPad', 'toString'],
   'pairs': ['keys'],
   'parseInt': ['isIterateeCall', 'trim'],
   'partial': ['createWrapper', 'lodash', 'replaceHolders', 'slice'],
@@ -253,32 +253,32 @@ var funcDependencyMap = createMap({
   'sortByAll': ['baseEach', 'baseFlatten', 'baseSortBy', 'compareMultipleAscending', 'isIterateeCall', 'isLength'],
   'sortedIndex': ['baseCallback', 'binaryIndex', 'binaryIndexBy', 'getCallback'],
   'sortedLastIndex': ['baseCallback', 'binaryIndex', 'binaryIndexBy', 'getCallback'],
-  'startsWith': [],
+  'startsWith': ['toString'],
   'take': ['isIterateeCall', 'slice'],
   'takeRight': ['isIterateeCall', 'slice'],
   'takeRightWhile': ['getCallback', 'slice'],
   'takeWhile': ['getCallback', 'slice'],
   'tap': [],
-  'template': ['assignOwnDefaults', 'attempt', 'baseAssign', 'baseValues', 'escapeStringChar', 'isError', 'isIterateeCall', 'keys'],
+  'template': ['assignOwnDefaults', 'attempt', 'baseAssign', 'baseValues', 'escapeStringChar', 'isError', 'isIterateeCall', 'keys', 'toString'],
   'throttle': ['debounce', 'isFunction', 'isObject'],
   'thru': [],
   'times': ['bindCallback'],
   'toArray': ['baseSlice', 'isLength', 'isString', 'values'],
   'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'getCallback', 'isArray', 'isArrayLike', 'isObject'],
-  'trim': ['charsLeftIndex', 'charsRightIndex', 'isIterateeCall', 'trimmedLeftIndex', 'trimmedRightIndex'],
-  'trimLeft': ['charsLeftIndex', 'isIterateeCall', 'trimmedLeftIndex'],
-  'trimRight': ['charsRightIndex', 'isIterateeCall', 'trimmedRightIndex'],
-  'trunc': ['isIterateeCall', 'isObject', 'isRegExp'],
-  'unescape': ['unescapeHtmlChar'],
+  'trim': ['charsLeftIndex', 'charsRightIndex', 'isIterateeCall', 'toString', 'trimmedLeftIndex', 'trimmedRightIndex'],
+  'trimLeft': ['charsLeftIndex', 'isIterateeCall', 'toString', 'trimmedLeftIndex'],
+  'trimRight': ['charsRightIndex', 'isIterateeCall', 'toString', 'trimmedRightIndex'],
+  'trunc': ['isIterateeCall', 'isObject', 'isRegExp', 'toString'],
+  'unescape': ['toString', 'unescapeHtmlChar'],
   'union': ['baseFlatten', 'baseUniq'],
   'uniq': ['baseCallback', 'baseUniq', 'getCallback', 'getIndexOf', 'isIterateeCall', 'sortedUniq'],
-  'uniqueId': [],
+  'uniqueId': ['toString'],
   'unzip': ['arrayMap', 'arrayMax', 'baseProperty'],
   'values': ['baseValues', 'keys'],
   'valuesIn': ['baseValues', 'keysIn'],
   'where': ['filter', 'matches'],
   'without': ['baseDifference', 'slice'],
-  'words': ['isIterateeCall'],
+  'words': ['isIterateeCall', 'toString'],
   'wrap': ['createWrapper', 'identity'],
   'xor': ['baseDifference', 'baseUniq', 'isArguments', 'isArray'],
   'zip': ['unzip'],
@@ -348,7 +348,7 @@ var funcDependencyMap = createMap({
   'baseIndexOf': ['indexOfNaN'],
   'baseInvoke': ['baseEach', 'isLength'],
   'baseIsEqual': ['baseIsEqualDeep'],
-  'baseIsEqualDeep': ['argsToObject', 'equalArrays', 'equalByClass', 'equalObjects', 'isArguments', 'isArray', 'isHostObject'],
+  'baseIsEqualDeep': ['argsToObject', 'equalArrays', 'equalByTag', 'equalObjects', 'isArguments', 'isArray', 'isHostObject'],
   'baseIsMatch': ['baseIsEqual'],
   'baseMap': ['baseEach'],
   'baseMatches': ['baseClone', 'baseIsMatch', 'clonePassthru', 'isStrictComparable', 'keys'],
@@ -390,7 +390,7 @@ var funcDependencyMap = createMap({
   'escapeHtmlChar': [],
   'escapeStringChar': [],
   'equalArrays': [],
-  'equalByClass': [],
+  'equalByTag': [],
   'equalObjects': ['keys'],
   'extremumBy': ['baseEach'],
   'getCallback': ['baseCallback', 'callback'],
@@ -734,10 +734,10 @@ var defaultExports = [
 
 /** List of variables with complex assignments. */
 var complexVars = [
-  'arrayLikeClasses',
-  'cloneableClasses',
+  'arrayLikeTags',
+  'cloneableTags',
   'contextProps',
-  'ctorByClass',
+  'ctorByTag',
   'freeGlobal',
   'nonEnumProps',
   'shadowProps',
@@ -1913,7 +1913,7 @@ function getIndent(func) {
  * @returns {string} Returns the fork.
  */
 function getIsArgumentsFork(source) {
-  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\((?:!support\.argsClass|!isArguments)\b[\s\S]+?\n\1  isArguments\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
+  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\((?:!support\.argsTag|!isArguments)\b[\s\S]+?\n\1  isArguments\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
 }
 
 /**
@@ -2566,7 +2566,7 @@ function removeIsHostObject(source, funcDepMap) {
   });
 
   source = source.replace(matchFunction(source, 'isElement'), function(match) {
-    return match.replace(/\(lodash\.support\.nodeClass\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)\)/, '$1');
+    return match.replace(/\(lodash\.support\.nodeTag\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)\)/, '$1');
   });
 
   return source.replace(matchFunction(source, 'isNative'), function(match) {
@@ -2738,7 +2738,7 @@ function removeStrings(source) {
 }
 
 /**
- * Removes all `support.argsClass` references from `source`.
+ * Removes all `support.argsTag` references from `source`.
  *
  * @private
  * @param {string} source The source to process.
@@ -2746,7 +2746,7 @@ function removeStrings(source) {
  * @param {Object} [objDepMap] The object dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeSupportArgsClass(source, funcDepMap, objDepMap) {
+function removeSupportArgsTag(source, funcDepMap, objDepMap) {
   _.each(['baseIsEqualDeep', 'isArguments', 'isArrayLike', 'isPlainObject', 'initObjectClone', 'shimIsPlainObject'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isArguments');
@@ -2757,22 +2757,22 @@ function removeSupportArgsClass(source, funcDepMap, objDepMap) {
     }
   });
 
-  source = removeSupportProp(source, 'argsClass');
+  source = removeSupportProp(source, 'argsTag');
 
-  // Replace `support.argsClass` in the `_.isArguments` fork.
+  // Replace `support.argsTag` in the `_.isArguments` fork.
   source = source.replace(getIsArgumentsFork(source), function(match) {
-    return match.replace(/!support\.argsClass/g, '!isArguments(arguments)');
+    return match.replace(/!support\.argsTag/g, '!isArguments(arguments)');
   });
 
-  // Remove `support.argsClass` from `baseIsEqualDeep`.
+  // Remove `support.argsTag` from `baseIsEqualDeep`.
   source = source.replace(matchFunction(source, 'baseIsEqualDeep'), function(match) {
-    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!lodash\.support\.argsClass\b[\s\S]+?\n\1\}\n/m, '');
+    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!lodash\.support\.argsTag\b[\s\S]+?\n\1\}\n/m, '');
   });
 
-  // Remove `support.argsClass` from others.
+  // Remove `support.argsTag` from others.
   _.each(['shimIsPlainObject', 'initObjectClone', 'isArrayLike', 'isPlainObject'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(/\s*\|\|\s*\(!(?:lodash\.)?support\.argsClass\b[\s\S]+?\)\)/, '');
+      return match.replace(/\s*\|\|\s*\(!(?:lodash\.)?support\.argsTag\b[\s\S]+?\)\)/, '');
     });
   });
   return source;
@@ -2826,22 +2826,22 @@ function removeSupportEnumPrototypes(source, objDepMap) {
 }
 
 /**
- * Removes all `support.nodeClass` references from `source`.
+ * Removes all `support.nodeTag` references from `source`.
  *
  * @private
  * @param {string} source The source to process.
  * @param {Object} [funcDepMap] The dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeSupportNodeClass(source, funcDepMap) {
+function removeSupportNodeTag(source, funcDepMap) {
   var deps = _.result(funcDepMap, 'isElement', []);
   _.pull(deps, 'isHostObject');
 
-  source = removeSupportProp(source, 'nodeClass');
+  source = removeSupportProp(source, 'nodeTag');
 
-  // Remove `support.nodeClass` from `_.isElement`.
+  // Remove `support.nodeTag` from `_.isElement`.
   return source.replace(matchFunction(source, 'isElement'), function(match) {
-    return match.replace(/\(lodash\.support\.nodeClass\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)\)/, '$1');
+    return match.replace(/\(lodash\.support\.nodeTag\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)\)/, '$1');
   });
 }
 
@@ -3496,16 +3496,16 @@ function build(options, callback) {
 
         source = replaceFunction(source, 'isRegExp', [
           'function isRegExp(value) {',
-          '  return (isObjectLike(value) && toString.call(value) == regexpClass) || false;',
+          '  return (isObjectLike(value) && objToString.call(value) == regexpTag) || false;',
           '}'
         ].join('\n'));
       }
       if (isModern) {
         source = removeIsHostObject(source, funcDepMap);
-        source = removeSupportArgsClass(source, funcDepMap, objDepMap);
+        source = removeSupportArgsTag(source, funcDepMap, objDepMap);
         source = removeSupportEnumErrorProps(source);
         source = removeSupportEnumPrototypes(source, objDepMap);
-        source = removeSupportNodeClass(source, funcDepMap);
+        source = removeSupportNodeTag(source, funcDepMap);
         source = removeSupportNonEnumShadows(source);
         source = removeSupportNonEnumStrings(source, funcDepMap);
         source = removeSupportOwnLast(source);
@@ -3785,13 +3785,13 @@ function build(options, callback) {
     }
     else {
       if (isExcluded('baseIsEqualDeep', 'initObjectClone', 'isArguments', 'isPlainObject')) {
-        source = removeSupportArgsClass(source);
+        source = removeSupportArgsTag(source);
       }
       if (isExcluded('clone', 'isElement', 'isEqual', 'isPlainObject')) {
-        source = removeSupportNodeClass(source);
+        source = removeSupportNodeTag(source);
       }
       if (isExcluded('isArguments')) {
-        source = replaceSupportProp(source, 'argsClass', 'true');
+        source = replaceSupportProp(source, 'argsTag', 'true');
       }
       if (isExcluded('isElement')) {
         source = removeSupportDom(source);
