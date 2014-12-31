@@ -421,6 +421,7 @@ var funcDependencyMap = createMap({
   'sortedUniq': [],
   'toIterable': ['isLength', 'isObject', 'isString', 'values'],
   'toObject': ['isObject', 'isString'],
+  'toString': [],
   'trimmedLeftIndex': ['isSpace'],
   'trimmedRightIndex': ['isSpace'],
   'unescapeHtmlChar': []
