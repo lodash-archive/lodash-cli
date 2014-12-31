@@ -817,6 +817,7 @@ var uninlinables = _.union(
   'createAssigner',
   'createCache',
   'createCompounder',
+  'createExtremum',
   'createPad',
   'createWrapper',
   'isArrayLike',
