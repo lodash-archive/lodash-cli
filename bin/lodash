@@ -2430,17 +2430,15 @@ function removeGetCallback(source, funcDepMap) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       match = removeVar(match, 'func');
       if (isSorted) {
-        match = match
+        return match
           .replace(/\(func[^)]+\)/, 'iteratee == null')
           .replace(/\bfunc(?=\()/, 'baseCallback');
-      } else {
-        match = match.replace(/^( *)if\s*\(!\(func[\s\S]+?\n\1\}/m, function(match, indent) {
-          return indent +
-            'iteratee = ' + (isExtremum ? 'noIteratee' : 'iteratee == null') +
-            ' ? iteratee : baseCallback(iteratee, thisArg, 3);';
-        });
       }
-      return match;
+      return match.replace(/^( *)if\s*\(!\(func[\s\S]+?\n\1\}/m, function(match, indent) {
+        return indent +
+          'iteratee = ' + (isExtremum ? 'noIteratee' : 'iteratee == null') +
+          ' ? iteratee : baseCallback(iteratee, thisArg, 3);';
+      });
     });
   });
 
