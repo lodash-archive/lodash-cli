@@ -809,6 +809,8 @@ var uninlinables = _.union(
   'baseSortBy',
   'baseUniq',
   'baseValues',
+  'binaryIndex',
+  'binaryIndexBy',
   'bindCallback',
   'cacheIndexOf',
   'charsLeftIndex',
