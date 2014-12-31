@@ -2406,33 +2406,39 @@ function removeGetCallback(source, funcDepMap) {
   source = removeFunction(source, 'getCallback');
 
   _.each([
-    'createAggregator', 'dropRightWhile', 'dropWhile', 'every', 'filter', 'find',
-    'findIndex', 'findKey', 'findLast', 'findLastIndex', 'findLastKey', 'map',
-    'mapValues', 'max', 'min', 'reduce', 'reduceRight', 'reject', 'remove', 'some',
-    'sortBy', 'sortedIndex', 'sortedLastIndex', 'takeRightWhile', 'takeWhile',
-    'transform', 'uniq'
+    'createAggregator', 'createExtremum', 'dropRightWhile', 'dropWhile', 'every',
+    'filter', 'find','findIndex', 'findKey', 'findLast', 'findLastIndex', 'findLastKey',
+    'map', 'mapValues', 'reduce', 'reduceRight', 'reject', 'remove', 'some', 'sortBy',
+    'sortedIndex', 'sortedLastIndex', 'takeRightWhile', 'takeWhile', 'transform', 'uniq'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
-    _.pull(deps, 'getCallback').push('baseCallback');
-
+    _.pull(deps, 'getCallback');
+    if (!_.includes(deps, 'baseCallback')) {
+      deps.push('baseCallback');
+    }
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match.replace(reGetCallback, 'baseCallback');
     });
   });
 
-  _.each(['max', 'min', 'sortedIndex', 'sortedLastIndex', 'uniq'], function(funcName) {
-    var isMaxMin = /^m(?:ax|in)$/.test(funcName),
+  _.each(['createExtremum', 'sortedIndex', 'sortedLastIndex', 'uniq'], function(funcName) {
+    var isExtremum = funcName == 'createExtremum',
         isSorted = /^sorted/.test(funcName);
 
     source = source.replace(matchFunction(source, funcName), function(match) {
       match = removeVar(match, 'func');
-      return match.replace(/^( *)if\s*\(!\(func[\s\S]+?\n\1\}/m, function(match, indent) {
-        return indent +
-          'iteratee = ' +
-          (isMaxMin ? 'noIteratee' : 'iteratee == null') +
-          ' ? iteratee : baseCallback(iteratee, thisArg, ' +
-          (isSorted ? '1' : '3') + ');';
-      });
+      if (isSorted) {
+        match = match
+          .replace(/\(func[^)]+\)/, 'iteratee == null')
+          .replace(/\bfunc(?=\()/, 'baseCallback');
+      } else {
+        match = match.replace(/^( *)if\s*\(!\(func[\s\S]+?\n\1\}/m, function(match, indent) {
+          return indent +
+            'iteratee = ' + (isExtremum ? 'noIteratee' : 'iteratee == null') +
+            ' ? iteratee : baseCallback(iteratee, thisArg, 3);';
+        });
+      }
+      return match;
     });
   });
 
