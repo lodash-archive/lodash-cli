@@ -954,7 +954,7 @@ function buildModule(state, onComplete) {
     }
     _.each(isNpm ? categories.slice(0, 1) : categories, function(category) {
       var isInternal = isPrivate(identifier),
-          moduleName = isNpm ? 'lodash.' + (isInternal ? '_' : '') + identifier.toLowerCase() : identifier,
+          moduleName = isNpm ? ('lodash.' + (isInternal ? '_' : '') + identifier.toLowerCase()) : identifier,
           modulePath = isNpm ? moduleName : getModulePath(identifier, category, funcDepMap);
 
       var depNames = _.union(
