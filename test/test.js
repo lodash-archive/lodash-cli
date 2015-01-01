@@ -1005,7 +1005,7 @@ QUnit.module('modularize modifier');
   var reLicense = /@license\b/;
 
   var funcNames = [
-    'lodash',
+    'main',
     'mixin',
     'template'
   ];
@@ -1027,7 +1027,7 @@ QUnit.module('modularize modifier');
       build(['modularize', 'modern', 'include=' + funcName, 'exports=node', '-o', outputPath], function() {
         emptyObject(require.cache);
 
-        if (funcName == 'lodash') {
+        if (funcName == 'main') {
           var lodash = require(outputPath);
           ok(lodash(1) instanceof lodash, outputPath, '`lodash()` should return a `lodash` instance');
           ok(reLicense.test(fs.readFileSync(require.resolve(outputPath), 'utf-8')), 'lodash module should preserve the copyright header');

@@ -3484,7 +3484,7 @@ function build(options, callback) {
         });
 
         // Associate "Chain" methods with `wrapperValue`.
-        _.each(_.without(categoryMap.Chain, 'wrapperValue'), function(funcName) {
+        _.each(_.without(categoryMap.Chain, 'lodash', 'wrapperValue'), function(funcName) {
           funcDepMap.wrapperValue.push(funcName);
           funcDepMap[funcName].push('wrapperValue');
         });
