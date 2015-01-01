@@ -113,7 +113,7 @@ var funcDependencyMap = createMap({
   'templateSettings': ['escape'],
 
   // Dependencies of the main module.
-  'main': ['arrayEach', 'baseForOwn', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'LodashWrapper', 'matches', 'property'],
+  'main': ['arrayEach', 'baseForOwn', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'matches', 'mixin', 'property'],
 
   // Dependencies of Lo-Dash methods.
   'after': ['isFunction'],
@@ -3465,7 +3465,7 @@ function build(options, callback) {
           delete varDepMap.root;
         }
         // Add deps to wrap `_.mixin` in `main`.
-        funcDepMap.main.push('baseFunctions', 'isObject', 'keys', 'lodash', 'mixin');
+        funcDepMap.main.push('baseFunctions', 'isObject', 'keys');
 
         // Remove `lodash` from function deps.
         _.each(placeholderFuncs.concat('mixin'), function(funcName) {
