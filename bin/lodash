@@ -703,16 +703,16 @@ var topLevel = createMap({
 });
 
 /** List of all object property dependencies. */
-var objDependencies = _.uniq(_.transform(objDependencyMap, _.bind(push.apply, push), []));
+var objDependencies = _.uniq(_.transform(objDependencyMap, _.bind(push.apply, push), [])).sort();
 
 /** List of all variable dependencies. */
-var varDependencies = _.uniq(_.transform(varDependencyMap, _.bind(push.apply, push), []));
+var varDependencies = _.uniq(_.transform(varDependencyMap, _.bind(push.apply, push), [])).sort();
 
 /** List of all function categories. */
-var allCategories = _.keys(categoryMap);
+var allCategories = _.keys(categoryMap).sort();
 
 /** List of all functions. */
-var allFuncs = _.filter(_.difference(_.keys(funcDependencyMap), objDependencies, varDependencies), function(key) {
+var allFuncs = _.filter(_.difference(_.keys(funcDependencyMap), objDependencies, varDependencies).sort(), function(key) {
   var type = typeof _.prototype[key];
   return type == 'function' || type == 'undefined';
 });
@@ -747,9 +747,9 @@ var complexVars = [
   'ctorByTag',
   'freeGlobal',
   'nonEnumProps',
+  'reWords',
   'shadowProps',
   'support',
-  'reWords',
   'whitespace'
 ];
 
@@ -843,7 +843,7 @@ var uninlinables = _.union(
   'toIterable',
   'trimmedLeftIndex',
   'trimmedRightIndex'
-]);
+]).sort();
 
 /*----------------------------------------------------------------------------*/
 
@@ -3608,7 +3608,7 @@ function build(options, callback) {
     }());
 
     // Expand properties, variables, and their function dependencies to include in the build.
-    var allDeps = getAllDependencies(buildFuncs, funcDepMap, objDepMap, varDepMap);
+    var allDeps = getAllDependencies(buildFuncs, funcDepMap, objDepMap, varDepMap).sort();
     buildFuncs = _.intersection(allFuncs, allDeps);
     includeObjs = _.intersection(objDependencies, allDeps);
     includeVars = _.intersection(varDependencies, allDeps);
