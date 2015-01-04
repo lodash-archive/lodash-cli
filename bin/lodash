@@ -113,7 +113,7 @@ var funcDependencyMap = createMap({
   'templateSettings': ['escape'],
 
   // Dependencies of the main module.
-  'main': ['arrayEach', 'baseForOwn', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'matches', 'mixin', 'property'],
+  'main': ['arrayEach', 'baseForOwn', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'matches', 'mixin', 'property', 'thru'],
 
   // Dependencies of Lo-Dash methods.
   'after': ['isFunction'],
@@ -3642,8 +3642,8 @@ function build(options, callback) {
       });
     }
     else {
-      // Unexpose `lodash.support`.
       if (isModularize) {
+        // Unexpose `lodash.support`.
         _.forOwn(objDependencyMap, function(deps, funcName) {
           if (_.includes(deps, 'support')) {
             source = source.replace(matchFunction(source, funcName), function(match) {
@@ -3655,8 +3655,7 @@ function build(options, callback) {
         source = source
           .replace(/\blodash\.support\s*=\s*/, '')
           .replace(/\blodash\.(?=support\b)/g, '');
-      }
-      if (isModularize) {
+
         // Replace the `lodash.templateSettings` property assignment with a variable assignment.
         source = source.replace(/\b(lodash\.)(?=templateSettings\s*=)/, 'var ');
 
@@ -3675,6 +3674,13 @@ function build(options, callback) {
           match = match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(options\s*==\s*null\b[\s\S]+?\n\1\}\n/m, '');
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!methodNames\b[\s\S]+?\n\1\}/m, function(match, indent) {
             return indent + 'var methodNames = baseFunctions(source, keys(source));\n';
+          });
+        });
+
+        // Replace `sample` references in `lodash.prototype.sample` method with `collection.sample`.
+        source = source.replace(getMethodAssignments(source), function(match) {
+          return match.replace(/^( *)lodash\.prototype\.sample\s*=[\s\S]+?\n\1\}/m, function(match) {
+            return match.replace(/\bsample(?=\()/g, 'collection.sample');
           });
         });
 
