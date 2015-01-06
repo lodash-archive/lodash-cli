@@ -690,8 +690,8 @@ var categoryToDepName = createMap({
 
 /* Used to force inlining of uninlinables per identifier. */
 var forceInlineMap = createMap({
-  'isArray': ['isNative'],
-  'isFunction': ['isNative'],
+  'isArray': ['isNative', 'toString'],
+  'isFunction': ['isNative', 'toString'],
   'keys': ['keysIn'],
   'slice': ['baseSlice', 'isIterateeCall']
 });
@@ -841,6 +841,7 @@ var uninlinables = _.union(
   'support',
   'templateSettings',
   'toIterable',
+  'toString',
   'trimmedLeftIndex',
   'trimmedRightIndex'
 ]).sort();
