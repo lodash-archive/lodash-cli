@@ -20,7 +20,7 @@
   "dependencies": {
     "closure-compiler": "0.2.6",
     "glob": "~3.2.11",
-    "lodash": "3.0.0-pre",
+    "lodash-compat": "3.0.0-pre",
     "uglify-js": "2.4.15"
   },
   "devDependencies": {
