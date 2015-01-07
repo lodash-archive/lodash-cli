@@ -1137,11 +1137,11 @@ QUnit.module('source-map modifier');
       asyncTest('`lodash ' + mapCommand + (outputCommand ? ' ' + outputCommand : '') + '`', function() {
         var callback = _.once(function(data) {
           var basename = path.basename(data.outputPath, '.js'),
-              sources = /foo.js/.test(outputCommand) ? ['foo.js'] : ['lodash' + (_.isEmpty(outputCommand) ? '.custom' : '') + '.js'],
+              sources = [_.result(/\w+\.js$/.exec(outputCommand), 0, 'lodash.custom.js')],
               sourceMap = JSON.parse(data.sourceMap),
-              sourceMapURL = (/\w+(?=\.map$)/.exec(mapCommand) || [basename])[0];
+              sourceMapURL = _.result(/\w+\.map$/.exec(mapCommand), 0, basename + '.map');
 
-          ok(RegExp('\\n//# sourceMappingURL=' + sourceMapURL + '.map$').test(data.source), basename);
+          ok(RegExp('\\n//# sourceMappingURL=' + sourceMapURL + '$').test(data.source), basename);
           strictEqual(sourceMap.file, basename + '.js', basename);
           deepEqual(sourceMap.sources, sources, basename);
 

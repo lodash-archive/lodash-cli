@@ -220,6 +220,6 @@ lodash.unique = lodash.uniq;
 // add other properties
 lodash.support = support;
 (lodash.templateSettings = templateSettings).imports._ = lodash;
-lodash.VERSION = require('lodash').VERSION;
+lodash.VERSION = require('lodash-compat').VERSION;
 
 module.exports = lodash;

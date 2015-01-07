@@ -33,7 +33,7 @@
         }
       }
     },
-    "lodash": {
+    "lodash-compat": {
       "version": "3.0.0-pre",
       "dependencies": {
         "curl-amd": {
@@ -43,30 +43,32 @@
         },
         "dojo": {
           "version": "1.10.2",
-          "from": "dojo@~1.10.2",
+          "from": "dojo@>=1.10.2 <1.11.0",
           "resolved": "https://registry.npmjs.org/dojo/-/dojo-1.10.2.tgz"
         },
         "jquery": {
           "version": "1.11.2",
-          "from": "jquery@~1.11.1",
+          "from": "jquery@>=1.11.1 <1.12.0",
           "resolved": "https://registry.npmjs.org/jquery/-/jquery-1.11.2.tgz"
         },
         "platform": {
           "version": "1.3.0",
-          "from": "platform@~1.3.0"
+          "from": "platform@>=1.3.0 <1.4.0",
+          "resolved": "https://registry.npmjs.org/platform/-/platform-1.3.0.tgz"
         },
         "qunit-extras": {
           "version": "1.4.0",
-          "from": "qunit-extras@~1.4.0"
+          "from": "qunit-extras@>=1.4.0 <1.5.0",
+          "resolved": "https://registry.npmjs.org/qunit-extras/-/qunit-extras-1.4.0.tgz"
         },
         "qunitjs": {
           "version": "1.16.0",
-          "from": "qunitjs@~1.16.0",
+          "from": "qunitjs@>=1.16.0 <1.17.0",
           "resolved": "https://registry.npmjs.org/qunitjs/-/qunitjs-1.16.0.tgz"
         },
         "requirejs": {
           "version": "2.1.15",
-          "from": "requirejs@~2.1.15",
+          "from": "requirejs@>=2.1.15 <2.2.0",
           "resolved": "https://registry.npmjs.org/requirejs/-/requirejs-2.1.15.tgz"
         }
       }

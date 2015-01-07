@@ -3244,7 +3244,7 @@ function build(options, callback) {
         varDepMap = createMap(_.cloneDeep(varDependencyMap));
 
     // The path to the source file.
-    var filePath = require.resolve('lodash/lodash.js');
+    var filePath = require.resolve('lodash-compat');
 
     // Used to specify a custom IIFE to wrap Lo-Dash.
     var iife = getOption(options, 'iife');
@@ -3962,14 +3962,16 @@ function build(options, callback) {
       return path.join(fs.realpathSync(dirname), path.basename(outputPath));
     }());
   }
-  // Used as the basename of the output path.
-  var basename = 'lodash';
-  if (outputPath) {
-    basename = outputPath;
-  } else if (isTemplate) {
-    basename += '.templates';
-  } else if (isCustom) {
-    basename += '.custom';
+  // Resolve the basename of the output path.
+  var basename = filePath = outputPath;
+  if (!basename) {
+    basename = 'lodash';
+    if (isTemplate) {
+      basename += '.templates';
+    } else if (isCustom) {
+      basename += '.custom';
+    }
+    filePath =  path.join(cwd, basename + '.js');
   }
   // Output development build.
   if (!isProduction && (isCustom || isDevelopment || isTemplate)) {
@@ -3984,7 +3986,6 @@ function build(options, callback) {
       });
     }
     else if (!isStdOut) {
-      filePath = outputPath || path.join(cwd, basename + '.js');
       outputUsed = true;
       callback({
         'source': devSource,
