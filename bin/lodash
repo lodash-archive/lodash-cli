@@ -763,7 +763,7 @@ var placeholderFuncs = [
   'partialRight'
 ];
 
-/** List of uninlinables dependencies. */
+/** List of uninlinable dependencies. */
 var uninlinables = _.union(
   _.without(lodashFuncs,
     'attempt',
