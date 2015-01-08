@@ -3551,7 +3551,7 @@ function build(options, callback) {
           '      skipIndexes = length > 0;',
           '',
           '  while (++index < length) {',
-          '    result[index] = String(index);',
+          "    result[index] = (index + '');",
           '  }',
           '  for (var key in object) {',
           '    if (!(skipIndexes && isIndex(key, length)) &&',
