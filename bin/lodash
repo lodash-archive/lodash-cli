@@ -693,6 +693,7 @@ var categoryToDepName = createMap({
 var forceInlineMap = createMap({
   'isArray': ['isNative', 'toString'],
   'isFunction': ['isNative', 'toString'],
+  'isNative': ['toString'],
   'keys': ['keysIn']
 });
 
