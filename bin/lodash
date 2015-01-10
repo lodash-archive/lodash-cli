@@ -1059,7 +1059,7 @@ function buildModule(state, onComplete) {
             .replace('Lo-Dash', '[Lo-Dash](https://lodash.com/)')
             .replace('Node.js', '[Node.js](http://nodejs.org/)')
             .replace('lodash-cli', '[lodash-cli](https://www.npmjs.com/package/lodash-cli)')
-            .replace(/`_\.([$\w]+)`/, '[$&](http://lodash.com/docs#$1)');
+            .replace(/`(_\.([$\w]+))`/, '[$1](http://lodash.com/docs#$2)');
 
           var templateData = {
             'name': moduleName,
