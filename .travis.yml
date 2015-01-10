@@ -3,15 +3,20 @@ node_js:
   - "0.10"
 env:
   global:
-    - BIN="node" BUILD="compat" EXPORTS="commonjs" OPTION="" OUTPUT_PATH=false NPM_VERSION="^2.0.0" TARGET_PATH=false TEST_BUILDS=false 
+    - BIN="node" BUILD="compat" EXPORTS="commonjs" OPTION="" NPM_VERSION="^2.0.0"
+    - LOADER="requirejs" RUNNER_ROOT="node_modules/lodash-compat/test"
+    - AMD_PATH="../../../amd/main.js" SAUCE_PATH="$RUNNER_ROOT/saucelabs.js" SAUCE_USERNAME="lodash"
+    - OUTPUT_PATH=false TARGET_PATH=false TEST_BUILDS=false
+    - secure: "HUCzn6i9XZ53278fYMICHuHWaVtTZmJCfY4wv3BEu57CGshw9T399Vxul849vIusw3x9cf4iNrrry0RaZga7KfaJIVSESy4zeY4vnsJ+5QCiXGbobpNPYnhU50eTo95MqDh1/Uds+cv2HCo+4VH8yb+6k/p9xX0CC3TvvToX60M="
   matrix:
-    - BUILD="compat"
-    - BUILD="modern"
-    - BUILD="modern" EXPORTS="es6" OUTPUT_PATH="./es6" TARGET_PATH="../../../es6/lodash.js"
-    - BUILD="modern" EXPORTS="node" OUTPUT_PATH="./node" TARGET_PATH="../../../node/index.js"
-    - BUILD="modern" EXPORTS="npm" OUTPUT_PATH="./npm/node_modules" TARGET_PATH="../../../npm/index.js"
+    -
+    - EXPORTS="node"
     - BIN="rhino" OPTION="-require"
     - BIN="ringo"
+    - BUILD="modern"
+    - BUILD="modern" EXPORTS="es6" TARGET_PATH="../../../es6/lodash.js"
+    - BUILD="modern" EXPORTS="node"
+    - BUILD="modern" EXPORTS="npm" OUTPUT_PATH="./npm/node_modules"
     - TEST_BUILDS=true
 matrix:
   include:
@@ -20,7 +25,19 @@ matrix:
     - node_js: "0.8"
       env: BUILD="modern" NPM_VERSION="~1.4.0"
     - node_js: "0.8"
-      env: BUILD="modern" EXPORTS="npm" NPM_VERSION="~1.4.0" OUTPUT_PATH="./npm/node_modules" TARGET_PATH="../../../npm/index.js"
+      env: BUILD="modern" EXPORTS="npm" NPM_VERSION="~1.4.0" OUTPUT_PATH="./npm/node_modules"
+    - node_js: "0.10"
+      env: EXPORTS="amd" TARGET_PATH=$AMD_PATH
+    - node_js: "0.10"
+      env: EXPORTS="amd" TARGET_PATH=$AMD_PATH LOADER="curl" 
+    - node_js: "0.10"
+      env: EXPORTS="amd" TARGET_PATH=$AMD_PATH LOADER="dojo" 
+    - node_js: "0.10"
+      env: BUILD="modern" EXPORTS="amd" TARGET_PATH=$AMD_PATH
+    - node_js: "0.10"
+      env: BUILD="modern" EXPORTS="amd" TARGET_PATH=$AMD_PATH LOADER="curl" 
+    - node_js: "0.10"
+      env: BUILD="modern" EXPORTS="amd" TARGET_PATH=$AMD_PATH LOADER="dojo"
 git:
   depth: 10
 branches:
@@ -31,16 +48,21 @@ before_install:
   - "npm config set loglevel error"
   - "npm i -g npm@\"$NPM_VERSION\""
   - "git clone --depth=10 --branch=master git://github.com/lodash/lodash.git ./node_modules/lodash-compat && cd ./node_modules/lodash-compat && sed -i'' 's|\"lodash\"|\"lodash-compat\"|' ./package.json && npm i && cd ../../"
-  - "[ $OUTPUT_PATH != false ] || OUTPUT_PATH=\"./$EXPORTS/$BUILD\""
-  - "[ $TARGET_PATH != false ] || TARGET_PATH=\"../../../$EXPORTS/$BUILD/index.js\""
+  - "[ $OUTPUT_PATH != false ] || OUTPUT_PATH=\"./$EXPORTS\""
+  - "[ $TARGET_PATH != false ] || TARGET_PATH=\"../../../$EXPORTS/index.js\""
   - "[ $BIN != 'rhino' ] || (sudo mkdir /opt/rhino-1.7R5 && sudo wget --no-check-certificate -O /opt/rhino-1.7R5/js.jar https://lodash.com/_travis/rhino-1.7R5.jar)"
   - "[ $BIN != 'rhino' ] || (echo -e '#!/bin/sh\\njava -jar /opt/rhino-1.7R5/js.jar $@' | sudo tee /usr/local/bin/rhino && sudo chmod +x /usr/local/bin/rhino)"
   - "[ $BIN != 'ringo' ] || (wget --no-check-certificate https://lodash.com/_travis/ringojs-0.11.zip && sudo unzip ringojs-0.11 -d /opt && rm ringojs-0.11.zip)"
   - "[ $BIN != 'ringo' ] || (sudo ln -s /opt/ringojs-0.11/bin/ringo /usr/local/bin/ringo && sudo chmod +x /usr/local/bin/ringo)"
-  - "[ $TEST_BUILDS == true ]  || node ./bin/lodash modularize $BUILD exports=$EXPORTS -o $OUTPUT_PATH"
+  - "[ $TEST_BUILDS == true ] || node ./bin/lodash modularize $BUILD exports=$EXPORTS -o $OUTPUT_PATH"
+  - "[ $EXPORTS != 'amd' ] || npm i chalk@\"0.5.1\" ecstatic@\"0.5.6\" request@\"^2.0.0\" sauce-tunnel@\"^2.0.0\""
   - "[ $EXPORTS != 'es6' ] || npm i -g es6-module-transpiler@\"0.9.6\""
   - "[ $EXPORTS != 'es6' ] || compile-modules convert -f commonjs -o ./ ./es6/*.js ./es6/**/*.js"
+  - "[ $EXPORTS != 'npm' ] || (cd ./npm && cp ../test/npm/index.js ./index.js && cd ../)"
 script:
-  - "[ $EXPORTS != 'npm' ]     || (cd ./npm && cp ../test/npm/index.js ./index.js && cd ../)"
-  - "[ $TEST_BUILDS == true ]  || $BIN $OPTION ./node_modules/lodash-compat/test/test.js $TARGET_PATH"
-  - "[ $TEST_BUILDS == false ] || node ./test/test.js --time-limit 45m"
+  - "[ $EXPORTS != 'amd' ]  || node $SAUCE_PATH name=\"lodash tests\"     runner=\"$RUNNER_ROOT/index.html?build=$TARGET_PATH&loader=$LOADER\"      tags=\"$BUILD,$LOADER,amd,development\""
+  - "[ $EXPORTS != 'amd' ]  || node $SAUCE_PATH name=\"backbone tests\"   runner=\"$RUNNER_ROOT/backbone.html?build=$TARGET_PATH&loader=$LOADER\"   tags=\"$BUILD,$LOADER,amd,development,backbone\""
+  - "[ $EXPORTS != 'amd' ]  || node $SAUCE_PATH name=\"underscore tests\" runner=\"$RUNNER_ROOT/underscore.html?build=$TARGET_PATH&loader=$LOADER\" tags=\"$BUILD,$LOADER,amd,development,underscore\""
+  - "([ $EXPORTS != 'amd' ] || [ $BUILD != 'compat' ])    || node $SAUCE_PATH name=\"lodash tests\" runner=\"$RUNNER_ROOT/index.html?build=$TARGET_PATH&loader=$LOADER\" tags=\"$BUILD,$LOADER,amd,development,ie-compat\" compatMode=7"
+  - "([ $EXPORTS == 'amd' ] || [ $TEST_BUILDS == true ])  || $BIN $OPTION $RUNNER_ROOT/test.js $TARGET_PATH"
+  - "([ $EXPORTS == 'amd' ] || [ $TEST_BUILDS == false ]) || node ./test/test.js --time-limit 45m"
