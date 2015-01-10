@@ -333,7 +333,7 @@ var funcDependencyMap = createMap({
   'baseAt': ['isIndex', 'isLength'],
   'baseBindAll': ['createWrapper'],
   'baseCallback': ['baseProperty', 'baseMatches', 'bindCallback', 'identity', 'isBindable'],
-  'baseClone': ['arrayCopy', 'arrayEach', 'baseAssign', 'baseForOwn', 'initCloneArray', 'initCloneByTag', 'initCloneObject', 'isArray', 'isArguments', 'isCloneable', 'isHostObject', 'isObject'],
+  'baseClone': ['arrayCopy', 'arrayEach', 'baseAssign', 'baseForOwn', 'initCloneArray', 'initCloneByTag', 'initCloneObject', 'isArray', 'isArguments', 'isHostObject', 'isObject'],
   'baseCompareAscending': [],
   'baseCreate': ['isObject'],
   'baseDelay': ['baseSlice', 'isFunction'],
@@ -407,7 +407,6 @@ var funcDependencyMap = createMap({
   'initCloneObject': [],
   'isArrayLike': ['isArguments', 'isLength', 'isObjectLike'],
   'isBindable': ['baseSetData', 'isNative'],
-  'isCloneable': ['isHostObject'],
   'isHostObject': [],
   'isIndex': [],
   'isIterateeCall': ['isIndex', 'isLength', 'isObject'],
@@ -832,7 +831,6 @@ var uninlinables = _.union(
   'createPad',
   'createWrapper',
   'isArrayLike',
-  'isCloneable',
   'isHostObject',
   'isIterateeCall',
   'pickByArray',
@@ -2568,12 +2566,12 @@ function removeIsFunctionFork(source) {
 function removeIsHostObject(source, funcDepMap) {
   source = source == null ? '' : String(source);
 
-  _.each(['baseClone', 'baseIsEqualDeep', 'isCloneable', 'isElement', 'isNative', 'shimIsPlainObject'], function(funcName) {
+  _.each(['baseClone', 'baseIsEqualDeep', 'isElement', 'isNative', 'shimIsPlainObject'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isHostObject');
   });
 
-  _.each(['baseIsEqualDeep', 'isCloneable', 'shimIsPlainObject'], function(funcName) {
+  _.each(['baseIsEqualDeep', 'shimIsPlainObject'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match.replace(/\s*&&\s*!isHostObject\([^)]+\)/g, '');
     });
