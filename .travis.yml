@@ -7,8 +7,12 @@ env:
   matrix:
     - BUILD="compat"
     - BUILD="modern"
-    - BUILD="modern" EXPORTS="npm" OUTPUT_PATH="./npm/node_modules" TARGET_PATH="../../../npm/index.js"
     - BUILD="modern" EXPORTS="es6" OUTPUT_PATH="./es6" TARGET_PATH="../../../es6/lodash.js"
+    - BUILD="modern" EXPORTS="node" OUTPUT_PATH="./node" TARGET_PATH="../../../node/index.js"
+    - BUILD="modern" EXPORTS="npm" OUTPUT_PATH="./npm/node_modules" TARGET_PATH="../../../npm/index.js"
+    - BIN="rhino" OPTION="-require"
+    - BIN="ringo"
+    - TEST_BUILDS=true
 matrix:
   include:
     - node_js: "0.8"
@@ -17,12 +21,6 @@ matrix:
       env: BUILD="modern" NPM_VERSION="~1.4.0"
     - node_js: "0.8"
       env: BUILD="modern" EXPORTS="npm" NPM_VERSION="~1.4.0" OUTPUT_PATH="./npm/node_modules" TARGET_PATH="../../../npm/index.js"
-    - node_js: "0.10"
-      env: BIN="rhino" OPTION="-require"
-    - node_js: "0.10"
-      env: BIN="ringo"
-    - node_js: "0.10"
-      env: TEST_BUILDS=true
 git:
   depth: 10
 branches:
