@@ -17,9 +17,9 @@ matrix:
     - node_js: "0.8"
       env: BUILD="modern" EXPORTS="npm" NPM_VERSION="~1.4.0" OUTPUT_PATH="./npm/node_modules" TARGET_PATH="../../../npm/index.js"
     - node_js: "0.10"
-      env: BIN="rhino" BUILD="compat" OPTION="-require"
+      env: BIN="rhino" OPTION="-require"
     - node_js: "0.10"
-      env: BIN="ringo" BUILD="compat"
+      env: BIN="ringo"
     - node_js: "0.10"
       env: TEST_BUILDS=true
 git:
