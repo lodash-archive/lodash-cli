@@ -50,7 +50,7 @@ var timeLimit = _.reduce(process.argv, function(result, value, index) {
   return result;
 }, 0);
 
-/** Used to map aliases with their real names. */
+/** Used to map aliases to their real names. */
 var aliasToRealMap = createMap({
   'all': 'every',
   'any': 'some',
@@ -79,7 +79,7 @@ var aliasToRealMap = createMap({
   'value': 'wrapperValue'
 });
 
-/** Used to map real names with their aliases. */
+/** Used to map real names to their aliases. */
 var realToAliasMap = createMap({
   'assign': ['extend'],
   'callback': ['iteratee'],
