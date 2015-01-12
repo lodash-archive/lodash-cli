@@ -1136,7 +1136,7 @@ function buildModule(state, onComplete) {
       source = source.replace(/^(?: *\/\/.*\n)* *lodash\.[$\w]+\s*=[^;]+;\n/m, function(match) {
         var code = [
           '  // wrap `_.mixin` so it works when provided only one argument',
-          (isES6 ? 'var ' : '') + 'mixin = (function(func) {'
+          '  ' + (isES6 ? 'var ' : '') + 'mixin = (function(func) {'
         ];
 
         code.push(
