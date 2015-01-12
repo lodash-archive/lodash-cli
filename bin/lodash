@@ -3731,19 +3731,19 @@ function build(options, callback) {
     }
     if (!isCommonJS || isModularize) {
       source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)\}?)\s*else\s*\{)?\s*freeExports\.[$\w]+\s*=[\s\S]+?(?:\n\2\})?\n+/m, function(match, prelude) {
-        return prelude ? prelude + '\n' : '';
+        return _.trim(prelude) ? prelude + '\n' : '';
       });
     }
     if (!isGlobal || isModularize) {
       source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)\}?)\s*else(?:\s*if\s*\(_\))?\s*\{)?(?:\s*\/\/.*)*\s*(?:root\._|_\.templates)\s*=[\s\S]+?(?:\n\2\})?\n+/gm, function(match, prelude) {
-        return prelude ? prelude + '\n' : '';
+        return _.trim(prelude) ? prelude + '\n' : '';
       });
     }
     // Remove `if (freeExports && freeModule) {...}` if it's empty.
     if (isAMD && isGlobal && !isModularize) {
       source = source.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*\}\n+/m, '');
     } else {
-      source = source.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*\}(?:\s*else\s*\{([\s\S]+?)\s*\})?\n+/m, '$1\n');
+      source = source.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*\}(?:\s*else\s*\{([\s\S]+?\n)\s*\})?\n+/m, '$1');
     }
 
     /*------------------------------------------------------------------------*/
