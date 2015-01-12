@@ -3740,7 +3740,7 @@ function build(options, callback) {
       });
     }
     // Remove `if (freeExports && freeModule) {...}` if it's empty.
-    if (isAMD && isGlobal && !isModularize) {
+    if (isAMD && isGlobal) {
       source = source.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*\}\n+/m, '');
     } else {
       source = source.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*\}(?:\s*else\s*\{([\s\S]+?\n)\s*\})?\n+/m, '$1');
