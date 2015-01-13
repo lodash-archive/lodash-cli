@@ -3,8 +3,9 @@ node_js:
   - "0.10"
 env:
   global:
-    - BIN="node" BUILD="compat" EXPORTS="commonjs" OPTION="" NPM_VERSION="^2.0.0"
-    - LOADER="requirejs" RUNNER_PATH="node_modules/lodash-compat/test" TEST_BUILDS=false
+    - BIN="node" BUILD="compat" EXPORTS="commonjs" NPM_VERSION="^2.0.0"
+    - OPTION="" TEST_BUILDS=false TRANSPILER="none"
+    - LOADER="requirejs" RUNNER_PATH="node_modules/lodash-compat/test"
     - SAUCE_PATH="$RUNNER_PATH/saucelabs.js" SAUCE_USERNAME="lodash"
     - secure: "HUCzn6i9XZ53278fYMICHuHWaVtTZmJCfY4wv3BEu57CGshw9T399Vxul849vIusw3x9cf4iNrrry0RaZga7KfaJIVSESy4zeY4vnsJ+5QCiXGbobpNPYnhU50eTo95MqDh1/Uds+cv2HCo+4VH8yb+6k/p9xX0CC3TvvToX60M="
   matrix:
@@ -13,7 +14,8 @@ env:
     - BIN="rhino" OPTION="-require"
     - BIN="ringo"
     - BUILD="modern"
-    - BUILD="modern" EXPORTS="es6"
+    - BUILD="modern" EXPORTS="es6" TRANSPILER="6to5"
+    - BUILD="modern" EXPORTS="es6" TRANSPILER="es6-module-transpiler"
     - BUILD="modern" EXPORTS="node"
     - BUILD="modern" EXPORTS="npm"
     - TEST_BUILDS=true
@@ -56,10 +58,12 @@ before_install:
   - "[ $EXPORTS != 'amd' ] || (QUERY=\"build=$TARGET_PATH&loader=$LOADER\" && TAGS=\"$BUILD,$LOADER,amd,development\")"
   - "[ $EXPORTS != 'amd' ] || npm i chalk@\"0.5.1\" ecstatic@\"0.5.6\" request@\"^2.0.0\" sauce-tunnel@\"^2.0.0\""
   - "[ $EXPORTS != 'es6' ] || TARGET_PATH=\"../../../es6/lodash.js\""
-  - "[ $EXPORTS != 'es6' ] || npm i -g es6-module-transpiler@\"0.9.6\""
   - "[ $EXPORTS != 'npm' ] || OUTPUT_PATH=\"./npm/node_modules\""
-  - "[ $TEST_BUILDS == true ] || node ./bin/lodash modularize $BUILD exports=$EXPORTS -o $OUTPUT_PATH"
-  - "[ $EXPORTS != 'es6' ] || compile-modules convert -f commonjs -o ./ ./es6/*.js ./es6/**/*.js"
+  - "[ $TEST_BUILDS == true ]  || node ./bin/lodash modularize $BUILD exports=$EXPORTS -o $OUTPUT_PATH"
+  - "[ $TRANSPILER != '6to5' ] || npm i -g 6to5@\"^2.0.0\""
+  - "[ $TRANSPILER != '6to5' ] || 6to5 ./es6 --out-dir ./es6"
+  - "[ $TRANSPILER != 'es6-module-transpiler' ] || npm i -g es6-module-transpiler@\"0.9.6\""
+  - "[ $TRANSPILER != 'es6-module-transpiler' ] || compile-modules convert -f commonjs -o ./ ./es6/*.js ./es6/**/*.js"
   - "[ $EXPORTS != 'npm' ] || (cd ./npm && cp ../test/npm/index.js ./index.js && cd ../)"
 script:
   - "[ $EXPORTS != 'amd' ]  || node $SAUCE_PATH name=\"lodash tests\"     runner=\"$RUNNER_PATH/index.html?$QUERY\"      tags=\"$TAGS\""
