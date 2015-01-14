@@ -180,7 +180,6 @@ var categoryMap = createMap({
     'some',
     'sortBy',
     'sortByAll',
-    'toArray',
     'where'
   ],
   'Date': [
@@ -231,7 +230,10 @@ var categoryMap = createMap({
     'isPlainObject',
     'isRegExp',
     'isString',
-    'isUndefined'
+    'isTypedArray',
+    'isUndefined',
+    'toArray',
+    'toPlainObject'
   ],
   'Number': [
     'random'
