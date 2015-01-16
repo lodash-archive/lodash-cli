@@ -327,7 +327,7 @@ var funcDependencyMap = createMap({
   'arrayReduce': [],
   'arrayReduceRight': [],
   'arraySome': [],
-  'arrayToObject': [],
+  'arrayToObject': ['arrayCopy'],
   'assignDefaults': [],
   'assignOwnDefaults': [],
   'baseAssign': ['baseCopy', 'keys'],
