@@ -798,6 +798,7 @@ var uninlinables = _.union(
   'baseCallback',
   'baseClone',
   'baseCompareAscending',
+  'baseCopy',
   'baseCreate',
   'baseDelay',
   'baseDifference',
