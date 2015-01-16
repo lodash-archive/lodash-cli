@@ -268,7 +268,7 @@ var funcDependencyMap = createMap({
   'thru': [],
   'times': ['bindCallback'],
   'toArray': ['arrayCopy', 'isLength', 'isString', 'values'],
-  'toPlainObject': ['arrayToObject', 'baseCopy', 'isArguments', 'isArray', 'isTypedArray', 'keysIn'],
+  'toPlainObject': ['baseCopy', 'keysIn'],
   'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'getCallback', 'isArray', 'isObject', 'isTypedArray'],
   'trim': ['charsLeftIndex', 'charsRightIndex', 'isIterateeCall', 'toString', 'trimmedLeftIndex', 'trimmedRightIndex'],
   'trimLeft': ['charsLeftIndex', 'isIterateeCall', 'toString', 'trimmedLeftIndex'],
@@ -327,14 +327,13 @@ var funcDependencyMap = createMap({
   'arrayReduce': [],
   'arrayReduceRight': [],
   'arraySome': [],
-  'arrayToObject': ['arrayCopy'],
   'assignDefaults': [],
   'assignOwnDefaults': [],
   'baseAssign': ['baseCopy', 'keys'],
   'baseAt': ['isIndex', 'isLength'],
   'baseBindAll': ['createWrapper'],
   'baseCallback': ['baseProperty', 'baseMatches', 'bindCallback', 'identity', 'isBindable'],
-  'baseClone': ['arrayCopy', 'arrayEach', 'baseAssign', 'baseForOwn', 'initCloneArray', 'initCloneByTag', 'initCloneObject', 'isArray', 'isArguments', 'isHostObject', 'isObject'],
+  'baseClone': ['arrayCopy', 'arrayEach', 'baseAssign', 'baseForOwn', 'initCloneArray', 'initCloneByTag', 'initCloneObject', 'isArray', 'isHostObject', 'isObject'],
   'baseCompareAscending': [],
   'baseCopy': [],
   'baseCreate': ['isObject'],
@@ -355,12 +354,12 @@ var funcDependencyMap = createMap({
   'baseIndexOf': ['indexOfNaN'],
   'baseInvoke': ['baseEach', 'isLength'],
   'baseIsEqual': ['baseIsEqualDeep'],
-  'baseIsEqualDeep': ['arrayToObject', 'equalArrays', 'equalByTag', 'equalObjects', 'isArguments', 'isArray', 'isHostObject', 'isLength', 'isTypedArray'],
+  'baseIsEqualDeep': ['equalArrays', 'equalByTag', 'equalObjects', 'isArray', 'isHostObject', 'isTypedArray'],
   'baseIsMatch': ['baseIsEqual'],
   'baseMap': ['baseEach'],
   'baseMatches': ['baseClone', 'baseIsMatch', 'isStrictComparable', 'keys'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'baseMergeDeep', 'isArray', 'isLength', 'isObjectLike', 'isTypedArray'],
-  'baseMergeDeep': ['arrayCopy', 'arrayToObject', 'isArguments', 'isArray', 'isLength', 'isPlainObject', 'isTypedArray'],
+  'baseMergeDeep': ['arrayCopy', 'isArguments', 'isArray', 'isLength', 'isPlainObject', 'isTypedArray', 'toPlainObject'],
   'baseProperty': [],
   'basePullAt': ['baseAt', 'baseCompareAscending', 'isIndex'],
   'baseRandom': [],
@@ -406,7 +405,7 @@ var funcDependencyMap = createMap({
   'getView': [],
   'indexOfNaN': [],
   'initCloneArray': [],
-  'initCloneByTag': ['arrayCopy', 'bufferClone'],
+  'initCloneByTag': ['bufferClone'],
   'initCloneObject': [],
   'isBindable': ['baseSetData', 'isNative'],
   'isHostObject': [],
@@ -436,7 +435,6 @@ var funcDependencyMap = createMap({
 
 /** Used to track Lo-Dash object dependencies of identifiers. */
 var objDependencyMap = createMap({
-  'baseClone': ['support'],
   'isArguments': ['support'],
   'isBindable': ['support'],
   'isElement': ['support'],
@@ -2772,7 +2770,7 @@ function removeSupportArgsTag(source, funcDepMap, objDepMap) {
   source = removeIsArgumentsFork(source);
   source = removeSupportProp(source, 'argsTag');
 
-  _.each(['baseClone', 'baseIsEqualDeep', 'isArguments', 'isPlainObject', 'shimIsPlainObject'], function(funcName) {
+  _.each(['isArguments', 'isPlainObject', 'shimIsPlainObject'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isArguments');
 
@@ -2782,29 +2780,13 @@ function removeSupportArgsTag(source, funcDepMap, objDepMap) {
     }
   });
 
-  // Remove `isArguments` from `baseIsEqualDeep`
-  source = source.replace(matchFunction(source, 'baseIsEqualDeep'), function(match) {
-    return match.replace(/\bisArguments\(([^)]+)\)/g, function(match, value) {
-      return (value == 'object' ? 'objTag' : 'othTag') + ' == argsTag';
-    });
-  });
-
-  // Remove `support.argsTag` from others.
-  _.each(['baseClone', 'baseIsEqualDeep'], function(funcName) {
-    source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!lodash\.support\.argsTag\b[\s\S]+?\n\1\}\n/m, '');
-    });
-  });
-
   _.each(['shimIsPlainObject', 'isPlainObject'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match.replace(/\s*\|\|\s*\(!(?:lodash\.)?support\.argsTag\b[\s\S]+?\)\)/, '');
     });
   });
 
-  return source.replace(matchFunction(source, 'baseClone'), function(match) {
-    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!lodash\.support\.argsTag\b[\s\S]+?\n\1\}\n/m, '');
-  });
+  return source;
 }
 
 /**
@@ -3819,7 +3801,7 @@ function build(options, callback) {
       }
     }
     else {
-      if (isExcluded('baseClone', 'baseIsEqualDeep', 'isArguments', 'isPlainObject', 'shimIsPlainObject')) {
+      if (isExcluded('isArguments', 'isPlainObject', 'shimIsPlainObject')) {
         source = removeSupportArgsTag(source);
       }
       if (isExcluded('isElement')) {
