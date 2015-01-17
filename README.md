@@ -12,7 +12,8 @@ The full changelog for this release is available on our [wiki](https://github.co
 Using npm:
 
 ```bash
-$ {sudo} npm i -g lodash-cli
+$ {sudo -H} npm i -g npm
+$ {sudo -H} npm i -g lodash-cli
 $ lodash -h
 ```
 
