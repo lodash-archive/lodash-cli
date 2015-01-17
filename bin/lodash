@@ -675,6 +675,16 @@ var categoryMap = createMap({
   ]
 });
 
+/** Used to map category aliases to their real names. */
+var aliasToCategory = createMap({
+  'Arrays': 'Array',
+  'Chaining': 'Chain',
+  'Collections': 'Collection',
+  'Functions': 'Function',
+  'Objects': 'Object',
+  'Utilities': 'Utility'
+});
+
 /* Used to map categories with their dependency name. */
 var categoryToDepName = createMap({
   'Array': 'array',
@@ -1705,8 +1715,8 @@ function displayHelp() {
  * @returns {Array} Returns an array of aliases.
  */
 function getAliases(funcName, funcDepMap) {
-  var aliases = _.has(realToAliasMap, funcName) && realToAliasMap[funcName];
-  return _.reject(aliases, _.partial(_.has, funcDepMap || funcDependencyMap));
+  var aliases = realToAliasMap[funcName];
+  return _.reject(aliases, _.propertyOf(funcDepMap || funcDependencyMap));
 }
 
 /**
@@ -1718,15 +1728,10 @@ function getAliases(funcName, funcDepMap) {
  * @returns {Array} Returns the array of categories.
  */
 function getCategories(identifier, funcDepMap) {
-  var result = [];
   identifier = getRealName(identifier, funcDepMap);
-
-  _.forOwn(categoryMap, function(identifiers, category) {
-    if (_.includes(identifiers, identifier)) {
-      result.push(category);
-    }
+  return _.filter(allCategories, function(category) {
+    return _.includes(categoryMap[category], identifier);
   });
-  return result;
 }
 
 /**
@@ -1772,7 +1777,9 @@ function getDepPath(depName, fromPath, funcDepMap) {
  * @returns {string[]} Returns the dependency paths.
  */
 function getDepPaths(depNames, fromPath, funcDepMap) {
-  return _.map(depNames, _.partial(getDepPath, _, fromPath, funcDepMap));
+  return _.map(depNames, function(depName) {
+    return getDepPath(depName, fromPath, funcDepMap);
+  });
 }
 
 /**
@@ -2055,19 +2062,27 @@ function getParseIntFork(source) {
 }
 
 /**
- * Gets the real name, not alias, of a given function name.
+ * Gets the real function name of `alias`.
  *
  * @private
- * @param {string} funcName The name of the function to resolve.
+ * @param {string} alias The alias to resolve.
  * @param {Object} [funcDepMap] The dependency map used to validate the real name.
- * @returns {string} Returns the real function name.
+ * @returns {string} Returns the real name.
  */
-function getRealName(funcName, funcDepMap) {
-  return (
-    !_.has(funcDepMap || funcDependencyMap, funcName) &&
-    _.has(aliasToRealMap, funcName) &&
-    aliasToRealMap[funcName]
-  ) || funcName;
+function getRealName(alias, funcDepMap) {
+  var depMap = funcDepMap || funcDependencyMap;
+  return depMap[alias] ? alias : (aliasToRealMap[alias] || alias);
+}
+
+/**
+ * Gets the real category of `alias`.
+ *
+ * @private
+ * @param {string} alias The alias to resolve.
+ * @returns {string} Returns the real category.
+ */
+function getRealCategory(alias) {
+  return categoryMap[alias] ? alias : (aliasToCategory[alias] || alias);
 }
 
 /**
@@ -3330,10 +3345,14 @@ function build(options, callback) {
     /*------------------------------------------------------------------------*/
 
     // Categories of functions to include in the build.
-    var categoryOptions = _.map(getOption(options, 'category', []), _.compose(_.capitalize, _.partial(_.result, _, 'toLowerCase')));
+    var categoryOptions = _.map(getOption(options, 'category', []), function(category) {
+      return getRealCategory(_.capitalize(category.toLowerCase()));
+    });
 
     // Functions to include in the build.
-    var includeFuncs = categoryOptions.concat(_.map(getOption(options, 'include', []), _.partial(getRealName, _, funcDepMap)));
+    var includeFuncs = _.union(categoryOptions, _.map(getOption(options, 'include', []), function(funcName) {
+      return getRealName(funcName, funcDepMap);
+    }));
 
     // Properties to include in the build.
     var includeObjs = _.intersection(includeFuncs, objDependencies);
@@ -3342,10 +3361,14 @@ function build(options, callback) {
     var includeVars = _.intersection(includeFuncs, varDependencies);
 
     // Functions to remove from the build.
-    var minusFuncs = _.map(getOption(options, 'minus', []), _.partial(getRealName, _, funcDepMap));
+    var minusFuncs = _.map(getOption(options, 'minus', []), function(funcName) {
+      return getRealName(funcName, funcDepMap);
+    });
 
     // Functions to add to the build.
-    var plusFuncs = _.map(getOption(options, 'plus', []), _.partial(getRealName, _, funcDepMap));
+    var plusFuncs = _.map(getOption(options, 'plus', []), function(funcName) {
+      return getRealName(funcName, funcDepMap);
+    });
 
     // Expand categories to function names.
     _.each([includeFuncs, minusFuncs, plusFuncs], function(funcNames) {
