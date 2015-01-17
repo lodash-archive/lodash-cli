@@ -311,8 +311,8 @@ var funcDependencyMap = createMap({
 
   // Dependencies of `Set` cache functions.
   'SetCache': ['cachePush', 'isNative'],
-  'cacheIndexOf': [],
-  'cachePush': [],
+  'cacheIndexOf': ['isObject'],
+  'cachePush': ['isObject'],
   'createCache': ['constant', 'isNative', 'SetCache'],
 
   // Dependencies of private functions.
