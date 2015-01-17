@@ -1102,6 +1102,49 @@ function buildModule(state, onComplete) {
     });
   });
 
+  // Add alias modules.
+  _.each(identifiers, function(identifier) {
+    var aliases = !isNpm && getAliases(identifier, funcDepMap);
+    if (_.isEmpty(aliases)) {
+      return;
+    }
+    var categories = getCategories(identifier, funcDepMap);
+    if (_.isEmpty(categories)) {
+      categories.push(null);
+    }
+    _.each(categories.slice(0, 1), function(category) {
+      var modulePath = getModulePath(identifier, category, funcDepMap),
+          depPath = getDepPath(identifier, modulePath, funcDepMap);
+
+      _.each(aliases, function(alias) {
+        var iife = [];
+        if (isAMD) {
+          iife.push(
+            'define(["' + depPath + '"], function(' + identifier + ') {',
+            '  return ' + identifier + ';',
+            '});'
+          );
+        }
+        else if (isES6) {
+          iife.push(
+            'import ' + identifier + " from '" + depPath + "'",
+            'export default ' + identifier + ';'
+          );
+        }
+        else {
+          iife.push(
+            (isCommonJS ? 'exports.' + identifier : 'module.exports') +
+            " = require('" + depPath + "')" + (isCommonJS ? '.' + identifier : '') + ';'
+          );
+        }
+        buildCallback({
+          'outputPath': path.join(outputPath, modulePath, alias + '.js'),
+          'source': iife.join('\n')
+        });
+      });
+    });
+  });
+
   // Create main module.
   (function() {
     var identifier = 'main';
@@ -1279,22 +1322,22 @@ function buildModule(state, onComplete) {
     var categories = _.uniq(_.compact(_.flatten(_.map(identifiers, _.partial(getCategories, _, funcDepMap)))));
 
     _.each(categories, function(category) {
-      var iife = [],
-          depNames = _.intersection(getNamesByCategory(category), identifiers).sort(),
-          depPaths = getDepPaths(depNames, null, funcDepMap);
+      var iife = [];
 
-      var exportNames = _.transform(depNames, function(result, depName) {
+      var depNames = _.transform(_.intersection(getNamesByCategory(category), identifiers), function(result, depName) {
         result.push(depName);
         push.apply(result, getAliases(depName, funcDepMap));
       })
       .sort();
 
+      var depPaths = getDepPaths(depNames, null, funcDepMap);
+
       if (isAMD) {
         iife.push(
           "define(['" + depPaths.join("', '") + "'], function(" + depNames.join(', ') + ') {',
           '  return {',
-          _.map(exportNames, function(exportName) {
-            return "    '" + exportName + "': " + getRealName(exportName, funcDepMap);
+          _.map(depNames, function(depName) {
+            return "    '" + depName + "': " + depName;
           })
           .join(',\n'),
           '  };',
@@ -1312,8 +1355,8 @@ function buildModule(state, onComplete) {
           iife.push(
             '',
             'export default {',
-            _.map(exportNames, function(exportName) {
-              return "  '" + exportName + "': " + getRealName(exportName, funcDepMap);
+            _.map(depNames, function(depName) {
+              return "  '" + depName + "': " + depName;
             })
             .join(',\n'),
             '};'
@@ -1321,22 +1364,18 @@ function buildModule(state, onComplete) {
         }
         else if (isCommonJS) {
           push.apply(iife,
-            _.map(exportNames, function(exportName) {
-              var depName = getRealName(exportName, funcDepMap),
-                  depPath = depPaths[_.indexOf(depNames, depName)];
-
-              return 'exports.' + exportName + " = require('" + depPath + "')." + depName + ';';
+            _.map(depNames, function(depName) {
+              var depPath = depPaths[_.indexOf(depNames, depName)];
+              return 'exports.' + depName + " = require('" + depPath + "')." + depName + ';';
             })
           );
         }
         else {
           iife.push(
             'module.exports = {',
-            _.map(exportNames, function(exportName) {
-              var depName = getRealName(exportName, funcDepMap),
-                  depPath = depPaths[_.indexOf(depNames, depName)];
-
-              return "  '" + exportName + "': require('" + depPath + "')";
+            _.map(depNames, function(depName) {
+              var depPath = depPaths[_.indexOf(depNames, depName)];
+              return "  '" + depName + "': require('" + depPath + "')";
             })
             .join(',\n'),
             '};'
