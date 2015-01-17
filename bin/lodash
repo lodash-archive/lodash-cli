@@ -1315,79 +1315,74 @@ function buildModule(state, onComplete) {
   }());
 
   // Create category modules.
-  (function() {
+  _.each(_.uniq(_.compact(_.flatten(_.map(identifiers, _.partial(getCategories, _, funcDepMap))))), function(category) {
     if (isNpm) {
       return;
     }
-    var categories = _.uniq(_.compact(_.flatten(_.map(identifiers, _.partial(getCategories, _, funcDepMap)))));
+    var depNames = _.transform(_.intersection(getNamesByCategory(category), identifiers), function(result, depName) {
+      result.push(depName);
+      push.apply(result, getAliases(depName, funcDepMap));
+    })
+    .sort();
 
-    _.each(categories, function(category) {
-      var iife = [];
+    var iife = [],
+        depPaths = getDepPaths(depNames, null, funcDepMap);
 
-      var depNames = _.transform(_.intersection(getNamesByCategory(category), identifiers), function(result, depName) {
-        result.push(depName);
-        push.apply(result, getAliases(depName, funcDepMap));
-      })
-      .sort();
+    if (isAMD) {
+      iife.push(
+        "define(['" + depPaths.join("', '") + "'], function(" + depNames.join(', ') + ') {',
+        '  return {',
+        _.map(depNames, function(depName) {
+          return "    '" + depName + "': " + depName;
+        })
+        .join(',\n'),
+        '  };',
+        '});'
+      );
+    }
+    else {
+      if (isES6) {
+        push.apply(iife,
+          _.map(depNames, function(depName, index) {
+            return 'import ' + depName + " from '" + depPaths[index] + "';";
+          })
+        );
 
-      var depPaths = getDepPaths(depNames, null, funcDepMap);
-
-      if (isAMD) {
         iife.push(
-          "define(['" + depPaths.join("', '") + "'], function(" + depNames.join(', ') + ') {',
-          '  return {',
+          '',
+          'export default {',
           _.map(depNames, function(depName) {
-            return "    '" + depName + "': " + depName;
+            return "  '" + depName + "': " + depName;
           })
           .join(',\n'),
-          '  };',
-          '});'
+          '};'
+        );
+      }
+      else if (isCommonJS) {
+        push.apply(iife,
+          _.map(depNames, function(depName) {
+            var depPath = depPaths[_.indexOf(depNames, depName)];
+            return 'exports.' + depName + " = require('" + depPath + "')." + depName + ';';
+          })
         );
       }
       else {
-        if (isES6) {
-          push.apply(iife,
-            _.map(depNames, function(depName, index) {
-              return 'import ' + depName + " from '" + depPaths[index] + "';";
-            })
-          );
-
-          iife.push(
-            '',
-            'export default {',
-            _.map(depNames, function(depName) {
-              return "  '" + depName + "': " + depName;
-            })
-            .join(',\n'),
-            '};'
-          );
-        }
-        else if (isCommonJS) {
-          push.apply(iife,
-            _.map(depNames, function(depName) {
-              var depPath = depPaths[_.indexOf(depNames, depName)];
-              return 'exports.' + depName + " = require('" + depPath + "')." + depName + ';';
-            })
-          );
-        }
-        else {
-          iife.push(
-            'module.exports = {',
-            _.map(depNames, function(depName) {
-              var depPath = depPaths[_.indexOf(depNames, depName)];
-              return "  '" + depName + "': require('" + depPath + "')";
-            })
-            .join(',\n'),
-            '};'
-          );
-        }
+        iife.push(
+          'module.exports = {',
+          _.map(depNames, function(depName) {
+            var depPath = depPaths[_.indexOf(depNames, depName)];
+            return "  '" + depName + "': require('" + depPath + "')";
+          })
+          .join(',\n'),
+          '};'
+        );
       }
-      buildCallback({
-        'outputPath': path.join(outputPath, category.toLowerCase() + '.js'),
-        'source': iife.join('\n')
-      });
+    }
+    buildCallback({
+      'outputPath': path.join(outputPath, category.toLowerCase() + '.js'),
+      'source': iife.join('\n')
     });
-  }());
+  });
 
   if (!isNpm && !isSilent) {
     // Warn of removed dependencies.
