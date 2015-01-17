@@ -1474,51 +1474,48 @@ function buildTemplate(state) {
     ''
   );
 
-  glob(pattern, { 'sync': true }, function(exception, filePaths) {
-    if (exception) {
-      throw exception;
-    }
-    var dirname = path.dirname(pattern);
-    if (dirname == '.') {
-      dirname = '';
-    }
-    var basePath = (dirname + path.sep).replace(RegExp('(^|' + path.sepEscaped + ')\\*\\*.*$'), '$1'),
-        insertAt = source.length,
-        templates = createMap();
+  var dirname = path.dirname(pattern),
+      filePaths = glob.sync(pattern);
 
-    _.each(filePaths, function(filePath) {
-      var string = fs.readFileSync(filePath, 'utf8'),
-          precompiled = cleanupCompiled(getFunctionSource(_.template(string, settings), 2));
+  if (dirname == '.') {
+    dirname = '';
+  }
+  var basePath = (dirname + path.sep).replace(RegExp('(^|' + path.sepEscaped + ')\\*\\*.*$'), '$1'),
+      insertAt = source.length,
+      templates = createMap();
 
-      // Glob uses *nix path separators even on Windows.
-      // See https://github.com/isaacs/node-glob#windows.
-      var clipped = filePath.slice(dirname ? basePath.length : 0).replace(/\..*$/, ''),
-          props = clipped.split('/');
+  _.each(filePaths, function(filePath) {
+    var string = fs.readFileSync(filePath, 'utf8'),
+        precompiled = cleanupCompiled(getFunctionSource(_.template(string, settings), 2));
 
-      // Create namespace objects.
-      _.reduce(props, function(object, key) {
-        return object[key] || (object[key] = createMap());
-      }, templates);
+    // Glob uses *nix path separators even on Windows.
+    // See https://github.com/isaacs/node-glob#windows.
+    var clipped = filePath.slice(dirname ? basePath.length : 0).replace(/\..*$/, ''),
+        props = clipped.split('/');
 
-      // Escape namespace property names.
-      props = _.map(props, function(key) {
-        return "['" + key.replace(/['\n\r\t]/g, '\\$&') + "']";
-      });
+    // Create namespace objects.
+    _.reduce(props, function(object, key) {
+      return object[key] || (object[key] = createMap());
+    }, templates);
 
-      // Add template assignment to `source`.
-      source.push('  templates' + props.join('') + ' = ' + precompiled + ';', '');
+    // Escape namespace property names.
+    props = _.map(props, function(key) {
+      return "['" + key.replace(/['\n\r\t]/g, '\\$&') + "']";
     });
 
-    // Add the initial `_.templates` object to `source`.
-    source.splice(insertAt, 0, '  var templates = ' +
-      JSON.stringify(templates, null, 4)
-        .replace(/^ *\}$/m, '  $&')
-        .replace(/'/g, "\\'")
-        .replace(/([^\\])"/g, "$1'") +
-      ';',
-      ''
-    );
+    // Add template assignment to `source`.
+    source.push('  templates' + props.join('') + ' = ' + precompiled + ';', '');
   });
+
+  // Add the initial `_.templates` object to `source`.
+  source.splice(insertAt, 0, '  var templates = ' +
+    JSON.stringify(templates, null, 4)
+      .replace(/^ *\}$/m, '  $&')
+      .replace(/'/g, "\\'")
+      .replace(/([^\\])"/g, "$1'") +
+    ';',
+    ''
+  );
 
   source.push(
     hr,
