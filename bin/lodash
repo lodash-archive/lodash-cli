@@ -680,8 +680,12 @@ var aliasToCategory = createMap({
   'Arrays': 'Array',
   'Chaining': 'Chain',
   'Collections': 'Collection',
+  'Dates': 'Date',
   'Functions': 'Function',
+  'Langs': 'Lang',
+  'Numbers': 'Number',
   'Objects': 'Object',
+  'Strings': 'String',
   'Utilities': 'Utility'
 });
 
@@ -693,8 +697,8 @@ var categoryToDepName = createMap({
   'Date': 'date',
   'Function': 'func',
   'Lang': 'lang',
-  'Object': 'object',
   'Number': 'number',
+  'Object': 'object',
   'String': 'string',
   'Utility': 'utility'
 });
@@ -748,6 +752,7 @@ var defaultExports = [
   'amd',
   'commonjs',
   'global',
+  'iojs',
   'node'
 ];
 
@@ -1680,8 +1685,9 @@ function displayHelp() {
     '               (i.e. “array”, “chain”, “collection”, “date”, “function”, “lang”,',
     '               “object”, “number”, “string”, & “utility”)',
     '',
-    '  exports=..   Comma separated names of ways to export the `lodash` function.',
-    '               (i.e. “amd”, “commonjs”, “es6”, “global”, “node”, “npm”, & “none”)',
+    '  exports=..   Comma separated values of ways to export Lo-Dash.',
+    '               (i.e. “amd”, “commonjs”, “es6”, “global”, “iojs”, “node”, “npm”,',
+    '               & “none”)',
     '',
     '  iife=..      Code to replace the IIFE that wraps Lo-Dash',
     '               (e.g. `lodash iife="!function(){%output%}()"`)',
@@ -1703,8 +1709,8 @@ function displayHelp() {
     '  The `exports` values “es6” & “npm” may only be used in conjunction with',
     '  the `modularize` command.',
     '',
-    '  The `modularize` command uses the first `exports` name as its module format,',
-    '  ignoring subsequent `exports` names.',
+    '  The `modularize` command uses the first `exports` values as its module format,',
+    '  ignoring subsequent values.',
     '',
     '  Unless specified by `-o` or `--output` all files created are saved to the',
     '  current working directory.',
@@ -1734,6 +1740,37 @@ function displayHelp() {
 function getAliases(funcName, funcDepMap) {
   var aliases = realToAliasMap[funcName];
   return _.reject(aliases, _.propertyOf(funcDepMap || funcDependencyMap));
+}
+
+/**
+ * Creates an array of all function, object, and variable dependencies for the
+ * given identifier(s).
+ *
+ * @private
+ * @param {string|string[]} identifier The identifier or array of identifiers to query.
+ * @param {Object} funcDepMap The dependency map to look up function dependencies.
+ * @param {Object} objDepMap The dependency map to look up object dependencies.
+ * @param {Object} varDepMap The dependency map to look up variable dependencies.
+ * @param- {Array} [stackA=[]] Internally used track queried identifiers.
+ * @returns {Array} Returns an array of identifier dependencies.
+ */
+function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack) {
+  var result = identifier;
+  if (!_.isArray(stack)) {
+    result = _.isArray(identifier) ? _.clone(identifier) : [identifier];
+    stack = [];
+  }
+  _.each(result, function(identifier) {
+    if (!_.includes(stack, identifier)) {
+      stack.push(identifier);
+
+      push.apply(result, getDependencies(identifier, funcDepMap));
+      push.apply(result, getDependencies(identifier, objDepMap));
+      push.apply(result, getDependencies(identifier, varDepMap));
+      getAllDependencies(result, funcDepMap, objDepMap, varDepMap, stack);
+    }
+  });
+  return stack ? result : _.uniq(result);
 }
 
 /**
@@ -1852,37 +1889,6 @@ function getDependencies(identifier, depMap, isDeep, stack) {
       push.apply(result, getDependencies(otherName, depMap, isDeep, stack));
     }
   }));
-}
-
-/**
- * Creates an array of all function, object, and variable dependencies for the
- * given identifier(s).
- *
- * @private
- * @param {string|string[]} identifier The identifier or array of identifiers to query.
- * @param {Object} funcDepMap The dependency map to look up function dependencies.
- * @param {Object} objDepMap The dependency map to look up object dependencies.
- * @param {Object} varDepMap The dependency map to look up variable dependencies.
- * @param- {Array} [stackA=[]] Internally used track queried identifiers.
- * @returns {Array} Returns an array of identifier dependencies.
- */
-function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack) {
-  var result = identifier;
-  if (!_.isArray(stack)) {
-    result = _.isArray(identifier) ? _.clone(identifier) : [identifier];
-    stack = [];
-  }
-  _.each(result, function(identifier) {
-    if (!_.includes(stack, identifier)) {
-      stack.push(identifier);
-
-      push.apply(result, getDependencies(identifier, funcDepMap));
-      push.apply(result, getDependencies(identifier, objDepMap));
-      push.apply(result, getDependencies(identifier, varDepMap));
-      getAllDependencies(result, funcDepMap, objDepMap, varDepMap, stack);
-    }
-  });
-  return stack ? result : _.uniq(result);
 }
 
 /**
@@ -3354,7 +3360,7 @@ function build(options, callback) {
         isES6 = _.includes(exportsOptions, 'es6'),
         isGlobal = _.includes(exportsOptions, 'global'),
         isNpm = _.includes(exportsOptions, 'npm'),
-        isNode = isNpm || _.includes(exportsOptions, 'node');
+        isNode = isNpm || _.includes(exportsOptions, 'iojs') || _.includes(exportsOptions, 'node');
 
     // The lodash.js source.
     var source = fs.readFileSync(filePath, 'utf8');
@@ -3458,7 +3464,9 @@ function build(options, callback) {
       },
       'exports': {
         'entries': exportsOptions,
-        'validEntries': isModularize ? ['amd', 'commonjs', 'es6', 'node', 'npm'] : defaultExports
+        'validEntries': isModularize
+          ? _.without(defaultExports.concat(['es6', 'npm']), 'global')
+          : defaultExports
       },
       'include': {
         'entries': includeFuncs,
