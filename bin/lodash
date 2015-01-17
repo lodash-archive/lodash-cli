@@ -1279,87 +1279,73 @@ function buildModule(state, onComplete) {
     var categories = _.uniq(_.compact(_.flatten(_.map(identifiers, _.partial(getCategories, _, funcDepMap)))));
 
     _.each(categories, function(category) {
-      state.buildFuncs = state.includeFuncs = state.includeObjs = state.includeVars = [];
-      state.outputPath = path.join(outputPath, category.toLowerCase() + '.js');
+      var iife = [],
+          depNames = _.intersection(getNamesByCategory(category), identifiers).sort(),
+          depPaths = getDepPaths(depNames, null, funcDepMap);
 
-      build(state, function(data) {
-        var iife = [],
-            source = data.source;
+      var exportNames = _.transform(depNames, function(result, depName) {
+        result.push(depName);
+        push.apply(result, getAliases(depName, funcDepMap));
+      })
+      .sort();
 
-        var depNames = _.intersection(getNamesByCategory(category), identifiers).sort(),
-            depPaths = getDepPaths(depNames, null, funcDepMap);
+      if (isAMD) {
+        iife.push(
+          "define(['" + depPaths.join("', '") + "'], function(" + depNames.join(', ') + ') {',
+          '  return {',
+          _.map(exportNames, function(exportName) {
+            return "    '" + exportName + "': " + getRealName(exportName, funcDepMap);
+          })
+          .join(',\n'),
+          '  };',
+          '});'
+        );
+      }
+      else {
+        if (isES6) {
+          push.apply(iife,
+            _.map(depNames, function(depName, index) {
+              return 'import ' + depName + " from '" + depPaths[index] + "';";
+            })
+          );
 
-        var exportNames = _.transform(depNames, function(result, depName) {
-          result.push(depName);
-          push.apply(result, getAliases(depName, funcDepMap));
-        })
-        .sort();
-
-        if (isAMD) {
           iife.push(
-            "define(['" + depPaths.join("', '") + "'], function(" + depNames.join(', ') + ') {',
-            '%output%',
-            '  return {',
+            '',
+            'export default {',
             _.map(exportNames, function(exportName) {
-              return "    '" + exportName + "': " + getRealName(exportName, funcDepMap);
+              return "  '" + exportName + "': " + getRealName(exportName, funcDepMap);
             })
             .join(',\n'),
-            '  };',
-            '});'
+            '};'
+          );
+        }
+        else if (isCommonJS) {
+          push.apply(iife,
+            _.map(exportNames, function(exportName) {
+              var depName = getRealName(exportName, funcDepMap),
+                  depPath = depPaths[_.indexOf(depNames, depName)];
+
+              return 'exports.' + exportName + " = require('" + depPath + "')." + depName + ';';
+            })
           );
         }
         else {
-          iife.push('%output%');
+          iife.push(
+            'module.exports = {',
+            _.map(exportNames, function(exportName) {
+              var depName = getRealName(exportName, funcDepMap),
+                  depPath = depPaths[_.indexOf(depNames, depName)];
 
-          if (isES6) {
-            push.apply(iife,
-              _.map(depNames, function(depName, index) {
-                return 'import ' + depName + " from '" + depPaths[index] + "';";
-              })
-            );
-
-            iife.push(
-              '',
-              'export default {',
-              _.map(exportNames, function(exportName) {
-                return "  '" + exportName + "': " + getRealName(exportName, funcDepMap);
-              })
-              .join(',\n'),
-              '};'
-            );
-          }
-          else if (isCommonJS) {
-            push.apply(iife,
-              _.map(exportNames, function(exportName) {
-                var depName = getRealName(exportName, funcDepMap),
-                    depPath = depPaths[_.indexOf(depNames, depName)];
-
-                return 'exports.' + exportName + " = require('" + depPath + "')." + depName + ';';
-              })
-            );
-          }
-          else {
-            iife.push(
-              'module.exports = {',
-              _.map(exportNames, function(exportName) {
-                var depName = getRealName(exportName, funcDepMap),
-                    depPath = depPaths[_.indexOf(depNames, depName)];
-
-                return "  '" + exportName + "': require('" + depPath + "')";
-              })
-              .join(',\n'),
-              '};'
-            );
-          }
+              return "  '" + exportName + "': require('" + depPath + "')";
+            })
+            .join(',\n'),
+            '};'
+          );
         }
-        if (!isAMD) {
-          source = trimIndent(source);
-        }
-        source = removeHeader(source);
-        source = replaceIIFE(source, iife.join('\n'));
-
-        data.source = source;
-        buildCallback(data);
+      }
+      buildCallback({
+        'outputPath': path.join(outputPath, category.toLowerCase() + '.js'),
+        'source': iife.join('\n')
       });
     });
   }());
