@@ -3615,16 +3615,18 @@ function build(options, callback) {
       if (isNpm) {
         source = removeMetadata(source, funcDepMap, objDepMap, varDepMap);
       }
-      // Remove "_.pluck" or "_.where" style callback support from `baseCallback`.
-      _.each(['pluck', 'where'], function(funcName) {
+      // Remove "_.matches" or "_.property" style callback support from `baseCallback`.
+      _.each(['matches', 'property'], function(funcName) {
         if (_.includes(minusFuncs, funcName)) {
-          _.pull(funcDepMap.baseCallback, funcName);
-          funcDepMap.baseCallback.push('identity');
+          var baseName = 'base' + _.capitalize(funcName),
+              deps = funcDepMap.baseCallback;
 
+          _.pull(deps, baseName);
+          if (funcName == 'property') {
+            _.pull(deps, 'baseToString');
+          }
           source = source.replace(matchFunction(source, 'baseCallback'), function(match) {
-            var otherName = funcName == 'where' ? 'baseMatches' : 'baseProperty';
-            _.pull(funcDepMap.baseCallback, otherName);
-            return match.replace(RegExp('\\b' + otherName + '\\([\\s\\S]+?\\)(?=[;\\n])', 'm'), 'identity');
+            return match.replace(RegExp('\\b' + baseName + '\\([\\s\\S]+?\\)(?=[;\\n])', 'm'), 'identity');
           });
         }
       });

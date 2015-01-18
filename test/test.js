@@ -1103,11 +1103,15 @@ QUnit.module('modularize modifier');
           lodash = lodash._;
         }
         _.each(['array', 'chain', 'collection', 'date', 'function', 'lang', 'number', 'object', 'string', 'utility'], function(category) {
-          var categoryModule = require(path.join(outputPath, category));
-          _.each(categoryMap[_.capitalize(category)], function(funcName) {
-            _.each(getAliases(funcName), function(alias) {
-              ok(_.isFunction(lodash[alias]), '`' + command + '` should have `' + alias + '` as an alias of `' + funcName + '` in lodash');
-              ok(_.isFunction(categoryModule[alias]), '`' + command + '` should have `' + alias + '` as an alias of `' + funcName + '` in lodash/' + category);
+          var categoryModule = require(path.join(outputPath, category)),
+              funcNames = categoryMap[_.capitalize(category)];
+
+          _.each(funcNames, function(funcName) {
+            var aliases = getAliases(funcName);
+            _.each(aliases, function(alias) {
+              _.each([(category == 'chain' ? lodash.prototype : lodash), categoryModule], function(object, index) {
+                ok(_.isFunction(object[alias]), '`' + command + '` should have `' + alias + '` as an alias of `' + funcName + '` in lodash' + (index ? ('/' + category) : ''));
+              });
             });
           });
         });
@@ -1117,7 +1121,7 @@ QUnit.module('modularize modifier');
     });
   });
 
-  asyncTest('`lodash modularize include=callback minus=pluck,where`', function() {
+  asyncTest('`lodash modularize include=callback minus=matches,property`', function() {
     var start = _.once(function() {
       process.chdir(cwd);
       QUnit.start();
@@ -1125,7 +1129,7 @@ QUnit.module('modularize modifier');
 
     setup();
 
-    build(['modularize', 'include=callback', 'minus=pluck,where', 'exports=node', '-o', outputPath], function() {
+    build(['modularize', 'include=callback', 'minus=matches,property', 'exports=node', '-o', outputPath], function() {
       emptyObject(require.cache);
 
       var modulePath = path.join(outputPath, 'utility'),
@@ -1288,32 +1292,10 @@ QUnit.module('minus command');
     });
   });
 
-  asyncTest('`lodash minus=pluck`', function() {
+  asyncTest('`lodash minus=matches`', function() {
     var start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'minus=pluck'], function(data) {
-      var basename = path.basename(data.outputPath, '.js'),
-          context = createContext();
-
-      vm.runInContext(data.source, context);
-
-      var lodash = context._,
-          callback = lodash.callback('x'),
-          object = { 'x': 1 };
-
-      strictEqual(callback(object), object, basename);
-
-      callback = lodash.callback(object);
-      strictEqual(callback(object), true, basename);
-
-      start();
-    });
-  });
-
-  asyncTest('`lodash minus=where`', function() {
-    var start = _.after(2, _.once(QUnit.start));
-
-    build(['-s', 'minus=where'], function(data) {
+    build(['-s', 'minus=matches'], function(data) {
       var basename = path.basename(data.outputPath, '.js'),
           context = createContext();
 
@@ -1332,10 +1314,32 @@ QUnit.module('minus command');
     });
   });
 
-  asyncTest('`lodash minus=pluck,where`', function() {
+  asyncTest('`lodash minus=property`', function() {
     var start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'minus=pluck,where'], function(data) {
+    build(['-s', 'minus=property'], function(data) {
+      var basename = path.basename(data.outputPath, '.js'),
+          context = createContext();
+
+      vm.runInContext(data.source, context);
+
+      var lodash = context._,
+          callback = lodash.callback('x'),
+          object = { 'x': 1 };
+
+      strictEqual(callback(object), object, basename);
+
+      callback = lodash.callback(object);
+      strictEqual(callback(object), true, basename);
+
+      start();
+    });
+  });
+
+  asyncTest('`lodash minus=matches,property`', function() {
+    var start = _.after(2, _.once(QUnit.start));
+
+    build(['-s', 'minus=matches,property'], function(data) {
       var basename = path.basename(data.outputPath, '.js'),
           context = createContext();
 
