@@ -1138,7 +1138,7 @@ function buildModule(state, onComplete) {
         }
         else {
           iife.push(
-            (isCommonJS ? 'exports.' + identifier : 'module.exports') +
+            (isCommonJS ? ('exports.' + alias) : 'module.exports') +
             " = require('" + depPath + "')" + (isCommonJS ? '.' + identifier : '') + ';'
           );
         }
