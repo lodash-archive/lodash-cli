@@ -3611,8 +3611,6 @@ function build(options, callback) {
       }
       if (isModularize) {
         source = removeGetIndexOf(source, funcDepMap);
-      }
-      if (isModularize) {
         source = removeGetCallback(source, funcDepMap);
       }
       if (isNpm) {
@@ -3689,72 +3687,70 @@ function build(options, callback) {
         'templateSettings': templateSettings
       });
     }
-    else {
-      if (isModularize) {
-        // Unexpose `lodash.support`.
-        _.forOwn(objDependencyMap, function(deps, funcName) {
-          if (_.includes(deps, 'support')) {
-            source = source.replace(matchFunction(source, funcName), function(match) {
-              return removeVar(match, 'support');
-            });
-          }
-        });
-
-        source = source
-          .replace(/\blodash\.support\s*=\s*/, '')
-          .replace(/\blodash\.(?=support\b)/g, '');
-
-        // Replace the `lodash.templateSettings` property assignment with a variable assignment.
-        source = source.replace(/\b(lodash\.)(?=templateSettings\s*=)/, 'var ');
-
-        // Remove the `lodash` namespace from properties.
-        source = source.replace(/( *)lodash\.([$\w]+\.)?([$\w]+)(\s*=\s*(?:function\([\s\S]+?\n\1\}|.+?);\n)?/g, function(match, indent, property, identifier, right) {
-          return (property || right || identifier == 'com' || identifier == 'prototype')
-            ? match
-            : (indent + identifier);
-        });
-
-        // Remove all horizontal rule comment separators.
-        source = source.replace(/^ *\/\*-+\*\/\n/gm, '');
-
-        // Remove `lodash` branch in `_.mixin`.
-        source = source.replace(matchFunction(source, 'mixin'), function(match) {
-          match = match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(options\s*==\s*null\b[\s\S]+?\n\1\}\n/m, '');
-          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!methodNames\b[\s\S]+?\n\1\}/m, function(match, indent) {
-            return indent + 'var methodNames = baseFunctions(source, keys(source));\n';
+    else if (isModularize) {
+      // Unexpose `lodash.support`.
+      _.forOwn(objDependencyMap, function(deps, funcName) {
+        if (_.includes(deps, 'support')) {
+          source = source.replace(matchFunction(source, funcName), function(match) {
+            return removeVar(match, 'support');
           });
-        });
-
-        // Replace `sample` references in `lodash.prototype.sample` method with `collection.sample`.
-        source = source.replace(getMethodAssignments(source), function(match) {
-          return match.replace(/^( *)lodash\.prototype\.sample\s*=[\s\S]+?\n\1\}/m, function(match) {
-            return match.replace(/\bsample(?=\()/g, 'collection.sample');
-          });
-        });
-
-        // Replace `lodash` use in `_.templateSettings.imports`.
-        source = source.replace(matchProp(source, 'templateSettings'), function(match) {
-          return match.replace(/(:\s*)lodash\b/, "$1{ 'escape': escape }");
-        });
-
-        source = source.replace(matchFunction(source, 'template'), function(match) {
-          // Assign `settings` using `template.imports`.
-          match = match.replace(/=\s*templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings');
-
-          // Remove default `sourceURL` value.
-          return match.replace(matchVar(match, 'sourceURL'), function(match) {
-            return match.replace(/=[\s\S]+?(?=;\n$)/, "= 'sourceURL' in options ? '//# sourceURL=' + options.sourceURL + '\\n' : ''");
-          });
-        });
-
-        if (isNode) {
-          source = source.replace(/\bcontext(?=\.)/g, 'global');
         }
-        if (!isAMD) {
-          source = removeVar(source, 'undefined');
-        }
-        source = removeRunInContext(source);
+      });
+
+      source = source
+        .replace(/\blodash\.support\s*=\s*/, '')
+        .replace(/\blodash\.(?=support\b)/g, '');
+
+      // Replace the `lodash.templateSettings` property assignment with a variable assignment.
+      source = source.replace(/\b(lodash\.)(?=templateSettings\s*=)/, 'var ');
+
+      // Remove the `lodash` namespace from properties.
+      source = source.replace(/( *)lodash\.([$\w]+\.)?([$\w]+)(\s*=\s*(?:function\([\s\S]+?\n\1\}|.+?);\n)?/g, function(match, indent, property, identifier, right) {
+        return (property || right || identifier == 'com' || identifier == 'prototype')
+          ? match
+          : (indent + identifier);
+      });
+
+      // Remove all horizontal rule comment separators.
+      source = source.replace(/^ *\/\*-+\*\/\n/gm, '');
+
+      // Remove `lodash` branch in `_.mixin`.
+      source = source.replace(matchFunction(source, 'mixin'), function(match) {
+        match = match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(options\s*==\s*null\b[\s\S]+?\n\1\}\n/m, '');
+        return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!methodNames\b[\s\S]+?\n\1\}/m, function(match, indent) {
+          return indent + 'var methodNames = baseFunctions(source, keys(source));\n';
+        });
+      });
+
+      // Replace `sample` references in `lodash.prototype.sample` method with `collection.sample`.
+      source = source.replace(getMethodAssignments(source), function(match) {
+        return match.replace(/^( *)lodash\.prototype\.sample\s*=[\s\S]+?\n\1\}/m, function(match) {
+          return match.replace(/\bsample(?=\()/g, 'collection.sample');
+        });
+      });
+
+      // Replace `lodash` use in `_.templateSettings.imports`.
+      source = source.replace(matchProp(source, 'templateSettings'), function(match) {
+        return match.replace(/(:\s*)lodash\b/, "$1{ 'escape': escape }");
+      });
+
+      source = source.replace(matchFunction(source, 'template'), function(match) {
+        // Assign `settings` using `template.imports`.
+        match = match.replace(/=\s*templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings');
+
+        // Remove default `sourceURL` value.
+        return match.replace(matchVar(match, 'sourceURL'), function(match) {
+          return match.replace(/=[\s\S]+?(?=;\n$)/, "= 'sourceURL' in options ? '//# sourceURL=' + options.sourceURL + '\\n' : ''");
+        });
+      });
+
+      if (isNode) {
+        source = source.replace(/\bcontext(?=\.)/g, 'global');
       }
+      if (!isAMD) {
+        source = removeVar(source, 'undefined');
+      }
+      source = removeRunInContext(source);
     }
 
     /*------------------------------------------------------------------------*/
