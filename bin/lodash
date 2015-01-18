@@ -245,7 +245,7 @@ var funcDependencyMap = createMap({
   'reduceRight': ['arrayReduceRight', 'baseEachRight', 'baseReduce', 'getCallback', 'isArray'],
   'reject': ['arrayFilter', 'baseFilter', 'getCallback', 'isArray'],
   'remove': ['getCallback'],
-  'repeat': [],
+  'repeat': ['baseToString'],
   'rest': ['drop'],
   'result': ['isFunction'],
   'runInContext': ['defaults', 'pick'],
