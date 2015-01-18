@@ -582,12 +582,12 @@ QUnit.module('minified AMD snippet');
 QUnit.module('template builds');
 
 (function() {
-  var templatePath = path.join(__dirname, 'fixture', 'template'),
+  var templatePath = path.join(__dirname, 'fixture'),
       quotesTemplatePath = path.join(templatePath, 'c', '\'".jst');
 
   var commands = [
-    'template=' + path.join('fixture', 'template', '*.jst'),
-    'template=' + relativePrefix + path.join('fixture', 'template', '*.jst'),
+    'template=' + path.join('fixture', '*.jst'),
+    'template=' + relativePrefix + path.join('fixture','*.jst'),
     'template=' + path.join(templatePath, '*.jst'),
     'template=' + '*.jst'
   ];
