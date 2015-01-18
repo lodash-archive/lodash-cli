@@ -707,7 +707,6 @@ var categoryToDepNameMap = createMap({
 
 /* Used to force referencing identifers by their alias. */
 var forceAliasMap = createMap({
-  'wrapperChain': 'chain',
   'wrapperReverse': 'reverse',
   'wrapperToString': 'toString',
   'wrapperValue': 'value'
