@@ -306,7 +306,7 @@ var categoryMap = createMap({
 });
 
 /** Used to map category aliases to their real names. */
-var aliasToCategory = createMap({
+var aliasToCategoryMap = createMap({
   'Arrays': 'Array',
   'Chaining': 'Chain',
   'Collections': 'Collection',
@@ -317,6 +317,14 @@ var aliasToCategory = createMap({
   'Objects': 'Object',
   'Strings': 'String',
   'Utilities': 'Utility'
+});
+
+/* Used to force referencing identifers by their alias. */
+var forceAliasMap = createMap({
+  'wrapperChain': 'chain',
+  'wrapperReverse': 'reverse',
+  'wrapperToString': 'toString',
+  'wrapperValue': 'value'
 });
 
 /** List of all functions. */
@@ -404,7 +412,7 @@ function expandFuncNames(funcNames) {
  * @returns {Array} Returns an array of aliases.
  */
 function getAliases(funcName) {
-  return realToAliasMap[funcName] || [];
+  return _.result(realToAliasMap, funcName, []);
 }
 
 /**
@@ -415,7 +423,7 @@ function getAliases(funcName) {
  * @returns {string} Returns the real name.
  */
 function getRealName(alias) {
-  return aliasToRealMap[alias] || alias;
+  return _.result(aliasToRealMap, alias, alias);
 }
 
 /**
@@ -426,7 +434,7 @@ function getRealName(alias) {
  * @returns {string} Returns the real category.
  */
 function getRealCategory(alias) {
-  return categoryMap[alias] ? alias : (aliasToCategory[alias] || alias);
+  return _.result(aliasToCategoryMap, alias, alias);
 }
 
 /**
@@ -1098,9 +1106,7 @@ QUnit.module('modularize modifier');
           var categoryModule = require(path.join(outputPath, category));
           _.each(categoryMap[_.capitalize(category)], function(funcName) {
             _.each(getAliases(funcName), function(alias) {
-              if (!(category == 'chain' && /^wrapper/.test(funcName))) {
-                ok(_.isFunction(lodash[alias]), '`' + command + '` should have `' + alias + '` as an alias of `' + funcName + '` in lodash');
-              }
+              ok(_.isFunction(lodash[alias]), '`' + command + '` should have `' + alias + '` as an alias of `' + funcName + '` in lodash');
               ok(_.isFunction(categoryModule[alias]), '`' + command + '` should have `' + alias + '` as an alias of `' + funcName + '` in lodash/' + category);
             });
           });

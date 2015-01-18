@@ -73,6 +73,7 @@ var aliasToRealMap = createMap({
   'select': 'filter',
   'tail': 'rest',
   'toJSON': 'wrapperValue',
+  'toString': 'wrapperToString',
   'unique': 'uniq',
   'valueOf': 'wrapperValue',
   'value': 'wrapperValue'
@@ -98,6 +99,7 @@ var realToAliasMap = createMap({
   'some': ['any'],
   'uniq': ['unique'],
   'wrapperReverse': ['reverse'],
+  'wrapperToString': ['toString'],
   'wrapperValue': ['toJSON', 'value', 'valueOf'],
   'zipObject': ['object']
 });
@@ -676,7 +678,7 @@ var categoryMap = createMap({
 });
 
 /** Used to map category aliases to their real names. */
-var aliasToCategory = createMap({
+var aliasToCategoryMap = createMap({
   'Arrays': 'Array',
   'Chaining': 'Chain',
   'Collections': 'Collection',
@@ -689,8 +691,8 @@ var aliasToCategory = createMap({
   'Utilities': 'Utility'
 });
 
-/* Used to map categories with their dependency name. */
-var categoryToDepName = createMap({
+/* Used to map categories to their dependency name. */
+var categoryToDepNameMap = createMap({
   'Array': 'array',
   'Chain': 'chain',
   'Collection': 'collection',
@@ -701,6 +703,14 @@ var categoryToDepName = createMap({
   'Object': 'object',
   'String': 'string',
   'Utility': 'utility'
+});
+
+/* Used to force referencing identifers by their alias. */
+var forceAliasMap = createMap({
+  'wrapperChain': 'chain',
+  'wrapperReverse': 'reverse',
+  'wrapperToString': 'toString',
+  'wrapperValue': 'value'
 });
 
 /* Used to force inlining of uninlinables per identifier. */
@@ -983,17 +993,14 @@ function buildModule(state, onComplete) {
       ).sort();
 
       if (isNpm) {
-        var uninlinees = _.difference(uninlinables, forceInlineMap[identifier]),
-            inlinees = _.difference(depNames, uninlinees);
+        var uninlinees = _.difference(uninlinables, forceInlineMap[identifier]);
 
-        depNames = _.intersection(uninlinees, depNames);
-
-        inlinees = _.union(_.transform(inlinees, function(result, identifier) {
+        var inlinees = _.union(_.transform(_.difference(depNames, uninlinees), function(result, identifier) {
           push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinees)));
           return result;
         }));
 
-        depNames = _.union(depNames, _.intersection(uninlinees, inlinees));
+        depNames = _.union(_.intersection(uninlinees, depNames), _.intersection(uninlinees, inlinees));
         inlinees = _.difference(inlinees, depNames).concat(identifier);
 
         var inlineFuncs = _.intersection(allFuncs, inlinees),
@@ -1020,6 +1027,7 @@ function buildModule(state, onComplete) {
           return 'lodash.' + (isPrivate(value) ? '_' : '') + value.toLowerCase();
         };
 
+        // Remove and track unused dependencies.
         depNames = _.sortBy(_.difference(depNames, unusedDeps), toDepName);
         removedDeps[identifier] = unusedDeps;
 
@@ -1109,7 +1117,7 @@ function buildModule(state, onComplete) {
 
   // Add alias modules.
   _.each(identifiers, function(identifier) {
-    var aliases = !isNpm && getAliases(identifier, funcDepMap);
+    var aliases = !isNpm && getAliases(identifier);
     if (_.isEmpty(aliases)) {
       return;
     }
@@ -1162,7 +1170,7 @@ function buildModule(state, onComplete) {
       return _.first(getCategories(identifier, funcDepMap));
     }))).sort();
 
-    var categoryDeps = _.map(categories, _.propertyOf(categoryToDepName));
+    var categoryDeps = _.map(categories, _.propertyOf(categoryToDepNameMap));
 
     var categoryDepPaths = _.map(categories, function(category) {
       return './' + category.toLowerCase();
@@ -1222,18 +1230,17 @@ function buildModule(state, onComplete) {
         return code.join('\n');
       });
 
-      // Add `lodash.support`, `lodash.templateSettings`, placeholder assignments.
+      // Add `lodash.support`, `lodash.templateSettings`, & placeholder assignments.
       source = source.replace(/^ *lodash\.VERSION\b.+\n/m, function(match) {
-        var funcNames = _.intersection(buildFuncs, placeholderFuncs);
-
         var code = [
           '',
           '  lodash.support = support;'
         ];
 
         if (_.includes(identifiers, 'templateSettings')) {
-          code.push('  (lodash.templateSettings = ' + categoryToDepName.String + '.templateSettings).imports._ = lodash;');
+          code.push('  (lodash.templateSettings = ' + categoryToDepNameMap.String + '.templateSettings).imports._ = lodash;');
         }
+        var funcNames = _.intersection(buildFuncs, placeholderFuncs);
         if (!_.isEmpty(funcNames)) {
           code.push(
             '',
@@ -1258,10 +1265,11 @@ function buildModule(state, onComplete) {
         if (_.includes(deps, identifier)) {
           return match;
         }
-        var category = categoryToDepName[_.first(getCategories(identifier, funcDepMap))];
-        return left + (category ? category + '.' : '') + identifier;
+        var category = categoryToDepNameMap[_.first(getCategories(identifier, funcDepMap))];
+        return left + (category ? category + '.' : '') + _.result(forceAliasMap, identifier, identifier);
       });
 
+      // Remove and track unused dependencies.
       var unusedDeps = getUnusedDeps(source, deps);
       deps = _.difference(deps, unusedDeps);
       removedDeps[identifier] = unusedDeps;
@@ -1325,8 +1333,10 @@ function buildModule(state, onComplete) {
       return;
     }
     var depNames = _.transform(_.intersection(getNamesByCategory(category), identifiers), function(result, depName) {
-      result.push(depName);
-      push.apply(result, getAliases(depName, funcDepMap));
+      if (!forceAliasMap[depName]) {
+        result.push(depName);
+      }
+      push.apply(result, getAliases(depName));
     })
     .sort();
 
@@ -1734,12 +1744,10 @@ function displayHelp() {
  *
  * @private
  * @param {string} funcName The name of the function to get aliases for.
- * @param {Object} [funcDepMap] The dependency map used to validate aliases.
  * @returns {Array} Returns an array of aliases.
  */
-function getAliases(funcName, funcDepMap) {
-  var aliases = realToAliasMap[funcName];
-  return _.reject(aliases, _.propertyOf(funcDepMap || funcDependencyMap));
+function getAliases(funcName) {
+  return _.result(realToAliasMap, funcName, []);
 }
 
 /**
@@ -1782,7 +1790,7 @@ function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack)
  * @returns {Array} Returns the array of categories.
  */
 function getCategories(identifier, funcDepMap) {
-  identifier = getRealName(identifier, funcDepMap);
+  identifier = getRealName(identifier);
   return _.filter(allCategories, function(category) {
     return _.includes(categoryMap[category], identifier);
   });
@@ -2089,12 +2097,10 @@ function getParseIntFork(source) {
  *
  * @private
  * @param {string} alias The alias to resolve.
- * @param {Object} [funcDepMap] The dependency map used to validate the real name.
  * @returns {string} Returns the real name.
  */
-function getRealName(alias, funcDepMap) {
-  var depMap = funcDepMap || funcDependencyMap;
-  return depMap[alias] ? alias : (aliasToRealMap[alias] || alias);
+function getRealName(alias) {
+  return _.result(aliasToRealMap, alias, alias);
 }
 
 /**
@@ -2105,7 +2111,7 @@ function getRealName(alias, funcDepMap) {
  * @returns {string} Returns the real category.
  */
 function getRealCategory(alias) {
-  return categoryMap[alias] ? alias : (aliasToCategory[alias] || alias);
+  return _.result(aliasToCategoryMap, alias, alias);
 }
 
 /**
@@ -3373,9 +3379,7 @@ function build(options, callback) {
     });
 
     // Functions to include in the build.
-    var includeFuncs = _.union(categoryOptions, _.map(getOption(options, 'include', []), function(funcName) {
-      return getRealName(funcName, funcDepMap);
-    }));
+    var includeFuncs = _.union(categoryOptions, _.map(getOption(options, 'include', []), getRealName));
 
     // Properties to include in the build.
     var includeObjs = _.intersection(includeFuncs, objDependencies);
@@ -3384,14 +3388,10 @@ function build(options, callback) {
     var includeVars = _.intersection(includeFuncs, varDependencies);
 
     // Functions to remove from the build.
-    var minusFuncs = _.map(getOption(options, 'minus', []), function(funcName) {
-      return getRealName(funcName, funcDepMap);
-    });
+    var minusFuncs = _.map(getOption(options, 'minus', []), getRealName);
 
     // Functions to add to the build.
-    var plusFuncs = _.map(getOption(options, 'plus', []), function(funcName) {
-      return getRealName(funcName, funcDepMap);
-    });
+    var plusFuncs = _.map(getOption(options, 'plus', []), getRealName);
 
     // Expand categories to function names.
     _.each([includeFuncs, minusFuncs, plusFuncs], function(funcNames) {
