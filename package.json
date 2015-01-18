@@ -24,7 +24,7 @@
     "uglify-js": "2.4.16"
   },
   "devDependencies": {
-    "qunit-extras": "~1.4.0",
+    "qunit-extras": "~1.4.1",
     "qunitjs": "~1.16.0"
   },
   "files": [
