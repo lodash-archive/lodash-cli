@@ -1,6 +1,6 @@
 # Contributing to lodash-cli
 
-If you’d like to contribute a feature or bug fix, you can [fork](https://help.github.com/articles/fork-a-repo/) lodash-cli, commit your changes, and [send a pull request](https://help.github.com/articles/using-pull-requests/).
+If you’d like to contribute a feature or bug fix, you can [fork](https://help.github.com/articles/fork-a-repo/) lodash-cli, commit your changes, & [send a pull request](https://help.github.com/articles/using-pull-requests/).
 Please make sure to [search the issue tracker](https://github.com/lodash/lodash-cli/issues) first; your issue may have already been discussed or fixed in `master`.
 
 ## Tests
@@ -23,11 +23,11 @@ In addition to the following guidelines, please follow the conventions already e
   Use two spaces for indentation. No tabs.
 
 - **Naming**:<br>
-  Keep variable and method names concise and descriptive.<br>
-  Variable names `index`, `collection`, and `callback` are preferable to `i`, `arr`, and `fn`.
+  Keep variable & method names concise & descriptive.<br>
+  Variable names `index`, `collection`, & `callback` are preferable to `i`, `arr`, & `fn`.
 
 - **Quotes**:<br>
   Single-quoted strings are preferred to double-quoted strings; however, please use a double-quoted string if the value contains a single-quote character to avoid unnecessary escaping.
 
 - **Comments**:<br>
-  Please use single-line comments to annotate significant additions, and [JSDoc-style](http://www.2ality.com/2011/08/jsdoc-intro.html) comments for new methods.
+  Please use single-line comments to annotate significant additions, & [JSDoc-style](http://www.2ality.com/2011/08/jsdoc-intro.html) comments for new methods.
