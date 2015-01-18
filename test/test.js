@@ -305,6 +305,20 @@ var categoryMap = createMap({
   ]
 });
 
+/** Used to map category aliases to their real names. */
+var aliasToCategory = createMap({
+  'Arrays': 'Array',
+  'Chaining': 'Chain',
+  'Collections': 'Collection',
+  'Dates': 'Date',
+  'Functions': 'Function',
+  'Langs': 'Lang',
+  'Numbers': 'Number',
+  'Objects': 'Object',
+  'Strings': 'String',
+  'Utilities': 'Utility'
+});
+
 /** List of all functions. */
 var allFuncs = _.reject(_.functions(_).sort(), _.partial(_.startsWith, _, '_', 0));
 
@@ -394,14 +408,25 @@ function getAliases(funcName) {
 }
 
 /**
- * Gets the real name, not alias, of a given function name.
+ * Gets the real function name of `alias`.
  *
  * @private
- * @param {string} funcName The name of the function to resolve.
+ * @param {string} alias The alias to resolve.
  * @returns {string} Returns the real name.
  */
-function getRealName(funcName) {
-  return aliasToRealMap[funcName] || funcName;
+function getRealName(alias) {
+  return aliasToRealMap[alias] || alias;
+}
+
+/**
+ * Gets the real category of `alias`.
+ *
+ * @private
+ * @param {string} alias The alias to resolve.
+ * @returns {string} Returns the real category.
+ */
+function getRealCategory(alias) {
+  return categoryMap[alias] ? alias : (aliasToCategory[alias] || alias);
 }
 
 /**
@@ -1069,13 +1094,10 @@ QUnit.module('modularize modifier');
         if (lodash._) {
           lodash = lodash._;
         }
-        _.each(['array', 'chain', 'collection', 'function', 'object', 'utility'], function(category) {
-          var categoryModule = require(path.join(outputPath, category)),
-              funcNames = categoryMap[_.capitalize(category)];
-
-          _.each(funcNames, function(funcName) {
-            var aliases = getAliases(funcName);
-            _.each(aliases, function(alias) {
+        _.each(['array', 'chain', 'collection', 'date', 'function', 'lang', 'number', 'object', 'string', 'utility'], function(category) {
+          var categoryModule = require(path.join(outputPath, category));
+          _.each(categoryMap[_.capitalize(category)], function(funcName) {
+            _.each(getAliases(funcName), function(alias) {
               if (!(category == 'chain' && /^wrapper/.test(funcName))) {
                 ok(_.isFunction(lodash[alias]), '`' + command + '` should have `' + alias + '` as an alias of `' + funcName + '` in lodash');
               }
@@ -1101,14 +1123,13 @@ QUnit.module('modularize modifier');
       emptyObject(require.cache);
 
       var modulePath = path.join(outputPath, 'utility'),
-          utilities = require(modulePath),
-          lodash = { 'callback': utilities.callback },
-          callback = lodash.callback('x'),
+          utility = require(modulePath),
+          callback = utility.callback('x'),
           object = { 'x': 1 };
 
       strictEqual(callback(object), object);
 
-      callback = lodash.callback(object);
+      callback = utility.callback(object);
       strictEqual(callback(object), object);
 
       start();
@@ -1587,11 +1608,25 @@ QUnit.module('lodash build');
     'modern',
     'strict',
     'category=array',
+    'category=arrays',
     'category=chain',
+    'category=chaining',
     'category=collection',
+    'category=collections',
+    'category=date',
+    'category=dates',
     'category=function',
+    'category=functions',
+    'category=lang',
+    'category=langs',
+    'category=number',
+    'category=numbers',
     'category=object',
+    'category=objects',
+    'category=string',
+    'category=strings',
     'category=utility',
+    'category=utilities',
     'minus=union,uniq,zip',
     'include=each,filter,map',
     'include=once plus=bind,Chain',
@@ -1631,7 +1666,9 @@ QUnit.module('lodash build');
           if (/\bcategory=/.test(command)) {
             var categories = command.match(/\bcategory=(\S*)/)[1].split(/, */);
             funcNames || (funcNames = []);
-            push.apply(funcNames, _.map(categories, _.compose(_.capitalize, _.partial(_.result, _, 'toLowerCase'))));
+            push.apply(funcNames, _.map(categories, function(category) {
+              return getRealCategory(_.capitalize(category.toLowerCase()));
+            }));
           }
           if (!funcNames) {
             funcNames = allFuncs.slice();
