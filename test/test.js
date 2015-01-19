@@ -74,6 +74,7 @@ var aliasToRealMap = createMap({
   'select': 'filter',
   'tail': 'rest',
   'toJSON': 'wrapperValue',
+  'toString': 'wrapperToString',
   'unique': 'uniq',
   'valueOf': 'wrapperValue',
   'value': 'wrapperValue'
@@ -99,6 +100,7 @@ var realToAliasMap = createMap({
   'some': ['any'],
   'uniq': ['unique'],
   'wrapperReverse': ['reverse'],
+  'wrapperToString': ['toString'],
   'wrapperValue': ['toJSON', 'value', 'valueOf'],
   'zipObject': ['object']
 });
