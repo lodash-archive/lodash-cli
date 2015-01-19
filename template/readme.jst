@@ -1,3 +1,20 @@
 # <%= name %> v<%= version %>
 
-<%= description %>
+The [modern build](https://github.com/lodash/lodash/wiki/Build-Differences) of [Lo-Dash’s](https://lodash.com/) <%= (isInternal ? 'internal `' : '`_.') + identifier %>` exported as a [Node.js](http://nodejs.org/)/[io.js](https://iojs.org/) module.
+
+## Installation
+
+Using npm:
+
+```bash
+$ {sudo -H} npm i -g npm
+$ npm i --save <%= name %>
+```
+
+In Node.js/io.js:
+
+```js
+var <%= identifier %> = require('<%= name %>');
+```
+
+See the <%= (isInternal ? '' : ('[documentation](https://lodash.com/docs#' + identifier + ') or ')) %>[package source](https://github.com/lodash/lodash/blob/3.0.0-npm-packages/<%= name %>) for more details.

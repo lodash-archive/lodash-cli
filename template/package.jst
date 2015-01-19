@@ -1,11 +1,12 @@
 {
   "name": "<%= name %>",
   "version": "<%= version %>",
-  "description": "<%= description %>",
-  "homepage": "https://lodash.com/custom-builds",
+  "description": "The modern build of Lo-Dash’s <%= (isInternal ? 'internal `' : '`_.') + identifier %>` as a module.",
+  "homepage": "https://lodash.com/",
+  "icon": "https://lodash.com/icon.svg",
   "license": "MIT",<%
-  if (!_.isEmpty(keywords)) {
-    print('\n  "keywords": "' + keywords.join(', ') + '",');
+  if (!isInternal) {
+    print('\n  "keywords": "lodash, lodash-modularized, stdlib, util",');
   }%>
   "author": "John-David Dalton <john.david.dalton@gmail.com> (http://allyoucanleet.com/)",
   "contributors": [
@@ -15,8 +16,8 @@
     "Kit Cambridge <github@kitcambridge.be> (http://kitcambridge.be/)",
     "Mathias Bynens <mathias@qiwi.be> (https://mathiasbynens.be/)"
   ],
-  "repository": "lodash/lodash-cli",
-  "scripts": { "test": "echo \"See the repository CONTRIBUTING.md for testing instructions.\"" }<%
+  "repository": "lodash/lodash",
+  "scripts": { "test": "echo \"See https://travis-ci.org/lodash/lodash-cli for testing details.\"" }<%
   if (!_.isEmpty(dependencies)) {
     print(',\n  "dependencies": ' + JSON.stringify(dependencies, null, 4).replace(/}$/, '  $&'));
   }%>
