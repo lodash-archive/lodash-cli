@@ -932,7 +932,7 @@ function buildModule(state, onComplete) {
       includeVars = state.includeVars,
       isAMD = state.isAMD,
       isCommonJS = state.isCommonJS,
-      isES6 = state.isES6,
+      isES = state.isES,
       isNpm = state.isNpm,
       isSilent = state.isSilent,
       minusFuncs = state.minusFuncs,
@@ -1043,7 +1043,7 @@ function buildModule(state, onComplete) {
             '});'
           );
         }
-        else if (isES6) {
+        else if (isES) {
           iife.push(
             _.reduce(depPaths, function(result, depPath, index) {
               var depName = depNames[index];
@@ -1126,7 +1126,7 @@ function buildModule(state, onComplete) {
             '});'
           );
         }
-        else if (isES6) {
+        else if (isES) {
           iife.push(
             'import ' + identifier + " from '" + depPath + "'",
             'export default ' + identifier + ';'
@@ -1173,7 +1173,7 @@ function buildModule(state, onComplete) {
     var basename = 'index';
     if (isAMD) {
       basename = 'main';
-    } else if (isES6) {
+    } else if (isES) {
       basename = 'lodash';
     }
     state.buildFuncs = state.includeFuncs = [identifier];
@@ -1192,7 +1192,7 @@ function buildModule(state, onComplete) {
       source = source.replace(/^(?: *\/\/.*\n)* *lodash\.[$\w]+\s*=[^;]+;\n/m, function(match) {
         var code = [
           '  // wrap `_.mixin` so it works when provided only one argument',
-          '  ' + (isES6 ? 'var ' : '') + 'mixin = (function(func) {'
+          '  ' + (isES ? 'var ' : '') + 'mixin = (function(func) {'
         ];
 
         code.push(
@@ -1210,7 +1210,7 @@ function buildModule(state, onComplete) {
           '      }',
           '      return func(object, source, options);',
           '    };',
-          '  }(' + (isES6 ? '_' : '') + 'mixin));',
+          '  }(' + (isES ? '_' : '') + 'mixin));',
           '',
           match
         );
@@ -1263,8 +1263,9 @@ function buildModule(state, onComplete) {
       removedDeps[identifier] = unusedDeps;
 
       var depNames = categoryDeps.concat(deps);
-      if (isES6) {
-        // Avoid an ES6 syntax error caused by reassigning `mixin` by naming it `_mixin` instead.
+      if (isES) {
+        // Avoid a syntax error caused by reassigning `mixin` by naming the
+        // dependency `_mixin` instead.
         depNames[_.indexOf(depNames, 'mixin')] = '_mixin';
       }
       var iife = [],
@@ -1279,7 +1280,7 @@ function buildModule(state, onComplete) {
           '});'
         );
       }
-      else if (isES6) {
+      else if (isES) {
         iife.push(
           _.reduce(depPaths, function(result, depPath, index) {
             var depName = depNames[index];
@@ -1344,7 +1345,7 @@ function buildModule(state, onComplete) {
       );
     }
     else {
-      if (isES6) {
+      if (isES) {
         push.apply(iife,
           _.map(depNames, function(depName, index) {
             return 'import ' + depName + " from '" + depPaths[index] + "';";
@@ -1669,8 +1670,8 @@ function displayHelp() {
     'Commands:',
     '',
     '  compat       Build with support for old & new environments (default)',
-    '  modern       Build tailored for newer environments with ES5 support',
-    '  strict       Build with ES5 strict mode enabled',
+    '  modern       Build tailored for newer environments',
+    '  strict       Build with ES strict mode enabled',
     '  modularize   Splits Lo-Dash into modules',
     '',
     '  include=..   Comma separated function/category names to include in the build',
@@ -1684,7 +1685,7 @@ function displayHelp() {
     '               “object”, “number”, “string”, & “utility”)',
     '',
     '  exports=..   Comma separated values of ways to export Lo-Dash.',
-    '               (i.e. “amd”, “commonjs”, “es6”, “global”, “iojs”, “node”, “npm”,',
+    '               (i.e. “amd”, “commonjs”, “es”, “global”, “iojs”, “node”, “npm”,',
     '               & “none”)',
     '',
     '  iife=..      Code to replace the IIFE that wraps Lo-Dash',
@@ -1704,7 +1705,7 @@ function displayHelp() {
     '',
     '  All commands except `compat` & `modern` may be combined.',
     '',
-    '  The `exports` values “es6” & “npm” may only be used in conjunction with',
+    '  The `exports` values “es” & “npm” may only be used in conjunction with',
     '  the `modularize` command.',
     '',
     '  The `modularize` command uses the first `exports` values as its module format,',
@@ -3351,11 +3352,17 @@ function build(options, callback) {
     // Flags to specify export options.
     var isAMD = _.includes(exportsOptions, 'amd'),
         isCommonJS = _.includes(exportsOptions, 'commonjs'),
-        isES6 = _.includes(exportsOptions, 'es6'),
+        isES = _.includes(exportsOptions, 'es') || _.includes(exportsOptions, 'es6'),
         isGlobal = _.includes(exportsOptions, 'global'),
         isNpm = _.includes(exportsOptions, 'npm'),
         isNode = isNpm || _.includes(exportsOptions, 'iojs') || _.includes(exportsOptions, 'node');
 
+    if (isES) {
+      _.pull(exportsOptions, 'es', 'es6').push('es');
+    }
+    if (isNode) {
+      _.pull(exportsOptions, 'iojs', 'node').push('node');
+    }
     // The lodash.js source.
     var source = fs.readFileSync(filePath, 'utf8');
 
@@ -3453,7 +3460,7 @@ function build(options, callback) {
       'exports': {
         'entries': exportsOptions,
         'validEntries': isModularize
-          ? _.without(defaultExports.concat(['es6', 'npm']), 'global')
+          ? _.without(defaultExports.concat(['es', 'npm']), 'global')
           : defaultExports
       },
       'include': {
@@ -3785,7 +3792,7 @@ function build(options, callback) {
         'includeVars': includeVars,
         'isAMD': isAMD,
         'isCommonJS': isCommonJS,
-        'isES6': isES6,
+        'isES': isES,
         'isModern': isModern,
         'isNode': isNode,
         'isNpm': isNpm,

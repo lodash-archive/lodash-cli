@@ -562,6 +562,7 @@ QUnit.module('build command checks');
 
   var commands = [
     'csp',
+    'exports=es',
     'exports=es6',
     'exports=npm',
     'modern template=./*.jst'
@@ -643,7 +644,7 @@ QUnit.module('template builds');
         var object = {
           'a': { 'people': ['fred', 'barney', 'pebbles'] },
           'b': { 'name': 'fred' },
-          'c': { 'name': 'es6' }
+          'c': { 'name': 'es' }
         };
 
         context._ = _;
@@ -655,7 +656,7 @@ QUnit.module('template builds');
         strictEqual(actual.replace(/[\r\n]+/g, ''), '<ul><li>fred</li><li>barney</li><li>pebbles</li></ul>', basename);
 
         strictEqual(_.templates.b(object.b), 'hello fred!', basename);
-        strictEqual(_.templates.c(object.c), 'hello es6', basename);
+        strictEqual(_.templates.c(object.c), 'hello es', basename);
         deepEqual(_.difference(['a', 'b', 'c', 'd', 'e'], _.keys(_.templates)), [], basename);
 
         delete _.templates;
