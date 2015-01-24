@@ -110,14 +110,14 @@ var funcDependencyMap = createMap({
   // Dependencies of variables.
   'metaMap': ['isNative'],
 
-  // Dependencies of Lo-Dash properties.
+  // Dependencies of lodash properties.
   'support': ['isNative'],
   'templateSettings': ['escape'],
 
   // Dependencies of the main module.
   'main': ['arrayEach', 'baseForOwn', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'matches', 'mixin', 'property', 'thru'],
 
-  // Dependencies of Lo-Dash methods.
+  // Dependencies of lodash methods.
   'after': ['isFunction'],
   'ary': ['createWrapper', 'isIterateeCall'],
   'assign': ['baseAssign', 'createAssigner'],
@@ -297,7 +297,7 @@ var funcDependencyMap = createMap({
   'lazyReverse': ['LazyWrapper'],
   'lazyValue': ['baseWrapperValue', 'getView', 'isArray'],
 
-  // Dependencies of Lo-Dash wrapper functions.
+  // Dependencies of lodash wrapper functions.
   'LodashWrapper': [],
   'wrapperChain': ['chain'],
   'wrapperReverse': ['LazyWrapper', 'LodashWrapper', 'thru'],
@@ -435,7 +435,7 @@ var funcDependencyMap = createMap({
   'unescapeHtmlChar': []
 });
 
-/** Used to track Lo-Dash object dependencies of identifiers. */
+/** Used to track lodash object dependencies of identifiers. */
 var objDependencyMap = createMap({
   'isArguments': ['support'],
   'isBindable': ['support'],
@@ -743,7 +743,7 @@ var allFuncs = _.filter(_.difference(_.keys(funcDependencyMap), objDependencies,
   return type == 'function' || type == 'undefined';
 });
 
-/** List of Lo-Dash functions. */
+/** List of lodash functions. */
 var lodashFuncs = _.intersection(allFuncs, _.union(
   _.functions(_),
   _.functions(_.prototype), [
@@ -904,7 +904,7 @@ function addCommandsToHeader(source, commands) {
     });
 
     // Add build commands to copyright/license header.
-    return header.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *Lo-Dash [.$\w\-]+)(.*)/, function() {
+    return header.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *lodash [.$\w\-]+)(.*)/, function() {
       return (
         arguments[1] +
         arguments[2] +
@@ -1672,7 +1672,7 @@ function displayHelp() {
     '  compat       Build with support for old & new environments (default)',
     '  modern       Build tailored for newer environments',
     '  strict       Build with ES strict mode enabled',
-    '  modularize   Splits Lo-Dash into modules',
+    '  modularize   Splits lodash into modules',
     '',
     '  include=..   Comma separated function/category names to include in the build',
     '',
@@ -1684,11 +1684,11 @@ function displayHelp() {
     '               (i.e. “array”, “chain”, “collection”, “date”, “function”, “lang”,',
     '               “object”, “number”, “string”, & “utility”)',
     '',
-    '  exports=..   Comma separated values of ways to export Lo-Dash.',
+    '  exports=..   Comma separated values of ways to export lodash.',
     '               (i.e. “amd”, “commonjs”, “es”, “global”, “iojs”, “node”, “npm”,',
     '               & “none”)',
     '',
-    '  iife=..      Code to replace the IIFE that wraps Lo-Dash',
+    '  iife=..      Code to replace the IIFE that wraps lodash',
     '               (e.g. `lodash iife="!function(){%output%}()"`)',
     '',
     '  template=..  File path pattern used to match template files to precompile',
@@ -1697,11 +1697,11 @@ function displayHelp() {
     '  settings=..  Template settings used when precompiling templates',
     '               (e.g. `lodash settings="{interpolate:/{{([\\s\\S]+?)}}/g}"`)',
     '',
-    '  moduleId=..  The AMD module ID used to export Lo-Dash in Lo-Dash builds or',
-    '               the module ID used to include Lo-Dash in compiled templates.',
+    '  moduleId=..  The AMD module ID used to export lodash in lodash builds or',
+    '               the module ID used to include lodash in compiled templates.',
     '',
     '               Use “none” as the module ID to create compiled templates without',
-    '               a dependency on Lo-Dash.',
+    '               a dependency on lodash.',
     '',
     '  All commands except `compat` & `modern` may be combined.',
     '',
@@ -1723,7 +1723,7 @@ function displayHelp() {
     '  -o, --output       Write output to a given path/filename',
     '  -p, --production   Write only the minified production output',
     '  -s, --silent       Skip status updates normally logged to the console',
-    '  -V, --version      Output current version of Lo-Dash',
+    '  -V, --version      Output current version of lodash',
     ''
   ].join('\n'));
 }
@@ -1991,7 +1991,7 @@ function getIsFunctionFork(source) {
 }
 
 /**
- * Gets the Lo-Dash method assignments snippet from `source`.
+ * Gets the lodash method assignments snippet from `source`.
  *
  * @private
  * @param {string} source The source to inspect.
@@ -2105,7 +2105,7 @@ function getRealCategory(alias) {
 
 /**
  * Creates an array variables names from all variables defined outside of
- * Lo-Dash functions.
+ * lodash functions.
  *
  * @private
  * @param {string} source The source to process.
@@ -2220,7 +2220,7 @@ function matchFunction(source, funcName, leadingComments) {
 }
 
 /**
- * Searches `source` for a Lo-Dash property, of the given property name, and
+ * Searches `source` for a lodash property, of the given property name, and
  * returns the matched snippet.
  *
  * @private
@@ -2305,7 +2305,7 @@ function optionToValue(name, string) {
 }
 
 /**
- * Removes all Lo-Dash method and property assignments from `source`.
+ * Removes all lodash method and property assignments from `source`.
  *
  * @private
  * @param {string} source The source to process.
@@ -2330,7 +2330,7 @@ function removeBufferCloneFork(source) {
 }
 
 /**
- * Removes support for Lo-Dash wrapper chaining in `source`.
+ * Removes support for lodash wrapper chaining in `source`.
  *
  * @private
  * @param {string} source The source to process.
@@ -2667,7 +2667,7 @@ function removeMethodAssignment(source, methodName) {
 }
 
 /**
- * Removes all Lo-Dash method assignments from `source`.
+ * Removes all lodash method assignments from `source`.
  *
  * @private
  * @param {string} source The source to process.
@@ -2715,7 +2715,7 @@ function removeParseIntFork(source) {
 }
 
 /**
- * Removes a Lo-Dash property, of the given property name, from `source`.
+ * Removes a lodash property, of the given property name, from `source`.
  *
  * @private
  * @param {string} source The source to process.
@@ -3280,7 +3280,7 @@ function build(options, callback) {
     // The path to the source file.
     var filePath = require.resolve('lodash-compat');
 
-    // Used to specify a custom IIFE to wrap Lo-Dash.
+    // Used to specify a custom IIFE to wrap lodash.
     var iife = getOption(options, 'iife');
 
     // Used to match external template files to precompile.
@@ -3331,7 +3331,7 @@ function build(options, callback) {
       return isModularize ? _.take(result, 1) : result;
     }());
 
-    // Used to specify the AMD module ID of Lo-Dash used by precompiled templates.
+    // Used to specify the AMD module ID of lodash used by precompiled templates.
     var moduleId = getOption(options, 'moduleId', null);
 
     // Used as the output path for the build.
@@ -3661,7 +3661,7 @@ function build(options, callback) {
 
     /*------------------------------------------------------------------------*/
 
-    // Load customized Lo-Dash module.
+    // Load customized lodash module.
     var lodash = !isTemplate && (function() {
       var context = vm.createContext({
         'clearTimeout': clearTimeout,
@@ -3755,7 +3755,7 @@ function build(options, callback) {
     if (isAMD && !isModularize && !isTemplate && moduleId != null && moduleId != 'none') {
       source = source.replace(/^ *define\((?=function)/m, "$&'" + moduleId + "', ");
     }
-    // Customize Lo-Dash's export bootstrap.
+    // Customize lodash's export bootstrap.
     if (!isAMD || isModularize) {
       source = source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(typeof\s+define\b[\s\S]+?else\s+/m, '$1');
     }
@@ -3980,7 +3980,7 @@ function build(options, callback) {
     }());
   }
 
-  // Customize Lo-Dash's IIFE.
+  // Customize lodash's IIFE.
   if (isIIFE) {
     source = replaceIIFE(source, iife);
   }

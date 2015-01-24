@@ -1,7 +1,7 @@
 {
   "name": "lodash-cli",
   "version": "3.0.0-pre",
-  "description": "The Lo-Dash command-line interface.",
+  "description": "The lodash command-line interface.",
   "homepage": "https://lodash.com/custom-builds",
   "license": "MIT",
   "main": "bin/lodash",

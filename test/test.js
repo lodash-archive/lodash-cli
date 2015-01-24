@@ -443,7 +443,7 @@ function getRealCategory(alias) {
  * Tests if a given method can be called successfully.
  *
  * @private
- * @param {Object} lodash The built Lo-Dash object.
+ * @param {Object} lodash The built lodash object.
  * @param {string} funcName The name of the method to test.
  * @param {string} message The unit test message.
  */
