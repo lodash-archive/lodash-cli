@@ -902,6 +902,11 @@ function addCommandsToHeader(source, commands) {
         .replace(/\*\//g, '*\\/');
     });
 
+    // Remove any existing custom build information.
+    header = header
+      .replace(' (Custom Build)', '')
+      .replace(/^ *\* *Build:.+\n/m, '');
+
     // Add build commands to copyright/license header.
     return header.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *lodash [.$\w\-]+)(.*)/, function() {
       return (
