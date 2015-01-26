@@ -19,7 +19,7 @@
   "scripts": { "test": "echo \"See the repository CONTRIBUTING.md for testing instructions.\"" },
   "dependencies": {
     "closure-compiler": "0.2.6",
-    "glob": "~4.3.5",
+    "glob": "4.3.5",
     "lodash-compat": "3.0.0",
     "uglify-js": "2.4.16"
   },
@@ -29,6 +29,7 @@
   },
   "files": [
     "LICENSE.txt",
+    "npm-shrinkwrap.json",
     "bin/lodash",
     "lib/minify.js",
     "lib/pre-compile.js",
