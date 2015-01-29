@@ -568,14 +568,11 @@ QUnit.module('build command checks');
   ];
 
   _.each(commands, function(command) {
-    test('`lodash ' + command +'` is invalid', function() {
-      var actual = false;
-      try {
-        build(command.split(' '), _.noop);
-      } catch(e) {
-        actual = reHelp.test(e.message);
-      }
-      ok(actual);
+    asyncTest('`lodash ' + command +'` is invalid', function() {
+      build(command.split(' '), function(data) {
+        ok(reHelp.test(data.source));
+        QUnit.start();
+      });
     });
   });
 }());
@@ -586,25 +583,23 @@ QUnit.module('minified AMD snippet');
 
 (function() {
   asyncTest('r.js build optimizer check', function() {
-    var start = _.after(2, _.once(QUnit.start));
+    // Test using the same regexp from the r.js build optimizer.
+    var defineHasRegExp = /typeof\s+define\s*==(=)?\s*['"]function['"]\s*&&\s*typeof\s+define\.amd\s*==(=)?\s*['"]object['"]\s*&&\s*define\.amd/g,
+        start = _.after(2, _.once(QUnit.start));
 
     build(['-s', 'minus='], function(data) {
-      // Test using the same regexp from the r.js build optimizer.
-      var basename = path.basename(data.outputPath, '.js'),
-          defineHasRegExp = /typeof\s+define\s*==(=)?\s*['"]function['"]\s*&&\s*typeof\s+define\.amd\s*==(=)?\s*['"]object['"]\s*&&\s*define\.amd/g;
-
+      var basename = path.basename(data.outputPath, '.js');
       ok(defineHasRegExp.test(data.source), basename);
       start();
     });
   });
 
   asyncTest('Dojo builder check', function() {
-    var start = _.after(2, _.once(QUnit.start));
+    var reSpaceDefine = /\sdefine\(/,
+        start = _.after(2, _.once(QUnit.start));
 
     build(['-s', 'minus='], function(data) {
-      var basename = path.basename(data.outputPath, '.js'),
-          reSpaceDefine = /\sdefine\(/;
-
+      var basename = path.basename(data.outputPath, '.js');
       ok(reSpaceDefine.test(data.source), basename);
       start();
     });

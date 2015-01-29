@@ -13,6 +13,71 @@ var _ = require('lodash-compat'),
 var fs = util.fs,
     path = util.path;
 
+/** Used as the text displayed for the `--help` option */
+var HELP_TEXT = [
+  'Usage:',
+  '  lodash [commands] [options]',
+  '',
+  'Commands:',
+  '',
+  '  compat       Build with support for old & new environments (default)',
+  '  modern       Build tailored for newer environments',
+  '  strict       Build with ES strict mode enabled',
+  '  modularize   Splits lodash into modules',
+  '',
+  '  include=..   Comma separated function/category names to include in the build',
+  '',
+  '  minus=..     Comma separated function/category names to remove from the build',
+  '',
+  '  plus=..      Comma separated function/category names to add to the build',
+  '',
+  '  category=..  Comma separated categories of functions to include in the build',
+  '               (i.e. “array”, “chain”, “collection”, “date”, “function”, “lang”,',
+  '               “object”, “number”, “string”, & “utility”)',
+  '',
+  '  exports=..   Comma separated values of ways to export lodash.',
+  '               (i.e. “amd”, “commonjs”, “es”, “global”, “iojs”, “node”, “npm”,',
+  '               & “none”)',
+  '',
+  '  iife=..      Code to replace the IIFE that wraps lodash',
+  '               (e.g. `lodash iife="!function(){%output%}()"`)',
+  '',
+  '  template=..  File path pattern used to match template files to precompile',
+  '               (e.g. `lodash template=./*.jst`)',
+  '',
+  '  settings=..  Template settings used when precompiling templates',
+  '               (e.g. `lodash settings="{interpolate:/{{([\\s\\S]+?)}}/g}"`)',
+  '',
+  '  moduleId=..  The AMD module ID used to export lodash in lodash builds or',
+  '               the module ID used to include lodash in compiled templates.',
+  '',
+  '               Use “none” as the module ID to create compiled templates without',
+  '               a dependency on lodash.',
+  '',
+  '  All commands except `compat` & `modern` may be combined.',
+  '',
+  '  The `exports` values “es” & “npm” may only be used in conjunction with',
+  '  the `modularize` command.',
+  '',
+  '  The `modularize` command uses the first `exports` values as its module format,',
+  '  ignoring subsequent values.',
+  '',
+  '  Unless specified by `-o` or `--output` all files created are saved to the',
+  '  current working directory.',
+  '',
+  'Options:',
+  '',
+  '  -c, --stdout       Write output to standard output',
+  '  -d, --development  Write only the non-minified development output',
+  '  -h, --help         Display help information',
+  '  -m, --source-map   Generate a source map using an optional source map URL',
+  '  -o, --output       Write output to a given path/filename',
+  '  -p, --production   Write only the minified production output',
+  '  -s, --silent       Skip status updates normally logged to the console',
+  '  -V, --version      Output current version of lodash',
+  ''
+].join('\n');
+
 /** Used to create regexes that detect single and multi-line comment blocks. */
 var commentPattern = '(?: *(?:/\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/|\/\/.*)\\n)*';
 
@@ -1662,77 +1727,6 @@ function defaultBuildCallback(data) {
 }
 
 /**
- * Writes the help message to standard output.
- *
- * @private
- */
-function displayHelp() {
-  console.log([
-    'Usage:',
-    '  lodash [commands] [options]',
-    '',
-    'Commands:',
-    '',
-    '  compat       Build with support for old & new environments (default)',
-    '  modern       Build tailored for newer environments',
-    '  strict       Build with ES strict mode enabled',
-    '  modularize   Splits lodash into modules',
-    '',
-    '  include=..   Comma separated function/category names to include in the build',
-    '',
-    '  minus=..     Comma separated function/category names to remove from the build',
-    '',
-    '  plus=..      Comma separated function/category names to add to the build',
-    '',
-    '  category=..  Comma separated categories of functions to include in the build',
-    '               (i.e. “array”, “chain”, “collection”, “date”, “function”, “lang”,',
-    '               “object”, “number”, “string”, & “utility”)',
-    '',
-    '  exports=..   Comma separated values of ways to export lodash.',
-    '               (i.e. “amd”, “commonjs”, “es”, “global”, “iojs”, “node”, “npm”,',
-    '               & “none”)',
-    '',
-    '  iife=..      Code to replace the IIFE that wraps lodash',
-    '               (e.g. `lodash iife="!function(){%output%}()"`)',
-    '',
-    '  template=..  File path pattern used to match template files to precompile',
-    '               (e.g. `lodash template=./*.jst`)',
-    '',
-    '  settings=..  Template settings used when precompiling templates',
-    '               (e.g. `lodash settings="{interpolate:/{{([\\s\\S]+?)}}/g}"`)',
-    '',
-    '  moduleId=..  The AMD module ID used to export lodash in lodash builds or',
-    '               the module ID used to include lodash in compiled templates.',
-    '',
-    '               Use “none” as the module ID to create compiled templates without',
-    '               a dependency on lodash.',
-    '',
-    '  All commands except `compat` & `modern` may be combined.',
-    '',
-    '  The `exports` values “es” & “npm” may only be used in conjunction with',
-    '  the `modularize` command.',
-    '',
-    '  The `modularize` command uses the first `exports` values as its module format,',
-    '  ignoring subsequent values.',
-    '',
-    '  Unless specified by `-o` or `--output` all files created are saved to the',
-    '  current working directory.',
-    '',
-    'Options:',
-    '',
-    '  -c, --stdout       Write output to standard output',
-    '  -d, --development  Write only the non-minified development output',
-    '  -h, --help         Display help information',
-    '  -m, --source-map   Generate a source map using an optional source map URL',
-    '  -o, --output       Write output to a given path/filename',
-    '  -p, --production   Write only the minified production output',
-    '  -s, --silent       Skip status updates normally logged to the console',
-    '  -V, --version      Output current version of lodash',
-    ''
-  ].join('\n'));
-}
-
-/**
  * Gets the aliases associated with a given function name.
  *
  * @private
@@ -3236,13 +3230,14 @@ function trimIndent(source, level) {
  * Creates a debug and/or minified build, invoking the callback for each. The
  * `callback` is invoked with one argument; (data).
  *
- * Note: For a list of commands see `displayHelp()` or run `lodash --help`.
+ * Note: For a list of commands see `HELP_TEXT` or run `lodash --help`.
  *
  * @param {Array|Object} [options=[]] An array of build commands or the state object.
  * @param {Function} [callback=defaultBuildCallback] The function called per build.
  */
 function build(options, callback) {
   options || (options = []);
+  callback || (callback = defaultBuildCallback);
 
   // Used to specify the output path for builds.
   var outputPath;
@@ -3497,18 +3492,26 @@ function build(options, callback) {
         console.warn(warnText);
         process.exit(1);
       } else {
-        throw new Error(warnText);
+        callback(_.create(Error.prototype, { 'message': warnText, 'source': warnText }));
       }
       return;
     }
     // Display the help message.
     if (getOption(options, '-h') || getOption(options, '--help')) {
-      displayHelp();
+      if (isBin) {
+        console.log(HELP_TEXT);
+      } else {
+        callback({ 'source': HELP_TEXT });
+      }
       return;
     }
     // Display the `lodash.VERSION`.
     if (getOption(options, '-V') || getOption(options, '--version')) {
-      console.log(_.VERSION);
+      if (isBin) {
+        console.log(_.VERSION);
+      } else {
+        callback({ 'source': _.VERSION });
+      }
       return;
     }
 
@@ -3795,6 +3798,9 @@ function build(options, callback) {
 
     // Exit early to create modules.
     if (isModularize) {
+      if (callback == defaultBuildCallback) {
+        callback = null;
+      }
       buildModule({
         'buildFuncs': buildFuncs,
         'filePath': filePath,
@@ -3999,7 +4005,6 @@ function build(options, callback) {
 
   /*--------------------------------------------------------------------------*/
 
-  callback || (callback = defaultBuildCallback);
   source = cleanupSource(source);
 
   // A flag to track if `outputPath` has been used by `callback`.
