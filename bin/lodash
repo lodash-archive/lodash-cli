@@ -3315,7 +3315,7 @@ function build(options, callback) {
     var isStdOut = getOption(options, '-c') || getOption(options, '--stdout');
 
     // A flag to specify skipping status updates normally logged to the console.
-    var isSilent = isStdOut || getOption(options, '-s') || getOption(options, '--silent');
+    var isSilent = !isBin || isStdOut || getOption(options, '-s') || getOption(options, '--silent');
 
     // A flag to specify `_.assign`, `_.bindAll`, and `_.defaults`
     // are constructed using the "use strict" directive.

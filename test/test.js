@@ -587,7 +587,7 @@ QUnit.module('minified AMD snippet');
     var defineHasRegExp = /typeof\s+define\s*==(=)?\s*['"]function['"]\s*&&\s*typeof\s+define\.amd\s*==(=)?\s*['"]object['"]\s*&&\s*define\.amd/g,
         start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'minus='], function(data) {
+    build(['minus='], function(data) {
       var basename = path.basename(data.outputPath, '.js');
       ok(defineHasRegExp.test(data.source), basename);
       start();
@@ -598,7 +598,7 @@ QUnit.module('minified AMD snippet');
     var reSpaceDefine = /\sdefine\(/,
         start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'minus='], function(data) {
+    build(['minus='], function(data) {
       var basename = path.basename(data.outputPath, '.js');
       ok(reSpaceDefine.test(data.source), basename);
       start();
@@ -630,7 +630,7 @@ QUnit.module('template builds');
 
       process.chdir(/=\*/.test(command) ? templatePath : __dirname);
 
-      build(['-s', command], function(data) {
+      build([command], function(data) {
         var basename = path.basename(data.outputPath, '.js'),
             context = createContext();
 
@@ -669,7 +669,7 @@ QUnit.module('template builds');
     asyncTest('`lodash exports=amd' + (command ? ' ' + command + '`' : '` using the default `moduleId`'), function() {
       var start = _.after(2, _.once(QUnit.start));
 
-      build(['-s', 'template=' + path.join(templatePath, '*.jst'), 'exports=amd'].concat(command || []), function(data) {
+      build(['template=' + path.join(templatePath, '*.jst'), 'exports=amd'].concat(command || []), function(data) {
         var actualId,
             basename = path.basename(data.outputPath, '.js'),
             context = createContext();
@@ -692,7 +692,7 @@ QUnit.module('template builds');
     asyncTest('`lodash settings=...' + (command ? ' ' + command : '') + '`', function() {
       var start = _.after(2, _.once(QUnit.start));
 
-      build(['-s', 'template=' + path.join(templatePath, '*.tpl'), 'settings={interpolate:/{{([\\s\\S]+?)}}/}'].concat(command || []), function(data) {
+      build(['template=' + path.join(templatePath, '*.tpl'), 'settings={interpolate:/{{([\\s\\S]+?)}}/}'].concat(command || []), function(data) {
         var actualId,
             basename = path.basename(data.outputPath, '.js'),
             context = createContext();
@@ -736,7 +736,7 @@ QUnit.module('template builds');
         // Manually create template `'".jst` to avoid issues in Windows.
         fs.writeFileSync(quotesTemplatePath, 'hello <%= name %>', 'utf8');
       }
-      build(['-s', command], function(data) {
+      build([command], function(data) {
         var basename = path.basename(data.outputPath, '.js'),
             context = createContext();
 
@@ -768,7 +768,7 @@ QUnit.module('template builds');
     asyncTest('should work with `' + command +'`', function() {
       var start = _.after(2, _.once(QUnit.start));
 
-      build(['-s',  'template=' + path.join(templatePath, 'c.jst'), command], function(data) {
+      build([ 'template=' + path.join(templatePath, 'c.jst'), command], function(data) {
         var templates,
             basename = path.basename(data.outputPath, '.js'),
             context = createContext(),
@@ -833,7 +833,7 @@ QUnit.module('template builds');
     asyncTest('should work with `' + command + '`', function() {
       var start = _.after(2, _.once(QUnit.start));
 
-      build(['-s', 'template=' + path.join(templatePath, 'd.jst'), command], function(data) {
+      build(['template=' + path.join(templatePath, 'd.jst'), command], function(data) {
         var actualId = '',
             basename = path.basename(data.outputPath, '.js'),
             context = createContext();
@@ -868,7 +868,7 @@ QUnit.module('template builds');
   asyncTest('`lodash iife=%output%`', function() {
     var start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'template=' + path.join(templatePath, 'c.jst'), 'iife=%output%'], function(data) {
+    build(['template=' + path.join(templatePath, 'c.jst'), 'iife=%output%'], function(data) {
       var basename = path.basename(data.outputPath, '.js'),
           context = createContext(),
           source = data.source;
@@ -888,7 +888,7 @@ QUnit.module('template builds');
   asyncTest('should normalize template file path patterns', function() {
     var start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'template=' + templatePath + path.sep + path.sep + 'c.jst'], function(data) {
+    build(['template=' + templatePath + path.sep + path.sep + 'c.jst'], function(data) {
       var basename = path.basename(data.outputPath, '.js'),
           context = createContext();
 
@@ -905,7 +905,7 @@ QUnit.module('template builds');
   asyncTest('should not modify whitespace in templates', function() {
     var start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'template=' + path.join(templatePath, 'e.jst')], function(data) {
+    build(['template=' + path.join(templatePath, 'e.jst')], function(data) {
       var basename = path.basename(data.outputPath, '.js'),
           context = createContext();
 
@@ -935,7 +935,7 @@ QUnit.module('independent builds');
   _.each(options, function(option) {
     asyncTest('development build using `' + option + '`' , function() {
       var start = _.once(QUnit.start);
-      build([option, '-s'], function(data) {
+      build([option], function(data) {
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash');
         start();
       });
@@ -943,7 +943,7 @@ QUnit.module('independent builds');
 
     asyncTest('development custom build using `' + option + '`', function() {
       var start = _.once(QUnit.start);
-      build([option, '-s', 'modern'], function(data) {
+      build([option, 'modern'], function(data) {
         var comment = _.result(data.source.match(reLicense), 0, '');
         ok(_.includes(comment, 'Custom Build'));
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
@@ -961,7 +961,7 @@ QUnit.module('independent builds');
   _.each(options, function(option) {
     asyncTest('production build using `' + option + '`', function() {
       var start = _.once(QUnit.start);
-      build([option, '-s'], function(data) {
+      build([option], function(data) {
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.min');
         start();
       });
@@ -969,7 +969,7 @@ QUnit.module('independent builds');
 
     asyncTest('production custom build using `' + option + '`', function() {
       var start = _.once(QUnit.start);
-      build([option, '-s', 'modern'], function(data) {
+      build([option, 'modern'], function(data) {
         var comment = _.result(data.source.match(reLicense), 0, '');
         ok(_.includes(comment, 'Custom Build'));
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
@@ -999,8 +999,8 @@ QUnit.module('compat modifier');
       check();
     };
 
-    build(['-s', '-d'], callback);
-    build(['-s', '-d', 'compat'], callback);
+    build(['-d'], callback);
+    build(['-d', 'compat'], callback);
   });
 }());
 
@@ -1012,7 +1012,7 @@ QUnit.module('modern modifier');
   asyncTest('`lodash modern`', function() {
     var start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'modern'], function(data) {
+    build(['modern'], function(data) {
       var basename = path.basename(data.outputPath, '.js'),
           context = createContext();
 
@@ -1184,7 +1184,7 @@ QUnit.module('source-map modifier');
         if (!_.includes(outputCommand, '-p')) {
           callback = _.after(2, callback);
         }
-        build(['-s'].concat(mapCommand.split(' '), outputCommand), callback);
+        build(mapCommand.split(' ').concat(outputCommand), callback);
       });
     });
   });
@@ -1207,7 +1207,7 @@ QUnit.module('strict modifier');
 
   _.each(modes, function(strictMode, index) {
     asyncTest(strictMode + ' should ' + (index ? 'error': 'silently fail') + ' attempting to overwrite read-only properties', function() {
-      var commands = ['-s', 'include=bindAll,defaults,extend'],
+      var commands = ['include=bindAll,defaults,extend'],
           start = _.after(2, _.once(QUnit.start));
 
       if (index) {
@@ -1251,7 +1251,7 @@ QUnit.module('minus command');
   asyncTest('`lodash minus=runInContext`', function() {
     var start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'minus=runInContext'], function(data) {
+    build(['minus=runInContext'], function(data) {
       var basename = path.basename(data.outputPath, '.js'),
           context = createContext();
 
@@ -1274,7 +1274,7 @@ QUnit.module('minus command');
   asyncTest('`lodash minus=value`', function() {
     var start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'minus=value'], function(data) {
+    build(['minus=value'], function(data) {
       var basename = path.basename(data.outputPath, '.js'),
           context = createContext();
 
@@ -1291,7 +1291,7 @@ QUnit.module('minus command');
   asyncTest('`lodash minus=matches`', function() {
     var start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'minus=matches'], function(data) {
+    build(['minus=matches'], function(data) {
       var basename = path.basename(data.outputPath, '.js'),
           context = createContext();
 
@@ -1313,7 +1313,7 @@ QUnit.module('minus command');
   asyncTest('`lodash minus=property`', function() {
     var start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'minus=property'], function(data) {
+    build(['minus=property'], function(data) {
       var basename = path.basename(data.outputPath, '.js'),
           context = createContext();
 
@@ -1335,7 +1335,7 @@ QUnit.module('minus command');
   asyncTest('`lodash minus=matches,property`', function() {
     var start = _.after(2, _.once(QUnit.start));
 
-    build(['-s', 'minus=matches,property'], function(data) {
+    build(['minus=matches,property'], function(data) {
       var basename = path.basename(data.outputPath, '.js'),
           context = createContext();
 
@@ -1374,7 +1374,7 @@ QUnit.module('exports command');
     asyncTest('`lodash ' + command +'`', function() {
       var start = _.after(2, _.once(QUnit.start));
 
-      build(['-s', command], function(data) {
+      build([command], function(data) {
         var basename = path.basename(data.outputPath, '.js'),
             context = createContext(exportType),
             pass = false,
@@ -1434,7 +1434,7 @@ QUnit.module('iife command');
     asyncTest('`lodash ' + command +'`', function() {
       var start = _.after(2, _.once(QUnit.start));
 
-      build(['-s', 'exports=none', command], function(data) {
+      build(['exports=none', command], function(data) {
         var basename = path.basename(data.outputPath, '.js'),
             context = createContext();
 
@@ -1471,7 +1471,7 @@ QUnit.module('include command');
     asyncTest('`lodash ' + command +'`', function() {
       var start = _.after(2, _.once(QUnit.start));
 
-      build(['-s', command], function(data) {
+      build([command], function(data) {
         var basename = path.basename(data.outputPath, '.js'),
             context = createContext();
 
@@ -1505,7 +1505,7 @@ QUnit.module('moduleId command');
     asyncTest('`lodash ' + command +'`', function() {
       var start = _.after(2, _.once(QUnit.start));
 
-      build(['-s'].concat(command.split(' ')), function(data) {
+      build(command.split(' '), function(data) {
         var actualId,
             basename = path.basename(data.outputPath, '.js'),
             context = createContext();
@@ -1560,7 +1560,7 @@ QUnit.module('output option');
 
       process.chdir(__dirname);
 
-      build(['-s'].concat(command.split(' ')), function(data) {
+      build(command.split(' '), function(data) {
         var basename = path.basename(data.outputPath, '.js');
         strictEqual(basename, expected + (counter++ ? '.min' : ''), command);
         start();
@@ -1656,7 +1656,7 @@ QUnit.module('lodash build');
       asyncTest('`lodash ' + command +'`', function() {
         var start = _.after(2, _.once(QUnit.start));
 
-        build(['--silent'].concat(command.split(' ')), function(data) {
+        build(command.split(' '), function(data) {
           var basename = path.basename(data.outputPath, '.js'),
               context = createContext();
 
