@@ -557,8 +557,7 @@ console.log('test.js invoked with arguments: ' + JSON.stringify(process.argv));
 QUnit.module('build command checks');
 
 (function() {
-  var reHelp = /lodash --help/,
-      write = process.stderr.write;
+  var reHelp = /lodash --help/;
 
   var commands = [
     'csp',
@@ -569,15 +568,14 @@ QUnit.module('build command checks');
   ];
 
   _.each(commands, function(command) {
-    asyncTest('`lodash ' + command +'` is invalid', function() {
-      process.stderr.write = _.once(function(string) {
-        ok(reHelp.test(string));
-
-        process.stderr.write = write;
-        QUnit.start();
-      });
-
-      build(command.split(' '), _.noop);
+    test('`lodash ' + command +'` is invalid', function() {
+      var actual = false;
+      try {
+        build(command.split(' '), _.noop);
+      } catch(e) {
+        actual = reHelp.test(e.message);
+      }
+      ok(actual);
     });
   });
 }());

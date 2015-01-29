@@ -19,6 +19,9 @@ var commentPattern = '(?: *(?:/\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/|\/\/.*)\\n)*';
 /** The current working directory. */
 var cwd = process.cwd();
 
+/** Used to indicate whether this file is executed directly from Node.js */
+var isBin = module == require.main;
+
 /** Native method references. */
 var push = Array.prototype.push;
 
@@ -3487,10 +3490,18 @@ function build(options, callback) {
     });
 
     if (!_.isEmpty(warnings)) {
-      console.warn([''].concat(
+      var warnText = [
+        '',
         warnings,
         'For more information type: lodash --help'
-      ).join('\n'));
+      ].join('\n');
+
+      if (isBin) {
+        console.warn(warnText);
+        process.exit(1);
+      } else {
+        throw new Error(warnText);
+      }
       return;
     }
     // Display the help message.
@@ -4068,7 +4079,7 @@ function build(options, callback) {
 /*----------------------------------------------------------------------------*/
 
 // Export `build`.
-if (module != require.main) {
+if (!isBin) {
   module.exports = build;
 }
 // Handle invoking `build` by the command-line.
