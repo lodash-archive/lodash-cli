@@ -459,9 +459,9 @@ function testMethod(lodash, methodName, message) {
     if (_.includes(categoryMap.Array, methodName)) {
       if (methodName == 'range') {
         func(2, 4);
-      } else if (/^(?:difference|intersection|union|uniq|zip)/.test(methodName)) {
+      } else if (/^(?:difference|intersection|union|uniq|zip(?:Object)?)$/.test(methodName)) {
         func(array, array);
-      } else if (/(?:indexOf|sortedIndex|without)$/i.test(methodName)) {
+      } else if (/^(?:indexOf|lastIndexOf|sortedIndex|sortedLastIndex|without)$/.test(methodName)) {
         func(array, string);
       } else {
         func(array);
@@ -583,12 +583,13 @@ QUnit.module('minified AMD snippet');
 
 (function() {
   asyncTest('r.js build optimizer check', function() {
-    // Test using the same regexp from the r.js build optimizer.
-    var defineHasRegExp = /typeof\s+define\s*==(=)?\s*['"]function['"]\s*&&\s*typeof\s+define\.amd\s*==(=)?\s*['"]object['"]\s*&&\s*define\.amd/g,
-        start = _.after(2, _.once(QUnit.start));
+    var start = _.after(2, _.once(QUnit.start));
 
     build(['minus='], function(data) {
-      var basename = path.basename(data.outputPath, '.js');
+      // Test using the same regexp from the r.js build optimizer.
+      var basename = path.basename(data.outputPath, '.js'),
+          defineHasRegExp = /typeof\s+define\s*==(=)?\s*['"]function['"]\s*&&\s*typeof\s+define\.amd\s*==(=)?\s*['"]object['"]\s*&&\s*define\.amd/g;
+
       ok(defineHasRegExp.test(data.source), basename);
       start();
     });
@@ -612,7 +613,8 @@ QUnit.module('template builds');
 
 (function() {
   var templatePath = path.join(__dirname, 'fixture'),
-      quotesTemplatePath = path.join(templatePath, 'c', '\'".jst');
+      quotesTemplatePath = path.join(templatePath, 'c', '\'".jst'),
+      reWildcard = /=\*/;
 
   var commands = [
     'template=' + path.join('fixture', '*.jst'),
@@ -628,7 +630,7 @@ QUnit.module('template builds');
         QUnit.start();
       }));
 
-      process.chdir(/=\*/.test(command) ? templatePath : __dirname);
+      process.chdir(reWildcard.test(command) ? templatePath : __dirname);
 
       build([command], function(data) {
         var basename = path.basename(data.outputPath, '.js'),
@@ -1608,7 +1610,16 @@ QUnit.module('stdout option');
 QUnit.module('lodash build');
 
 (function() {
-  var reNonCombinable = /\b(?:compat|modern)\b/;
+  var reInclude = /\binclude=/,
+      reIncludeValue = /\binclude=(\S*)/,
+      reCategory = /\bcategory=/,
+      reCategoryValue = /\bcategory=(\S*)/,
+      reComma = /, */,
+      reMinus = /\bminus=/,
+      reMinusValue = /\bminus=(\S*)/,
+      reNonCombinable = /\b(?:compat|modern)\b/,
+      rePlus =/\bplus=/,
+      rePlusValue = /\bplus=(\S*)/;
 
   var commands = [
     'modern',
@@ -1666,11 +1677,11 @@ QUnit.module('lodash build');
             console.log(e);
           }
           // Add function names explicitly.
-          if (/\binclude=/.test(command)) {
-            var funcNames = command.match(/\binclude=(\S*)/)[1].split(/, */);
+          if (reInclude.test(command)) {
+            var funcNames = command.match(reIncludeValue)[1].split(reComma);
           }
-          if (/\bcategory=/.test(command)) {
-            var categories = command.match(/\bcategory=(\S*)/)[1].split(/, */);
+          if (reCategory.test(command)) {
+            var categories = command.match(reCategoryValue)[1].split(reComma);
             funcNames || (funcNames = []);
             push.apply(funcNames, _.map(categories, function(category) {
               return getRealCategory(_.capitalize(category.toLowerCase()));
@@ -1679,12 +1690,12 @@ QUnit.module('lodash build');
           if (!funcNames) {
             funcNames = allFuncs.slice();
           }
-          if (/\bplus=/.test(command)) {
-            var otherNames = command.match(/\bplus=(\S*)/)[1].split(/, */);
+          if (rePlus.test(command)) {
+            var otherNames = command.match(rePlusValue)[1].split(reComma);
             push.apply(funcNames, expandFuncNames(otherNames));
           }
-          if (/\bminus=/.test(command)) {
-            otherNames = command.match(/\bminus=(\S*)/)[1].split(/, */);
+          if (reMinus.test(command)) {
+            otherNames = command.match(reMinusValue)[1].split(reComma);
             funcNames = _.difference(funcNames, expandFuncNames(otherNames));
           }
           // Expand categories to function names.
