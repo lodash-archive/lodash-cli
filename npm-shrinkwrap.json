@@ -1,6 +1,6 @@
 {
   "name": "lodash-cli",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "dependencies": {
     "closure-compiler": {
       "version": "0.2.6",
@@ -68,7 +68,7 @@
       }
     },
     "lodash-compat": {
-      "version": "3.0.0"
+      "version": "3.0.1"
     },
     "uglify-js": {
       "version": "2.4.16",
