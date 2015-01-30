@@ -1149,7 +1149,8 @@ function buildModule(state, onComplete) {
             'type': type,
             'version': version,
             'dependencies': _.transform(depPaths, function(result, depPath) {
-              result[depPath] = '^' + version;
+              var parts = version.split('.');
+              result[depPath] = '^' + parts[0] + '.0.0';
             }, {})
           };
 
