@@ -5,7 +5,7 @@ var baseFunctions = require('lodash._basefunctions'),
     support = require('lodash.support'),
     templateSettings = require('lodash.templatesettings');
 
-// wrap `_.mixin` so it works when provided only one argument
+// Wrap `_.mixin` so it works when provided only one argument.
 mixin = (function(func) {
   return function(object, source, options) {
     var isObj = isObject(source),
@@ -24,10 +24,10 @@ mixin = (function(func) {
   };
 }(mixin));
 
-// namespace
+// The lodash namespace.
 var lodash = function() {};
 
-// add functions
+// Add functions.
 lodash.after = require('lodash.after');
 lodash.ary = require('lodash.ary');
 lodash.assign = require('lodash.assign');
@@ -197,7 +197,7 @@ lodash.xor = require('lodash.xor');
 lodash.zip = require('lodash.zip');
 lodash.zipObject = require('lodash.zipobject');
 
-// add aliases
+// Add aliases.
 lodash.all = lodash.every;
 lodash.any = lodash.some;
 lodash.backflow = lodash.flowRight;
@@ -220,7 +220,7 @@ lodash.select = lodash.filter;
 lodash.tail = lodash.rest;
 lodash.unique = lodash.uniq;
 
-// add other properties
+// Add other properties.
 lodash.support = support;
 (lodash.templateSettings = templateSettings).imports._ = lodash;
 lodash.VERSION = require('lodash-compat').VERSION;
