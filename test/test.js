@@ -279,6 +279,7 @@ var categoryMap = createMap({
     'parseInt',
     'repeat',
     'snakeCase',
+    'startCase',
     'startsWith',
     'template',
     'templateSettings',
