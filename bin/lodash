@@ -3632,13 +3632,9 @@ function build(options, callback) {
       // Remove "_.matches" or "_.property" style callback support from `baseCallback`.
       _.each(['matches', 'property'], function(funcName) {
         if (_.includes(minusFuncs, funcName)) {
-          var baseName = 'base' + _.capitalize(funcName),
-              deps = funcDepMap.baseCallback;
+          var baseName = 'base' + _.capitalize(funcName);
+          _.pull(funcDepMap.baseCallback, baseName);
 
-          _.pull(deps, baseName);
-          if (funcName == 'property') {
-            _.pull(deps, 'baseToString');
-          }
           source = source.replace(matchFunction(source, 'baseCallback'), function(match) {
             return match.replace(RegExp('\\b' + baseName + '\\([\\s\\S]+?\\)(?=[;\\n])', 'm'), 'identity');
           });
