@@ -183,7 +183,7 @@ var funcDependencyMap = createMap({
   'templateSettings': ['escape'],
 
   // Dependencies of the main module.
-  'main': ['arrayEach', 'baseForOwn', 'baseMatches', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'mixin', 'property', 'thru'],
+  'main': ['arrayEach', 'baseForOwn', 'baseMatches', 'baseProperty', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'mixin', 'thru'],
 
   // Dependencies of lodash methods.
   'after': ['isFunction'],
@@ -301,7 +301,7 @@ var funcDependencyMap = createMap({
   'partialRight': ['baseSlice', 'createWrapper', 'lodash', 'replaceHolders'],
   'partition': ['createAggregator'],
   'pick': ['baseFlatten', 'bindCallback', 'pickByArray', 'pickByCallback'],
-  'pluck': ['map', 'property'],
+  'pluck': ['baseProperty', 'map'],
   'property': ['baseProperty'],
   'propertyOf': [],
   'pull': ['getIndexOf'],
