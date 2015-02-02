@@ -61,7 +61,7 @@ before_install:
   - "[ $EXPORTS != 'amd' ] || npm i chalk@\"0.5.1\" ecstatic@\"0.5.8\" request@\"^2.0.0\" sauce-tunnel@\"^2.0.0\""
   - "([ $EXPORTS != 'es' ] && [ $EXPORTS != 'es6' ]) || TARGET_PATH=\"../../../$EXPORTS/lodash.js\""
   - "[ $EXPORTS != 'npm' ] || OUTPUT_PATH=\"./npm/node_modules\""
-  - "[ $TEST_BUILDS == true ]  || node ./bin/lodash modularize $BUILD exports=$EXPORTS -o $OUTPUT_PATH"
+  - "[ $TEST_BUILDS == true ]  || (npm i && node ./bin/lodash modularize $BUILD exports=$EXPORTS -o $OUTPUT_PATH)"
   - "[ $TRANSPILER != '6to5' ] || npm i -g 6to5@\"^2.0.0\""
   - "[ $TRANSPILER != '6to5' ] || 6to5 ./$EXPORTS --out-dir ./$EXPORTS"
   - "[ $TRANSPILER != 'es6-module-transpiler' ] || npm i -g es6-module-transpiler@\"0.10.0\""

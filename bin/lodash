@@ -1013,14 +1013,8 @@ function buildModule(state, onComplete) {
       plusFuncs = state.plusFuncs,
       varDepMap = state.varDepMap;
 
-  var templatePath = fs.realpathSync(path.join(__dirname, '..', 'template')),
-      licenseTemplate = fs.readFileSync(path.join(templatePath, 'license.jst'), 'utf-8'),
-      packageTemplate = fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf-8'),
-      readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
-
   var identifiers = _.without(_.union(buildFuncs, includeObjs, includeVars), 'main'),
-      removedDeps = {},
-      version = state.lodash.VERSION;
+      removedDeps = {};
 
   var buildCallback = function(data) {
     var source = data.source;
@@ -1036,10 +1030,34 @@ function buildModule(state, onComplete) {
     });
   };
 
-  // Exclude "Chain" methods & most internal functions when exporting for npm.
+  var toDepName = !isNpm ? _.identity : function(value) {
+    return 'lodash.' + (isPrivate(value) ? '_' : '') + value.toLowerCase();
+  };
+
   if (isNpm) {
+    // Load package templates.
+    var templatePath = fs.realpathSync(path.join(__dirname, '..', 'template')),
+        licenseTemplate = fs.readFileSync(path.join(templatePath, 'license.jst'), 'utf-8'),
+        packageTemplate = fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf-8'),
+        readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
+
+    // Exclude "Chain" methods & most internal functions when exporting for npm.
     identifiers = _.reject(_.difference(identifiers, categoryMap.Chain), function(identifier) {
       return isPrivate(identifier) && !_.includes(uninlinables, identifier) && !_.includes(includeFuncs, identifier);
+    });
+
+    // Remove unused packages.
+    var glob = require('glob'),
+        newPackages = _.map(identifiers, toDepName),
+        oldPackages = glob.sync(path.join(outputPath, 'lodash.*')),
+        unusedPackages = _.difference(oldPackages, newPackages);
+
+    _.each(unusedPackages, function(packageName) {
+      var pathname = path.join(outputPath, packageName);
+      _.each(fs.readdirSync(pathname), function(identifier) {
+        fs.unlinkSync(path.join(pathname, identifier));
+      });
+      fs.rmdirSync(pathname);
     });
   }
   // List of identifiers that keep their copyright/license headers.
@@ -1054,8 +1072,7 @@ function buildModule(state, onComplete) {
       categories.push(null);
     }
     _.each(isNpm ? categories.slice(0, 1) : categories, function(category) {
-      var isInternal = isPrivate(identifier),
-          moduleName = isNpm ? ('lodash.' + (isInternal ? '_' : '') + identifier.toLowerCase()) : identifier,
+      var moduleName = isNpm ? toDepName(identifier) : identifier,
           modulePath = isNpm ? moduleName : getModulePath(identifier, category, funcDepMap);
 
       var depNames = _.union(
@@ -1095,13 +1112,9 @@ function buildModule(state, onComplete) {
             source = data.source,
             unusedDeps = getUnusedDeps(source, depNames);
 
-        var toDepName = !isNpm ? _.identity : function(value) {
-          return 'lodash.' + (isPrivate(value) ? '_' : '') + value.toLowerCase();
-        };
-
-        // Remove and track unused dependencies.
-        depNames = _.sortBy(_.difference(depNames, unusedDeps), toDepName);
+        // Track and remove unused dependencies.
         removedDeps[identifier] = unusedDeps;
+        depNames = _.sortBy(_.difference(depNames, unusedDeps), toDepName);
 
         var depPaths = isNpm
           ? _.map(depNames, toDepName)
@@ -1138,8 +1151,21 @@ function buildModule(state, onComplete) {
             (isCommonJS ? 'exports.' + identifier : 'module.exports') + ' = ' + identifier + ';'
           );
         }
+        if (!isAMD) {
+          source = trimIndent(source);
+        }
+        source = _.includes(includeHeaders, identifier) ? removeLicenseTag(source) : removeHeader(source);
+        source = replaceIIFE(source, iife.join('\n'));
+
         if (isNpm) {
-          var type = 'function';
+          var templatePath = fs.realpathSync(path.join(__dirname, '..', 'template')),
+              licenseTemplate = fs.readFileSync(path.join(templatePath, 'license.jst'), 'utf-8'),
+              packageTemplate = fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf-8'),
+              readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
+
+          var type = 'function',
+              version = state.lodash.VERSION;
+
           if (_.includes(objDependencies, identifier)) {
             type = 'object';
           } else if (_.includes(varDependencies, identifier)) {
@@ -1147,7 +1173,7 @@ function buildModule(state, onComplete) {
           }
           var templateData = {
             'identifier': identifier,
-            'isInternal': isInternal,
+            'isInternal': isPrivate(identifier),
             'name': moduleName,
             'type': type,
             'version': version,
@@ -1157,19 +1183,33 @@ function buildModule(state, onComplete) {
             }, {})
           };
 
+          // Independently update the package version.
+          if (fs.existsSync(data.outputPath)) {
+            var semver = require('semver'),
+                oldPackage = JSON.parse(fs.readFileSync(path.join(path.dirname(data.outputPath), 'package.json'), 'utf-8')),
+                oldVersion = oldPackage.version;
+
+            if (_.isEqual(oldPackage.dependencies || {}, templateData.dependencies)) {
+              // Bump the `patch` version if the source has changed.
+              var oldSource = fs.readFileSync(data.outputPath, 'utf-8');
+              templateData.version = removeHeader(oldSource) === removeHeader(cleanupSource(source))
+                ? oldVersion
+                : semver.inc(oldVersion, 'patch', true);
+            }
+            else {
+              // Bump the `minor` version if the dependencies have changed.
+              templateData.version = semver.inc(oldVersion, 'minor', true);
+            }
+            source = source.replace(getHeader(source), function(header) {
+              return header.replace(/^( \* *lodash )[.$\w\-]+/m, function(match, prelude) {
+                return prelude + templateData.version;
+              });
+            });
+          }
           fs.writeFileSync(path.join(outputPath, modulePath, 'package.json'), _.template(packageTemplate)(templateData), 'utf-8');
           fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE.txt'), _.template(licenseTemplate)(templateData), 'utf-8');
           fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate)(templateData), 'utf-8');
         }
-        if (!isAMD) {
-          source = trimIndent(source);
-        }
-        source = _.includes(includeHeaders, identifier)
-          ? removeLicenseTag(source)
-          : removeHeader(source);
-
-        source = replaceIIFE(source, iife.join('\n'));
-
         data.source = source;
         buildCallback(data);
       });
@@ -1330,10 +1370,10 @@ function buildModule(state, onComplete) {
         return left + (category ? category + '.' : '') + _.result(forceAliasMap, identifier, identifier);
       });
 
-      // Remove and track unused dependencies.
+      // Track and remove unused dependencies.
       var unusedDeps = getUnusedDeps(source, deps);
-      deps = _.difference(deps, unusedDeps);
       removedDeps[identifier] = unusedDeps;
+      deps = _.difference(deps, unusedDeps);
 
       var depNames = categoryDeps.concat(deps);
       if (isES) {
@@ -1484,8 +1524,7 @@ function buildModule(state, onComplete) {
  * @returns {string} Returns the compiled source.
  */
 function buildTemplate(state) {
-  var glob = require('glob'),
-      moduleId = state.moduleId || 'lodash',
+  var moduleId = state.moduleId || 'lodash',
       isStandalone = moduleId == 'none',
       pattern = state.templatePattern,
       settings = state.templateSettings;
@@ -1546,7 +1585,8 @@ function buildTemplate(state) {
     ''
   );
 
-  var dirname = path.dirname(pattern),
+  var glob = require('glob'),
+      dirname = path.dirname(pattern),
       filePaths = glob.sync(pattern);
 
   if (dirname == '.') {
@@ -2153,7 +2193,6 @@ function getVars(source) {
 function isFunctionSnippet(source) {
   source = source == null ? '' : String(source);
   var header = getHeader(source);
-
   return (header && reFuncTag.test(header)) || reFuncSnippet.test(source.replace(header, ''));
 }
 

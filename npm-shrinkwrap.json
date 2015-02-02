@@ -70,6 +70,11 @@
     "lodash-compat": {
       "version": "3.0.1"
     },
+    "semver": {
+      "version": "4.2.0",
+      "from": "semver@4.2.0",
+      "resolved": "https://registry.npmjs.org/semver/-/semver-4.2.0.tgz"
+    },
     "uglify-js": {
       "version": "2.4.16",
       "from": "uglify-js@2.4.16",
