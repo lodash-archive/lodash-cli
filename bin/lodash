@@ -3672,11 +3672,18 @@ function build(options, callback) {
       _.each(['matches', 'property'], function(funcName) {
         if (_.includes(minusFuncs, funcName)) {
           var baseName = 'base' + _.capitalize(funcName);
-          _.pull(funcDepMap.baseCallback, baseName);
 
+          _.pull(funcDepMap.baseCallback, baseName);
           source = source.replace(matchFunction(source, 'baseCallback'), function(match) {
             return match.replace(RegExp('\\b' + baseName + '\\([\\s\\S]+?\\)(?=[;\\n])', 'm'), 'identity');
           });
+
+          if (funcName == 'matches') {
+            _.pull(funcDepMap.callback, 'isObjectLike', 'matches');
+            source = source.replace(matchFunction(source, 'callback'), function(match) {
+              return match.replace(/^( *return\s+)[^:]+:\s*/m, '$1');
+            });
+          }
         }
       });
 
