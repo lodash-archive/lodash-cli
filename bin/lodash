@@ -183,7 +183,7 @@ var funcDependencyMap = createMap({
   'templateSettings': ['escape'],
 
   // Dependencies of the main module.
-  'main': ['arrayEach', 'baseForOwn', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'matches', 'mixin', 'property', 'thru'],
+  'main': ['arrayEach', 'baseForOwn', 'baseMatches', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'mixin', 'property', 'thru'],
 
   // Dependencies of lodash methods.
   'after': ['isFunction'],
@@ -195,7 +195,7 @@ var funcDependencyMap = createMap({
   'bind': [ 'baseSlice', 'createWrapper', 'lodash', 'replaceHolders'],
   'bindAll': ['baseBindAll', 'baseFlatten', 'functions'],
   'bindKey': [ 'baseSlice', 'createWrapper', 'lodash', 'replaceHolders'],
-  'callback': ['baseCallback', 'isIterateeCall'],
+  'callback': ['baseCallback', 'isIterateeCall', 'isObjectLike', 'matches'],
   'camelCase': ['createCompounder'],
   'capitalize': ['baseToString'],
   'chain': ['lodash'],
@@ -229,7 +229,7 @@ var funcDependencyMap = createMap({
   'findKey': ['baseFind', 'baseForOwn', 'getCallback'],
   'findLast': ['baseEachRight', 'baseFind', 'getCallback'],
   'findLastKey': ['baseFind', 'baseForOwnRight', 'getCallback'],
-  'findWhere': ['find', 'matches'],
+  'findWhere': ['baseMatches', 'find'],
   'first': [],
   'flatten': ['baseFlatten', 'isIterateeCall'],
   'flattenDeep': ['baseFlatten'],
@@ -280,7 +280,7 @@ var funcDependencyMap = createMap({
   'lodash': ['arrayCopy', 'isArray', 'isObjectLike', 'LodashWrapper'],
   'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
   'mapValues': ['baseForOwn', 'getCallback'],
-  'matches': ['baseMatches'],
+  'matches': ['baseClone', 'baseMatches'],
   'max': ['arrayMax', 'createExtremum'],
   'memoize': ['isFunction', 'MapCache'],
   'merge': ['baseMerge', 'createAssigner'],
@@ -352,7 +352,7 @@ var funcDependencyMap = createMap({
   'unzip': ['arrayMap', 'arrayMax', 'baseProperty'],
   'values': ['baseValues', 'keys'],
   'valuesIn': ['baseValues', 'keysIn'],
-  'where': ['filter', 'matches'],
+  'where': ['baseMatches', 'filter'],
   'without': ['baseDifference', 'baseSlice'],
   'words': ['baseToString', 'isIterateeCall'],
   'wrap': ['createWrapper', 'identity'],
@@ -428,7 +428,7 @@ var funcDependencyMap = createMap({
   'baseIsEqualDeep': ['equalArrays', 'equalByTag', 'equalObjects', 'isArray', 'isHostObject', 'isTypedArray'],
   'baseIsMatch': ['baseIsEqual'],
   'baseMap': ['baseEach'],
-  'baseMatches': ['baseClone', 'baseIsMatch', 'isStrictComparable', 'keys'],
+  'baseMatches': ['baseIsMatch', 'isStrictComparable', 'keys'],
   'baseMerge': ['arrayEach', 'baseForOwn', 'baseMergeDeep', 'isArray', 'isLength', 'isObjectLike', 'isTypedArray'],
   'baseMergeDeep': ['arrayCopy', 'isArguments', 'isArray', 'isLength', 'isPlainObject', 'isTypedArray', 'toPlainObject'],
   'baseProperty': [],
