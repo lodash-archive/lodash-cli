@@ -789,8 +789,7 @@ var forceInlineMap = createMap({
   'isArray': ['baseToString', 'isNative'],
   'isFunction': ['baseToString', 'isNative'],
   'isNative': ['baseToString'],
-  'keys': ['keysIn', 'support'],
-  'keysIn': ['support'],
+  'keys': ['keysIn'],
   'template': ['baseAssign']
 });
 
@@ -938,7 +937,6 @@ var uninlinables = _.union(
   'reEscape',
   'reEvaluate',
   'replaceHolders',
-  'support',
   'templateSettings',
   'toIterable',
   'trimmedLeftIndex',
@@ -3910,7 +3908,10 @@ function build(options, callback) {
         source = removeAssignments(source);
       }
     }
-    else {
+    else if (isExcluded('wrapperValue')) {
+      source = removeChaining(source);
+    }
+    if (_.includes(includeObjs, 'support') && !_.isEmpty(buildFuncs)) {
       if (isExcluded('isArguments', 'isPlainObject', 'shimIsPlainObject')) {
         source = removeSupportArgsTag(source);
       }
@@ -3932,9 +3933,6 @@ function build(options, callback) {
       if (isExcluded('keysIn', 'shimKeys')) {
         source = removeSupportNonEnumArgs(source);
         source = removeSupportNonEnumStrings(source);
-      }
-      if (isExcluded('wrapperValue')) {
-        source = removeChaining(source);
       }
     }
     // Remove functions from the build.
