@@ -1194,7 +1194,7 @@ function buildModule(state, onComplete) {
             if (_.isEqual(oldPackage.dependencies || {}, templateData.dependencies)) {
               // Bump the `patch` version if the source has changed.
               var oldSource = fs.readFileSync(data.outputPath, 'utf-8');
-              templateData.version = removeHeader(oldSource) === removeHeader(cleanupSource(source))
+              templateData.version = cleanupSource(removeComments(oldSource)) === cleanupSource(removeComments(source))
                 ? oldVersion
                 : semver.inc(oldVersion, 'patch', true);
             }
