@@ -1051,7 +1051,7 @@ function buildModule(state, onComplete) {
     // Remove unused packages.
     var glob = require('glob'),
         newPackages = _.map(identifiers, toDepName),
-        oldPackages = glob.sync(path.join(outputPath, 'lodash.*')),
+        oldPackages = _.map(glob.sync(path.join(outputPath, 'lodash.*')), _.ary(path.basename, 1)),
         unusedPackages = _.difference(oldPackages, newPackages);
 
     _.each(unusedPackages, function(packageName) {
