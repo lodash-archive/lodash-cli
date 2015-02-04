@@ -825,9 +825,6 @@ var lodashFuncs = _.intersection(allFuncs, _.union(
   'wrapperValue'
 ]));
 
-/** List of private functions. */
-var privateFuncs = _.difference(allFuncs, lodashFuncs);
-
 /** List of the default ways to export the `lodash` function. */
 var defaultExports = [
   'amd',
@@ -2058,14 +2055,17 @@ function getModulePath(identifier, category, funcDepMap) {
   if (topLevel[identifier]) {
     return '';
   }
+  if (isPrivate(identifier)) {
+    return 'internal';
+  }
   if (_.isObject(category)) {
     funcDepMap = category;
     category = null;
   }
-  if (!category) {
+  if (category == null) {
     category = _.first(getCategories(identifier, funcDepMap));
   }
-  return (category || 'internal').toLowerCase();
+  return category.toLowerCase();
 }
 
 /**
@@ -2076,7 +2076,7 @@ function getModulePath(identifier, category, funcDepMap) {
  * @returns {Array} Returns a new array of names.
  */
 function getNamesByCategory(category) {
-  return categoryMap[category];
+  return _.result(categoryMap, category, []);
 }
 
 /**
@@ -2199,14 +2199,20 @@ function isFunctionSnippet(source) {
 }
 
 /**
- * Checks if `funcName` is a private function.
+ * Checks if `identifier` is private.
  *
  * @private
- * @param {string} funcName The name of the function.
- * @returns {boolean} Returns `true` if the function is private, else `false`.
+ * @param {string} identifier The identifier to query.
+ * @returns {boolean} Returns `true` if the identifier is private, else `false`.
  */
-function isPrivate(funcName) {
-  return _.includes(privateFuncs, funcName);
+function isPrivate(identifier) {
+  identifier = getRealName(identifier);
+  if (topLevel[identifier]) {
+    return false;
+  }
+  return _.findKey(categoryMap, function(identifiers) {
+    return _.includes(identifiers, identifier);
+  }) === undefined;
 }
 
 /**
