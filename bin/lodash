@@ -785,7 +785,7 @@ var forceAliasMap = createMap({
 /* Used to force inlining of uninlinables per identifier. */
 var forceInlineMap = createMap({
   'baseEach': ['baseFor'],
-  'baseMatches': ['baseIsMatch'],
+  'baseCallback': ['baseIsMatch', 'baseMatches', 'baseProperty'],
   'isArray': ['baseToString', 'isNative'],
   'isFunction': ['baseToString', 'isNative'],
   'isNative': ['baseToString'],
