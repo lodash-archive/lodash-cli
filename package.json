@@ -29,7 +29,6 @@
     "qunitjs": "~1.16.0"
   },
   "files": [
-    "LICENSE.txt",
     "npm-shrinkwrap.json",
     "bin/lodash",
     "lib/minify.js",
