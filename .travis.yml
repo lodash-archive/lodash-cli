@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-  - "0.10"
+  - "0.12"
 env:
   global:
     - BIN="node" BUILD="compat" EXPORTS="commonjs" NPM_VERSION="^2.0.0"
@@ -30,16 +30,22 @@ matrix:
     - node_js: "0.8"
       env: BUILD="modern" EXPORTS="npm" NPM_VERSION="~1.4.0"
     - node_js: "0.10"
+      env:
+    - node_js: "0.10"
+      env: BUILD="modern"
+    - node_js: "0.10"
+      env: BUILD="modern" EXPORTS="npm"
+    - node_js: "0.12"
       env: EXPORTS="amd"
-    - node_js: "0.10"
+    - node_js: "0.12"
       env: EXPORTS="amd" LOADER="curl"
-    - node_js: "0.10"
+    - node_js: "0.12"
       env: EXPORTS="amd" LOADER="dojo"
-    - node_js: "0.10"
+    - node_js: "0.12"
       env: BUILD="modern" EXPORTS="amd"
-    - node_js: "0.10"
+    - node_js: "0.12"
       env: BUILD="modern" EXPORTS="amd" LOADER="curl"
-    - node_js: "0.10"
+    - node_js: "0.12"
       env: BUILD="modern" EXPORTS="amd" LOADER="dojo"
 git:
   depth: 10
