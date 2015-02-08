@@ -3907,13 +3907,13 @@ function build(options, callback) {
       }
     });
 
-    if (isExcluded('lodash')) {
-      // Remove `LodashWrapper.prototype` assignment.
-      source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype\s*=[^;]+;\n/m, '');
-    }
     if (isExcluded('memoize')) {
       // Remove `memoize.Cache` assignment.
       source = source.replace(/^(?: *\/\/.*\n)* *memoize\.Cache\s*=[^;]+;\n/m, '');
+    }
+    if (isExcluded(isModularize ? 'main' : 'LodashWrapper')) {
+      // Remove `LodashWrapper.prototype` assignment.
+      source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype\s*=[^;]+;\n/m, '');
     }
     if (isExcluded(isModularize ? 'main' : 'mixin')) {
       source = removeMixinCalls(source);
