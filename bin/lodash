@@ -2048,7 +2048,7 @@ function getIsFunctionFork(source) {
  * @returns {string} Returns the method assignments snippet.
  */
 function getMethodAssignments(source) {
-  return _.result(/\n\n(?: *\/\/.*\n)* *lodash(?:\.[$\w]+)+\s*=[\s\S]+lodash(?:\.[$\w]+)+\s=.+/.exec(source), 0, '');
+  return _.result(/\n\n(?: *\/\/.*\n)* *lodash(?:\.[$\w]+)+\s*=[\s\S]+\n *lodash(?:\.[$\w]+)+\s=[^;]+;(?=\n)/.exec(source), 0, '');
 }
 
 /**
@@ -3903,17 +3903,17 @@ function build(options, callback) {
     _.each(['MapCache', 'SetCache'], function(funcName) {
       if (isExcluded(funcName)) {
         // Remove prototype assignments.
-        source = source.replace(RegExp('^(?: *\\/\\/.*\\n)* *' + funcName + '\\.prototype(?:\\.[$\\w]+|\\[\'[^\']+\'\\])\\s*=.+?;\\n', 'gm'), '');
+        source = source.replace(RegExp('^(?: *\\/\\/.*\\n)* *' + funcName + '\\.prototype(?:\\.[$\\w]+|\\[\'[^\']+\'\\])\\s*=[^;]+;\\n', 'gm'), '');
       }
     });
 
     if (isExcluded('lodash')) {
       // Remove `LodashWrapper.prototype` assignment.
-      source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype\s*=.+\n/m, '');
+      source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype\s*=[^;]+;\n/m, '');
     }
     if (isExcluded('memoize')) {
       // Remove `memoize.Cache` assignment.
-      source = source.replace(/^(?: *\/\/.*\n)* *memoize\.Cache\s*=.+?;\n/m, '');
+      source = source.replace(/^(?: *\/\/.*\n)* *memoize\.Cache\s*=[^;]+;\n/m, '');
     }
     if (isExcluded(isModularize ? 'main' : 'mixin')) {
       source = removeMixinCalls(source);
