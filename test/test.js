@@ -57,6 +57,7 @@ var aliasToRealMap = createMap({
   'backflow': 'flowRight',
   'collect': 'map',
   'compose': 'flowRight',
+  'commit': 'wrapperCommit',
   'contains': 'includes',
   'detect': 'find',
   'each': 'forEach',
@@ -70,7 +71,9 @@ var aliasToRealMap = createMap({
   'iteratee': 'callback',
   'methods': 'functions',
   'object': 'zipObject',
+  'plant': 'wrapperPlant',
   'reverse': 'wrapperReverse',
+  'run': 'wrapperValue',
   'select': 'filter',
   'tail': 'rest',
   'toJSON': 'wrapperValue',
@@ -99,9 +102,11 @@ var realToAliasMap = createMap({
   'rest': ['tail'],
   'some': ['any'],
   'uniq': ['unique'],
+  'wrapperCommit': ['commit'],
+  'wrapperPlant': ['plant'],
   'wrapperReverse': ['reverse'],
   'wrapperToString': ['toString'],
-  'wrapperValue': ['toJSON', 'value', 'valueOf'],
+  'wrapperValue': ['run', 'toJSON', 'value', 'valueOf'],
   'zipObject': ['object']
 });
 
@@ -150,6 +155,8 @@ var categoryMap = createMap({
     'tap',
     'thru',
     'wrapperChain',
+    'wrapperCommit',
+    'wrapperPlant',
     'wrapperReverse',
     'wrapperToString',
     'wrapperValue'
@@ -324,7 +331,8 @@ var aliasToCategoryMap = createMap({
 
 /* Used to force referencing identifers by their alias. */
 var forceAliasMap = createMap({
-  'wrapperChain': 'chain',
+  'wrapperCommit': 'commit',
+  'wrapperPlant': 'plant',
   'wrapperReverse': 'reverse',
   'wrapperToString': 'toString',
   'wrapperValue': 'value'

@@ -124,6 +124,7 @@ var aliasToRealMap = createMap({
   'backflow': 'flowRight',
   'collect': 'map',
   'compose': 'flowRight',
+  'commit': 'wrapperCommit',
   'contains': 'includes',
   'detect': 'find',
   'each': 'forEach',
@@ -137,7 +138,9 @@ var aliasToRealMap = createMap({
   'iteratee': 'callback',
   'methods': 'functions',
   'object': 'zipObject',
+  'plant': 'wrapperPlant',
   'reverse': 'wrapperReverse',
+  'run': 'wrapperValue',
   'select': 'filter',
   'tail': 'rest',
   'toJSON': 'wrapperValue',
@@ -166,9 +169,11 @@ var realToAliasMap = createMap({
   'rest': ['tail'],
   'some': ['any'],
   'uniq': ['unique'],
+  'wrapperCommit': ['commit'],
+  'wrapperPlant': ['plant'],
   'wrapperReverse': ['reverse'],
   'wrapperToString': ['toString'],
-  'wrapperValue': ['toJSON', 'value', 'valueOf'],
+  'wrapperValue': ['run', 'toJSON', 'value', 'valueOf'],
   'zipObject': ['object']
 });
 
@@ -183,7 +188,7 @@ var funcDependencyMap = createMap({
   'templateSettings': ['escape'],
 
   // Dependencies of the main module.
-  'main': ['arrayEach', 'baseForOwn', 'baseMatches', 'baseProperty', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'mixin', 'thru'],
+  'main': ['arrayEach', 'baseCreate', 'baseForOwn', 'baseMatches', 'baseProperty', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'mixin', 'thru'],
 
   // Dependencies of lodash methods.
   'after': [],
@@ -277,7 +282,7 @@ var funcDependencyMap = createMap({
   'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isFunction', 'isIndex', 'isLength', 'isObject', 'isString'],
   'last': [],
   'lastIndexOf': ['indexOfNaN', 'binaryIndex'],
-  'lodash': ['arrayCopy', 'isArray', 'isObjectLike', 'LodashWrapper'],
+  'lodash': ['isArray', 'isObjectLike', 'LazyWrapper', 'LodashWrapper', 'wrapperClone'],
   'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
   'mapValues': ['baseForOwn', 'getCallback'],
   'matches': ['baseClone', 'baseMatches'],
@@ -369,6 +374,9 @@ var funcDependencyMap = createMap({
   // Dependencies of lodash wrapper functions.
   'LodashWrapper': [],
   'wrapperChain': ['chain'],
+  'wrapperClone': ['LazyWrapper', 'LodashWrapper'],
+  'wrapperCommit': ['LodashWrapper'],
+  'wrapperPlant': ['LodashWrapper', 'wrapperClone'],
   'wrapperReverse': ['LazyWrapper', 'LodashWrapper', 'thru'],
   'wrapperToString': [],
   'wrapperValue': ['baseWrapperValue'],
@@ -589,6 +597,8 @@ var categoryMap = createMap({
     'tap',
     'thru',
     'wrapperChain',
+    'wrapperCommit',
+    'wrapperPlant',
     'wrapperReverse',
     'wrapperToString',
     'wrapperValue'
@@ -777,6 +787,8 @@ var categoryToDepNameMap = createMap({
 
 /* Used to force referencing identifers by their alias. */
 var forceAliasMap = createMap({
+  'wrapperCommit': 'commit',
+  'wrapperPlant': 'plant',
   'wrapperReverse': 'reverse',
   'wrapperToString': 'toString',
   'wrapperValue': 'value'
@@ -817,13 +829,10 @@ var allFuncs = _.filter(_.difference(_.keys(funcDependencyMap), objDependencies,
 /** List of lodash functions. */
 var lodashFuncs = _.intersection(allFuncs, _.union(
   _.functions(_),
-  _.functions(_.prototype), [
-  'main',
-  'wrapperChain',
-  'wrapperReverse',
-  'wrapperToString',
-  'wrapperValue'
-]));
+  _.functions(_.prototype),
+  categoryMap.Chain,
+  ['main']
+));
 
 /** List of the default ways to export the `lodash` function. */
 var defaultExports = [
@@ -2416,6 +2425,9 @@ function removeComments(source) {
  * @returns {string} Returns the modified source.
  */
 function removeLazyChaining(source) {
+  // Remove `LazyWrapper.prototype` assignment.
+  source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\s*=[^;]+;\n/m, '');
+
   // Remove bulk `LazyWrapper.prototype` assignments.
   source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial|pluck)\b[\s\S]+?\n\1\}\);\n/gm, '');
 
@@ -2423,13 +2435,13 @@ function removeLazyChaining(source) {
   source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:dropWhile|reject|slice)\s*=[\s\S]+?\n\1\};\n/gm, '');
 
   // Remove other `LazyWrapper.prototype` assignments.
-  source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.[$\w]+\s*=.+?;\n/gm, '');
+  source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.[$\w]+\s*=[^;]+;\n/gm, '');
 
   // Remove `LazyWrapper` additions to `LodashWrapper`.
   source = source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(LazyWrapper\.prototype\b[\s\S]+?\n\1\}\);\n/m, '');
 
   // Remove related `lodash.prototype` method aliases.
-  return source.replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.(?:collect|head|select|tail)\s*=.+?;\n/gm, '');
+  return source.replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.(?:collect|head|select|tail)\s*=[^;]+;\n/gm, '');
 }
 
 /**
