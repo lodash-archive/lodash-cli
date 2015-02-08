@@ -214,6 +214,7 @@ var categoryMap = createMap({
     'partial',
     'partialRight',
     'rearg',
+    'spread',
     'throttle',
     'wrap'
   ],

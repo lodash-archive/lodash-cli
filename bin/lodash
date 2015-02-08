@@ -332,6 +332,7 @@ var funcDependencyMap = createMap({
   'sortByAll': ['baseEach', 'baseFlatten', 'baseSortBy', 'compareMultipleAscending', 'isIterateeCall', 'isLength'],
   'sortedIndex': ['baseCallback', 'binaryIndex', 'binaryIndexBy', 'getCallback'],
   'sortedLastIndex': ['baseCallback', 'binaryIndex', 'binaryIndexBy', 'getCallback'],
+  'spread': [],
   'startCase': ['createCompounder'],
   'startsWith': ['baseToString'],
   'take': ['baseSlice', 'isIterateeCall'],
@@ -656,6 +657,7 @@ var categoryMap = createMap({
     'partial',
     'partialRight',
     'rearg',
+    'spread',
     'throttle',
     'wrap'
   ],

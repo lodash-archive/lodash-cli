@@ -166,6 +166,7 @@ lodash.sortBy = require('lodash.sortby');
 lodash.sortByAll = require('lodash.sortbyall');
 lodash.sortedIndex = require('lodash.sortedindex');
 lodash.sortedLastIndex = require('lodash.sortedlastindex');
+lodash.spread = require('lodash.spread');
 lodash.startCase = require('lodash.startcase');
 lodash.startsWith = require('lodash.startswith');
 lodash.take = require('lodash.take');
