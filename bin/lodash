@@ -374,7 +374,7 @@ var funcDependencyMap = createMap({
   // Dependencies of lodash wrapper functions.
   'LodashWrapper': [],
   'wrapperChain': ['chain'],
-  'wrapperClone': ['LazyWrapper', 'LodashWrapper'],
+  'wrapperClone': ['arrayCopy', 'LazyWrapper', 'LodashWrapper'],
   'wrapperCommit': ['LodashWrapper'],
   'wrapperPlant': ['LodashWrapper', 'wrapperClone'],
   'wrapperReverse': ['LazyWrapper', 'LodashWrapper', 'thru'],
