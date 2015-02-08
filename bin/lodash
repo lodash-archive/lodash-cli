@@ -3648,7 +3648,7 @@ function build(options, callback) {
         _.pull(objDepMap.shimIsPlainObject, 'support');
 
         // Replace `_.keysIn`.
-        _.pull(funcDepMap.keysIn, 'arrayEach', 'isString');
+        _.pull(funcDepMap.keysIn, 'arrayEach', 'isFunction', 'isString');
 
         source = replaceFunction(source, 'keysIn', [
           'function keysIn(object) {',
@@ -3664,7 +3664,7 @@ function build(options, callback) {
           '',
           '  var Ctor = object.constructor,',
           '      index = -1,',
-          "      isProto = isFunction(Ctor) && Ctor.prototype === object,",
+          "      isProto = typeof Ctor == 'function' && Ctor.prototype === object,",
           '      result = Array(length),',
           '      skipIndexes = length > 0;',
           '',
