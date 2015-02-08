@@ -1049,7 +1049,7 @@ function buildModule(state, onComplete) {
         packageTemplate = fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf-8'),
         readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
 
-    // Exclude "Chain" methods & most internal functions when exporting for npm.
+    // Exclude "Chain" methods and most internal functions when exporting for npm.
     identifiers = _.reject(_.difference(identifiers, categoryMap.Chain), function(identifier) {
       return isPrivate(identifier) && !_.includes(uninlinables, identifier) && !_.includes(includeFuncs, identifier);
     });
@@ -1339,7 +1339,7 @@ function buildModule(state, onComplete) {
         return code.join('\n');
       });
 
-      // Add `lodash.support`, `lodash.templateSettings`, & placeholder assignments.
+      // Add `lodash.support`, `lodash.templateSettings`, and placeholder assignments.
       source = source.replace(/^ *lodash\.VERSION\b.+\n/m, function(match) {
         var code = [
           '',
@@ -1370,7 +1370,7 @@ function buildModule(state, onComplete) {
       });
 
       // Add category namespaces to each lodash function assignment.
-      source = source.replace(/(lodash(?:\.prototype)?\.[$\w]+\s*=\s*)([$\w]+)/g, function(match, left, identifier) {
+      source = source.replace(/(lodash(?:\.prototype)?\.[$\w]+\s*=\s*)(?!lodash\b)([$\w]+)/g, function(match, left, identifier) {
         if (_.includes(deps, identifier)) {
           return match;
         }
@@ -2716,6 +2716,7 @@ function removeMethodAssignment(source, methodName) {
   return source.replace(getMethodAssignments(source), function(match) {
     var reAssignment = RegExp(
       '^( *//.*\\n)* *' +
+      '(?:lodash(?:\\.prototype)?\\.[$\\w]+\\s*=\\s*)*' +
       'lodash(?:\\.prototype)?\\.' +
       '(?:[$\\w]+\\s*=\\s*' + methodName + '|' + methodName + '\\s*=\\s*[$\\w]+);' +
       '\\n(\\n)?'
