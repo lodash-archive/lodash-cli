@@ -63,6 +63,7 @@ lodash.endsWith = require('lodash.endswith');
 lodash.escape = require('lodash.escape');
 lodash.escapeRegExp = require('lodash.escaperegexp');
 lodash.every = require('lodash.every');
+lodash.fill = require('lodash.fill');
 lodash.filter = require('lodash.filter');
 lodash.find = require('lodash.find');
 lodash.findIndex = require('lodash.findindex');

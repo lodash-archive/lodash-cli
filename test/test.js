@@ -120,6 +120,7 @@ var categoryMap = createMap({
     'dropRight',
     'dropRightWhile',
     'dropWhile',
+    'fill',
     'findIndex',
     'findLastIndex',
     'first',
