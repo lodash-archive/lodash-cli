@@ -3604,8 +3604,8 @@ function build(options, callback) {
       }
       else {
         funcDepMap.chain.push('wrapperChain');
-        funcDepMap.wrapperValue = _.union(funcDepMap.wrapperValue, funcDepMap.main);
-        objDepMap.wrapperValue = _.union(objDepMap.wrapperValue, objDepMap.main);
+        funcDepMap.LodashWrapper.push('baseCreate');
+        funcDepMap.wrapperValue = _.union(funcDepMap.wrapperValue, _.without(funcDepMap.main, 'baseCreate', 'lodash', 'LodashWrapper'));
 
         // Add `arrayEach` to functions with placeholder support because it's
         // used to reduce code for placeholder assignments
