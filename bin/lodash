@@ -3592,6 +3592,7 @@ function build(options, callback) {
 
       if (isModularize) {
         if (isNode) {
+          // Remove `root` from `varDepMap` identifiers.
           _.forOwn(varDepMap, function(depNames) {
             _.pull(depNames, 'root');
           });
@@ -3606,6 +3607,7 @@ function build(options, callback) {
         });
       }
       else {
+        // Redistribute `main` deps for chaining.
         funcDepMap.chain.push('wrapperChain');
         funcDepMap.LodashWrapper.push('baseCreate');
         funcDepMap.wrapperValue = _.union(funcDepMap.wrapperValue, _.without(funcDepMap.main, 'baseCreate', 'lodash', 'LodashWrapper'));
@@ -3623,7 +3625,18 @@ function build(options, callback) {
         });
       }
       if (isModern) {
+        _.pull(objDepMap.shimIsPlainObject, 'support');
+
+        source = removeIsHostObject(source, funcDepMap);
+        source = removeSupportArgsTag(source, funcDepMap, objDepMap);
+        source = removeSupportEnumErrorProps(source);
+        source = removeSupportEnumPrototypes(source, objDepMap);
+        source = removeSupportNodeTag(source, funcDepMap);
+        source = removeSupportNonEnumShadows(source);
+        source = removeSupportNonEnumStrings(source, funcDepMap);
+        source = removeSupportOwnLast(source);
         source = removeSupportSpliceObjects(source);
+        source = removeSupportUnindexedChars(source, funcDepMap, objDepMap);
 
         // Simplify `initCloneByTag`.
         _.pull(varDepMap.initCloneByTag, 'root');
@@ -3640,18 +3653,6 @@ function build(options, callback) {
           '  return (isObjectLike(value) && objToString.call(value) == regexpTag) || false;',
           '}'
         ].join('\n'));
-
-        source = removeIsHostObject(source, funcDepMap);
-        source = removeSupportArgsTag(source, funcDepMap, objDepMap);
-        source = removeSupportEnumErrorProps(source);
-        source = removeSupportEnumPrototypes(source, objDepMap);
-        source = removeSupportNodeTag(source, funcDepMap);
-        source = removeSupportNonEnumShadows(source);
-        source = removeSupportNonEnumStrings(source, funcDepMap);
-        source = removeSupportOwnLast(source);
-        source = removeSupportUnindexedChars(source, funcDepMap, objDepMap);
-
-        _.pull(objDepMap.shimIsPlainObject, 'support');
 
         // Replace `_.keysIn`.
         _.pull(funcDepMap.keysIn, 'arrayEach', 'isFunction', 'isString');
@@ -3718,24 +3719,38 @@ function build(options, callback) {
         var result = includeFuncs;
       }
       // Add default function names.
-      if (_.isEmpty(includeObjs) && _.isEmpty(includeVars) && !result) {
+      else if (_.isEmpty(includeObjs) && _.isEmpty(includeVars)) {
         result = _.clone(lodashFuncs);
       }
       // Remove special "none" entry.
-      if (result == 'none') {
+      if (_.isEqual(result, ['none'])) {
         result = [];
       } else {
         _.pull(result, 'none');
       }
-      // Add and subtract function names.
+      // Force removing or adding deps.
+      if (isModularize) {
+        minusFuncs.push('noConflict', 'runInContext');
+      } else {
+        plusFuncs.push('lodash');
+      }
+      // Add extra function names.
       if (!_.isEmpty(plusFuncs)) {
         result = _.union(result, plusFuncs);
       }
+      // Subtract function names.
       if (!_.isEmpty(minusFuncs)) {
         result = _.difference(result, minusFuncs.concat(getDependants(minusFuncs, funcDepMap, true)));
       }
-      if (isModularize) {
-        _.pull(result, 'noConflict', 'runInContext');
+      // Simplify `lodash` when not capable of chaining.
+      if (!_.includes(result, 'main') && !_.includes(result, 'mixin') && !_.includes(result, 'wrapperValue')) {
+        funcDepMap.lodash.length = 0;
+
+        source = replaceFunction(source, 'lodash', [
+          'function lodash() {',
+          '  // No operation performed.',
+          '}'
+        ].join('\n'));
       }
       return getDependencies(result, funcDepMap, true);
     }());
@@ -3961,8 +3976,7 @@ function build(options, callback) {
     }
     // Remove functions from the build.
     _.each(allFuncs, function(funcName) {
-      if (!_.includes(buildFuncs, funcName) &&
-          !(funcName == 'lodash' && !isModularize)) {
+      if (!_.includes(buildFuncs, funcName)) {
         source = removeFunction(source, funcName);
         if (!isModularize) {
           source = removeMethodAssignment(source, funcName);
