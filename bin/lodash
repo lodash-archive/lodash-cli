@@ -188,7 +188,7 @@ var funcDependencyMap = createMap({
   'templateSettings': ['escape'],
 
   // Dependencies of the main module.
-  'main': ['arrayEach', 'baseCreate', 'baseForOwn', 'baseMatches', 'baseProperty', 'getCallback', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'mixin', 'thru'],
+  'main': ['arrayEach', 'baseCreate', 'baseForOwn', 'baseMatches', 'baseProperty', 'getCallback', 'identity', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'mixin', 'thru'],
 
   // Dependencies of lodash methods.
   'after': [],
@@ -2436,8 +2436,8 @@ function removeLazyChaining(source) {
   // Remove bulk `LazyWrapper.prototype` assignments.
   source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial|pluck)\b[\s\S]+?\n\1\}\);\n/gm, '');
 
-  // Remove `LazyWrapper` methods `dropWhile`, `reject`, and `slice` assignments.
-  source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:dropWhile|reject|slice)\s*=[\s\S]+?\n\1\};\n/gm, '');
+  // Remove `LazyWrapper` methods `compact`, `dropWhile`, `reject`, `slice`, and `toArray` assignments.
+  source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:compact|dropWhile|reject|slice|toArray)\s*=[\s\S]+?\n\1\};\n/gm, '');
 
   // Remove other `LazyWrapper.prototype` assignments.
   source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.[$\w]+\s*=[^;]+;\n/gm, '');
