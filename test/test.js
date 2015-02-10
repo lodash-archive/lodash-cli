@@ -14,11 +14,8 @@ var fs = util.fs,
     path = util.path;
 
 /** The unit testing framework. */
-var QUnit = (
-  global.QUnit = require('qunitjs'),
-  require('qunit-extras').runInContext(global),
-  global.QUnit
-);
+global.QUnit = require('qunitjs');
+require('qunit-extras').runInContext(global);
 
 /** Used to avoid `noglobal` false positives caused by `errno` leaked in Node.js. */
 global.errno = true;
