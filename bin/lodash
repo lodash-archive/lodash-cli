@@ -862,6 +862,21 @@ var complexVars = [
   'whitespace'
 ];
 
+/** List of dependencies that should not cause a minor bump when changed. */
+var laxSemVerDeps = [
+  'isBoolean',
+  'isError',
+  'isFinite',
+  'isFunction',
+  'isNaN',
+  'isNull',
+  'isNumber',
+  'isObject',
+  'isObjectLike',
+  'isString',
+  'isUndefined'
+];
+
 /** List of functions that support argument placeholders. */
 var placeholderFuncs = [
   'bind',
@@ -1199,10 +1214,13 @@ function buildModule(state, onComplete) {
           // Independently update the package version.
           if (fs.existsSync(data.outputPath)) {
             var semver = require('semver'),
+                laxDeps = _.map(laxSemVerDeps, toDepName),
                 oldPackage = JSON.parse(fs.readFileSync(path.join(path.dirname(data.outputPath), 'package.json'), 'utf-8')),
-                oldVersion = oldPackage.version;
+                oldVersion = oldPackage.version,
+                oldDeps = _.omit(oldPackage.dependencies || {}, laxDeps),
+                pkgDeps = _.omit(templateData.dependencies, laxDeps);
 
-            if (_.isEqual(oldPackage.dependencies || {}, templateData.dependencies)) {
+            if (_.isEqual(pkgDeps, oldDeps)) {
               // Bump the `patch` version if the source has changed.
               var oldSource = fs.readFileSync(data.outputPath, 'utf-8');
               templateData.version = cleanupSource(removeComments(oldSource)) === cleanupSource(removeComments(source))
