@@ -302,6 +302,7 @@ var categoryMap = createMap({
     'constant',
     'identity',
     'matches',
+    'matchesProperty',
     'mixin',
     'noConflict',
     'noop',

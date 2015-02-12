@@ -123,6 +123,7 @@ lodash.lastIndexOf = require('lodash.lastindexof');
 lodash.map = require('lodash.map');
 lodash.mapValues = require('lodash.mapvalues');
 lodash.matches = require('lodash.matches');
+lodash.matchesProperty = require('lodash.matchesproperty');
 lodash.max = require('lodash.max');
 lodash.memoize = require('lodash.memoize');
 lodash.merge = require('lodash.merge');
