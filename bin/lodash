@@ -811,7 +811,7 @@ var forceInlineMap = createMap({
   'isFunction': ['baseIsFunction', 'baseToString', 'isNative'],
   'isNative': ['baseToString'],
   'keys': ['keysIn'],
-  'template': ['baseAssign']
+  'template': ['baseAssign', 'baseToString', 'isError']
 });
 
 /* Used to designate dependencies at the top level. */
