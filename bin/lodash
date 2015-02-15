@@ -811,7 +811,12 @@ var forceInlineMap = createMap({
   'isFunction': ['baseIsFunction', 'baseToString', 'isNative'],
   'isNative': ['baseToString'],
   'keys': ['keysIn'],
-  'template': ['baseAssign', 'baseToString', 'isError']
+  'template': ['attempt', 'baseAssign', 'isError']
+});
+
+/* Used to hoist nested dependencies per identifier. */
+var hoistDepMap = createMap({
+  'template': ['baseSlice', 'baseToString', 'escape', 'reEscape', 'reEvaluate']
 });
 
 /* Used to designate dependencies at the top level. */
@@ -894,7 +899,6 @@ var placeholderFuncs = [
 /** List of uninlinable dependencies. */
 var uninlinables = _.union(
   _.without(lodashFuncs,
-    'attempt',
     'constant',
     'drop',
     'dropRight',
@@ -1115,14 +1119,16 @@ function buildModule(state, onComplete) {
       ).sort();
 
       if (isNpm) {
-        var uninlinees = _.difference(uninlinables, forceInlineMap[identifier]);
+        var hoistDeps = hoistDepMap[identifier],
+            forceInlineDeps = _.difference(forceInlineMap[identifier], hoistDeps),
+            uninlinees = _.difference(uninlinables, forceInlineDeps);
 
         var inlinees = _.union(_.transform(_.difference(depNames, uninlinees), function(result, identifier) {
           push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinees)));
           return result;
         }));
 
-        depNames = _.union(_.intersection(uninlinees, depNames), _.intersection(uninlinees, inlinees));
+        depNames = _.union(hoistDeps, _.intersection(uninlinees, depNames), _.intersection(uninlinees, inlinees));
         inlinees = _.difference(inlinees, depNames).concat(identifier);
 
         var inlineFuncs = _.intersection(allFuncs, inlinees),
@@ -1143,7 +1149,7 @@ function buildModule(state, onComplete) {
       build(state, function(data) {
         var iife = [],
             source = data.source,
-            unusedDeps = getUnusedDeps(source, depNames);
+            unusedDeps = _.difference(getUnusedDeps(source, depNames), hoistDeps);
 
         // Track and remove unused dependencies.
         removedDeps[identifier] = unusedDeps;
