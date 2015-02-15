@@ -195,7 +195,7 @@ var funcDependencyMap = createMap({
   'ary': ['createWrapper', 'isIterateeCall'],
   'assign': ['baseAssign', 'createAssigner'],
   'at': ['baseAt', 'baseFlatten', 'isLength', 'toIterable'],
-  'attempt': ['baseSlice', 'isError'],
+  'attempt': ['isError'],
   'before': [],
   'bind': [ 'baseSlice', 'createWrapper', 'lodash', 'replaceHolders'],
   'bindAll': ['baseBindAll', 'baseFlatten', 'functions'],
@@ -816,7 +816,7 @@ var forceInlineMap = createMap({
 
 /* Used to hoist nested dependencies per identifier. */
 var hoistDepMap = createMap({
-  'template': ['baseSlice', 'baseToString', 'escape', 'reEscape', 'reEvaluate']
+  'template': ['baseToString', 'escape', 'reEscape', 'reEvaluate']
 });
 
 /* Used to designate dependencies at the top level. */
