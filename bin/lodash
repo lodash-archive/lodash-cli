@@ -188,7 +188,7 @@ var funcDependencyMap = createMap({
   'templateSettings': ['escape'],
 
   // Dependencies of the main module.
-  'main': ['arrayEach', 'baseCreate', 'baseForOwn', 'baseMatches', 'baseProperty', 'getCallback', 'identity', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'mixin', 'thru'],
+  'main': ['arrayEach', 'baseForOwn', 'baseMatches', 'baseProperty', 'getCallback', 'identity', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'mixin', 'thru'],
 
   // Dependencies of lodash methods.
   'after': [],
@@ -375,7 +375,7 @@ var funcDependencyMap = createMap({
   'lazyValue': ['baseWrapperValue', 'getView', 'isArray'],
 
   // Dependencies of lodash wrapper functions.
-  'LodashWrapper': [],
+  'LodashWrapper': ['baseCreate', 'lodash'],
   'wrapperChain': ['chain'],
   'wrapperClone': ['arrayCopy', 'LazyWrapper', 'LodashWrapper'],
   'wrapperCommit': ['LodashWrapper'],
@@ -3638,8 +3638,7 @@ function build(options, callback) {
       else {
         // Redistribute `main` deps for chaining.
         funcDepMap.chain.push('wrapperChain');
-        funcDepMap.LodashWrapper.push('baseCreate');
-        funcDepMap.wrapperValue = _.union(funcDepMap.wrapperValue, _.without(funcDepMap.main, 'baseCreate', 'lodash', 'LodashWrapper'));
+        funcDepMap.wrapperValue = _.union(funcDepMap.wrapperValue, _.without(funcDepMap.main, 'lodash', 'LodashWrapper'));
 
         // Add `arrayEach` to functions with placeholder support because it's
         // used to reduce code for placeholder assignments
@@ -3961,7 +3960,7 @@ function build(options, callback) {
       // Remove `memoize.Cache` assignment.
       source = source.replace(/^(?: *\/\/.*\n)* *memoize\.Cache\s*=[^;]+;\n/m, '');
     }
-    if (isExcluded(isModularize ? 'main' : 'LodashWrapper')) {
+    if (isExcluded('LodashWrapper')) {
       // Remove `LodashWrapper.prototype` assignment.
       source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype\s*=[^;]+;\n/m, '');
     }
