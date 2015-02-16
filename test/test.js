@@ -244,7 +244,8 @@ var categoryMap = createMap({
     'toPlainObject'
   ],
   'Number': [
-    'random'
+    'random',
+    'inRange'
   ],
   'Object': [
     'assign',

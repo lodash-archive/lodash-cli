@@ -255,6 +255,7 @@ var funcDependencyMap = createMap({
   'indexBy': ['createAggregator'],
   'indexOf': ['baseIndexOf', 'binaryIndex'],
   'initial': ['dropRight'],
+  'inRange': [],
   'intersection': ['cacheIndexOf', 'createCache', 'getIndexOf', 'isArguments', 'isArray'],
   'invert': ['isIterateeCall', 'keys'],
   'invoke': ['baseInvoke', 'baseSlice'],
@@ -696,7 +697,8 @@ var categoryMap = createMap({
     'toPlainObject'
   ],
   'Number': [
-    'random'
+    'random',
+    'inRange'
   ],
   'Object': [
     'assign',

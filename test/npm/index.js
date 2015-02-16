@@ -91,6 +91,7 @@ lodash.includes = require('lodash.includes');
 lodash.indexBy = require('lodash.indexby');
 lodash.indexOf = require('lodash.indexof');
 lodash.initial = require('lodash.initial');
+lodash.inRange = require('lodash.inrange');
 lodash.intersection = require('lodash.intersection');
 lodash.invert = require('lodash.invert');
 lodash.invoke = require('lodash.invoke');
