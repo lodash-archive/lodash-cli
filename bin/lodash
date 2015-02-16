@@ -283,7 +283,7 @@ var funcDependencyMap = createMap({
   'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isFunction', 'isIndex', 'isLength', 'isObject', 'isString'],
   'last': [],
   'lastIndexOf': ['indexOfNaN', 'binaryIndex'],
-  'lodash': ['isArray', 'isObjectLike', 'LazyWrapper', 'LodashWrapper', 'wrapperClone'],
+  'lodash': ['baseLodash', 'isArray', 'isObjectLike', 'LazyWrapper', 'LodashWrapper', 'wrapperClone'],
   'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
   'mapValues': ['baseForOwn', 'getCallback'],
   'matches': ['baseClone', 'baseMatches'],
@@ -369,17 +369,17 @@ var funcDependencyMap = createMap({
   'zipObject': ['isArray'],
 
   // Dependencies of Lazy wrapper functions.
-  'LazyWrapper': [],
+  'LazyWrapper': ['baseCreate', 'baseLodash'],
   'lazyClone': ['arrayCopy', 'LazyWrapper'],
   'lazyReverse': ['LazyWrapper'],
   'lazyValue': ['baseWrapperValue', 'getView', 'isArray'],
 
   // Dependencies of lodash wrapper functions.
-  'LodashWrapper': ['baseCreate', 'lodash'],
+  'LodashWrapper': ['baseCreate', 'baseLodash'],
   'wrapperChain': ['chain'],
   'wrapperClone': ['arrayCopy', 'LazyWrapper', 'LodashWrapper'],
   'wrapperCommit': ['LodashWrapper'],
-  'wrapperPlant': ['LodashWrapper', 'wrapperClone'],
+  'wrapperPlant': ['baseLodash', 'wrapperClone'],
   'wrapperReverse': ['LazyWrapper', 'LodashWrapper', 'thru'],
   'wrapperToString': [],
   'wrapperValue': ['baseWrapperValue'],
@@ -440,6 +440,7 @@ var funcDependencyMap = createMap({
   'baseIsEqualDeep': ['equalArrays', 'equalByTag', 'equalObjects', 'isArray', 'isHostObject', 'isTypedArray'],
   'baseIsFunction': [],
   'baseIsMatch': ['baseIsEqual'],
+  'baseLodash': [],
   'baseMap': ['baseEach'],
   'baseMatches': ['baseIsMatch', 'isStrictComparable', 'keys'],
   'baseMatchesProperty': ['baseIsEqual', 'isStrictComparable'],
@@ -2082,7 +2083,7 @@ function getIsFunctionFork(source) {
  * @returns {string} Returns the method assignments snippet.
  */
 function getMethodAssignments(source) {
-  return _.result(/\n\n(?: *\/\/.*\n)* *lodash(?:\.[$\w]+)+\s*=[\s\S]+\n *lodash(?:\.[$\w]+)+\s=[^;]+;(?=\n)/.exec(source), 0, '');
+  return _.result(/\n\n(?: *\/\/.*\n)* *lodash(?:\.(?!prototype\b)[$\w]+)+\s*=[\s\S]+\n *lodash(?:\.[$\w]+)+\s=[^;]+;(?=\n)/.exec(source), 0, '');
 }
 
 /**
@@ -2203,7 +2204,7 @@ function getVars(source) {
 
   // Remove all functions except `runInContext`.
   source = source
-    .replace(/^( *)function\s+(?!runInContext)[\s\S]+?\{\n[\s\S]+?\n\1\}\n/gm, '')
+    .replace(/^( *)function\s+(?!runInContext\b)[\s\S]+?\{\n[\s\S]+?\n\1\}\n/gm, '')
     .replace(/^( *)(?:var\s+)?[$\w]+\s*=\s*function\([\s\S]+?\{\n[\s\S]+?\n\1\};\n/gm, '')
     .replace(/^( *)(?:var\s+)?[$\w]+\s*=.*?create[A-Z][a-z]+\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '');
 
@@ -2436,7 +2437,7 @@ function removeChaining(source) {
   // Remove all `lodash.prototype` additions.
   return source
     .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['concat\b[\s\S]+?\n\1\}\);\n/m, '')
-    .replace(/^(?: *\/\/.*\n)*( *)lodash\.prototype\.[$\w]+\s*=\s*(?:function\([\s\S]+?\n\1\}|.+?);\n/gm, '');
+    .replace(/^(?: *\/\/.*\n)*( *)lodash\.prototype\.(?!constructor\b)[$\w]+\s*=\s*(?:function\([\s\S]+?\n\1\}|.+?);\n/gm, '');
 }
 
 /**
@@ -2459,9 +2460,6 @@ function removeComments(source) {
  * @returns {string} Returns the modified source.
  */
 function removeLazyChaining(source) {
-  // Remove `LazyWrapper.prototype` assignment.
-  source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\s*=[^;]+;\n/m, '');
-
   // Remove bulk `LazyWrapper.prototype` assignments.
   source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial|pluck)\b[\s\S]+?\n\1\}\);\n/gm, '');
 
@@ -2469,7 +2467,7 @@ function removeLazyChaining(source) {
   source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:compact|dropWhile|reject|slice|toArray)\s*=[\s\S]+?\n\1\};\n/gm, '');
 
   // Remove other `LazyWrapper.prototype` assignments.
-  source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.[$\w]+\s*=[^;]+;\n/gm, '');
+  source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.(?!constructor\b)[$\w]+\s*=[^;]+;\n/gm, '');
 
   // Remove `LazyWrapper` additions to `LodashWrapper`.
   source = source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(LazyWrapper\.prototype\b[\s\S]+?\n\1\}\);\n/m, '');
@@ -3960,9 +3958,17 @@ function build(options, callback) {
       // Remove `memoize.Cache` assignment.
       source = source.replace(/^(?: *\/\/.*\n)* *memoize\.Cache\s*=[^;]+;\n/m, '');
     }
+    if (isExcluded('LazyWrapper')) {
+      // Remove `LazyWrapper.prototype` assignment.
+      source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype(\.constructor)?\s*=[^;]+;\n/gm, '');
+    }
+    if (isExcluded('lodash')) {
+      // Remove `lodash.prototype` assignment.
+      source = source.replace(/^(?: *\/\/.*\n)* *lodash\.prototype(\.constructor)?\s*=[^;]+;\n/gm, '');
+    }
     if (isExcluded('LodashWrapper')) {
       // Remove `LodashWrapper.prototype` assignment.
-      source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype\s*=[^;]+;\n/m, '');
+      source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype(\.constructor)?\s*=[^;]+;\n/gm, '');
     }
     if (isExcluded(isModularize ? 'main' : 'mixin')) {
       source = removeMixinCalls(source);
@@ -4053,12 +4059,12 @@ function build(options, callback) {
       return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var\s+Ctor\s*=[\s\S]+?\n *for\b[\s\S]+?\}\n)([\s\S]+?)\}\(0,\s*0\)\);\n/m, function(match, setup, indent, body) {
         var modified = setup;
 
-        if (!/\.spliceObjects\s*=\s*(?!false|true)/.test(body)) {
+        if (!/\.spliceObjects\s*=\s*(?!false\b|true\b)/.test(body)) {
           modified = removeVar(modified, 'object');
         }
-        if (!/\.enumPrototypes\s*=\s*(?!false|true)/.test(body) &&
-            !/\.nonEnumShadows\s*=\s*(?!false|true)/.test(body) &&
-            !/\.ownLast\s*=\s*(?!false|true)/.test(body)) {
+        if (!/\.enumPrototypes\s*=\s*(?!false\b|true\b)/.test(body) &&
+            !/\.nonEnumShadows\s*=\s*(?!false\b|true\b)/.test(body) &&
+            !/\.ownLast\s*=\s*(?!false\b|true\b)/.test(body)) {
           modified = removeVar(modified, 'Ctor');
           modified = removeVar(modified, 'props');
           modified = modified
