@@ -3964,7 +3964,7 @@ function build(options, callback) {
       // Remove `LazyWrapper.prototype` assignment.
       source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype(\.constructor)?\s*=[^;]+;\n/gm, '');
     }
-    if (isExcluded('lodash')) {
+    if (isExcluded('lodash') || !_.includes(funcDepMap.lodash, 'baseLodash')) {
       // Remove `lodash.prototype` assignment.
       source = source.replace(/^(?: *\/\/.*\n)* *lodash\.prototype(\.constructor)?\s*=[^;]+;\n/gm, '');
     }
