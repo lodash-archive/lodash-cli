@@ -1128,7 +1128,7 @@ function buildModule(state, onComplete) {
             forceInlineDeps = _.difference(forceInlineMap[identifier], hoistDeps),
             uninlinees = _.difference(uninlinables, forceInlineDeps);
 
-        var inlinees = _.union(_.transform(_.difference(depNames, uninlinees), function(result, identifier) {
+        var inlinees = _.uniq(_.transform(_.difference(depNames, uninlinees), function(result, identifier) {
           push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinees)));
           return result;
         }));
