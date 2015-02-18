@@ -814,12 +814,13 @@ var forceInlineMap = createMap({
   'isFunction': ['baseIsFunction', 'baseToString', 'isNative'],
   'isNative': ['baseToString'],
   'keys': ['keysIn'],
-  'template': ['attempt', 'baseAssign', 'isError']
+  'template': ['attempt', 'baseAssign', 'isError'],
+  'templateSettings': ['reEscape', 'reEvaluate']
 });
 
 /* Used to hoist nested dependencies per identifier. */
 var hoistDepMap = createMap({
-  'template': ['baseToString', 'escape', 'reEscape', 'reEvaluate']
+  'template': ['baseToString', 'escape']
 });
 
 /* Used to designate dependencies at the top level. */
@@ -945,6 +946,7 @@ var uninlinables = _.union(
   'baseIndexOf',
   'baseIsEqual',
   'baseIsMatch',
+  'baseLodash',
   'baseMatches',
   'baseMatchesProperty',
   'baseProperty',
@@ -1131,7 +1133,7 @@ function buildModule(state, onComplete) {
           return result;
         }));
 
-        depNames = _.union(hoistDeps, _.intersection(uninlinees, depNames), _.intersection(uninlinees, inlinees));
+        depNames = _.union(_.intersection(uninlinees, depNames), _.intersection(uninlinees, inlinees), hoistDeps);
         inlinees = _.difference(inlinees, depNames).concat(identifier);
 
         var inlineFuncs = _.intersection(allFuncs, inlinees),
