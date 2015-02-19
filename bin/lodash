@@ -445,7 +445,7 @@ var funcDependencyMap = createMap({
   'baseMap': ['baseEach'],
   'baseMatches': ['baseIsMatch', 'isStrictComparable', 'keys'],
   'baseMatchesProperty': ['baseIsEqual', 'isStrictComparable'],
-  'baseMerge': ['arrayEach', 'baseForOwn', 'baseMergeDeep', 'isArray', 'isLength', 'isObjectLike', 'isTypedArray'],
+  'baseMerge': ['arrayEach', 'baseForOwn', 'baseMergeDeep', 'isArray', 'isLength', 'isObject', 'isObjectLike', 'isTypedArray'],
   'baseMergeDeep': ['arrayCopy', 'isArguments', 'isArray', 'isLength', 'isPlainObject', 'isTypedArray', 'toPlainObject'],
   'baseProperty': [],
   'basePullAt': ['baseAt', 'baseCompareAscending', 'isIndex'],
