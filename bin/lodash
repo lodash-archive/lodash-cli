@@ -946,7 +946,6 @@ var uninlinables = _.union(
   'baseIndexOf',
   'baseIsEqual',
   'baseIsMatch',
-  'baseLodash',
   'baseMatches',
   'baseMatchesProperty',
   'baseProperty',
