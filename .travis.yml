@@ -17,12 +17,13 @@ env:
     - BUILD="modern" EXPORTS="es"  TRANSPILER="babel"
     - BUILD="modern" EXPORTS="es"  TRANSPILER="es6-module-transpiler"
     - BUILD="modern" EXPORTS="es6" TRANSPILER="es6-module-transpiler"
-    - BUILD="modern" EXPORTS="iojs"
     - BUILD="modern" EXPORTS="node"
     - BUILD="modern" EXPORTS="npm"
     - TEST_BUILDS=true
 matrix:
   include:
+    - node_js: "io.js"
+      env: BUILD="modern" EXPORTS="iojs"
     - node_js: "0.8"
       env: NPM_VERSION="~1.4.0"
     - node_js: "0.8"
