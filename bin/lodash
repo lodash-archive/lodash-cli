@@ -1236,8 +1236,13 @@ function buildModule(state, onComplete) {
                 pkgDeps = _.omit(templateData.dependencies, laxDeps);
 
             if (_.isEqual(pkgDeps, oldDeps)) {
-              // Bump the `patch` version if the source has changed.
               var oldSource = fs.readFileSync(data.outputPath, 'utf-8');
+
+              // Exit early if sources are identical.
+              if (removeHeader(cleanupSource(oldSource)) === removeHeader(cleanupSource(source))) {
+                return;
+              }
+              // Bump the `patch` version if the source has changed.
               templateData.version = cleanupSource(removeComments(oldSource)) === cleanupSource(removeComments(source))
                 ? oldVersion
                 : semver.inc(oldVersion, 'patch', true);
@@ -1247,6 +1252,8 @@ function buildModule(state, onComplete) {
               templateData.version = semver.inc(oldVersion, 'minor', true);
             }
             source = source.replace(getHeader(source), function(header) {
+              // Use the old header if the package version remains unchanged.
+              header = templateData.version == oldVersion ? getHeader(oldSource) : header;
               return header.replace(/^( \* *lodash )[.$\w\-]+/m, function(match, prelude) {
                 return prelude + templateData.version;
               });
