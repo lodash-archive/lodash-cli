@@ -1,6 +1,6 @@
 {
   "name": "lodash-cli",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "The lodash command-line interface.",
   "homepage": "https://lodash.com/custom-builds",
   "license": "MIT",
@@ -20,7 +20,7 @@
   "dependencies": {
     "closure-compiler": "0.2.6",
     "glob": "4.3.5",
-    "lodash-compat": "3.3.0",
+    "lodash-compat": "3.3.1",
     "semver": "4.2.0",
     "uglify-js": "2.4.16"
   },
