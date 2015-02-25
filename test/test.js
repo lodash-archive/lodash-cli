@@ -1293,7 +1293,7 @@ QUnit.module('minus command');
       vm.runInContext(data.source, context);
 
       var lodash = context._;
-      ok(lodash([1]) instanceof lodash, basename);
+      ok(lodash() instanceof lodash, basename);
       deepEqual(_.keys(lodash.prototype), [], basename);
 
       start();
@@ -1474,9 +1474,10 @@ QUnit.module('include command');
 
 (function() {
   var commands = [
+    'include=chain',
     'include=mixin',
-    'include=mixin,tap',
-    'include=mixin,value'
+    'include=tap',
+    'include=value'
   ];
 
   _.each(commands, function(command, index) {
@@ -1494,6 +1495,7 @@ QUnit.module('include command');
 
         strictEqual(lodash.x, _.noop, basename);
         strictEqual(typeof lodash.prototype.x, 'function', basename);
+        ok(lodash() instanceof lodash, basename);
 
         start();
       });

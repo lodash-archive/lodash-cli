@@ -1854,11 +1854,10 @@ function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack)
   }
   _.each(result, function(identifier) {
     if (!_.includes(stack, identifier)) {
-      stack.push(identifier);
-
       push.apply(result, getDependencies(identifier, funcDepMap));
       push.apply(result, getDependencies(identifier, objDepMap));
       push.apply(result, getDependencies(identifier, varDepMap));
+      stack.push(identifier);
       getAllDependencies(result, funcDepMap, objDepMap, varDepMap, stack);
     }
   });
@@ -1968,7 +1967,7 @@ function getDependants(identifier, depMap, isDeep, stack) {
 function getDependencies(identifier, depMap, isDeep, stack) {
   var depNames = _.isArray(identifier) ? identifier : depMap[identifier];
   if (!isDeep) {
-    return _.clone(depNames);
+    return depNames ? _.difference(depNames, stack) : [];
   }
   stack || (stack = []);
 
@@ -3778,6 +3777,11 @@ function build(options, callback) {
       if (!_.isEmpty(minusFuncs)) {
         result = _.difference(result, minusFuncs.concat(getDependants(minusFuncs, funcDepMap, true)));
       }
+      result = _.uniq(result);
+
+      var hasLodash = _.includes(result, 'lodash');
+      result = getDependencies(_.without(result, 'lodash'), funcDepMap, true, ['lodash']);
+
       // Simplify `lodash` when not capable of chaining.
       if (!_.includes(result, 'main') && !_.includes(result, 'mixin') && !_.includes(result, 'wrapperValue')) {
         funcDepMap.lodash.length = 0;
@@ -3788,7 +3792,10 @@ function build(options, callback) {
           '}'
         ].join('\n'));
       }
-      return getDependencies(result, funcDepMap, true);
+      if (hasLodash) {
+        result = _.union(result, ['lodash'], getDependencies('lodash', funcDepMap, true));
+      }
+      return result;
     }());
 
     // Expand properties, variables, and their function dependencies to include in the build.
