@@ -780,12 +780,8 @@ var aliasToCategoryMap = createMap({
   'Arrays': 'Array',
   'Chaining': 'Chain',
   'Collections': 'Collection',
-  'Dates': 'Date',
   'Functions': 'Function',
-  'Langs': 'Lang',
-  'Numbers': 'Number',
   'Objects': 'Object',
-  'Strings': 'String',
   'Utilities': 'Utility'
 });
 
@@ -797,6 +793,7 @@ var categoryToDepNameMap = createMap({
   'Date': 'date',
   'Function': 'func',
   'Lang': 'lang',
+  'Math': 'math',
   'Number': 'number',
   'Object': 'object',
   'String': 'string',
@@ -1330,7 +1327,9 @@ function buildModule(state, onComplete) {
       return _.first(getCategories(identifier, funcDepMap));
     }))).sort();
 
-    var categoryDeps = _.map(categories, _.propertyOf(categoryToDepNameMap));
+    var categoryDeps = _.map(categories, function(category) {
+      return categoryToDepNameMap[category] || category.toLowerCase();
+    });
 
     var categoryDepPaths = _.map(categories, function(category) {
       return './' + category.toLowerCase();

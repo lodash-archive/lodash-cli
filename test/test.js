@@ -325,12 +325,8 @@ var aliasToCategoryMap = createMap({
   'Arrays': 'Array',
   'Chaining': 'Chain',
   'Collections': 'Collection',
-  'Dates': 'Date',
   'Functions': 'Function',
-  'Langs': 'Lang',
-  'Numbers': 'Number',
   'Objects': 'Object',
-  'Strings': 'String',
   'Utilities': 'Utility'
 });
 
