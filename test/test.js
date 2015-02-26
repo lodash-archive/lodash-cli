@@ -243,6 +243,10 @@ var categoryMap = createMap({
     'toArray',
     'toPlainObject'
   ],
+  'Math': [
+    'add',
+    'sum'
+  ],
   'Number': [
     'random',
     'inRange'

@@ -28,6 +28,7 @@ mixin = (function(func) {
 var lodash = function() {};
 
 // Add functions.
+lodash.add = require('lodash.add');
 lodash.after = require('lodash.after');
 lodash.ary = require('lodash.ary');
 lodash.assign = require('lodash.assign');
@@ -172,6 +173,7 @@ lodash.sortedLastIndex = require('lodash.sortedlastindex');
 lodash.spread = require('lodash.spread');
 lodash.startCase = require('lodash.startcase');
 lodash.startsWith = require('lodash.startswith');
+lodash.sum = require('lodash.sum');
 lodash.take = require('lodash.take');
 lodash.takeRight = require('lodash.takeright');
 lodash.takeRightWhile = require('lodash.takerightwhile');

@@ -191,6 +191,7 @@ var funcDependencyMap = createMap({
   'main': ['arrayEach', 'baseForOwn', 'baseMatches', 'baseProperty', 'getCallback', 'identity', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'mixin', 'thru'],
 
   // Dependencies of lodash methods.
+  'add': [],
   'after': [],
   'ary': ['createWrapper', 'isIterateeCall'],
   'assign': ['baseAssign', 'createAssigner'],
@@ -338,6 +339,7 @@ var funcDependencyMap = createMap({
   'spread': [],
   'startCase': ['createCompounder'],
   'startsWith': ['baseToString'],
+  'sum': [],
   'take': ['baseSlice', 'isIterateeCall'],
   'takeRight': ['baseSlice', 'isIterateeCall'],
   'takeRightWhile': ['baseSlice', 'getCallback'],
@@ -695,6 +697,10 @@ var categoryMap = createMap({
     'isUndefined',
     'toArray',
     'toPlainObject'
+  ],
+  'Math': [
+    'add',
+    'sum'
   ],
   'Number': [
     'random',
