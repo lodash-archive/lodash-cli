@@ -339,7 +339,7 @@ var funcDependencyMap = createMap({
   'spread': [],
   'startCase': ['createCompounder'],
   'startsWith': ['baseToString'],
-  'sum': [],
+  'sum': ['isArray', 'toIterable'],
   'take': ['baseSlice', 'isIterateeCall'],
   'takeRight': ['baseSlice', 'isIterateeCall'],
   'takeRightWhile': ['baseSlice', 'getCallback'],
