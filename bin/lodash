@@ -2475,10 +2475,10 @@ function removeComments(source) {
  */
 function removeLazyChaining(source) {
   // Remove bulk `LazyWrapper.prototype` assignments.
-  source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial|pluck)\b[\s\S]+?\n\1\}\);\n/gm, '');
+  source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|dropWhile|first|initial|pluck)\b[\s\S]+?\n\1\}\);\n/gm, '');
 
-  // Remove `LazyWrapper` methods `compact`, `dropWhile`, `reject`, `slice`, and `toArray` assignments.
-  source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:compact|dropWhile|reject|slice|toArray)\s*=[\s\S]+?\n\1\};\n/gm, '');
+  // Remove `LazyWrapper` methods `compact`, `reject`, `slice`, and `toArray` assignments.
+  source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:compact|reject|slice|toArray)\s*=[\s\S]+?\n\1\};\n/gm, '');
 
   // Remove other `LazyWrapper.prototype` assignments.
   source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.(?!constructor\b)[$\w]+\s*=[^;]+;\n/gm, '');
