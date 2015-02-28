@@ -562,6 +562,15 @@ var varDependencyMap = createMap({
   'times': ['root']
 });
 
+/** Used to track the category of aliases. */
+var aliasCategoryMap = createMap({
+  'Collection': [
+    'max',
+    'min',
+    'sum'
+  ]
+});
+
 /** Used to track the category of identifiers. */
 var categoryMap = createMap({
   'Array': [
@@ -629,8 +638,6 @@ var categoryMap = createMap({
     'indexBy',
     'invoke',
     'map',
-    'max',
-    'min',
     'partition',
     'pluck',
     'reduce',
@@ -700,6 +707,8 @@ var categoryMap = createMap({
   ],
   'Math': [
     'add',
+    'max',
+    'min',
     'sum'
   ],
   'Number': [
@@ -775,16 +784,6 @@ var categoryMap = createMap({
   ]
 });
 
-/** Used to map category aliases to their real names. */
-var aliasToCategoryMap = createMap({
-  'Arrays': 'Array',
-  'Chaining': 'Chain',
-  'Collections': 'Collection',
-  'Functions': 'Function',
-  'Objects': 'Object',
-  'Utilities': 'Utility'
-});
-
 /* Used to map categories to their dependency name. */
 var categoryToDepNameMap = createMap({
   'Array': 'array',
@@ -824,6 +823,16 @@ var forceInlineMap = createMap({
 /* Used to hoist nested dependencies per identifier. */
 var hoistDepMap = createMap({
   'template': ['baseToString', 'escape']
+});
+
+/** Used to map old categories to current ones. */
+var oldCategoryMap = createMap({
+  'Arrays': 'Array',
+  'Chaining': 'Chain',
+  'Collections': 'Collection',
+  'Functions': 'Function',
+  'Objects': 'Object',
+  'Utilities': 'Utility'
 });
 
 /* Used to designate dependencies at the top level. */
@@ -1274,19 +1283,29 @@ function buildModule(state, onComplete) {
 
   // Add alias modules.
   _.each(identifiers, function(identifier) {
-    var aliases = !isNpm && getAliases(identifier);
-    if (_.isEmpty(aliases)) {
+    if (isNpm) {
       return;
     }
-    var categories = getCategories(identifier, funcDepMap);
-    if (_.isEmpty(categories)) {
-      categories.push(null);
+    var aliases = getAliases(identifier),
+        categories = getCategories(identifier, funcDepMap),
+        categoryAliases = getCategoryAliases(identifier),
+        curated = categories.slice(0, 1);
+
+    if (!_.isEmpty(categoryAliases)) {
+      aliases.push(identifier);
+      curated = _.union(curated, categoryAliases);
     }
-    _.each(categories.slice(0, 1), function(category) {
+    if (_.isEmpty(curated)) {
+      curated.push(null);
+    }
+    _.each(curated, function(category) {
       var modulePath = getModulePath(identifier, category, funcDepMap),
           depPath = getDepPath(identifier, modulePath, funcDepMap);
 
       _.each(aliases, function(alias) {
+        if (alias === identifier && _.includes(categories, category)) {console.log(alias)
+          return;
+        }
         var iife = [];
         if (isAMD) {
           iife.push(
@@ -1829,14 +1848,29 @@ function defaultBuildCallback(data) {
 }
 
 /**
- * Gets the aliases associated with a given function name.
+ * Gets the aliases associated with a given identifier.
  *
  * @private
- * @param {string} funcName The name of the function to get aliases for.
+ * @param {string} identifier The identifier to get aliases for.
  * @returns {Array} Returns an array of aliases.
  */
-function getAliases(funcName) {
-  return _.result(realToAliasMap, funcName, []);
+function getAliases(identifier) {
+  return _.result(realToAliasMap, identifier, []);
+}
+
+/**
+ * Gets the category aliases associated with a given identifier.
+ *
+ * @private
+ * @param {string} identifier The identifier to get category aliases for.
+ * @returns {Array} Returns an array of aliases.
+ */
+function getCategoryAliases(identifier) {
+  return _.transform(aliasCategoryMap, function(result, identifiers, category) {
+    if (_.includes(identifiers, identifier)) {
+      result.push(category);
+    }
+  }, []);
 }
 
 /**
@@ -2134,7 +2168,7 @@ function getModulePath(identifier, category, funcDepMap) {
  * @returns {Array} Returns a new array of names.
  */
 function getNamesByCategory(category) {
-  return _.result(categoryMap, category, []);
+  return _.union(categoryMap[category], aliasCategoryMap[category]);
 }
 
 /**
@@ -2184,7 +2218,7 @@ function getParseIntFork(source) {
 }
 
 /**
- * Gets the real function name of `alias`.
+ * Gets the real name of `alias`.
  *
  * @private
  * @param {string} alias The alias to resolve.
@@ -2202,7 +2236,7 @@ function getRealName(alias) {
  * @returns {string} Returns the real category.
  */
 function getRealCategory(alias) {
-  return _.result(aliasToCategoryMap, alias, alias);
+  return _.result(oldCategoryMap, alias, alias);
 }
 
 /**

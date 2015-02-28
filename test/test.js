@@ -320,16 +320,6 @@ var categoryMap = createMap({
   ]
 });
 
-/** Used to map category aliases to their real names. */
-var aliasToCategoryMap = createMap({
-  'Arrays': 'Array',
-  'Chaining': 'Chain',
-  'Collections': 'Collection',
-  'Functions': 'Function',
-  'Objects': 'Object',
-  'Utilities': 'Utility'
-});
-
 /* Used to force referencing identifers by their alias. */
 var forceAliasMap = createMap({
   'wrapperCommit': 'commit',
@@ -337,6 +327,16 @@ var forceAliasMap = createMap({
   'wrapperReverse': 'reverse',
   'wrapperToString': 'toString',
   'wrapperValue': 'value'
+});
+
+/** Used to map old categories to current ones. */
+var oldCategoryMap = createMap({
+  'Arrays': 'Array',
+  'Chaining': 'Chain',
+  'Collections': 'Collection',
+  'Functions': 'Function',
+  'Objects': 'Object',
+  'Utilities': 'Utility'
 });
 
 /** List of all functions. */
@@ -417,18 +417,18 @@ function expandFuncNames(funcNames) {
 }
 
 /**
- * Gets the aliases associated with a given function name.
+ * Gets the aliases associated with a given identifier.
  *
  * @private
- * @param {string} funcName The name of the function to get aliases for.
+ * @param {string} identifier The identifier to get aliases for.
  * @returns {Array} Returns an array of aliases.
  */
-function getAliases(funcName) {
-  return _.result(realToAliasMap, funcName, []);
+function getAliases(identifier) {
+  return _.result(realToAliasMap, identifier, []);
 }
 
 /**
- * Gets the real function name of `alias`.
+ * Gets the real name of `alias`.
  *
  * @private
  * @param {string} alias The alias to resolve.
@@ -446,7 +446,7 @@ function getRealName(alias) {
  * @returns {string} Returns the real category.
  */
 function getRealCategory(alias) {
-  return _.result(aliasToCategoryMap, alias, alias);
+  return _.result(oldCategoryMap, alias, alias);
 }
 
 /**
