@@ -1120,164 +1120,159 @@ function buildModule(state, onComplete) {
   }
   // Create modules for each identifier.
   _.each(identifiers, function(identifier) {
-    var categories = getCategories(identifier, funcDepMap);
-    if (_.isEmpty(categories)) {
-      categories.push(null);
+    var category = getCategory(identifier, funcDepMap),
+        moduleName = isNpm ? toDepName(identifier) : identifier,
+        modulePath = isNpm ? moduleName : getModulePath(identifier, category, funcDepMap);
+
+    var depNames = _.union(
+      getDependencies(identifier, funcDepMap),
+      getDependencies(identifier, objDepMap),
+      getDependencies(identifier, varDepMap)
+    ).sort();
+
+    if (isNpm) {
+      var hoistDeps = hoistDepMap[identifier],
+          forceInlineDeps = _.difference(forceInlineMap[identifier], hoistDeps),
+          uninlinees = _.difference(uninlinables, forceInlineDeps);
+
+      var inlinees = _.uniq(_.transform(_.difference(depNames, uninlinees), function(result, identifier) {
+        push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinees)));
+        return result;
+      }));
+
+      depNames = _.union(_.intersection(uninlinees, depNames), _.intersection(uninlinees, inlinees), hoistDeps);
+      inlinees = _.difference(inlinees, depNames).concat(identifier);
+
+      var inlineFuncs = _.intersection(allFuncs, inlinees),
+          inlineObjs = _.intersection(objDependencies, inlinees),
+          inlineVars = _.intersection(varDependencies, inlinees);
     }
-    _.each(isNpm ? categories.slice(0, 1) : categories, function(category) {
-      var moduleName = isNpm ? toDepName(identifier) : identifier,
-          modulePath = isNpm ? moduleName : getModulePath(identifier, category, funcDepMap);
+    else {
+      inlinees = [identifier];
+      inlineFuncs = _.includes(allFuncs, identifier) ? inlinees : [];
+      inlineObjs = _.includes(objDependencies, identifier) ? inlinees : [];
+      inlineVars = _.includes(varDependencies, identifier) ? inlinees : [];
+    }
+    state.outputPath = path.join(outputPath, modulePath, (isNpm ? 'index' : identifier) + '.js');
+    state.buildFuncs = state.includeFuncs = inlineFuncs;
+    state.includeObjs = inlineObjs;
+    state.includeVars = inlineVars;
 
-      var depNames = _.union(
-        getDependencies(identifier, funcDepMap),
-        getDependencies(identifier, objDepMap),
-        getDependencies(identifier, varDepMap)
-      ).sort();
+    build(state, function(data) {
+      var iife = [],
+          source = data.source,
+          unusedDeps = _.difference(getUnusedDeps(source, depNames), hoistDeps);
 
-      if (isNpm) {
-        var hoistDeps = hoistDepMap[identifier],
-            forceInlineDeps = _.difference(forceInlineMap[identifier], hoistDeps),
-            uninlinees = _.difference(uninlinables, forceInlineDeps);
+      // Track and remove unused dependencies.
+      removedDeps[identifier] = unusedDeps;
+      depNames = _.sortBy(_.difference(depNames, unusedDeps), toDepName);
 
-        var inlinees = _.uniq(_.transform(_.difference(depNames, uninlinees), function(result, identifier) {
-          push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinees)));
-          return result;
-        }));
+      var depPaths = isNpm
+        ? _.map(depNames, toDepName)
+        : getDepPaths(depNames, modulePath, funcDepMap);
 
-        depNames = _.union(_.intersection(uninlinees, depNames), _.intersection(uninlinees, inlinees), hoistDeps);
-        inlinees = _.difference(inlinees, depNames).concat(identifier);
-
-        var inlineFuncs = _.intersection(allFuncs, inlinees),
-            inlineObjs = _.intersection(objDependencies, inlinees),
-            inlineVars = _.intersection(varDependencies, inlinees);
+      if (isAMD) {
+        iife.push(
+          'define([' + (_.isEmpty(depPaths) ? '' : "'" + depPaths.join("', '") + "'") + '], function(' + depNames.join(', ') + ') {',
+          '%output%',
+          '  return ' + identifier + ';',
+          '});'
+        );
+      }
+      else if (isES) {
+        iife.push(
+          _.reduce(depPaths, function(result, depPath, index) {
+            var depName = depNames[index];
+            return result + (result ? ';\n' : '') +
+              'import ' + depName + " from '" + depPath + "'";
+          }, '') + ';',
+          '%output%',
+          'export default ' + identifier + ';'
+        );
       }
       else {
-        inlinees = [identifier];
-        inlineFuncs = _.includes(allFuncs, identifier) ? inlinees : [];
-        inlineObjs = _.includes(objDependencies, identifier) ? inlinees : [];
-        inlineVars = _.includes(varDependencies, identifier) ? inlinees : [];
+        iife.push(
+          _.reduce(depPaths, function(result, depPath, index) {
+            var depName = depNames[index];
+            return result + (result ? ',\n    ' : 'var ') +
+              depName + " = require('" + depPath + "')" +
+              (isCommonJS ? '.' + depName : '');
+          }, '') + ';',
+          '%output%',
+          (isCommonJS ? 'exports.' + identifier : 'module.exports') + ' = ' + identifier + ';'
+        );
       }
-      state.outputPath = path.join(outputPath, modulePath, (isNpm ? 'index' : identifier) + '.js');
-      state.buildFuncs = state.includeFuncs = inlineFuncs;
-      state.includeObjs = inlineObjs;
-      state.includeVars = inlineVars;
+      if (!isAMD) {
+        source = trimIndent(source);
+      }
+      source = _.includes(includeHeaders, identifier) ? removeLicenseTag(source) : removeHeader(source);
+      source = replaceIIFE(source, iife.join('\n'));
 
-      build(state, function(data) {
-        var iife = [],
-            source = data.source,
-            unusedDeps = _.difference(getUnusedDeps(source, depNames), hoistDeps);
+      if (isNpm) {
+        var templatePath = fs.realpathSync(path.join(__dirname, '..', 'template')),
+            licenseTemplate = fs.readFileSync(path.join(templatePath, 'license.jst'), 'utf-8'),
+            packageTemplate = fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf-8'),
+            readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
 
-        // Track and remove unused dependencies.
-        removedDeps[identifier] = unusedDeps;
-        depNames = _.sortBy(_.difference(depNames, unusedDeps), toDepName);
+        var type = 'function',
+            version = state.lodash.VERSION;
 
-        var depPaths = isNpm
-          ? _.map(depNames, toDepName)
-          : getDepPaths(depNames, modulePath, funcDepMap);
-
-        if (isAMD) {
-          iife.push(
-            'define([' + (_.isEmpty(depPaths) ? '' : "'" + depPaths.join("', '") + "'") + '], function(' + depNames.join(', ') + ') {',
-            '%output%',
-            '  return ' + identifier + ';',
-            '});'
-          );
+        if (_.includes(objDependencies, identifier)) {
+          type = 'object';
+        } else if (_.includes(varDependencies, identifier)) {
+          type = 'variable';
         }
-        else if (isES) {
-          iife.push(
-            _.reduce(depPaths, function(result, depPath, index) {
-              var depName = depNames[index];
-              return result + (result ? ';\n' : '') +
-                'import ' + depName + " from '" + depPath + "'";
-            }, '') + ';',
-            '%output%',
-            'export default ' + identifier + ';'
-          );
-        }
-        else {
-          iife.push(
-            _.reduce(depPaths, function(result, depPath, index) {
-              var depName = depNames[index];
-              return result + (result ? ',\n    ' : 'var ') +
-                depName + " = require('" + depPath + "')" +
-                (isCommonJS ? '.' + depName : '');
-            }, '') + ';',
-            '%output%',
-            (isCommonJS ? 'exports.' + identifier : 'module.exports') + ' = ' + identifier + ';'
-          );
-        }
-        if (!isAMD) {
-          source = trimIndent(source);
-        }
-        source = _.includes(includeHeaders, identifier) ? removeLicenseTag(source) : removeHeader(source);
-        source = replaceIIFE(source, iife.join('\n'));
+        var templateData = {
+          'identifier': identifier,
+          'isInternal': isPrivate(identifier),
+          'name': moduleName,
+          'type': type,
+          'version': version,
+          'dependencies': _.transform(depPaths, function(result, depPath) {
+            var parts = version.split('.');
+            result[depPath] = '^' + parts[0] + '.0.0';
+          }, {})
+        };
 
-        if (isNpm) {
-          var templatePath = fs.realpathSync(path.join(__dirname, '..', 'template')),
-              licenseTemplate = fs.readFileSync(path.join(templatePath, 'license.jst'), 'utf-8'),
-              packageTemplate = fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf-8'),
-              readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
+        // Independently update the package version.
+        if (fs.existsSync(data.outputPath)) {
+          var semver = require('semver'),
+              laxDeps = _.map(laxSemVerDeps, toDepName),
+              oldPackage = JSON.parse(fs.readFileSync(path.join(path.dirname(data.outputPath), 'package.json'), 'utf-8')),
+              oldVersion = oldPackage.version,
+              oldDeps = _.omit(oldPackage.dependencies || {}, laxDeps),
+              pkgDeps = _.omit(templateData.dependencies, laxDeps);
 
-          var type = 'function',
-              version = state.lodash.VERSION;
+          if (_.isEqual(pkgDeps, oldDeps)) {
+            var oldSource = fs.readFileSync(data.outputPath, 'utf-8');
 
-          if (_.includes(objDependencies, identifier)) {
-            type = 'object';
-          } else if (_.includes(varDependencies, identifier)) {
-            type = 'variable';
+            // Exit early if sources are identical.
+            if (removeHeader(cleanupSource(oldSource)) === removeHeader(cleanupSource(source))) {
+              return;
+            }
+            // Bump the `patch` version if the source has changed.
+            templateData.version = cleanupSource(removeComments(oldSource)) === cleanupSource(removeComments(source))
+              ? oldVersion
+              : semver.inc(oldVersion, 'patch', true);
           }
-          var templateData = {
-            'identifier': identifier,
-            'isInternal': isPrivate(identifier),
-            'name': moduleName,
-            'type': type,
-            'version': version,
-            'dependencies': _.transform(depPaths, function(result, depPath) {
-              var parts = version.split('.');
-              result[depPath] = '^' + parts[0] + '.0.0';
-            }, {})
-          };
-
-          // Independently update the package version.
-          if (fs.existsSync(data.outputPath)) {
-            var semver = require('semver'),
-                laxDeps = _.map(laxSemVerDeps, toDepName),
-                oldPackage = JSON.parse(fs.readFileSync(path.join(path.dirname(data.outputPath), 'package.json'), 'utf-8')),
-                oldVersion = oldPackage.version,
-                oldDeps = _.omit(oldPackage.dependencies || {}, laxDeps),
-                pkgDeps = _.omit(templateData.dependencies, laxDeps);
-
-            if (_.isEqual(pkgDeps, oldDeps)) {
-              var oldSource = fs.readFileSync(data.outputPath, 'utf-8');
-
-              // Exit early if sources are identical.
-              if (removeHeader(cleanupSource(oldSource)) === removeHeader(cleanupSource(source))) {
-                return;
-              }
-              // Bump the `patch` version if the source has changed.
-              templateData.version = cleanupSource(removeComments(oldSource)) === cleanupSource(removeComments(source))
-                ? oldVersion
-                : semver.inc(oldVersion, 'patch', true);
-            }
-            else {
-              // Bump the `minor` version if the dependencies have changed.
-              templateData.version = semver.inc(oldVersion, 'minor', true);
-            }
-            source = source.replace(getHeader(source), function(header) {
-              // Use the old header if the package version remains unchanged.
-              header = templateData.version == oldVersion ? getHeader(oldSource) : header;
-              return header.replace(/^( \* *lodash )[.$\w\-]+/m, function(match, prelude) {
-                return prelude + templateData.version;
-              });
+          else {
+            // Bump the `minor` version if the dependencies have changed.
+            templateData.version = semver.inc(oldVersion, 'minor', true);
+          }
+          source = source.replace(getHeader(source), function(header) {
+            // Use the old header if the package version remains unchanged.
+            header = templateData.version == oldVersion ? getHeader(oldSource) : header;
+            return header.replace(/^( \* *lodash )[.$\w\-]+/m, function(match, prelude) {
+              return prelude + templateData.version;
             });
-          }
-          fs.writeFileSync(path.join(outputPath, modulePath, 'package.json'), _.template(packageTemplate)(templateData), 'utf-8');
-          fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE.txt'), _.template(licenseTemplate)(templateData), 'utf-8');
-          fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate)(templateData), 'utf-8');
+          });
         }
-        data.source = source;
-        buildCallback(data);
-      });
+        fs.writeFileSync(path.join(outputPath, modulePath, 'package.json'), _.template(packageTemplate)(templateData), 'utf-8');
+        fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE.txt'), _.template(licenseTemplate)(templateData), 'utf-8');
+        fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate)(templateData), 'utf-8');
+      }
+      data.source = source;
+      buildCallback(data);
     });
   });
 
@@ -1287,23 +1282,23 @@ function buildModule(state, onComplete) {
       return;
     }
     var aliases = getAliases(identifier),
-        categories = getCategories(identifier, funcDepMap),
+        realCategory = getCategory(identifier, funcDepMap),
         categoryAliases = getCategoryAliases(identifier),
-        curated = categories.slice(0, 1);
+        categories = realCategory ? [realCategory] : [];
 
     if (!_.isEmpty(categoryAliases)) {
       aliases.push(identifier);
-      curated = _.union(curated, categoryAliases);
+      categories = _.union(categories, categoryAliases);
     }
-    if (_.isEmpty(curated)) {
-      curated.push(null);
+    if (_.isEmpty(categories)) {
+      categories.push(null);
     }
-    _.each(curated, function(category) {
+    _.each(categories, function(category) {
       var modulePath = getModulePath(identifier, category, funcDepMap),
           depPath = getDepPath(identifier, modulePath, funcDepMap);
 
       _.each(aliases, function(alias) {
-        if (alias === identifier && _.includes(categories, category)) {console.log(alias)
+        if (alias == identifier && category == realCategory) {
           return;
         }
         var iife = [];
@@ -1343,7 +1338,7 @@ function buildModule(state, onComplete) {
     var modulePath = getModulePath(identifier, funcDepMap);
 
     var categories = _.uniq(_.compact(_.map(identifiers, function(identifier) {
-      return _.first(getCategories(identifier, funcDepMap));
+      return getCategory(identifier, funcDepMap);
     }))).sort();
 
     var categoryDeps = _.map(categories, function(category) {
@@ -1443,7 +1438,7 @@ function buildModule(state, onComplete) {
         if (_.includes(deps, identifier)) {
           return match;
         }
-        var category = categoryToDepNameMap[_.first(getCategories(identifier, funcDepMap))];
+        var category = categoryToDepNameMap[getCategory(identifier, funcDepMap)];
         return left + (category ? category + '.' : '') + _.result(forceAliasMap, identifier, identifier);
       });
 
@@ -1507,7 +1502,7 @@ function buildModule(state, onComplete) {
   }());
 
   // Create category modules.
-  _.each(_.uniq(_.compact(_.flatten(_.map(identifiers, _.partial(getCategories, _, funcDepMap))))), function(category) {
+  _.each(_.uniq(_.compact(_.flatten(_.map(identifiers, _.partial(getCategory, _, funcDepMap))))), function(category) {
     if (isNpm) {
       return;
     }
@@ -1904,16 +1899,16 @@ function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack)
 }
 
 /**
- * Gets the categories of the given identifier.
+ * Gets the category of the given identifier.
  *
  * @private
  * @param {string} identifier The identifier to query.
  * @param {Object} [funcDepMap] The dependency map used to resolve the identifier.
- * @returns {Array} Returns the array of categories.
+ * @returns {string|undefined} Returns the category.
  */
-function getCategories(identifier, funcDepMap) {
+function getCategory(identifier, funcDepMap) {
   identifier = getRealName(identifier);
-  return _.filter(allCategories, function(category) {
+  return _.find(allCategories, function(category) {
     return _.includes(categoryMap[category], identifier);
   });
 }
@@ -2155,7 +2150,7 @@ function getModulePath(identifier, category, funcDepMap) {
     category = null;
   }
   if (category == null) {
-    category = _.first(getCategories(identifier, funcDepMap));
+    category = getCategory(identifier, funcDepMap);
   }
   return category.toLowerCase();
 }
