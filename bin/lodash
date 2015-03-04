@@ -826,6 +826,9 @@ var forceInlineMap = createMap({
 
 /* Used to hoist nested dependencies per identifier. */
 var hoistDepMap = createMap({
+  'sortBy': ['isArray', 'keys'],
+  'sortByAll': ['baseEach', 'isArguments', 'isArray'],
+  'sortByOrder': ['baseEach', 'isArray'],
   'template': ['baseToString', 'escape']
 });
 
