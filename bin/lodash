@@ -1623,19 +1623,17 @@ function buildTemplate(state) {
     "    'object': true",
     '  };',
     '',
-    '  var root = (objectTypes[typeof window] && window !== (this && this.window)) ? window : this;',
-    '',
     '  var freeExports = objectTypes[typeof exports] && exports && !exports.nodeType && exports;',
     '',
     '  var freeModule = objectTypes[typeof module] && module && !module.nodeType && module;',
     '',
     "  var freeGlobal = freeExports && freeModule && typeof global == 'object' && global;",
-    '  if (freeGlobal && (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal ||',
-    "      (typeof freeGlobal.WorkerGlobalScope == 'function' && freeGlobal instanceof freeGlobal.WorkerGlobalScope))) {",
-    '    root = freeGlobal;',
-    '  }',
+    '',
+    '  var freeWindow = objectTypes[typeof window] && window;',
     '',
     '  var moduleExports = freeModule && freeModule.exports === freeExports && freeExports;',
+    '',
+    '  var root = freeGlobal || ((freeWindow !== (this && this.window)) && freeWindow) || this;',
     ''
   ];
 
