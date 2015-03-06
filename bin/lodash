@@ -1268,17 +1268,21 @@ function buildModule(state, onComplete) {
             // Bump the `minor` version if the dependencies have changed.
             templateData.version = semver.inc(oldVersion, 'minor', true);
           }
+          var isSameVersion = templateData.version == oldVersion;
+
           source = source.replace(getHeader(source), function(header) {
-            // Use the old header if the package version remains unchanged.
-            header = templateData.version == oldVersion ? getHeader(oldSource) : header;
+            // Use the old header if the package version remains the same.
+            header = isSameVersion ? getHeader(oldSource) : header;
             return header.replace(/^( \* *lodash )[.$\w\-]+/m, function(match, prelude) {
               return prelude + templateData.version;
             });
           });
         }
-        fs.writeFileSync(path.join(outputPath, modulePath, 'package.json'), _.template(packageTemplate)(templateData), 'utf-8');
-        fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE.txt'), _.template(licenseTemplate)(templateData), 'utf-8');
-        fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate)(templateData), 'utf-8');
+        if (!isSameVersion) {
+          fs.writeFileSync(path.join(outputPath, modulePath, 'package.json'), _.template(packageTemplate)(templateData), 'utf-8');
+          fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE.txt'), _.template(licenseTemplate)(templateData), 'utf-8');
+          fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate)(templateData), 'utf-8');
+        }
       }
       data.source = source;
       buildCallback(data);
