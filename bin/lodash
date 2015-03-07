@@ -2924,7 +2924,7 @@ function removeSpliceObjectsFix(source) {
   return source.replace(/^( *)arrayEach\(\['concat\b[\s\S]+?\n\1\}\);/m, function(match) {
     match = removeVar(match, 'fixObjects');
     match = removeVar(match, 'func');
-    return match.replace(/\barrayFunc\b/g, 'func');
+    return match.replace(/\bprotoFunc\b/g, 'func');
   });
 }
 
