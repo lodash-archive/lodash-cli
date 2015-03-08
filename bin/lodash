@@ -188,7 +188,7 @@ var funcDependencyMap = createMap({
   'templateSettings': ['escape'],
 
   // Dependencies of the main module.
-  'main': ['arrayEach', 'baseForOwn', 'baseMatches', 'baseProperty', 'getCallback', 'identity', 'isArray', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'mixin', 'thru'],
+  'main': ['arrayEach', 'baseForOwn', 'baseMatches', 'baseProperty', 'getCallback', 'identity', 'isArray', 'last', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'mixin', 'thru'],
 
   // Dependencies of lodash methods.
   'add': [],
