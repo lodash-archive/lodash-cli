@@ -3681,6 +3681,14 @@ function build(options, callback) {
           _.forOwn(varDepMap, function(depNames) {
             _.pull(depNames, 'root');
           });
+
+          // Replace `root` references with `global`.
+          _.each(['createBindWrapper', 'createHybridWrapper', 'createPartialWrapper'], function(funcName) {
+            source = source.replace(matchFunction(source, funcName), function(match) {
+              return match.replace(/\broot\b/g, 'global');
+            });
+          });
+
           delete varDepMap.root;
         }
         // Add deps to wrap `_.mixin` in `main`.
