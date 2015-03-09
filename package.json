@@ -19,7 +19,7 @@
   "scripts": { "test": "echo \"See the repository CONTRIBUTING.md for testing instructions.\"" },
   "dependencies": {
     "closure-compiler": "0.2.6",
-    "glob": "4.4.1",
+    "glob": "5.0.1",
     "lodash-compat": "3.4.0",
     "semver": "4.3.1",
     "uglify-js": "2.4.16"
