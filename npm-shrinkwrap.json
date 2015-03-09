@@ -1,6 +1,6 @@
 {
   "name": "lodash-cli",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "dependencies": {
     "closure-compiler": {
       "version": "0.2.6",
@@ -8,9 +8,9 @@
       "resolved": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.6.tgz"
     },
     "glob": {
-      "version": "4.4.1",
-      "from": "https://registry.npmjs.org/glob/-/glob-4.4.1.tgz",
-      "resolved": "https://registry.npmjs.org/glob/-/glob-4.4.1.tgz",
+      "version": "5.0.1",
+      "from": "https://registry.npmjs.org/glob/-/glob-5.0.1.tgz",
+      "resolved": "https://registry.npmjs.org/glob/-/glob-5.0.1.tgz",
       "dependencies": {
         "inflight": {
           "version": "1.0.4",
@@ -68,7 +68,7 @@
       }
     },
     "lodash-compat": {
-      "version": "3.4.0"
+      "version": "3.5.0"
     },
     "semver": {
       "version": "4.3.1",
