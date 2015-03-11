@@ -365,7 +365,7 @@ var funcDependencyMap = createMap({
   'values': ['baseValues', 'keys'],
   'valuesIn': ['baseValues', 'keysIn'],
   'where': ['baseMatches', 'filter'],
-  'without': ['baseDifference', 'baseSlice'],
+  'without': ['baseDifference', 'baseSlice', 'isArguments', 'isArray'],
   'words': ['baseToString', 'isIterateeCall'],
   'wrap': ['createWrapper', 'identity'],
   'xor': ['baseDifference', 'baseUniq', 'isArguments', 'isArray'],
