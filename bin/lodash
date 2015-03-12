@@ -481,7 +481,7 @@ var funcDependencyMap = createMap({
   'createCompounder': ['deburr', 'words'],
   'createCtorWrapper': ['baseCreate', 'isObject'],
   'createExtremum': ['baseCallback', 'charAtCallback', 'extremumBy', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
-  'createHybridWrapper': ['arrayCopy', 'composeArgs', 'composeArgsRight', 'createCtorWrapper', 'reorder', 'replaceHolders'],
+  'createHybridWrapper': ['arrayCopy', 'composeArgs', 'composeArgsRight', 'createCtorWrapper', 'LazyWrapper', 'lodash', 'reorder', 'replaceHolders', 'setData'],
   'createPad': ['repeat'],
   'createPartialWrapper': ['createCtorWrapper'],
   'createWrapper': ['baseSetData', 'createBindWrapper', 'createHybridWrapper', 'createPartialWrapper', 'getData', 'mergeData', 'setData'],
@@ -527,6 +527,7 @@ var funcDependencyMap = createMap({
 
 /** Used to track lodash object dependencies of identifiers. */
 var objDependencyMap = createMap({
+  'createHybridWrapper': ['support'],
   'isArguments': ['support'],
   'isBindable': ['support'],
   'isElement': ['support'],
@@ -2551,6 +2552,9 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
   deps = _.result(funcDepMap, 'createWrapper', []);
   _.pull(deps, 'baseSetData', 'getData', 'mergeData', 'setData');
 
+  deps = _.result(funcDepMap, 'createHybridWrapper', []);
+  _.pull(deps, 'LazyWrapper', 'lodash', 'setData');
+
   deps = _.result(funcDepMap, 'support', []);
   _.pull(deps, 'isNative');
 
@@ -2570,6 +2574,13 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
     return match
       .replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:typeof\s+)?data\b[\s\S]+?\n\1\}\n/gm, '')
       .replace(/^( *return\s+)setter\(([^,]+),[^)]+\)/m, '$1$2');
+  });
+
+  source = source.replace(matchFunction(source, 'createHybridWrapper'), function(match) {
+    match = removeVar(match, 'funcName');
+    match = removeVar(match, 'newData');
+    match = replaceVar(match, 'result', 'createHybridWrapper(func, bitmask, thisArg, newPartials, newsHolders, newPartialsRight, newHoldersRight, newArgPos, ary, newArity)');
+    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(funcName\b[\s\S]+?\n\1\}\n/m, '');
   });
 
   return source;
