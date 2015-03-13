@@ -252,7 +252,7 @@ var funcDependencyMap = createMap({
   'groupBy': ['createAggregator'],
   'has': [],
   'identity': [],
-  'includes': ['getIndexOf', 'isArray', 'isLength', 'isString', 'values'],
+  'includes': ['getIndexOf', 'isArray', 'isIterateeCall', 'isLength', 'isString', 'values'],
   'indexBy': ['createAggregator'],
   'indexOf': ['baseIndexOf', 'binaryIndex'],
   'initial': ['dropRight'],
