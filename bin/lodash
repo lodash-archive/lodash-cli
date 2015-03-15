@@ -341,7 +341,7 @@ var funcDependencyMap = createMap({
   'spread': [],
   'startCase': ['createCompounder'],
   'startsWith': ['baseToString'],
-  'sum': ['isArray', 'toIterable'],
+  'sum': ['isArray', 'isIterateeCall', 'getCallback', 'toIterable'],
   'take': ['baseSlice', 'isIterateeCall'],
   'takeRight': ['baseSlice', 'isIterateeCall'],
   'takeRightWhile': ['baseSlice', 'getCallback'],
@@ -2629,7 +2629,7 @@ function removeGetCallback(source, funcDepMap) {
     'createAggregator', 'createExtremum', 'createFind', 'createFindIndex',
     'createFindKey', 'createReduce', 'dropRightWhile', 'dropWhile', 'every',
     'filter', 'map', 'mapValues', 'reject', 'remove', 'some', 'sortBy',
-    'sortedIndex', 'sortedLastIndex', 'takeRightWhile', 'takeWhile',
+    'sortedIndex', 'sortedLastIndex', 'sum', 'takeRightWhile', 'takeWhile',
     'transform', 'uniq'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
@@ -2642,9 +2642,9 @@ function removeGetCallback(source, funcDepMap) {
     });
   });
 
-  _.each(['createExtremum', 'sortedIndex', 'sortedLastIndex', 'uniq'], function(funcName) {
-    var isExtremum = funcName == 'createExtremum',
-        isSorted = /^sorted/.test(funcName);
+  _.each(['createExtremum', 'sortedIndex', 'sortedLastIndex', 'sum', 'uniq'], function(funcName) {
+    var isSorted = /^sorted/.test(funcName),
+        useNoIteratee = /^(?:createExtremum|sum)$/.test(funcName);
 
     source = source.replace(matchFunction(source, funcName), function(match) {
       match = removeVar(match, 'func');
@@ -2655,7 +2655,7 @@ function removeGetCallback(source, funcDepMap) {
       }
       return match.replace(/^( *)if\s*\(!\(func[\s\S]+?\n\1\}/m, function(match, indent) {
         return indent +
-          'iteratee = ' + (isExtremum ? 'noIteratee' : 'iteratee == null') +
+          'iteratee = ' + (useNoIteratee ? 'noIteratee' : 'iteratee == null') +
           ' ? iteratee : baseCallback(iteratee, thisArg, 3);';
       });
     });
