@@ -100,7 +100,7 @@ var reDeepVars = /^ *function +runInContext\b/m;
 var reFuncTag = /^ *\* *@type +Function\b/im;
 
 /** Used to detect if a string is a function snippet. */
-var reFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|create[A-Z][a-z]+)\(/;
+var reFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|[a-z]+(?:[A-Z][a-z]+)+)\(/;
 
 /** Used to match `getCallback` references. */
 var reGetCallback = /\bgetCallback(?:\(\))?/g;
@@ -2276,7 +2276,7 @@ function getVars(source) {
   source = source
     .replace(/^( *)function\s+(?!runInContext\b)[\s\S]+?\{\n[\s\S]+?\n\1\}\n/gm, '')
     .replace(/^( *)(?:var\s+)?[$\w]+\s*=\s*function\([\s\S]+?\{\n[\s\S]+?\n\1\};\n/gm, '')
-    .replace(/^( *)(?:var\s+)?[$\w]+\s*=.*?create[A-Z][a-z]+\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '');
+    .replace(/^( *)(?:var\s+)?[$\w]+\s*=.*?(?:create(?:[A-Z][a-z]+)+|restParam)\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '');
 
   var isDeep = reDeepVars.test(source),
       indentA = isDeep ? ' {2,4}' : ' {2}',
@@ -2367,8 +2367,8 @@ function matchFunction(source, funcName, leadingComments) {
     '( *)function\\s+' + funcName + '\\((?:\\)\\s*\\{\\s*|[\\s\\S]+?\\n\\3)\\}\\n',
     // Match a simple variable declaration.
     ' *var\\s+' + funcName + '\\s*=.+?;\\n',
-    // Match variable declarations using `createAggregator`, or `createCompounder`.
-    '( *)var\\s+' + funcName + '\\s*=.*?create[A-Z][a-z]+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
+    // Match variable declarations using creator functions.
+    '( *)var\\s+' + funcName + '\\s*=.*?(?:create(?:[A-Z][a-z]+)+|restParam)\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
     // Match a variable declaration with function expression.
     '( *)var\\s+' + funcName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n'
   ];
