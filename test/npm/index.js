@@ -159,6 +159,7 @@ lodash.reject = require('lodash.reject');
 lodash.remove = require('lodash.remove');
 lodash.repeat = require('lodash.repeat');
 lodash.rest = require('lodash.rest');
+lodash.restParam = require('lodash.restparam');
 lodash.result = require('lodash.result');
 lodash.sample = require('lodash.sample');
 lodash.shuffle = require('lodash.shuffle');
