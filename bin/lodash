@@ -843,6 +843,7 @@ var forceInlineMap = createMap({
 
 /* Used to hoist nested dependencies per identifier. */
 var hoistDepMap = createMap({
+  'merge': ['isNative', 'keysIn'],
   'sortBy': ['isArray', 'keys'],
   'sortByAll': ['baseEach', 'isArguments', 'isArray'],
   'sortByOrder': ['baseEach', 'isArray'],
