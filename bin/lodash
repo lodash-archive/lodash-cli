@@ -479,7 +479,7 @@ var funcDependencyMap = createMap({
   'createAssigner': ['bindCallback', 'isIterateeCall'],
   'createBaseFor': ['toObject'],
   'createBindWrapper': ['createCtorWrapper'],
-  'createFlow': [],
+  'createFlow': ['getData', 'isArray', 'isLaziable', 'LodashWrapper'],
   'createCompounder': ['deburr', 'words'],
   'createCtorWrapper': ['baseCreate', 'isObject'],
   'createCurry': ['createWrapper', 'isIterateeCall', 'lodash'],
@@ -490,7 +490,7 @@ var funcDependencyMap = createMap({
   'createForEach': ['bindCallback', 'isArray'],
   'createForIn': ['bindCallback', 'keysIn'],
   'createForOwn': ['bindCallback'],
-  'createHybridWrapper': ['arrayCopy', 'composeArgs', 'composeArgsRight', 'createCtorWrapper', 'LazyWrapper', 'lodash', 'reorder', 'replaceHolders', 'setData'],
+  'createHybridWrapper': ['arrayCopy', 'composeArgs', 'composeArgsRight', 'createCtorWrapper', 'isLaziable', 'reorder', 'replaceHolders', 'setData'],
   'createPadding': ['repeat'],
   'createPadDir': ['baseToString', 'createPadding'],
   'createPartial': ['createWrapper', 'lodash', 'restParam', 'replaceHolders'],
@@ -516,6 +516,7 @@ var funcDependencyMap = createMap({
   'isHostObject': [],
   'isIndex': [],
   'isIterateeCall': ['isIndex', 'isLength', 'isObject'],
+  'isLaziable': ['LazyWrapper', 'lodash'],
   'isLength': [],
   'isObjectLike': [],
   'isSpace': [],
@@ -539,10 +540,10 @@ var funcDependencyMap = createMap({
 
 /** Used to track lodash object dependencies of identifiers. */
 var objDependencyMap = createMap({
-  'createHybridWrapper': ['support'],
   'isArguments': ['support'],
   'isBindable': ['support'],
   'isElement': ['support'],
+  'isLaziable': ['support'],
   'isPlainObject': ['support'],
   'keys': ['support'],
   'keysIn': ['support'],
@@ -2568,7 +2569,7 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
   _.pull(deps, 'baseSetData', 'getData', 'mergeData', 'setData');
 
   deps = _.result(funcDepMap, 'createHybridWrapper', []);
-  _.pull(deps, 'LazyWrapper', 'lodash', 'setData');
+  _.pull(deps, 'isLaziable', 'setData');
 
   deps = _.result(funcDepMap, 'support', []);
   _.pull(deps, 'isNative');
@@ -2592,10 +2593,9 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
   });
 
   source = source.replace(matchFunction(source, 'createHybridWrapper'), function(match) {
-    match = removeVar(match, 'funcName');
     match = removeVar(match, 'newData');
     match = replaceVar(match, 'result', 'createHybridWrapper(func, bitmask, thisArg, newPartials, newsHolders, newPartialsRight, newHoldersRight, newArgPos, ary, newArity)');
-    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(funcName\b[\s\S]+?\n\1\}\n/m, '');
+    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(isLaziable\b[\s\S]+?\n\1\}\n/m, '');
   });
 
   return source;
@@ -3810,6 +3810,39 @@ function build(options, callback) {
       if (isModularize) {
         source = removeGetIndexOf(source, funcDepMap);
         source = removeGetCallback(source, funcDepMap);
+
+        // Replace `createFlow`.
+        _.pull(funcDepMap.createFlow, 'getData', 'isArray', 'isLaziable', 'LodashWrapper');
+
+        source = replaceFunction(source, 'createFlow', [
+          'function createFlow(fromRight) {',
+          '  return function() {',
+          '    var length = arguments.length,',
+          '        index = length,',
+          '        fromIndex = fromRight ? (length - 1) : 0;',
+          '',
+          '    if (!length) {',
+          '      return function() { return arguments[0]; };',
+          '    }',
+          '    var funcs = Array(length);',
+          '    while (index--) {',
+          '      funcs[index] = arguments[index];',
+          "      if (typeof funcs[index] != 'function') {",
+          '        throw new TypeError(FUNC_ERROR_TEXT);',
+          '      }',
+          '    }',
+          '    return function() {',
+          '      var index = fromIndex,',
+          '          result = funcs[index].apply(this, arguments);',
+          '',
+          '      while ((fromRight ? index-- : ++index < length)) {',
+          '        result = funcs[index].call(this, result);',
+          '      }',
+          '      return result;',
+          '    };',
+          '  };',
+          '}'
+        ].join('\n'));
       }
       if (isNpm) {
         source = removeMetadata(source, funcDepMap, objDepMap, varDepMap);
