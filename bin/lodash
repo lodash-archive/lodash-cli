@@ -1650,11 +1650,13 @@ function buildTemplate(state) {
     '',
     "  var freeGlobal = freeExports && freeModule && typeof global == 'object' && global;",
     '',
-    '  var freeWindow = objectTypes[typeof window] && window;',
+    '  var freeSelf = objectTypes[typeof self] && self && self.Object && self;',
+    '',
+    '  var freeWindow = objectTypes[typeof window] && window && window.Object && window;',
     '',
     '  var moduleExports = freeModule && freeModule.exports === freeExports && freeExports;',
     '',
-    '  var root = freeGlobal || ((freeWindow !== (this && this.window)) && freeWindow) || this;',
+    '  var root = freeGlobal || ((freeWindow !== (this && this.window)) && freeWindow) || freeSelf || this;',
     ''
   ];
 
