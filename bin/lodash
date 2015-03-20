@@ -2542,8 +2542,11 @@ function removeLazyChaining(source) {
   // Remove other `LazyWrapper.prototype` assignments.
   source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.(?!constructor\b)[$\w]+\s*=[^;]+;\n/gm, '');
 
-  // Remove `LazyWrapper` additions to `LodashWrapper`.
-  source = source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(LazyWrapper\.prototype\b[\s\S]+?\n\1\}\);\n/m, '');
+  // Remove `LazyWrapper` additions to `LodashWrapper` and `realNames` assignments.
+  source = source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(LazyWrapper\.prototype\b[\s\S]+?\n\1\}\);\n/gm, '');
+
+  // Remove `realNames` assignment for `wrapper`.
+  source = source.replace(/^(?: *\/\/.*\n)* *realNames\[createHybridWrapper\b[\s\S]+?;\n/m, '');
 
   // Remove related `lodash.prototype` method aliases.
   return source.replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.(?:collect|head|select|tail)\s*=[^;]+;\n/gm, '');
