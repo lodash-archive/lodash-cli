@@ -184,7 +184,6 @@ var funcDependencyMap = createMap({
   'metaMap': ['isNative'],
 
   // Dependencies of lodash properties.
-  'support': ['isNative'],
   'templateSettings': ['escape'],
 
   // Dependencies of the main module.
@@ -419,7 +418,7 @@ var funcDependencyMap = createMap({
   'assignOwnDefaults': [],
   'baseAssign': ['baseCopy', 'keys'],
   'baseAt': ['isIndex', 'isLength'],
-  'baseCallback': ['baseMatches', 'baseMatchesProperty', 'baseProperty', 'bindCallback', 'identity', 'isBindable'],
+  'baseCallback': ['baseMatches', 'baseMatchesProperty', 'baseProperty', 'bindCallback', 'identity'],
   'baseClone': ['arrayCopy', 'arrayEach', 'baseCopy', 'baseForOwn', 'initCloneArray', 'initCloneByTag', 'initCloneObject', 'isArray', 'isHostObject', 'isObject', 'keys'],
   'baseCompareAscending': [],
   'baseCopy': [],
@@ -506,17 +505,17 @@ var funcDependencyMap = createMap({
   'extremumBy': ['baseEach'],
   'getCallback': ['baseCallback', 'callback'],
   'getData': ['noop'],
+  'getFuncName': ['baseProperty', 'constant'],
   'getIndexOf': ['baseIndexOf', 'indexOf'],
   'getView': [],
   'indexOfNaN': [],
   'initCloneArray': [],
   'initCloneByTag': ['bufferClone'],
   'initCloneObject': [],
-  'isBindable': ['baseSetData', 'isNative'],
   'isHostObject': [],
   'isIndex': [],
   'isIterateeCall': ['isIndex', 'isLength', 'isObject'],
-  'isLaziable': ['LazyWrapper', 'lodash'],
+  'isLaziable': ['getFuncName', 'LazyWrapper', 'lodash'],
   'isLength': [],
   'isObjectLike': [],
   'isSpace': [],
@@ -540,14 +539,13 @@ var funcDependencyMap = createMap({
 
 /** Used to track lodash object dependencies of identifiers. */
 var objDependencyMap = createMap({
+  'getFuncName': ['realNames', 'support'],
   'isArguments': ['support'],
-  'isBindable': ['support'],
   'isElement': ['support'],
-  'isLaziable': ['support'],
   'isPlainObject': ['support'],
   'keys': ['support'],
   'keysIn': ['support'],
-  'main': ['support'],
+  'main': ['realNames', 'support'],
   'shimIsPlainObject': ['support'],
   'shimKeys': ['support'],
   'template': ['templateSettings'],
@@ -2562,10 +2560,7 @@ function removeLazyChaining(source) {
  * @returns {string} Returns the modified source.
  */
 function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
-  var deps = _.result(funcDepMap, 'baseCallback', []);
-  _.pull(deps, 'isBindable');
-
-  deps = _.result(funcDepMap, 'createWrapper', []);
+  var deps = _.result(funcDepMap, 'createWrapper', []);
   _.pull(deps, 'baseSetData', 'getData', 'mergeData', 'setData');
 
   deps = _.result(funcDepMap, 'createHybridWrapper', []);
@@ -2581,10 +2576,6 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
   source = removeSupportProp(source, 'funcNames');
 
   // Remove metadata related code.
-  source = source.replace(matchFunction(source, 'baseCallback'), function(match) {
-    return match.replace(/\s*&&\s*isBindable\([^)]+\)/, '');
-  });
-
   source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
     match = _.reduce(['data', 'funcBitmask', 'funcIsPartialed', 'setter'], removeVar, match);
     return match
@@ -2927,8 +2918,6 @@ function removeRunInContext(source) {
       .replace(/^[\s\S]+?function\s+runInContext\b[\s\S]+?context\s*=\s*context.+?\n+| *return\s+lodash;[\s\S]+$/g, '')
       // Remove native constructor references.
       .replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)? *var\s+Array\s*=[\s\S]+?;\n/m, '')
-      // Replace `reThis` reference in `support.funcDecomp` assignment.
-      .replace(/\btest\(runInContext\)/, 'test(function() { return this; })')
       // Replace `context` references with `root`.
       .replace(/\bcontext\b/g, 'root');
   });
