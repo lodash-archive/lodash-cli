@@ -478,7 +478,7 @@ var funcDependencyMap = createMap({
   'createAssigner': ['bindCallback', 'isIterateeCall'],
   'createBaseFor': ['toObject'],
   'createBindWrapper': ['createCtorWrapper'],
-  'createFlow': ['getData', 'isArray', 'isLaziable', 'LodashWrapper'],
+  'createFlow': ['getData', 'getFuncName', 'isArray', 'isLaziable', 'LodashWrapper'],
   'createCompounder': ['deburr', 'words'],
   'createCtorWrapper': ['baseCreate', 'isObject'],
   'createCurry': ['createWrapper', 'isIterateeCall', 'lodash'],
@@ -3802,9 +3802,12 @@ function build(options, callback) {
       if (isModularize) {
         source = removeGetIndexOf(source, funcDepMap);
         source = removeGetCallback(source, funcDepMap);
+      }
+      if (isNpm) {
+        source = removeMetadata(source, funcDepMap, objDepMap, varDepMap);
 
         // Replace `createFlow`.
-        _.pull(funcDepMap.createFlow, 'getData', 'isArray', 'isLaziable', 'LodashWrapper');
+        _.pull(funcDepMap.createFlow, 'getData', 'getFuncName', 'isArray', 'isLaziable', 'LodashWrapper');
 
         source = replaceFunction(source, 'createFlow', [
           'function createFlow(fromRight) {',
@@ -3835,9 +3838,6 @@ function build(options, callback) {
           '  };',
           '}'
         ].join('\n'));
-      }
-      if (isNpm) {
-        source = removeMetadata(source, funcDepMap, objDepMap, varDepMap);
       }
       // Remove "_.matches" or "_.property" style callback support from `baseCallback`.
       _.each(['matches', 'property'], function(funcName) {
