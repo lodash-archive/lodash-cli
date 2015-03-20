@@ -3183,7 +3183,7 @@ function removeSupportProp(source, propName) {
       // Match a `try` block.
       '(?:( *)try\\b.+\\n)?' +
       // Match the `support` property assignment.
-      ' *support\\.' + propName + '\\s*=[\\s\\S]+?;' +
+      ' *support\\.' + propName + '\\s*=[\\s\\S]+?;(?=\\n)' +
       // Match the `catch` block.
       '(?:\\n\\1\\}\\s*catch\\b[\\s\\S]+?\\n\\1\\})?'
     , 'm'), '');
