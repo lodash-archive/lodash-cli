@@ -6,6 +6,7 @@
   "license": "MIT",
   "main": "bin/lodash",
   "bin": { "lodash": "bin/lodash" },
+  "preferGlobal": "true",
   "keywords": "builder, compile, customize, lodash, util",
   "author": "John-David Dalton <john.david.dalton@gmail.com> (http://allyoucanleet.com/)",
   "contributors": [
