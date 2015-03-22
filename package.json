@@ -4,6 +4,7 @@
   "description": "The lodash command-line interface.",
   "homepage": "https://lodash.com/custom-builds",
   "license": "MIT",
+  "preferGlobal": true,
   "main": "bin/lodash",
   "bin": { "lodash": "bin/lodash" },
   "keywords": "builder, compile, customize, lodash, util",
