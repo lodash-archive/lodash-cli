@@ -335,8 +335,8 @@ var funcDependencyMap = createMap({
   'sortBy': ['baseEach', 'baseSortBy', 'compareAscending', 'getCallback', 'isIterateeCall', 'isLength'],
   'sortByAll': ['baseFlatten', 'baseSortByOrder', 'isIterateeCall'],
   'sortByOrder': ['baseSortByOrder', 'isArray', 'isIterateeCall'],
-  'sortedIndex': ['baseCallback', 'binaryIndex', 'binaryIndexBy', 'getCallback'],
-  'sortedLastIndex': ['baseCallback', 'binaryIndex', 'binaryIndexBy', 'getCallback'],
+  'sortedIndex': ['createSortedIndex'],
+  'sortedLastIndex': ['createSortedIndex'],
   'spread': [],
   'startCase': ['createCompounder'],
   'startsWith': ['baseToString'],
@@ -495,6 +495,7 @@ var funcDependencyMap = createMap({
   'createPartial': ['createWrapper', 'lodash', 'restParam', 'replaceHolders'],
   'createPartialWrapper': ['createCtorWrapper'],
   'createReduce': ['baseReduce', 'getCallback', 'isArray'],
+  'createSortedIndex': ['baseCallback', 'binaryIndex', 'binaryIndexBy', 'getCallback'],
   'createWrapper': ['baseSetData', 'createBindWrapper', 'createHybridWrapper', 'createPartialWrapper', 'getData', 'mergeData', 'setData'],
   'deburrLetter': [],
   'escapeHtmlChar': [],
@@ -2625,9 +2626,9 @@ function removeGetCallback(source, funcDepMap) {
 
   _.each([
     'createAggregator', 'createExtremum', 'createFind', 'createFindIndex',
-    'createFindKey', 'createReduce', 'dropRightWhile', 'dropWhile', 'every',
-    'filter', 'map', 'mapValues', 'reject', 'remove', 'some', 'sortBy',
-    'sortedIndex', 'sortedLastIndex', 'sum', 'takeRightWhile', 'takeWhile',
+    'createFindKey', 'createReduce', 'createSortedIndex', 'dropRightWhile',
+    'dropWhile', 'every', 'filter', 'map', 'mapValues', 'reject', 'remove',
+    'some', 'sortBy', 'sum', 'takeRightWhile', 'takeWhile',
     'transform', 'uniq'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
@@ -2640,13 +2641,13 @@ function removeGetCallback(source, funcDepMap) {
     });
   });
 
-  _.each(['createExtremum', 'sortedIndex', 'sortedLastIndex', 'sum', 'uniq'], function(funcName) {
-    var isSorted = /^sorted/.test(funcName),
+  _.each(['createExtremum', 'createSortedIndex', 'sum', 'uniq'], function(funcName) {
+    var isCreateSortedIndex = funcName == 'createSortedIndex',
         useNoIteratee = /^(?:createExtremum|sum)$/.test(funcName);
 
     source = source.replace(matchFunction(source, funcName), function(match) {
       match = removeVar(match, 'func');
-      if (isSorted) {
+      if (isCreateSortedIndex) {
         return match
           .replace(/\(func[^)]+\)/, 'iteratee == null')
           .replace(/\bfunc(?=\()/, 'baseCallback');
