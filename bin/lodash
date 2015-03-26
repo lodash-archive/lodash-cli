@@ -845,11 +845,36 @@ var forceInlineMap = createMap({
 
 /* Used to hoist nested dependencies per identifier. */
 var hoistDepMap = createMap({
+  'countBy': ['keys'],
+  'dropRightWhile': ['isArray'],
+  'dropWhile': ['isArray'],
+  'every': ['keys'],
+  'filter': ['keys'],
+  'find': ['keys'],
+  'findIndex': ['isArray'],
+  'findLast': ['keys'],
+  'findLastIndex': ['isArray'],
+  'groupBy': ['keys'],
+  'indexBy': ['keys'],
+  'map': ['keys'],
+  'max': ['keys'],
   'merge': ['isNative', 'keysIn'],
+  'min': ['keys'],
+  'partition': ['keys'],
+  'reduce': ['keys'],
+  'reduceRight': ['keys'],
+  'reject': ['keys'],
+  'some': ['keys'],
   'sortBy': ['isArray', 'keys'],
   'sortByAll': ['baseEach', 'isArguments', 'isArray'],
   'sortByOrder': ['baseEach', 'isArray'],
-  'template': ['baseToString', 'escape']
+  'sortedIndex': ['isArray'],
+  'sortedLastIndex': ['isArray'],
+  'sum': ['keys'],
+  'takeRightWhile': ['isArray'],
+  'takeWhile': ['isArray'],
+  'template': ['baseToString', 'escape'],
+  'uniq': ['isArray', 'isNative']
 });
 
 /** Used to map old categories to current ones. */
