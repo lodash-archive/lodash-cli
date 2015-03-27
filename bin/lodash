@@ -6,11 +6,14 @@ var vm = require('vm');
 
 /** Load other modules. */
 var _ = require('lodash-compat'),
+    listing = require('../lib/listing.js'),
+    mapping = require('../lib/mapping.js'),
     minify = require('../lib/minify.js'),
     util = require('../lib/util.js');
 
 /** Module references. */
-var fs = util.fs,
+var createMap = util.createMap,
+    fs = util.fs,
     path = util.path;
 
 /** Used as the text displayed for the `--help` option */
@@ -117,936 +120,6 @@ var reVarSnippet = /^\s*var\s+/;
 /** Shortcut to the `stdout` object. */
 var stdout = process.stdout;
 
-/** Used to map aliases to their real names. */
-var aliasToRealMap = createMap({
-  'all': 'every',
-  'any': 'some',
-  'backflow': 'flowRight',
-  'collect': 'map',
-  'compose': 'flowRight',
-  'commit': 'wrapperCommit',
-  'contains': 'includes',
-  'detect': 'find',
-  'each': 'forEach',
-  'eachRight': 'forEachRight',
-  'extend': 'assign',
-  'foldl': 'reduce',
-  'foldr': 'reduceRight',
-  'head': 'first',
-  'include': 'includes',
-  'inject': 'reduce',
-  'iteratee': 'callback',
-  'methods': 'functions',
-  'object': 'zipObject',
-  'plant': 'wrapperPlant',
-  'reverse': 'wrapperReverse',
-  'run': 'wrapperValue',
-  'select': 'filter',
-  'tail': 'rest',
-  'toJSON': 'wrapperValue',
-  'toString': 'wrapperToString',
-  'unique': 'uniq',
-  'valueOf': 'wrapperValue',
-  'value': 'wrapperValue'
-});
-
-/** Used to map real names to their aliases. */
-var realToAliasMap = createMap({
-  'assign': ['extend'],
-  'callback': ['iteratee'],
-  'every': ['all'],
-  'filter': ['select'],
-  'find': ['detect'],
-  'first': ['head'],
-  'flowRight': ['backflow', 'compose'],
-  'forEach': ['each'],
-  'forEachRight': ['eachRight'],
-  'functions': ['methods'],
-  'includes': ['contains', 'include'],
-  'map': ['collect'],
-  'reduce': ['foldl', 'inject'],
-  'reduceRight': ['foldr'],
-  'rest': ['tail'],
-  'some': ['any'],
-  'uniq': ['unique'],
-  'wrapperCommit': ['commit'],
-  'wrapperPlant': ['plant'],
-  'wrapperReverse': ['reverse'],
-  'wrapperToString': ['toString'],
-  'wrapperValue': ['run', 'toJSON', 'value', 'valueOf'],
-  'zipObject': ['object']
-});
-
-/** Used to track function dependencies. */
-var funcDependencyMap = createMap({
-
-  // Dependencies of variables.
-  'metaMap': ['isNative'],
-
-  // Dependencies of lodash properties.
-  'templateSettings': ['escape'],
-
-  // Dependencies of the main module.
-  'main': ['arrayEach', 'baseForOwn', 'baseMatches', 'baseProperty', 'createHybridWrapper', 'getCallback', 'identity', 'isArray', 'last', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'lodash', 'LodashWrapper', 'mixin', 'thru'],
-
-  // Dependencies of lodash methods.
-  'add': [],
-  'after': [],
-  'ary': ['createWrapper', 'isIterateeCall'],
-  'assign': ['baseAssign', 'createAssigner'],
-  'at': ['baseAt', 'baseFlatten', 'isLength', 'restParam', 'toIterable'],
-  'attempt': ['isError', 'restParam'],
-  'before': [],
-  'bind': ['createWrapper', 'lodash', 'restParam', 'replaceHolders'],
-  'bindAll': ['baseFlatten', 'createWrapper', 'functions', 'restParam'],
-  'bindKey': [ 'createWrapper', 'lodash', 'restParam', 'replaceHolders'],
-  'callback': ['baseCallback', 'isIterateeCall', 'isObjectLike', 'matches'],
-  'camelCase': ['createCompounder'],
-  'capitalize': ['baseToString'],
-  'chain': ['lodash'],
-  'chunk': ['baseSlice', 'isIterateeCall'],
-  'clone': ['baseClone', 'bindCallback', 'isIterateeCall'],
-  'cloneDeep': ['baseClone', 'bindCallback'],
-  'compact': [],
-  'constant': [],
-  'countBy': ['createAggregator'],
-  'create': ['baseCopy', 'baseCreate', 'isIterateeCall', 'keys'],
-  'curry': ['createCurry'],
-  'curryRight': ['createCurry'],
-  'debounce': ['isObject', 'now'],
-  'deburr': ['baseToString', 'deburrLetter'],
-  'defaults': ['assign', 'assignDefaults', 'restParam'],
-  'defer': ['baseDelay', 'restParam'],
-  'delay': ['baseDelay', 'restParam'],
-  'difference': ['baseDifference', 'baseFlatten', 'isArguments', 'isArray', 'restParam'],
-  'drop': ['baseSlice', 'isIterateeCall'],
-  'dropRight': ['baseSlice', 'isIterateeCall'],
-  'dropRightWhile': ['baseWhile', 'getCallback'],
-  'dropWhile': ['baseWhile', 'getCallback'],
-  'endsWith': ['baseToString'],
-  'escape': ['baseToString', 'escapeHtmlChar'],
-  'escapeRegExp': ['baseToString'],
-  'every': ['arrayEvery', 'baseEvery', 'getCallback', 'isArray', 'isIterateeCall'],
-  'fill': ['baseFill', 'isIterateeCall'],
-  'filter': ['arrayFilter', 'baseFilter', 'getCallback', 'isArray'],
-  'find': ['baseEach','createFind'],
-  'findIndex': ['createFindIndex'],
-  'findLastIndex': ['createFindIndex'],
-  'findKey': ['baseForOwn', 'createFindKey'],
-  'findLast': ['baseEachRight', 'createFind'],
-  'findLastKey': ['baseForOwnRight', 'createFindKey'],
-  'findWhere': ['baseMatches', 'find'],
-  'first': [],
-  'flatten': ['baseFlatten', 'isIterateeCall'],
-  'flattenDeep': ['baseFlatten'],
-  'flow': ['createFlow'],
-  'flowRight': ['createFlow'],
-  'forEach': ['arrayEach', 'baseEach', 'createForEach'],
-  'forEachRight': ['arrayEachRight', 'baseEachRight', 'createForEach'],
-  'forIn': ['baseFor', 'createForIn'],
-  'forInRight': ['baseForRight', 'createForIn'],
-  'forOwn': ['baseForOwn', 'createForOwn'],
-  'forOwnRight': ['baseForOwnRight', 'createForOwn'],
-  'functions': ['baseFunctions', 'keysIn'],
-  'groupBy': ['createAggregator'],
-  'has': [],
-  'identity': [],
-  'includes': ['getIndexOf', 'isArray', 'isIterateeCall', 'isLength', 'isString', 'values'],
-  'indexBy': ['createAggregator'],
-  'indexOf': ['baseIndexOf', 'binaryIndex'],
-  'initial': ['dropRight'],
-  'inRange': [],
-  'intersection': ['cacheIndexOf', 'createCache', 'getIndexOf', 'isArguments', 'isArray'],
-  'invert': ['isIterateeCall', 'keys'],
-  'invoke': ['baseEach', 'isLength', 'restParam'],
-  'isArguments': ['isLength', 'isObjectLike'],
-  'isArray': ['isLength', 'isNative', 'isObjectLike'],
-  'isBoolean': ['isObjectLike'],
-  'isDate': ['isObjectLike'],
-  'isElement': ['isHostObject', 'isObjectLike', 'isPlainObject'],
-  'isEmpty': ['isArguments', 'isArray', 'isFunction', 'isLength', 'isObjectLike', 'isString', 'keys'],
-  'isEqual': ['baseIsEqual', 'bindCallback', 'isStrictComparable'],
-  'isError': ['isObjectLike'],
-  'isFinite': ['isNative'],
-  'isFunction': ['baseIsFunction', 'isNative'],
-  'isMatch': ['baseIsMatch', 'bindCallback', 'isStrictComparable', 'keys', 'toObject'],
-  'isNaN': ['isNumber'],
-  'isNative': ['escapeRegExp', 'isHostObject', 'isObjectLike'],
-  'isNull': [],
-  'isNumber': ['isObjectLike'],
-  'isObject': [],
-  'isPlainObject': ['isArguments', 'isNative', 'shimIsPlainObject'],
-  'isRegExp': ['isObject'],
-  'isString': ['isObjectLike'],
-  'isUndefined': [],
-  'kebabCase': ['createCompounder'],
-  'keys': ['isLength', 'isObject', 'isNative', 'shimKeys'],
-  'keysIn': ['arrayEach', 'isArguments', 'isArray', 'isFunction', 'isIndex', 'isLength', 'isObject', 'isString'],
-  'last': [],
-  'lastIndexOf': ['indexOfNaN', 'binaryIndex'],
-  'lodash': ['baseLodash', 'isArray', 'isObjectLike', 'LazyWrapper', 'LodashWrapper', 'wrapperClone'],
-  'map': ['arrayMap', 'baseMap', 'getCallback', 'isArray'],
-  'mapValues': ['baseForOwn', 'getCallback'],
-  'matches': ['baseClone', 'baseMatches'],
-  'matchesProperty': ['baseClone', 'baseMatchesProperty'],
-  'max': ['arrayMax', 'createExtremum'],
-  'memoize': ['MapCache'],
-  'merge': ['baseMerge', 'createAssigner'],
-  'min': ['arrayMin', 'createExtremum'],
-  'mixin': ['arrayCopy', 'baseFunctions', 'isFunction', 'isObject', 'keys', 'lodash'],
-  'negate': [],
-  'noConflict': [],
-  'noop': [],
-  'now': ['isNative'],
-  'omit': ['arrayMap', 'baseDifference', 'baseFlatten', 'bindCallback', 'keysIn', 'pickByArray', 'pickByCallback', 'restParam'],
-  'once': ['before'],
-  'pad': ['baseToString', 'createPadding'],
-  'padLeft': ['createPadDir'],
-  'padRight': ['createPadDir'],
-  'pairs': ['keys'],
-  'parseInt': ['isIterateeCall', 'trim'],
-  'partial': ['createPartial'],
-  'partialRight': ['createPartial'],
-  'partition': ['createAggregator'],
-  'pick': ['baseFlatten', 'bindCallback', 'pickByArray', 'pickByCallback', 'restParam'],
-  'pluck': ['baseProperty', 'map'],
-  'property': ['baseProperty'],
-  'propertyOf': [],
-  'pull': ['getIndexOf'],
-  'pullAt': ['baseAt', 'baseCompareAscending', 'baseFlatten', 'isIndex', 'restParam'],
-  'random': ['baseRandom', 'isIterateeCall'],
-  'range': ['isIterateeCall'],
-  'rearg': ['baseFlatten', 'createWrapper', 'restParam'],
-  'reduce': ['arrayReduce', 'baseEach', 'createReduce'],
-  'reduceRight': ['arrayReduceRight', 'baseEachRight', 'createReduce'],
-  'reject': ['arrayFilter', 'baseFilter', 'getCallback', 'isArray'],
-  'remove': ['getCallback'],
-  'repeat': ['baseToString'],
-  'rest': ['drop'],
-  'restParam': [],
-  'result': ['isFunction'],
-  'runInContext': ['defaults', 'pick'],
-  'sample': ['baseRandom', 'isIterateeCall', 'shuffle', 'toIterable'],
-  'shuffle': ['baseRandom', 'toIterable'],
-  'size': ['isLength', 'keys'],
-  'slice': ['baseSlice', 'isIterateeCall'],
-  'snakeCase': ['createCompounder'],
-  'some': ['arraySome', 'baseSome', 'getCallback', 'isArray', 'isIterateeCall'],
-  'sortBy': ['baseEach', 'baseSortBy', 'compareAscending', 'getCallback', 'isIterateeCall', 'isLength'],
-  'sortByAll': ['baseFlatten', 'baseSortByOrder', 'isIterateeCall'],
-  'sortByOrder': ['baseSortByOrder', 'isArray', 'isIterateeCall'],
-  'sortedIndex': ['createSortedIndex'],
-  'sortedLastIndex': ['createSortedIndex'],
-  'spread': [],
-  'startCase': ['createCompounder'],
-  'startsWith': ['baseToString'],
-  'sum': ['baseSum', 'arraySum', 'isArray', 'isIterateeCall', 'getCallback', 'toIterable'],
-  'take': ['baseSlice', 'isIterateeCall'],
-  'takeRight': ['baseSlice', 'isIterateeCall'],
-  'takeRightWhile': ['baseWhile', 'getCallback'],
-  'takeWhile': ['baseWhile', 'getCallback'],
-  'tap': [],
-  'template': ['assignOwnDefaults', 'attempt', 'baseAssign', 'baseToString', 'baseValues', 'escapeStringChar', 'isError', 'isIterateeCall', 'keys'],
-  'throttle': ['debounce', 'isObject'],
-  'thru': [],
-  'times': ['bindCallback'],
-  'toArray': ['arrayCopy', 'isLength', 'isString', 'values'],
-  'toPlainObject': ['baseCopy', 'keysIn'],
-  'transform': ['arrayEach', 'baseCreate', 'baseForOwn', 'getCallback', 'isArray', 'isFunction', 'isObject', 'isTypedArray'],
-  'trim': ['baseToString', 'charsLeftIndex', 'charsRightIndex', 'isIterateeCall', 'trimmedLeftIndex', 'trimmedRightIndex'],
-  'trimLeft': ['baseToString', 'charsLeftIndex', 'isIterateeCall', 'trimmedLeftIndex'],
-  'trimRight': ['baseToString', 'charsRightIndex', 'isIterateeCall', 'trimmedRightIndex'],
-  'trunc': ['baseToString', 'isIterateeCall', 'isObject', 'isRegExp'],
-  'unescape': ['baseToString', 'unescapeHtmlChar'],
-  'union': ['baseFlatten', 'baseUniq', 'restParam'],
-  'uniq': ['baseCallback', 'baseUniq', 'getCallback', 'getIndexOf', 'isIterateeCall', 'sortedUniq'],
-  'uniqueId': ['baseToString'],
-  'unzip': ['arrayMap', 'arrayMax', 'baseProperty'],
-  'values': ['baseValues', 'keys'],
-  'valuesIn': ['baseValues', 'keysIn'],
-  'where': ['baseMatches', 'filter'],
-  'without': ['baseDifference', 'isArguments', 'isArray', 'restParam'],
-  'words': ['baseToString', 'isIterateeCall'],
-  'wrap': ['createWrapper', 'identity'],
-  'xor': ['baseDifference', 'baseUniq', 'isArguments', 'isArray'],
-  'zip': ['restParam', 'unzip'],
-  'zipObject': ['isArray'],
-
-  // Dependencies of Lazy wrapper functions.
-  'LazyWrapper': ['baseCreate', 'baseLodash'],
-  'lazyClone': ['arrayCopy', 'LazyWrapper'],
-  'lazyReverse': ['LazyWrapper'],
-  'lazyValue': ['baseWrapperValue', 'getView', 'isArray'],
-
-  // Dependencies of lodash wrapper functions.
-  'LodashWrapper': ['baseCreate', 'baseLodash'],
-  'wrapperChain': ['chain'],
-  'wrapperClone': ['arrayCopy', 'LazyWrapper', 'LodashWrapper'],
-  'wrapperCommit': ['LodashWrapper'],
-  'wrapperPlant': ['baseLodash', 'wrapperClone'],
-  'wrapperReverse': ['LazyWrapper', 'LodashWrapper', 'thru'],
-  'wrapperToString': [],
-  'wrapperValue': ['baseWrapperValue'],
-
-  // Dependencies of `Map` cache functions.
-  'MapCache': ['mapDelete', 'mapGet', 'mapHas', 'mapSet'],
-  'mapDelete': [],
-  'mapGet': [],
-  'mapHas': [],
-  'mapSet': [],
-
-  // Dependencies of `Set` cache functions.
-  'SetCache': ['cachePush', 'isNative'],
-  'cacheIndexOf': ['isObject'],
-  'cachePush': ['isObject'],
-  'createCache': ['constant', 'isNative', 'SetCache'],
-
-  // Dependencies of private functions.
-  'arrayCopy': [],
-  'arrayEach': [],
-  'arrayEachRight': [],
-  'arrayEvery': [],
-  'arrayFilter': [],
-  'arrayMap': [],
-  'arrayMax': [],
-  'arrayMin': [],
-  'arrayReduce': [],
-  'arrayReduceRight': [],
-  'arraySome': [],
-  'arraySum': [],
-  'assignDefaults': [],
-  'assignOwnDefaults': [],
-  'baseAssign': ['baseCopy', 'keys'],
-  'baseAt': ['isIndex', 'isLength'],
-  'baseCallback': ['baseMatches', 'baseMatchesProperty', 'baseProperty', 'bindCallback', 'identity'],
-  'baseClone': ['arrayCopy', 'arrayEach', 'baseCopy', 'baseForOwn', 'initCloneArray', 'initCloneByTag', 'initCloneObject', 'isArray', 'isHostObject', 'isObject', 'keys'],
-  'baseCompareAscending': [],
-  'baseCopy': [],
-  'baseCreate': ['isObject'],
-  'baseDelay': [],
-  'baseDifference': ['cacheIndexOf', 'createCache', 'getIndexOf'],
-  'baseEach': ['baseForOwn', 'createBaseEach'],
-  'baseEachRight': ['baseForOwnRight', 'createBaseEach'],
-  'baseEvery': ['baseEach'],
-  'baseFill': [],
-  'baseFilter': ['baseEach'],
-  'baseFind': [],
-  'baseFindIndex': [],
-  'baseFlatten': ['isArguments', 'isArray', 'isLength', 'isObjectLike'],
-  'baseFor': ['createBaseFor'],
-  'baseForIn': ['baseFor', 'keysIn'],
-  'baseForOwn': ['baseFor', 'keys'],
-  'baseForOwnRight': ['baseForRight', 'keys'],
-  'baseForRight': ['createBaseFor'],
-  'baseFunctions': ['isFunction'],
-  'baseIndexOf': ['indexOfNaN'],
-  'baseIsEqual': ['baseIsEqualDeep'],
-  'baseIsEqualDeep': ['equalArrays', 'equalByTag', 'equalObjects', 'isArray', 'isHostObject', 'isTypedArray'],
-  'baseIsFunction': [],
-  'baseIsMatch': ['baseIsEqual'],
-  'baseLodash': [],
-  'baseMap': ['baseEach'],
-  'baseMatches': ['baseIsMatch', 'constant', 'isStrictComparable', 'keys', 'toObject'],
-  'baseMatchesProperty': ['baseIsEqual', 'isStrictComparable', 'toObject'],
-  'baseMerge': ['arrayEach', 'baseForOwn', 'baseMergeDeep', 'isArray', 'isLength', 'isObject', 'isObjectLike', 'isTypedArray'],
-  'baseMergeDeep': ['arrayCopy', 'isArguments', 'isArray', 'isLength', 'isPlainObject', 'isTypedArray', 'toPlainObject'],
-  'baseProperty': [],
-  'baseRandom': [],
-  'baseReduce': [],
-  'baseSetData': ['identity'],
-  'baseSlice': [],
-  'baseSome': ['baseEach'],
-  'baseSortBy': [],
-  'baseSortByOrder': ['baseEach', 'baseSortBy', 'compareMultiple', 'isLength'],
-  'baseSum': ['baseEach'],
-  'baseToString': [],
-  'baseUniq': ['cacheIndexOf', 'createCache', 'getIndexOf'],
-  'baseValues': [],
-  'baseWhile': ['baseSlice'],
-  'baseWrapperValue': ['LazyWrapper'],
-  'binaryIndex': ['binaryIndexBy', 'identity'],
-  'binaryIndexBy': [],
-  'bindCallback': ['identity'],
-  'bufferClone': ['constant', 'isNative'],
-  'charAtCallback': [],
-  'charsLeftIndex': [],
-  'charsRightIndex': [],
-  'compareAscending': ['baseCompareAscending'],
-  'compareMultiple': ['baseCompareAscending'],
-  'composeArgs': [],
-  'composeArgsRight': [],
-  'createAggregator': ['baseEach', 'getCallback', 'isArray'],
-  'createAssigner': ['bindCallback', 'isIterateeCall'],
-  'createBaseEach': ['isLength', 'toObject'],
-  'createBaseFor': ['toObject'],
-  'createBindWrapper': ['createCtorWrapper'],
-  'createFlow': ['getData', 'getFuncName', 'isArray', 'isLaziable', 'LodashWrapper'],
-  'createCompounder': ['deburr', 'words'],
-  'createCtorWrapper': ['baseCreate', 'isObject'],
-  'createCurry': ['createWrapper', 'isIterateeCall', 'lodash'],
-  'createExtremum': ['baseCallback', 'charAtCallback', 'extremumBy', 'getCallback', 'isArray', 'isIterateeCall', 'isString', 'toIterable'],
-  'createFind': ['baseFind', 'baseFindIndex', 'getCallback', 'isArray'],
-  'createFindIndex': ['baseFindIndex', 'getCallback'],
-  'createFindKey': ['baseFind', 'getCallback'],
-  'createForEach': ['bindCallback', 'isArray'],
-  'createForIn': ['bindCallback', 'keysIn'],
-  'createForOwn': ['bindCallback'],
-  'createHybridWrapper': ['arrayCopy', 'composeArgs', 'composeArgsRight', 'createCtorWrapper', 'isLaziable', 'reorder', 'replaceHolders', 'setData'],
-  'createPadding': ['repeat'],
-  'createPadDir': ['baseToString', 'createPadding'],
-  'createPartial': ['createWrapper', 'lodash', 'restParam', 'replaceHolders'],
-  'createPartialWrapper': ['createCtorWrapper'],
-  'createReduce': ['baseReduce', 'getCallback', 'isArray'],
-  'createSortedIndex': ['baseCallback', 'binaryIndex', 'binaryIndexBy', 'getCallback'],
-  'createWrapper': ['baseSetData', 'createBindWrapper', 'createHybridWrapper', 'createPartialWrapper', 'getData', 'mergeData', 'setData'],
-  'deburrLetter': [],
-  'escapeHtmlChar': [],
-  'escapeStringChar': [],
-  'equalArrays': [],
-  'equalByTag': [],
-  'equalObjects': ['keys'],
-  'extremumBy': ['baseEach'],
-  'getCallback': ['baseCallback', 'callback'],
-  'getData': ['noop'],
-  'getFuncName': ['baseProperty', 'constant'],
-  'getIndexOf': ['baseIndexOf', 'indexOf'],
-  'getView': [],
-  'indexOfNaN': [],
-  'initCloneArray': [],
-  'initCloneByTag': ['bufferClone'],
-  'initCloneObject': [],
-  'isHostObject': [],
-  'isIndex': [],
-  'isIterateeCall': ['isIndex', 'isLength', 'isObject'],
-  'isLaziable': ['getFuncName', 'LazyWrapper', 'lodash'],
-  'isLength': [],
-  'isObjectLike': [],
-  'isSpace': [],
-  'isStrictComparable': ['isObject'],
-  'isTypedArray': ['isLength', 'isObjectLike'],
-  'mergeData': ['arrayCopy', 'composeArgs', 'composeArgsRight', 'replaceHolders'],
-  'pickByArray': ['toObject'],
-  'pickByCallback': ['baseForIn'],
-  'reorder': ['arrayCopy', 'isIndex'],
-  'replaceHolders': [],
-  'setData': ['baseSetData', 'now'],
-  'shimIsPlainObject': ['baseForIn', 'isArguments', 'isHostObject', 'isObjectLike'],
-  'shimKeys': ['isArguments', 'isArray', 'isIndex', 'isLength', 'isString', 'keysIn'],
-  'sortedUniq': [],
-  'toIterable': ['isLength', 'isObject', 'isString', 'values'],
-  'toObject': ['isObject', 'isString'],
-  'trimmedLeftIndex': ['isSpace'],
-  'trimmedRightIndex': ['isSpace'],
-  'unescapeHtmlChar': []
-});
-
-/** Used to track lodash object dependencies of identifiers. */
-var objDependencyMap = createMap({
-  'getFuncName': ['realNames', 'support'],
-  'isArguments': ['support'],
-  'isElement': ['support'],
-  'isPlainObject': ['support'],
-  'keys': ['support'],
-  'keysIn': ['support'],
-  'main': ['realNames', 'support'],
-  'shimIsPlainObject': ['support'],
-  'shimKeys': ['support'],
-  'template': ['templateSettings'],
-  'toArray': ['support'],
-  'toIterable': ['support'],
-  'toObject': ['support']
-});
-
-/** Used to track variable dependencies of identifiers. */
-var varDependencyMap = createMap({
-  'after': ['root'],
-  'baseCreate': ['root'],
-  'baseSetData': ['metaMap'],
-  'bufferClone': ['root'],
-  'createBindWrapper': ['root'],
-  'createCache': ['root'],
-  'createHybridWrapper': ['root'],
-  'createPadding': ['root'],
-  'createPartialWrapper': ['root'],
-  'getData': ['metaMap'],
-  'initCloneByTag': ['root'],
-  'isFinite': ['root'],
-  'isFunction': ['root'],
-  'metaMap': ['root'],
-  'pad': ['root'],
-  'parseInt': ['root'],
-  'repeat': ['root'],
-  'SetCache': ['root'],
-  'support': ['root'],
-  'template': ['reInterpolate'],
-  'templateSettings': ['reEscape', 'reEvaluate', 'reInterpolate'],
-  'times': ['root']
-});
-
-/** Used to track the category of aliases. */
-var aliasCategoryMap = createMap({
-  'Collection': [
-    'max',
-    'min',
-    'sum'
-  ]
-});
-
-/** Used to track the category of identifiers. */
-var categoryMap = createMap({
-  'Array': [
-    'chunk',
-    'compact',
-    'difference',
-    'drop',
-    'dropRight',
-    'dropRightWhile',
-    'dropWhile',
-    'fill',
-    'findIndex',
-    'findLastIndex',
-    'first',
-    'flatten',
-    'flattenDeep',
-    'indexOf',
-    'initial',
-    'intersection',
-    'last',
-    'lastIndexOf',
-    'pull',
-    'pullAt',
-    'remove',
-    'rest',
-    'slice',
-    'sortedIndex',
-    'sortedLastIndex',
-    'take',
-    'takeRight',
-    'takeRightWhile',
-    'takeWhile',
-    'union',
-    'uniq',
-    'unzip',
-    'without',
-    'xor',
-    'zip',
-    'zipObject'
-  ],
-  'Chain': [
-    'chain',
-    'lodash',
-    'tap',
-    'thru',
-    'wrapperChain',
-    'wrapperCommit',
-    'wrapperPlant',
-    'wrapperReverse',
-    'wrapperToString',
-    'wrapperValue'
-  ],
-  'Collection': [
-    'at',
-    'countBy',
-    'every',
-    'filter',
-    'find',
-    'findLast',
-    'findWhere',
-    'forEach',
-    'forEachRight',
-    'groupBy',
-    'includes',
-    'indexBy',
-    'invoke',
-    'map',
-    'partition',
-    'pluck',
-    'reduce',
-    'reduceRight',
-    'reject',
-    'sample',
-    'shuffle',
-    'size',
-    'some',
-    'sortBy',
-    'sortByAll',
-    'sortByOrder',
-    'where'
-  ],
-  'Date': [
-    'now'
-  ],
-  'Function': [
-    'after',
-    'ary',
-    'before',
-    'bind',
-    'bindAll',
-    'bindKey',
-    'curry',
-    'curryRight',
-    'debounce',
-    'defer',
-    'delay',
-    'flow',
-    'flowRight',
-    'memoize',
-    'negate',
-    'once',
-    'partial',
-    'partialRight',
-    'rearg',
-    'restParam',
-    'spread',
-    'throttle',
-    'wrap'
-  ],
-  'Lang': [
-    'clone',
-    'cloneDeep',
-    'isArguments',
-    'isArray',
-    'isBoolean',
-    'isDate',
-    'isElement',
-    'isEmpty',
-    'isEqual',
-    'isError',
-    'isFinite',
-    'isFunction',
-    'isMatch',
-    'isNaN',
-    'isNative',
-    'isNull',
-    'isNumber',
-    'isObject',
-    'isPlainObject',
-    'isRegExp',
-    'isString',
-    'isTypedArray',
-    'isUndefined',
-    'toArray',
-    'toPlainObject'
-  ],
-  'Math': [
-    'add',
-    'max',
-    'min',
-    'sum'
-  ],
-  'Number': [
-    'random',
-    'inRange'
-  ],
-  'Object': [
-    'assign',
-    'create',
-    'defaults',
-    'findKey',
-    'findLastKey',
-    'forIn',
-    'forInRight',
-    'forOwn',
-    'forOwnRight',
-    'functions',
-    'has',
-    'invert',
-    'keys',
-    'keysIn',
-    'mapValues',
-    'merge',
-    'omit',
-    'pairs',
-    'pick',
-    'result',
-    'transform',
-    'values',
-    'valuesIn'
-  ],
-  'String': [
-    'camelCase',
-    'capitalize',
-    'deburr',
-    'endsWith',
-    'escape',
-    'escapeRegExp',
-    'kebabCase',
-    'pad',
-    'padLeft',
-    'padRight',
-    'parseInt',
-    'repeat',
-    'snakeCase',
-    'startCase',
-    'startsWith',
-    'template',
-    'templateSettings',
-    'trim',
-    'trimLeft',
-    'trimRight',
-    'trunc',
-    'unescape',
-    'words'
-  ],
-  'Utility': [
-    'attempt',
-    'callback',
-    'constant',
-    'identity',
-    'matches',
-    'matchesProperty',
-    'mixin',
-    'noConflict',
-    'noop',
-    'property',
-    'propertyOf',
-    'range',
-    'runInContext',
-    'times',
-    'uniqueId'
-  ]
-});
-
-/* Used to map categories to their dependency name. */
-var categoryToDepNameMap = createMap({
-  'Array': 'array',
-  'Chain': 'chain',
-  'Collection': 'collection',
-  'Date': 'date',
-  'Function': 'func',
-  'Lang': 'lang',
-  'Math': 'math',
-  'Number': 'number',
-  'Object': 'object',
-  'String': 'string',
-  'Utility': 'utility'
-});
-
-/* Used to force referencing identifers by their alias. */
-var forceAliasMap = createMap({
-  'wrapperCommit': 'commit',
-  'wrapperPlant': 'plant',
-  'wrapperReverse': 'reverse',
-  'wrapperToString': 'toString',
-  'wrapperValue': 'value'
-});
-
-/* Used to force inlining of uninlinables per identifier. */
-var forceInlineMap = createMap({
-  'baseEach': ['baseFor'],
-  'baseCallback': ['baseIsMatch', 'baseMatches', 'baseMatchesProperty', 'baseProperty'],
-  'isArray': ['baseToString', 'isNative'],
-  'isFunction': ['baseIsFunction', 'baseToString', 'isNative'],
-  'isNative': ['baseToString'],
-  'keys': ['keysIn'],
-  'template': ['attempt', 'baseAssign', 'isError'],
-  'templateSettings': ['reEscape', 'reEvaluate']
-});
-
-/* Used to hoist nested dependencies per identifier. */
-var hoistDepMap = createMap({
-  'countBy': ['keys'],
-  'dropRightWhile': ['isArray'],
-  'dropWhile': ['isArray'],
-  'every': ['keys'],
-  'filter': ['keys'],
-  'find': ['keys'],
-  'findIndex': ['isArray'],
-  'findLast': ['keys'],
-  'findLastIndex': ['isArray'],
-  'groupBy': ['keys'],
-  'indexBy': ['keys'],
-  'map': ['keys'],
-  'max': ['keys'],
-  'merge': ['isNative', 'keysIn'],
-  'min': ['keys'],
-  'partition': ['keys'],
-  'reduce': ['keys'],
-  'reduceRight': ['keys'],
-  'reject': ['keys'],
-  'some': ['keys'],
-  'sortBy': ['isArray', 'keys'],
-  'sortByAll': ['baseEach', 'isArguments', 'isArray'],
-  'sortByOrder': ['baseEach', 'isArray'],
-  'sortedIndex': ['isArray'],
-  'sortedLastIndex': ['isArray'],
-  'sum': ['keys'],
-  'takeRightWhile': ['isArray'],
-  'takeWhile': ['isArray'],
-  'template': ['baseToString', 'escape'],
-  'uniq': ['isArray', 'isNative']
-});
-
-/** Used to map old categories to current ones. */
-var oldCategoryMap = createMap({
-  'Arrays': 'Array',
-  'Chaining': 'Chain',
-  'Collections': 'Collection',
-  'Functions': 'Function',
-  'Objects': 'Object',
-  'Utilities': 'Utility'
-});
-
-/* Used to designate dependencies at the top level. */
-var topLevel = createMap({
-  'main': true,
-  'support': true
-});
-
-/** List of all object property dependencies. */
-var objDependencies = _.uniq(_.transform(objDependencyMap, _.bind(push.apply, push), [])).sort();
-
-/** List of all variable dependencies. */
-var varDependencies = _.uniq(_.transform(varDependencyMap, _.bind(push.apply, push), [])).sort();
-
-/** List of all function categories. */
-var allCategories = _.keys(categoryMap).sort();
-
-/** List of all functions. */
-var allFuncs = _.filter(_.difference(_.keys(funcDependencyMap), objDependencies, varDependencies).sort(), function(key) {
-  var type = typeof _.prototype[key];
-  return type == 'function' || type == 'undefined';
-});
-
-/** List of lodash functions. */
-var lodashFuncs = _.intersection(allFuncs, _.union(
-  _.functions(_),
-  _.functions(_.prototype),
-  categoryMap.Chain,
-  ['main']
-));
-
-/** List of the default ways to export the `lodash` function. */
-var defaultExports = [
-  'amd',
-  'commonjs',
-  'global',
-  'iojs',
-  'node'
-];
-
-/** List of variables with complex assignments. */
-var complexVars = [
-  'cloneableTags',
-  'contextProps',
-  'ctorByTag',
-  'freeGlobal',
-  'nonEnumProps',
-  'reWords',
-  'shadowProps',
-  'support',
-  'typedArrayTags',
-  'whitespace'
-];
-
-/** List of dependencies that should not cause a minor bump when changed. */
-var laxSemVerDeps = [
-  'isBoolean',
-  'isError',
-  'isFinite',
-  'isFunction',
-  'isNaN',
-  'isNull',
-  'isNumber',
-  'isObject',
-  'isObjectLike',
-  'isString',
-  'isUndefined'
-];
-
-/** List of functions that support argument placeholders. */
-var placeholderFuncs = [
-  'bind',
-  'bindKey',
-  'curry',
-  'curryRight',
-  'partial',
-  'partialRight'
-];
-
-/** List of uninlinable dependencies. */
-var uninlinables = _.union(
-  _.without(lodashFuncs,
-    'constant',
-    'drop',
-    'dropRight',
-    'escapeRegExp',
-    'filter',
-    'identity',
-    'isObject',
-    'matches',
-    'noop',
-    'now',
-    'pluck',
-    'property',
-    'values'
-  ),
-  _.keys(_.support),
-  _.keys(_.templateSettings), [
-  'arrayCopy',
-  'arrayEach',
-  'arrayEvery',
-  'arrayFilter',
-  'arrayMap',
-  'arrayMax',
-  'arrayMin',
-  'baseAssign',
-  'baseAt',
-  'baseCallback',
-  'baseClone',
-  'baseCompareAscending',
-  'baseCopy',
-  'baseCreate',
-  'baseDelay',
-  'baseDifference',
-  'baseEach',
-  'baseEachRight',
-  'baseFilter',
-  'baseFind',
-  'baseFindIndex',
-  'baseFlatten',
-  'baseFor',
-  'baseForRight',
-  'baseFunctions',
-  'baseIndexOf',
-  'baseIsEqual',
-  'baseIsMatch',
-  'baseMatches',
-  'baseMatchesProperty',
-  'baseProperty',
-  'baseRandom',
-  'baseReduce',
-  'baseSlice',
-  'baseSortBy',
-  'baseSortByOrder',
-  'baseToString',
-  'baseUniq',
-  'baseValues',
-  'binaryIndex',
-  'binaryIndexBy',
-  'bindCallback',
-  'cacheIndexOf',
-  'charsLeftIndex',
-  'charsRightIndex',
-  'createAggregator',
-  'createAssigner',
-  'createCache',
-  'createCompounder',
-  'createPadding',
-  'createWrapper',
-  'isIterateeCall',
-  'pickByArray',
-  'pickByCallback',
-  'reInterpolate',
-  'reEscape',
-  'reEvaluate',
-  'replaceHolders',
-  'templateSettings',
-  'toIterable',
-  'trimmedLeftIndex',
-  'trimmedRightIndex'
-]).sort();
-
 /*----------------------------------------------------------------------------*/
 
 /**
@@ -1148,8 +221,8 @@ function buildModule(state, onComplete) {
         readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
 
     // Exclude "Chain" methods and most internal functions when exporting for npm.
-    identifiers = _.reject(_.difference(identifiers, categoryMap.Chain), function(identifier) {
-      return isPrivate(identifier) && !_.includes(uninlinables, identifier) && !_.includes(includeFuncs, identifier);
+    identifiers = _.reject(_.difference(identifiers, mapping.category.Chain), function(identifier) {
+      return isPrivate(identifier) && !_.includes(listing.uninlinables, identifier) && !_.includes(includeFuncs, identifier);
     });
 
     // Remove unused packages.
@@ -1184,9 +257,9 @@ function buildModule(state, onComplete) {
     ).sort();
 
     if (isNpm) {
-      var hoistDeps = hoistDepMap[identifier],
-          forceInlineDeps = _.difference(forceInlineMap[identifier], hoistDeps),
-          uninlinees = _.difference(uninlinables, forceInlineDeps);
+      var hoistDeps = mapping.hoist[identifier],
+          forceInlineDeps = _.difference(mapping.forceInline[identifier], hoistDeps),
+          uninlinees = _.difference(listing.uninlinables, forceInlineDeps);
 
       var inlinees = _.uniq(_.transform(_.difference(depNames, uninlinees), function(result, identifier) {
         push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinees)));
@@ -1196,15 +269,15 @@ function buildModule(state, onComplete) {
       depNames = _.union(_.intersection(uninlinees, depNames), _.intersection(uninlinees, inlinees), hoistDeps);
       inlinees = _.difference(inlinees, depNames).concat(identifier);
 
-      var inlineFuncs = _.intersection(allFuncs, inlinees),
-          inlineObjs = _.intersection(objDependencies, inlinees),
-          inlineVars = _.intersection(varDependencies, inlinees);
+      var inlineFuncs = _.intersection(listing.funcs, inlinees),
+          inlineObjs = _.intersection(listing.objDeps, inlinees),
+          inlineVars = _.intersection(listing.varDeps, inlinees);
     }
     else {
       inlinees = [identifier];
-      inlineFuncs = _.includes(allFuncs, identifier) ? inlinees : [];
-      inlineObjs = _.includes(objDependencies, identifier) ? inlinees : [];
-      inlineVars = _.includes(varDependencies, identifier) ? inlinees : [];
+      inlineFuncs = _.includes(listing.funcs, identifier) ? inlinees : [];
+      inlineObjs = _.includes(listing.objDeps, identifier) ? inlinees : [];
+      inlineVars = _.includes(listing.varDeps, identifier) ? inlinees : [];
     }
     state.outputPath = path.join(outputPath, modulePath, (isNpm ? 'index' : identifier) + '.js');
     state.buildFuncs = state.includeFuncs = inlineFuncs;
@@ -1270,9 +343,9 @@ function buildModule(state, onComplete) {
         var type = 'function',
             version = state.lodash.VERSION;
 
-        if (_.includes(objDependencies, identifier)) {
+        if (_.includes(listing.objDeps, identifier)) {
           type = 'object';
-        } else if (_.includes(varDependencies, identifier)) {
+        } else if (_.includes(listing.varDeps, identifier)) {
           type = 'variable';
         }
         var templateData = {
@@ -1290,7 +363,7 @@ function buildModule(state, onComplete) {
         // Independently update the package version.
         if (fs.existsSync(data.outputPath)) {
           var semver = require('semver'),
-              laxDeps = _.map(laxSemVerDeps, toDepName),
+              laxDeps = _.map(listing.laxSemVerDeps, toDepName),
               oldPackage = JSON.parse(fs.readFileSync(path.join(path.dirname(data.outputPath), 'package.json'), 'utf-8')),
               oldVersion = oldPackage.version,
               oldDeps = _.omit(oldPackage.dependencies || {}, laxDeps),
@@ -1399,7 +472,7 @@ function buildModule(state, onComplete) {
     }))).sort();
 
     var categoryDeps = _.map(categories, function(category) {
-      return categoryToDepNameMap[category] || category.toLowerCase();
+      return mapping.categoryToDepName[category] || category.toLowerCase();
     });
 
     var categoryDepPaths = _.map(categories, function(category) {
@@ -1426,7 +499,7 @@ function buildModule(state, onComplete) {
       var source = data.source;
 
       // Remove unneeded method and alias assignments.
-      _.each(_.difference(allFuncs, buildFuncs), function(funcName) {
+      _.each(_.difference(listing.funcs, buildFuncs), function(funcName) {
         source = removeMethodAssignment(source, funcName);
       });
 
@@ -1468,9 +541,9 @@ function buildModule(state, onComplete) {
         ];
 
         if (_.includes(identifiers, 'templateSettings')) {
-          code.push('  (lodash.templateSettings = ' + categoryToDepNameMap.String + '.templateSettings).imports._ = lodash;');
+          code.push('  (lodash.templateSettings = ' + mapping.categoryToDepName.String + '.templateSettings).imports._ = lodash;');
         }
-        var funcNames = _.intersection(buildFuncs, placeholderFuncs);
+        var funcNames = _.intersection(buildFuncs, listing.placeholderFuncs);
         if (!_.isEmpty(funcNames)) {
           code.push(
             '',
@@ -1495,8 +568,8 @@ function buildModule(state, onComplete) {
         if (_.includes(deps, identifier)) {
           return match;
         }
-        var category = categoryToDepNameMap[getCategory(identifier, funcDepMap)];
-        return left + (category ? category + '.' : '') + _.result(forceAliasMap, identifier, identifier);
+        var category = mapping.categoryToDepName[getCategory(identifier, funcDepMap)];
+        return left + (category ? category + '.' : '') + _.result(mapping.forceAlias, identifier, identifier);
       });
 
       // Track and remove unused dependencies.
@@ -1564,7 +637,7 @@ function buildModule(state, onComplete) {
       return;
     }
     var depNames = _.transform(_.intersection(getNamesByCategory(category), identifiers), function(result, depName) {
-      if (!forceAliasMap[depName]) {
+      if (!mapping.forceAlias[depName]) {
         result.push(depName);
       }
       push.apply(result, getAliases(depName));
@@ -1867,18 +940,6 @@ function cleanupSource(source) {
 }
 
 /**
- * Creates a map object. If a `properties` object is provided its own
- * enumerable properties are assigned to the created object.
- *
- * @private
- * @param {Object} [properties] The properties to assign to the object.
- * @returns {Object} Returns the new object.
- */
-function createMap(properties) {
-  return _.assign(Object.create(null), properties);
-}
-
-/**
  * The default callback used for `build` invocations.
  *
  * @private
@@ -1908,7 +969,7 @@ function defaultBuildCallback(data) {
  * @returns {Array} Returns an array of aliases.
  */
 function getAliases(identifier) {
-  return _.result(realToAliasMap, identifier, []);
+  return _.result(mapping.realToAlias, identifier, []);
 }
 
 /**
@@ -1919,7 +980,7 @@ function getAliases(identifier) {
  * @returns {Array} Returns an array of aliases.
  */
 function getCategoryAliases(identifier) {
-  return _.transform(aliasCategoryMap, function(result, identifiers, category) {
+  return _.transform(mapping.aliasCategory, function(result, identifiers, category) {
     if (_.includes(identifiers, identifier)) {
       result.push(category);
     }
@@ -1966,8 +1027,8 @@ function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack)
  */
 function getCategory(identifier, funcDepMap) {
   identifier = getRealName(identifier);
-  return _.find(allCategories, function(category) {
-    return _.includes(categoryMap[category], identifier);
+  return _.find(listing.categories, function(category) {
+    return _.includes(mapping.category[category], identifier);
   });
 }
 
@@ -2197,7 +1258,7 @@ function getMethodAssignments(source) {
  * @returns {string} Returns the module path.
  */
 function getModulePath(identifier, category, funcDepMap) {
-  if (topLevel[identifier]) {
+  if (_.includes(listing.topLevelDeps, identifier)) {
     return '';
   }
   if (isPrivate(identifier)) {
@@ -2221,7 +1282,7 @@ function getModulePath(identifier, category, funcDepMap) {
  * @returns {Array} Returns a new array of names.
  */
 function getNamesByCategory(category) {
-  return _.union(categoryMap[category], aliasCategoryMap[category]);
+  return _.union(mapping.category[category], mapping.aliasCategory[category]);
 }
 
 /**
@@ -2278,7 +1339,7 @@ function getParseIntFork(source) {
  * @returns {string} Returns the real name.
  */
 function getRealName(alias) {
-  return _.result(aliasToRealMap, alias, alias);
+  return _.result(mapping.aliasToReal, alias, alias);
 }
 
 /**
@@ -2289,7 +1350,7 @@ function getRealName(alias) {
  * @returns {string} Returns the real category.
  */
 function getRealCategory(alias) {
-  return _.result(oldCategoryMap, alias, alias);
+  return _.result(mapping.oldCategory, alias, alias);
 }
 
 /**
@@ -2352,10 +1413,10 @@ function isFunctionSnippet(source) {
  */
 function isPrivate(identifier) {
   identifier = getRealName(identifier);
-  if (topLevel[identifier]) {
+  if (_.includes(listing.topLevelDeps, identifier)) {
     return false;
   }
-  return _.findKey(categoryMap, function(identifiers) {
+  return _.findKey(mapping.category, function(identifiers) {
     return _.includes(identifiers, identifier);
   }) === undefined;
 }
@@ -2457,7 +1518,7 @@ function matchVar(source, varName, leadingComments) {
   ];
 
   // Match complex variable assignments.
-  if (_.includes(complexVars, varName)) {
+  if (_.includes(listing.complexVars, varName)) {
     reAttempts.splice(2, 0, ['^(' + commentPattern + ')(( *)var\\s+' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]);
   }
   return _.reduce(reAttempts, function(result, data) {
@@ -3473,9 +2534,9 @@ function build(options, callback) {
   }
   else {
     // Clone dependencies to modify.
-    var funcDepMap = createMap(_.cloneDeep(funcDependencyMap)),
-        objDepMap = createMap(_.cloneDeep(objDependencyMap)),
-        varDepMap = createMap(_.cloneDeep(varDependencyMap));
+    var funcDepMap = createMap(_.cloneDeep(mapping.funcDep)),
+        objDepMap = createMap(_.cloneDeep(mapping.objDep)),
+        varDepMap = createMap(_.cloneDeep(mapping.varDep));
 
     // The path to the source file.
     var filePath = require.resolve('lodash-compat');
@@ -3527,7 +2588,7 @@ function build(options, callback) {
 
     // Used to specify the ways to export the `lodash` function.
     var exportsOptions = (function() {
-      var result = getOption(options, 'exports', isModularize ? ['amd'] : defaultExports);
+      var result = getOption(options, 'exports', isModularize ? ['amd'] : listing.exports);
       return isModularize ? _.take(result, 1) : result;
     }());
 
@@ -3546,7 +2607,7 @@ function build(options, callback) {
       isMapped || isModern || isStrict || isTemplate || outputPath ||
       getOption(options, 'compat') ||
       /\b(?:category|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
-      !_.isEqual(exportsOptions, defaultExports)
+      !_.isEqual(exportsOptions, listing.exports)
     );
 
     // Flags to specify export options.
@@ -3577,10 +2638,10 @@ function build(options, callback) {
     var includeFuncs = _.union(categoryOptions, _.map(getOption(options, 'include', []), getRealName));
 
     // Properties to include in the build.
-    var includeObjs = _.intersection(includeFuncs, objDependencies);
+    var includeObjs = _.intersection(includeFuncs, listing.objDeps);
 
     // Variables to include in the build.
-    var includeVars = _.intersection(includeFuncs, varDependencies);
+    var includeVars = _.intersection(includeFuncs, listing.varDeps);
 
     // Functions to remove from the build.
     var minusFuncs = _.map(getOption(options, 'minus', []), getRealName);
@@ -3590,7 +2651,7 @@ function build(options, callback) {
 
     // Expand categories to function names.
     _.each([includeFuncs, minusFuncs, plusFuncs], function(funcNames) {
-      var categories = _.intersection(funcNames, allCategories);
+      var categories = _.intersection(funcNames, listing.categories);
 
       _.each(categories, function(category) {
         push.apply(funcNames, _.filter(getNamesByCategory(category), function(key) {
@@ -3601,9 +2662,9 @@ function build(options, callback) {
     });
 
     // Remove categories from function names.
-    includeFuncs = _.difference(includeFuncs, allCategories, includeObjs, includeVars);
-    minusFuncs = _.difference(minusFuncs, allCategories);
-    plusFuncs = _.difference(plusFuncs, allCategories);
+    includeFuncs = _.difference(includeFuncs, listing.categories, includeObjs, includeVars);
+    minusFuncs = _.difference(minusFuncs, listing.categories);
+    plusFuncs = _.difference(plusFuncs, listing.categories);
 
     /*------------------------------------------------------------------------*/
 
@@ -3655,25 +2716,25 @@ function build(options, callback) {
     _.forOwn({
       'category': {
         'entries': categoryOptions,
-        'validEntries': allCategories
+        'validEntries': listing.categories
       },
       'exports': {
         'entries': exportsOptions,
         'validEntries': isModularize
-          ? _.without(defaultExports.concat(['es', 'npm']), 'global')
-          : defaultExports
+          ? _.without(listing.exports.concat(['es', 'npm']), 'global')
+          : listing.exports
       },
       'include': {
         'entries': includeFuncs,
-        'validEntries': allFuncs
+        'validEntries': listing.funcs
       },
       'minus': {
         'entries': minusFuncs,
-        'validEntries': allFuncs
+        'validEntries': listing.funcs
       },
       'plus': {
         'entries': plusFuncs,
-        'validEntries': allFuncs
+        'validEntries': listing.funcs
       }
     }, function(data, commandName) {
       invalidArgs = _.difference(data.entries, data.validEntries, ['none']);
@@ -3742,7 +2803,7 @@ function build(options, callback) {
         funcDepMap.main.push('baseFunctions', 'isObject', 'keys');
 
         // Remove `lodash` from function deps.
-        _.each(placeholderFuncs.concat('createCurry', 'createPartial', 'mixin'), function(funcName) {
+        _.each(listing.placeholderFuncs.concat('createCurry', 'createPartial', 'mixin'), function(funcName) {
           _.pull(funcDepMap[funcName], 'lodash');
         });
       }
@@ -3753,12 +2814,12 @@ function build(options, callback) {
 
         // Add `arrayEach` to functions with placeholder support because it's
         // used to reduce code for placeholder assignments
-        _.each(placeholderFuncs, function(funcName) {
+        _.each(listing.placeholderFuncs, function(funcName) {
           funcDepMap[funcName].push('arrayEach');
         });
 
         // Associate "Chain" methods with `wrapperValue`.
-        _.each(_.without(categoryMap.Chain, 'lodash', 'wrapperValue'), function(funcName) {
+        _.each(_.without(mapping.category.Chain, 'lodash', 'wrapperValue'), function(funcName) {
           funcDepMap.wrapperValue.push(funcName);
           funcDepMap[funcName].push('wrapperValue');
         });
@@ -3892,7 +2953,7 @@ function build(options, callback) {
       }
       // Add default function names.
       else if (_.isEmpty(includeObjs) && _.isEmpty(includeVars)) {
-        result = _.clone(lodashFuncs);
+        result = _.clone(listing.includes);
       }
       // Remove special "none" entry.
       if (_.isEqual(result, ['none'])) {
@@ -3937,9 +2998,9 @@ function build(options, callback) {
 
     // Expand properties, variables, and their function dependencies to include in the build.
     var allDeps = getAllDependencies(buildFuncs, funcDepMap, objDepMap, varDepMap).sort();
-    buildFuncs = _.intersection(allFuncs, allDeps);
-    includeObjs = _.intersection(objDependencies, allDeps);
-    includeVars = _.intersection(varDependencies, allDeps);
+    buildFuncs = _.intersection(listing.funcs, allDeps);
+    includeObjs = _.intersection(listing.objDeps, allDeps);
+    includeVars = _.intersection(listing.varDeps, allDeps);
 
     /*------------------------------------------------------------------------*/
 
@@ -3967,7 +3028,7 @@ function build(options, callback) {
     }
     else if (isModularize) {
       // Unexpose `lodash.support`.
-      _.forOwn(objDependencyMap, function(deps, funcName) {
+      _.forOwn(mapping.objDep, function(deps, funcName) {
         if (_.includes(deps, 'support')) {
           source = source.replace(matchFunction(source, funcName), function(match) {
             return removeVar(match, 'support');
@@ -4163,7 +3224,7 @@ function build(options, callback) {
       }
     }
     // Remove functions from the build.
-    _.each(allFuncs, function(funcName) {
+    _.each(listing.funcs, function(funcName) {
       if (!_.includes(buildFuncs, funcName)) {
         source = removeFunction(source, funcName);
         if (!isModularize) {
@@ -4189,7 +3250,7 @@ function build(options, callback) {
     });
 
     // Remove unneeded property dependencies.
-    _.each(objDependencies, function(propName) {
+    _.each(listing.objDeps, function(propName) {
       if (!_.includes(includeObjs, propName)) {
         source = removeProp(source, propName);
       }
@@ -4197,7 +3258,7 @@ function build(options, callback) {
 
     // Remove placeholder assignments of removed functions.
     source = source.replace(/^((?: *\/\/.*\n)*)( *)(arrayEach\(\[')bind\b[\s\S]+?('\][\s\S]+?\n\2\}\))/m, function(match, comment, indent, prelude, postlude) {
-      var funcNames = _.reject(placeholderFuncs, isExcluded),
+      var funcNames = _.reject(listing.placeholderFuncs, isExcluded),
           length = funcNames.length;
 
       if (length > 1) {
@@ -4233,18 +3294,16 @@ function build(options, callback) {
     });
 
     // Remove unneeded variable dependencies.
-    if (!_.includes(includeVars, 'root')) {
+    if (!(isAMD || isGlobal) && !_.includes(includeVars, 'root')) {
       source = removeVar(source, 'freeGlobal');
+      source = removeVar(source, 'root');
     }
-    if (isModularize) {
-      _.each(varDependencies, function(varName) {
-        if (!_.includes(includeFuncs, varName) &&
-            !_.includes(includeObjs, varName) &&
-            !_.includes(includeVars, varName)) {
-          source = removeVar(source, varName);
-        }
-      });
-    }
+    _.each(_.without(listing.varDeps, 'root'), function(varName) {
+      if (!_.includes(includeVars, varName)) {
+        source = removeVar(source, varName);
+      }
+    });
+
     (function() {
       var useMap = createMap(),
           snippet = cleanupSource(removeStrings(removeComments(source))),

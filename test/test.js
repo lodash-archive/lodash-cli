@@ -6,6 +6,8 @@ var vm = require('vm');
 /** Load other modules. */
 var _ = require('lodash-compat'),
     build = require('../bin/lodash'),
+    listing = require('../lib/listing.js'),
+    mapping = require('../lib/mapping.js'),
     minify = require('../lib/minify.js'),
     util = require('../lib/util.js');
 
@@ -47,301 +49,8 @@ var timeLimit = _.reduce(process.argv, function(result, value, index) {
   return result;
 }, 0);
 
-/** Used to map aliases to their real names. */
-var aliasToRealMap = createMap({
-  'all': 'every',
-  'any': 'some',
-  'backflow': 'flowRight',
-  'collect': 'map',
-  'compose': 'flowRight',
-  'commit': 'wrapperCommit',
-  'contains': 'includes',
-  'detect': 'find',
-  'each': 'forEach',
-  'eachRight': 'forEachRight',
-  'extend': 'assign',
-  'foldl': 'reduce',
-  'foldr': 'reduceRight',
-  'head': 'first',
-  'include': 'includes',
-  'inject': 'reduce',
-  'iteratee': 'callback',
-  'methods': 'functions',
-  'object': 'zipObject',
-  'plant': 'wrapperPlant',
-  'reverse': 'wrapperReverse',
-  'run': 'wrapperValue',
-  'select': 'filter',
-  'tail': 'rest',
-  'toJSON': 'wrapperValue',
-  'toString': 'wrapperToString',
-  'unique': 'uniq',
-  'valueOf': 'wrapperValue',
-  'value': 'wrapperValue'
-});
-
-/** Used to map real names to their aliases. */
-var realToAliasMap = createMap({
-  'assign': ['extend'],
-  'callback': ['iteratee'],
-  'every': ['all'],
-  'filter': ['select'],
-  'find': ['detect'],
-  'first': ['head'],
-  'flowRight': ['backflow', 'compose'],
-  'forEach': ['each'],
-  'forEachRight': ['eachRight'],
-  'functions': ['methods'],
-  'includes': ['contains', 'include'],
-  'map': ['collect'],
-  'reduce': ['foldl', 'inject'],
-  'reduceRight': ['foldr'],
-  'rest': ['tail'],
-  'some': ['any'],
-  'uniq': ['unique'],
-  'wrapperCommit': ['commit'],
-  'wrapperPlant': ['plant'],
-  'wrapperReverse': ['reverse'],
-  'wrapperToString': ['toString'],
-  'wrapperValue': ['run', 'toJSON', 'value', 'valueOf'],
-  'zipObject': ['object']
-});
-
-/** Used to track the category of identifiers. */
-var categoryMap = createMap({
-  'Array': [
-    'chunk',
-    'compact',
-    'difference',
-    'drop',
-    'dropRight',
-    'dropRightWhile',
-    'dropWhile',
-    'fill',
-    'findIndex',
-    'findLastIndex',
-    'first',
-    'flatten',
-    'flattenDeep',
-    'indexOf',
-    'initial',
-    'intersection',
-    'last',
-    'lastIndexOf',
-    'pull',
-    'pullAt',
-    'remove',
-    'rest',
-    'slice',
-    'sortedIndex',
-    'sortedLastIndex',
-    'take',
-    'takeRight',
-    'takeRightWhile',
-    'takeWhile',
-    'union',
-    'uniq',
-    'unzip',
-    'without',
-    'xor',
-    'zip',
-    'zipObject'
-  ],
-  'Chain': [
-    'chain',
-    'lodash',
-    'tap',
-    'thru',
-    'wrapperChain',
-    'wrapperCommit',
-    'wrapperPlant',
-    'wrapperReverse',
-    'wrapperToString',
-    'wrapperValue'
-  ],
-  'Collection': [
-    'at',
-    'countBy',
-    'every',
-    'filter',
-    'find',
-    'findLast',
-    'findWhere',
-    'forEach',
-    'forEachRight',
-    'groupBy',
-    'includes',
-    'indexBy',
-    'invoke',
-    'map',
-    'max',
-    'min',
-    'partition',
-    'pluck',
-    'reduce',
-    'reduceRight',
-    'reject',
-    'sample',
-    'shuffle',
-    'size',
-    'some',
-    'sortBy',
-    'sortByAll',
-    'where'
-  ],
-  'Date': [
-    'now'
-  ],
-  'Function': [
-    'after',
-    'ary',
-    'before',
-    'bind',
-    'bindAll',
-    'bindKey',
-    'curry',
-    'curryRight',
-    'debounce',
-    'defer',
-    'delay',
-    'flow',
-    'flowRight',
-    'memoize',
-    'negate',
-    'once',
-    'partial',
-    'partialRight',
-    'rearg',
-    'restParam',
-    'spread',
-    'throttle',
-    'wrap'
-  ],
-  'Lang': [
-    'clone',
-    'cloneDeep',
-    'isArguments',
-    'isArray',
-    'isBoolean',
-    'isDate',
-    'isElement',
-    'isEmpty',
-    'isEqual',
-    'isError',
-    'isFinite',
-    'isFunction',
-    'isMatch',
-    'isNaN',
-    'isNative',
-    'isNull',
-    'isNumber',
-    'isObject',
-    'isPlainObject',
-    'isRegExp',
-    'isString',
-    'isTypedArray',
-    'isUndefined',
-    'toArray',
-    'toPlainObject'
-  ],
-  'Math': [
-    'add',
-    'sum'
-  ],
-  'Number': [
-    'random',
-    'inRange'
-  ],
-  'Object': [
-    'assign',
-    'create',
-    'defaults',
-    'findKey',
-    'findLastKey',
-    'forIn',
-    'forInRight',
-    'forOwn',
-    'forOwnRight',
-    'functions',
-    'has',
-    'invert',
-    'keys',
-    'keysIn',
-    'mapValues',
-    'merge',
-    'omit',
-    'pairs',
-    'pick',
-    'result',
-    'transform',
-    'values',
-    'valuesIn'
-  ],
-  'String': [
-    'camelCase',
-    'capitalize',
-    'deburr',
-    'endsWith',
-    'escape',
-    'escapeRegExp',
-    'kebabCase',
-    'pad',
-    'padLeft',
-    'padRight',
-    'parseInt',
-    'repeat',
-    'snakeCase',
-    'startCase',
-    'startsWith',
-    'template',
-    'templateSettings',
-    'trim',
-    'trimLeft',
-    'trimRight',
-    'trunc',
-    'unescape',
-    'words'
-  ],
-  'Utility': [
-    'attempt',
-    'callback',
-    'constant',
-    'identity',
-    'matches',
-    'matchesProperty',
-    'mixin',
-    'noConflict',
-    'noop',
-    'property',
-    'propertyOf',
-    'range',
-    'runInContext',
-    'times',
-    'uniqueId'
-  ]
-});
-
-/* Used to force referencing identifers by their alias. */
-var forceAliasMap = createMap({
-  'wrapperCommit': 'commit',
-  'wrapperPlant': 'plant',
-  'wrapperReverse': 'reverse',
-  'wrapperToString': 'toString',
-  'wrapperValue': 'value'
-});
-
-/** Used to map old categories to current ones. */
-var oldCategoryMap = createMap({
-  'Arrays': 'Array',
-  'Chaining': 'Chain',
-  'Collections': 'Collection',
-  'Functions': 'Function',
-  'Objects': 'Object',
-  'Utilities': 'Utility'
-});
-
-/** List of all functions. */
-var allFuncs = _.reject(_.functions(_).sort(), _.partial(_.startsWith, _, '_', 0));
+/** List of lodash functions included by default. */
+var includes = _.reject(_.functions(_).sort(), _.partial(_.startsWith, _, '_', 0));
 
 /*----------------------------------------------------------------------------*/
 
@@ -425,7 +134,7 @@ function expandFuncNames(funcNames) {
  * @returns {Array} Returns an array of aliases.
  */
 function getAliases(identifier) {
-  return _.result(realToAliasMap, identifier, []);
+  return _.result(mapping.realToAlias, identifier, []);
 }
 
 /**
@@ -436,7 +145,7 @@ function getAliases(identifier) {
  * @returns {string} Returns the real name.
  */
 function getRealName(alias) {
-  return _.result(aliasToRealMap, alias, alias);
+  return _.result(mapping.aliasToReal, alias, alias);
 }
 
 /**
@@ -447,7 +156,7 @@ function getRealName(alias) {
  * @returns {string} Returns the real category.
  */
 function getRealCategory(alias) {
-  return _.result(oldCategoryMap, alias, alias);
+  return _.result(mapping.oldCategory, alias, alias);
 }
 
 /**
@@ -467,7 +176,7 @@ function testMethod(lodash, methodName, message) {
       func = lodash[methodName];
 
   try {
-    if (_.includes(categoryMap.Array, methodName)) {
+    if (_.includes(mapping.category.Array, methodName)) {
       if (methodName == 'range') {
         func(2, 4);
       } else if (/^(?:difference|intersection|union|uniq|zip(?:Object)?)$/.test(methodName)) {
@@ -478,10 +187,10 @@ function testMethod(lodash, methodName, message) {
         func(array);
       }
     }
-    else if (_.includes(categoryMap.Chain, methodName)) {
+    else if (_.includes(mapping.category.Chain, methodName)) {
       lodash(array)[methodName](_.noop);
     }
-    else if (_.includes(categoryMap.Collection, methodName)) {
+    else if (_.includes(mapping.category.Collection, methodName)) {
       if (methodName == 'at') {
         func(array, 0, 2);
         func(object, 'a', 'c');
@@ -504,7 +213,7 @@ function testMethod(lodash, methodName, message) {
         func(object, _.noop, object);
       }
     }
-    else if (_.includes(categoryMap.Function, methodName)) {
+    else if (_.includes(mapping.category.Function, methodName)) {
       if (methodName == 'bindAll') {
         func({ 'noop': _.noop });
       } else if (methodName == 'bindKey') {
@@ -521,7 +230,7 @@ function testMethod(lodash, methodName, message) {
         func(_.noop);
       }
     }
-    else if (_.includes(categoryMap.Object, methodName)) {
+    else if (_.includes(mapping.category.Object, methodName)) {
       if (methodName == 'clone') {
         func(object);
         func(object, true);
@@ -537,7 +246,7 @@ function testMethod(lodash, methodName, message) {
         func(object);
       }
     }
-    else if (_.includes(categoryMap.Utility, methodName)) {
+    else if (_.includes(mapping.category.Utility, methodName)) {
       if (methodName == 'mixin') {
         func({});
       } else if (methodName == 'result') {
@@ -1113,7 +822,7 @@ QUnit.module('modularize modifier');
         }
         _.each(['array', 'chain', 'collection', 'date', 'function', 'lang', 'number', 'object', 'string', 'utility'], function(category) {
           var categoryModule = require(path.join(outputPath, category)),
-              funcNames = categoryMap[_.capitalize(category)];
+              funcNames = mapping.category[_.capitalize(category)];
 
           _.each(funcNames, function(funcName) {
             var aliases = getAliases(funcName);
@@ -1644,17 +1353,13 @@ QUnit.module('lodash build');
     'category=collection',
     'category=collections',
     'category=date',
-    'category=dates',
     'category=function',
     'category=functions',
     'category=lang',
-    'category=langs',
     'category=number',
-    'category=numbers',
     'category=object',
     'category=objects',
     'category=string',
-    'category=strings',
     'category=utility',
     'category=utilities',
     'minus=union,uniq,zip',
@@ -1666,7 +1371,7 @@ QUnit.module('lodash build');
     'modern strict include=isArguments,isArray,isFunction,isPlainObject,keys'
   ];
 
-  push.apply(commands, _.map(allFuncs, function(funcName) {
+  push.apply(commands, _.map(includes, function(funcName) {
     return 'include=' + funcName;
   }));
 
@@ -1701,7 +1406,7 @@ QUnit.module('lodash build');
             }));
           }
           if (!funcNames) {
-            funcNames = allFuncs.slice();
+            funcNames = includes.slice();
           }
           if (rePlus.test(command)) {
             var otherNames = command.match(rePlusValue)[1].split(reComma);
@@ -1713,13 +1418,13 @@ QUnit.module('lodash build');
           }
           // Expand categories to function names.
           _.each(funcNames.slice(), function(category) {
-            var otherNames = _.filter(categoryMap[category], function(key) {
+            var otherNames = _.filter(mapping.category[category], function(key) {
               var type = typeof _[key];
               return type == 'function' || type == 'undefined';
             });
 
             // Limit function names to those available for specific builds.
-            otherNames = _.intersection(otherNames, allFuncs);
+            otherNames = _.intersection(otherNames, includes);
 
             if (!_.isEmpty(otherNames)) {
               _.pull(funcNames, category);
@@ -1728,7 +1433,7 @@ QUnit.module('lodash build');
           });
 
           // Expand aliases and remove nonexistent and duplicate function names.
-          funcNames = _.uniq(_.intersection(expandFuncNames(funcNames), allFuncs));
+          funcNames = _.uniq(_.intersection(expandFuncNames(funcNames), includes));
 
           var lodash = context._ || {};
           _.each(funcNames, _.partial(testMethod, lodash, _, basename));
