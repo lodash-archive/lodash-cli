@@ -109,7 +109,7 @@ var reFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|[a-z]+(?:[A-Z][a-z]+)+)\(/;
 var reGetCallback = /\bgetCallback(?:\(\))?/g;
 
 /** Used to match string literals. */
-var reStrings = /(["'])(?:(?!\1)[^\n\\]|\\.)*\1/g;
+var reStrings = /(["'])(?:(?!\1)[^\n\\]|\\.)*?\1/g;
 
 /** Used to match string tokens. */
 var reStringTokens = RegExp(_.escapeRegExp(stringToken), 'g');
