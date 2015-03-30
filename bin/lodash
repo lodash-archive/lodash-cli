@@ -97,25 +97,25 @@ var push = Array.prototype.push;
 var stringToken = '[[lodash@' + _.VERSION + ' token]]';
 
 /** Used to determine if a variable search should be deep. */
-var reDeepVars = /^ *function +runInContext\b/m;
+var reHasDeepVars = /^ *function +runInContext\b/m;
 
 /** Used to detect the JSDoc `@type` tag of "Function". */
-var reFuncTag = /^ *\* *@type +Function\b/im;
+var reHasFuncTag = /^ *\* *@type +Function\b/im;
 
 /** Used to detect if a string is a function snippet. */
-var reFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|[a-z]+(?:[A-Z][a-z]+)+)\(/;
+var reIsFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|[a-z]+(?:[A-Z][a-z]+)+)\(/;
+
+/** Used to detect if a string is a variable declaration snippet. */
+var reIsVarSnippet = /^\s*var\s+/;
 
 /** Used to match `getCallback` references. */
 var reGetCallback = /\bgetCallback(?:\(\))?/g;
 
 /** Used to match string literals. */
-var reStrings = /(["'])(?:(?!\1)[^\n\\]|\\.)*?\1/g;
+var reString = /(["'])(?:(?!\1)[^\n\\]|\\.)*?\1/g;
 
 /** Used to match string tokens. */
-var reStringTokens = RegExp(_.escapeRegExp(stringToken), 'g');
-
-/** Used to detect if a string is a variable declaration snippet. */
-var reVarSnippet = /^\s*var\s+/;
+var reStringToken = RegExp(_.escapeRegExp(stringToken), 'g');
 
 /** Shortcut to the `stdout` object. */
 var stdout = process.stdout;
@@ -1370,7 +1370,7 @@ function getVars(source) {
     .replace(/^( *)(?:var\s+)?[$\w]+\s*=\s*function\([\s\S]+?\{\n[\s\S]+?\n\1\};\n/gm, '')
     .replace(/^( *)(?:var\s+)?[$\w]+\s*=.*?(?:create|rest)(?:[A-Z][a-z]+)+\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '');
 
-  var isDeep = reDeepVars.test(source),
+  var isDeep = reHasDeepVars.test(source),
       indentA = isDeep ? ' {2,4}' : ' {2}',
       indentB = isDeep ? ' {6,8}' : ' {6}';
 
@@ -1401,7 +1401,7 @@ function getVars(source) {
 function isFunctionSnippet(source) {
   source = source == null ? '' : String(source);
   var header = getHeader(source);
-  return (header && reFuncTag.test(header)) || reFuncSnippet.test(source.replace(header, ''));
+  return (header && reHasFuncTag.test(header)) || reIsFuncSnippet.test(source.replace(header, ''));
 }
 
 /**
@@ -2048,7 +2048,7 @@ function removeSpliceObjectsFix(source) {
  */
 function removeStrings(source) {
   source = source == null ? '' : String(source);
-  return source.replace(reStrings, '');
+  return source.replace(reString, '');
 }
 
 /**
@@ -2319,7 +2319,7 @@ function removeVar(source, varName) {
 function replaceFunction(source, funcName, funcValue) {
   source = source == null ? '' : String(source);
 
-  var checkFuncTag = reVarSnippet.test(funcValue),
+  var checkFuncTag = reIsVarSnippet.test(funcValue),
       snippet = matchFunction(source, funcName, checkFuncTag);
 
   if (!snippet) {
@@ -2464,12 +2464,12 @@ function stringFree(source, callback) {
   source = source == null ? '' : String(source);
 
   var strings = [];
-  source = callback(source.replace(reStrings, function(match) {
+  source = callback(source.replace(reString, function(match) {
     strings.push(match);
     return stringToken;
   })) || '';
 
-  return source.replace(reStringTokens, function() {
+  return source.replace(reStringToken, function() {
     return strings.shift();
   });
 }
