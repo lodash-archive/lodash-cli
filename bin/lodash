@@ -2929,21 +2929,19 @@ function build(options, callback) {
         ].join('\n'));
       }
       // Remove "_.matches" or "_.property" style callback support from `baseCallback`.
-      _.each(['matches', 'property'], function(funcName) {
-        if (_.includes(minusFuncs, funcName)) {
-          var baseName = 'base' + _.capitalize(funcName);
+      _.pull(funcDepMap.callback, 'isObjectLike', 'matches');
 
-          _.pull(funcDepMap.baseCallback, baseName);
+      source = source.replace(matchFunction(source, 'callback'), function(match) {
+        return match.replace(/^( *return\s+)[^:]+:\s*/m, '$1');
+      });
+
+      _.each(['baseMatches', 'baseMatchesProperty', 'property'], function(funcName) {
+        var otherName = _.camelCase(_.trimLeft(funcName, 'base'));
+        if (_.includes(minusFuncs, otherName)) {
+          _.pull(funcDepMap.baseCallback, funcName);
           source = source.replace(matchFunction(source, 'baseCallback'), function(match) {
-            return match.replace(RegExp('\\b' + baseName + '\\([\\s\\S]+?\\)(?=[;\\n])', 'm'), 'identity');
+            return match.replace(RegExp('\\b' + funcName + '\\([\\s\\S]+?\\)(?=[;\\n])', 'm'), 'identity');
           });
-
-          if (funcName == 'matches') {
-            _.pull(funcDepMap.callback, 'isObjectLike', 'matches');
-            source = source.replace(matchFunction(source, 'callback'), function(match) {
-              return match.replace(/^( *return\s+)[^:]+:\s*/m, '$1');
-            });
-          }
         }
       });
 
