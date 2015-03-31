@@ -16,7 +16,7 @@ env:
     - BUILD="modern"
     - BUILD="modern" EXPORTS="es"  TRANSPILER="babel"
     - BUILD="modern" EXPORTS="es"  TRANSPILER="es6-module-transpiler"
-    - BUILD="modern" EXPORTS="es6" TRANSPILER="es6-module-transpiler"
+    - BUILD="modern" EXPORTS="es6" TRANSPILER="babel"
     - BUILD="modern" EXPORTS="node"
     - BUILD="modern" EXPORTS="npm"
     - TEST_BUILDS=true
