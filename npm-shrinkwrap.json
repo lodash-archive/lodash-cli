@@ -8,9 +8,9 @@
       "resolved": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.6.tgz"
     },
     "glob": {
-      "version": "5.0.1",
-      "from": "https://registry.npmjs.org/glob/-/glob-5.0.1.tgz",
-      "resolved": "https://registry.npmjs.org/glob/-/glob-5.0.1.tgz",
+      "version": "5.0.3",
+      "from": "https://registry.npmjs.org/glob/-/glob-5.0.3.tgz",
+      "resolved": "https://registry.npmjs.org/glob/-/glob-5.0.3.tgz",
       "dependencies": {
         "inflight": {
           "version": "1.0.4",
@@ -30,9 +30,9 @@
           "resolved": "https://registry.npmjs.org/inherits/-/inherits-2.0.1.tgz"
         },
         "minimatch": {
-          "version": "2.0.1",
-          "from": "https://registry.npmjs.org/minimatch/-/minimatch-2.0.1.tgz",
-          "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-2.0.1.tgz",
+          "version": "2.0.4",
+          "from": "https://registry.npmjs.org/minimatch/-/minimatch-2.0.4.tgz",
+          "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-2.0.4.tgz",
           "dependencies": {
             "brace-expansion": {
               "version": "1.1.0",
@@ -71,14 +71,14 @@
       "version": "3.6.0"
     },
     "semver": {
-      "version": "4.3.1",
-      "from": "https://registry.npmjs.org/semver/-/semver-4.3.1.tgz",
-      "resolved": "https://registry.npmjs.org/semver/-/semver-4.3.1.tgz"
+      "version": "4.3.3",
+      "from": "https://registry.npmjs.org/semver/-/semver-4.3.3.tgz",
+      "resolved": "https://registry.npmjs.org/semver/-/semver-4.3.3.tgz"
     },
     "uglify-js": {
-      "version": "2.4.16",
-      "from": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.4.16.tgz",
-      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.4.16.tgz",
+      "version": "2.4.19",
+      "from": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.4.19.tgz",
+      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.4.19.tgz",
       "dependencies": {
         "async": {
           "version": "0.2.10",
@@ -97,11 +97,26 @@
             }
           }
         },
-        "optimist": {
-          "version": "0.3.7",
-          "from": "https://registry.npmjs.org/optimist/-/optimist-0.3.7.tgz",
-          "resolved": "https://registry.npmjs.org/optimist/-/optimist-0.3.7.tgz",
+        "yargs": {
+          "version": "3.5.4",
+          "from": "https://registry.npmjs.org/yargs/-/yargs-3.5.4.tgz",
+          "resolved": "https://registry.npmjs.org/yargs/-/yargs-3.5.4.tgz",
           "dependencies": {
+            "camelcase": {
+              "version": "1.0.2",
+              "from": "https://registry.npmjs.org/camelcase/-/camelcase-1.0.2.tgz",
+              "resolved": "https://registry.npmjs.org/camelcase/-/camelcase-1.0.2.tgz"
+            },
+            "decamelize": {
+              "version": "1.0.0",
+              "from": "https://registry.npmjs.org/decamelize/-/decamelize-1.0.0.tgz",
+              "resolved": "https://registry.npmjs.org/decamelize/-/decamelize-1.0.0.tgz"
+            },
+            "window-size": {
+              "version": "0.1.0",
+              "from": "https://registry.npmjs.org/window-size/-/window-size-0.1.0.tgz",
+              "resolved": "https://registry.npmjs.org/window-size/-/window-size-0.1.0.tgz"
+            },
             "wordwrap": {
               "version": "0.0.2",
               "from": "https://registry.npmjs.org/wordwrap/-/wordwrap-0.0.2.tgz",
