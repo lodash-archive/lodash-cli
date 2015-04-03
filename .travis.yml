@@ -69,7 +69,7 @@ before_install:
   - "([ $EXPORTS != 'es' ] && [ $EXPORTS != 'es6' ]) || TARGET_PATH=\"../../../$EXPORTS/lodash.js\""
   - "[ $EXPORTS != 'npm' ] || OUTPUT_PATH=\"./npm/node_modules\""
   - "[ $TEST_BUILDS == true ]   || (npm i && node ./bin/lodash modularize $BUILD exports=$EXPORTS -o $OUTPUT_PATH)"
-  - "[ $TRANSPILER != 'babel' ] || npm i -g babel@\"^4.0.0\""
+  - "[ $TRANSPILER != 'babel' ] || npm i -g babel@\"^5.0.0\""
   - "[ $TRANSPILER != 'babel' ] || babel ./$EXPORTS --out-dir ./$EXPORTS"
   - "[ $TRANSPILER != 'es6-module-transpiler' ] || npm i -g es6-module-transpiler@\"0.10.0\""
   - "[ $TRANSPILER != 'es6-module-transpiler' ] || compile-modules convert -f commonjs -o ./ ./$EXPORTS/*.js ./$EXPORTS/**/*.js"
