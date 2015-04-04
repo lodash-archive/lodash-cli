@@ -39,8 +39,8 @@ var HELP_TEXT = [
   '               “object”, “number”, “string”, & “utility”)',
   '',
   '  exports=..   Comma separated values of ways to export lodash.',
-  '               (i.e. “amd”, “commonjs”, “es”, “global”, “iojs”, “node”, “npm”,',
-  '               & “none”)',
+  '               (i.e. “amd”, “commonjs”, “es”, “global”, “iojs”, “node”, “none”,',
+  '               “npm”, & “umd”)',
   '',
   '  iife=..      Code to replace the IIFE that wraps lodash',
   '               (e.g. `lodash iife="!function(){%output%}()"`)',
@@ -2586,12 +2586,6 @@ function build(options, callback) {
     // A flag to specify a template build.
     var isTemplate = !!templatePattern;
 
-    // Used to specify the ways to export the `lodash` function.
-    var exportsOptions = (function() {
-      var result = getOption(options, 'exports', isModularize ? ['amd'] : listing.exports);
-      return isModularize ? _.take(result, 1) : result;
-    }());
-
     // Used to specify the AMD module ID of lodash used by precompiled templates.
     var moduleId = getOption(options, 'moduleId', null);
 
@@ -2601,6 +2595,15 @@ function build(options, callback) {
         ? path.normalize(options[index + 1])
         : result;
     }, isModularize ? '.' + path.sep + 'modularize' : '');
+
+    // Used to specify the ways to export the `lodash` function.
+    var exportsOptions = (function() {
+      var result = getOption(options, 'exports', isModularize ? ['amd'] : listing.exports);
+      if (!isModularize && _.includes(result, 'umd')) {
+        result = _.union(result, listing.exports);
+      }
+      return isModularize ? _.take(result, 1) : result;
+    }());
 
     // A flag to specify creating a custom build.
     var isCustom = !isModularize && (
