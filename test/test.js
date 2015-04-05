@@ -79,6 +79,7 @@ function createContext(exportType) {
       context.module = {};
       break;
 
+    case 'iojs':
     case 'node':
       context.exports = {};
       context.module = { 'exports': context.exports };
@@ -1086,56 +1087,62 @@ QUnit.module('exports command');
     'exports=amd',
     'exports=commonjs',
     'exports=global',
+    'exports=iojs',
     'exports=node',
-    'exports=none'
+    'exports=none',
+    'exports=umd'
   ];
 
   _.each(commands, function(command, index) {
-    var exportType = command.split('=')[1];
+    var type = command.split('=')[1],
+        types = type == 'umd' ? ['amd', 'commonjs', 'global', 'node'] : [type];
 
     asyncTest('`lodash ' + command +'`', function() {
       var start = _.after(2, _.once(QUnit.start));
 
       build([command], function(data) {
-        var basename = path.basename(data.outputPath, '.js'),
-            context = createContext(exportType),
-            pass = false,
-            source = data.source;
+        _.each(types, function(type) {
+          var basename = path.basename(data.outputPath, '.js'),
+              context = createContext(type),
+              pass = false,
+              source = data.source;
 
-        switch(exportType) {
-          case 'amd':
-            context.define = function(factory) {
-              pass = true;
-              context._ = factory();
-            };
-            context.define.amd = {};
-            vm.runInContext(source, context);
+          switch(type) {
+            case 'amd':
+              context.define = function(factory) {
+                pass = true;
+                context._ = factory();
+              };
+              context.define.amd = {};
+              vm.runInContext(source, context);
 
-            ok(pass, basename);
-            ok(_.isFunction(context._), basename);
-            break;
+              ok(pass, basename);
+              ok(_.isFunction(context._), basename);
+              break;
 
-          case 'commonjs':
-            vm.runInContext(source, context);
-            ok(_.isFunction(context.exports._), basename);
-            strictEqual(context._, undefined, basename);
-            break;
+            case 'commonjs':
+              vm.runInContext(source, context);
+              ok(_.isFunction(context.exports._), basename);
+              strictEqual(context._, undefined, basename);
+              break;
 
-          case 'global':
-            vm.runInContext(source, context);
-            ok(_.isFunction(context._), basename);
-            break;
+            case 'global':
+              vm.runInContext(source, context);
+              ok(_.isFunction(context._), basename);
+              break;
 
-          case 'node':
-            vm.runInContext(source, context);
-            ok(_.isFunction(context.module.exports), basename);
-            strictEqual(context._, undefined, basename);
-            break;
+            case 'iojs':
+            case 'node':
+              vm.runInContext(source, context);
+              ok(_.isFunction(context.module.exports), basename);
+              strictEqual(context._, undefined, basename);
+              break;
 
-          case 'none':
-            vm.runInContext(source, context);
-            strictEqual(context._, undefined, basename);
-        }
+            case 'none':
+              vm.runInContext(source, context);
+              strictEqual(context._, undefined, basename);
+          }
+        });
         start();
       });
     });
