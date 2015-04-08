@@ -2184,7 +2184,7 @@ function removeSupportNonEnumStrings(source, funcDepMap) {
 
   source = source.replace(matchFunction(source,'toObject'), function(match) {
     match = removeVar(match, 'support');
-    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(support\.unindexedChars\b[\s\S]+?\n\1\}\n/m, '');
+    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(\(support\.nonEnumStrings\b[\s\S]+?\n\1\}\n/m, '');
   });
 
   return source.replace(matchFunction(source, 'shimKeys'), function(match) {
