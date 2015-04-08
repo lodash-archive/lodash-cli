@@ -2123,8 +2123,6 @@ function removeSupportEnumPrototypes(source, objDepMap) {
   _.pull(deps, 'support');
 
   source = removeSupportProp(source, 'enumPrototypes');
-
-  // Remove `support.enumPrototypes` from `_.keys`.
   return source.replace(matchFunction(source, 'keys'), function(match) {
     return match.replace(/typeof\s+object[^:]+:/, "typeof object != 'function' &&");
   });
@@ -2143,8 +2141,6 @@ function removeSupportNodeTag(source, funcDepMap) {
   _.pull(deps, 'isHostObject');
 
   source = removeSupportProp(source, 'nodeTag');
-
-  // Remove `support.nodeTag` from `_.isElement`.
   return source.replace(matchFunction(source, 'isElement'), function(match) {
     return match.replace(/\(lodash\.support\.nodeTag\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)\)/, '$1');
   });
@@ -2207,8 +2203,6 @@ function removeSupportNonEnumStrings(source, funcDepMap) {
  */
 function removeSupportOwnLast(source) {
   source = removeSupportProp(source, 'ownLast');
-
-  // Remove `support.ownLast` from `shimIsPlainObject`.
   return source.replace(matchFunction(source, 'shimIsPlainObject'), function(match) {
     return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(support\.ownLast\b[\s\S]+?\n\1\}\n/m, '');
   });
