@@ -2186,7 +2186,11 @@ function removeSupportNonEnumStrings(source, funcDepMap) {
 
   source = removeSupportProp(source, 'nonEnumStrings');
 
-  // Remove `support.nonEnumStrings` from `shimKeys`.
+  source = source.replace(matchFunction(source,'toObject'), function(match) {
+    match = removeVar(match, 'support');
+    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(support\.unindexedChars\b[\s\S]+?\n\1\}\n/m, '');
+  });
+
   return source.replace(matchFunction(source, 'shimKeys'), function(match) {
     return match.replace(/\s*\|\|\s*\(support\.nonEnumStrings\b[\s\S]+?\)\)(\s*\|\|\s*)?/, function(match, postlude) {
       return postlude ? postlude.replace(/\s+$/, ' ') : '';
@@ -2241,14 +2245,14 @@ function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
 
   source = removeSupportProp(source, 'unindexedChars');
 
-  // Remove `support.unindexedChars` from `toIterable` and `toObject`.
-  _.each(['toIterable', 'toObject'], function(funcName) {
-    source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(lodash\.support\.unindexedChars\b[\s\S]+?\n\1\}\n/m, '');
-    });
+  source = source.replace(matchFunction(source, 'toObject'), function(match) {
+    return match.replace(/\s*\|\|\s*support\.unindexedChars/, '');
   });
 
-  // Remove `support.unindexedChars` from `_.toArray`.
+  source = source.replace(matchFunction(source,'toIterable'), function(match) {
+    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(lodash\.support\.unindexedChars\b[\s\S]+?\n\1\}\n/m, '');
+  });
+
   return source.replace(matchFunction(source, 'toArray'), function(match) {
     return match.replace(/\(lodash\.support\.unindexedChars\b[\s\S]+?:\s*/, '');
   });
