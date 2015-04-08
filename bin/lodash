@@ -2088,7 +2088,7 @@ function removeSupportArgsTag(source, funcDepMap, objDepMap) {
  *
  * @private
  * @param {string} source The source to process.
- * @param {Object} [objDepMap] The dependency map to modify.
+ * @param {Object} [objDepMap] The object dependency map to modify.
  * @returns {string} Returns the modified source.
  */
 function removeSupportDom(source, objDepMap) {
@@ -2115,7 +2115,7 @@ function removeSupportEnumErrorProps(source) {
  *
  * @private
  * @param {string} source The source to process.
- * @param {Object} [objDepMap] The dependency map to modify.
+ * @param {Object} [objDepMap] The object dependency map to modify.
  * @returns {string} Returns the modified source.
  */
 function removeSupportEnumPrototypes(source, objDepMap) {
@@ -2133,7 +2133,7 @@ function removeSupportEnumPrototypes(source, objDepMap) {
  *
  * @private
  * @param {string} source The source to process.
- * @param {Object} [funcDepMap] The dependency map to modify.
+ * @param {Object} [funcDepMap] The function dependency map to modify.
  * @returns {string} Returns the modified source.
  */
 function removeSupportNodeTag(source, funcDepMap) {
@@ -2174,17 +2174,23 @@ function removeSupportNonEnumShadows(source) {
  * @private
  * @param {string} source The source to process.
  * @param {Object} [funcDepMap] The function dependency map to modify.
+ * @param {Object} [objDepMap] The object dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeSupportNonEnumStrings(source, funcDepMap) {
+function removeSupportNonEnumStrings(source, funcDepMap, objDepMap) {
   var deps = _.result(funcDepMap, 'shimKeys', []);
   _.pull(deps, 'isString');
 
+  deps = _.result(funcDepMap, 'has', []);
+  _.pull(deps, 'isIndex', 'isString');
+
+  deps = _.result(objDepMap, 'has', []);
+  _.pull(deps, 'support');
+
   source = removeSupportProp(source, 'nonEnumStrings');
 
-  source = source.replace(matchFunction(source,'toObject'), function(match) {
-    match = removeVar(match, 'support');
-    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(\(support\.nonEnumStrings\b[\s\S]+?\n\1\}\n/m, '');
+  source = source.replace(matchFunction(source, 'has'), function(match) {
+    return match.replace(/\s*\|\|\s*\(lodash\.support\.nonEnumStrings\b[\s\S]+?\)(?=;\n)/, '');
   });
 
   return source.replace(matchFunction(source, 'shimKeys'), function(match) {
@@ -2239,12 +2245,10 @@ function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
 
   source = removeSupportProp(source, 'unindexedChars');
 
-  source = source.replace(matchFunction(source, 'toIterable'), function(match) {
-    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(lodash\.support\.unindexedChars\b[\s\S]+?\n\1\}\n/m, '');
-  });
-
-  source = source.replace(matchFunction(source, 'toObject'), function(match) {
-    return match.replace(/\s*\|\|\s*support\.unindexedChars/, '');
+  _.each(['toIterable', 'toObject'], function(funcName) {
+    source = source.replace(matchFunction(source, funcName), function(match) {
+      return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(lodash\.support\.unindexedChars\b[\s\S]+?\n\1\}\n/m, '');
+    });
   });
 
   return source.replace(matchFunction(source, 'toArray'), function(match) {
@@ -2834,7 +2838,7 @@ function build(options, callback) {
         source = removeSupportEnumPrototypes(source, objDepMap);
         source = removeSupportNodeTag(source, funcDepMap);
         source = removeSupportNonEnumShadows(source);
-        source = removeSupportNonEnumStrings(source, funcDepMap);
+        source = removeSupportNonEnumStrings(source, funcDepMap, objDepMap);
         source = removeSupportOwnLast(source);
         source = removeSupportSpliceObjects(source);
         source = removeSupportUnindexedChars(source, funcDepMap, objDepMap);
