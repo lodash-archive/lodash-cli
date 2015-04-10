@@ -99,8 +99,8 @@ var stringToken = '[[lodash@' + _.VERSION + ' token]]';
 /** Used to determine if a variable search should be deep. */
 var reHasDeepVars = /^ *function +runInContext\b/m;
 
-/** Used to detect the JSDoc `@type` tag of "Function". */
-var reHasFuncTag = /^ *\* *@type +Function\b/im;
+/** Used to detect a function by its JSDoc tags. */
+var reHasFuncTags = /^ *\* *(?:@param|@returns|@type +Function)\b/im;
 
 /** Used to detect if a string is a function snippet. */
 var reIsFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|[a-z]+(?:[A-Z][a-z]+)+)\(/;
@@ -1401,7 +1401,7 @@ function getVars(source) {
 function isFunctionSnippet(source) {
   source = source == null ? '' : String(source);
   var header = getHeader(source);
-  return (header && reHasFuncTag.test(header)) || reIsFuncSnippet.test(source.replace(header, ''));
+  return (header && reHasFuncTags.test(header)) || reIsFuncSnippet.test(source.replace(header, ''));
 }
 
 /**
