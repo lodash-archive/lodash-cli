@@ -1713,10 +1713,10 @@ function removeGetCallback(source, funcDepMap) {
   source = removeFunction(source, 'getCallback');
 
   _.each([
-    'createAggregator', 'createExtremum', 'createFind', 'createFindIndex',
-    'createFindKey', 'createReduce', 'createSortedIndex', 'dropRightWhile',
-    'dropWhile', 'every', 'filter', 'map', 'mapValues', 'reject', 'remove',
-    'some', 'sortBy', 'sum', 'takeRightWhile', 'takeWhile',
+    'baseSortByOrder', 'createAggregator', 'createExtremum', 'createFind',
+    'createFindIndex', 'createFindKey', 'createReduce', 'createSortedIndex',
+    'dropRightWhile', 'dropWhile', 'every', 'filter', 'map', 'mapValues',
+    'reject', 'remove', 'some', 'sortBy', 'sum', 'takeRightWhile', 'takeWhile',
     'transform', 'uniq'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
@@ -1746,6 +1746,11 @@ function removeGetCallback(source, funcDepMap) {
           ' ? iteratee : baseCallback(iteratee, thisArg, 3);';
       });
     });
+  });
+
+  source = source.replace(matchFunction(source, 'baseSortByOrder'), function(match) {
+    match = removeVar(match, 'callback');
+    return match.replace(/\bcallback(?=\()/, 'baseCallback');
   });
 
   return source.replace(getMethodAssignments(source), function(match) {
