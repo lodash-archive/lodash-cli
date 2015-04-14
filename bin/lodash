@@ -2855,6 +2855,15 @@ function build(options, callback) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(Ctor\s+instanceof\s+Ctor[\s\S]+?\n\1\}\n/m, '');
         });
 
+        // Optimize `baseProperty` and `_.result` by removing `toObject`.
+        _.each(['baseProperty', 'result'], function(funcName) {
+          _.pull(funcDepMap[funcName], 'toObject');
+
+          source = source.replace(matchFunction(source, funcName), function(match) {
+            return match.replace(/\btoObject\(([^)]+)\)/g, '$1');
+          });
+        });
+
         // Replace `_.isRegExp`.
         _.pull(funcDepMap.isRegExp, 'isObject').push('isObjectLike');
 
