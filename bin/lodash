@@ -2864,6 +2864,14 @@ function build(options, callback) {
           });
         });
 
+        // Optimize `baseMatches` by moving `toObject`.
+        source = source.replace(matchFunction(source, 'baseMatches'), function(match) {
+          match = removeVar(match, 'object');
+          return match
+            .replace(/^ *object\s*=[^;]+;\n/m, '')
+            .replace(/\bkey\s+in\s+object\b/, 'key in toObject(object)');
+        });
+
         // Replace `_.isRegExp`.
         _.pull(funcDepMap.isRegExp, 'isObject').push('isObjectLike');
 
