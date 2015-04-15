@@ -108,14 +108,17 @@ var reIsFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|[a-z]+(?:[A-Z][a-z]+)+)\(/;
 /** Used to detect if a string is a variable declaration snippet. */
 var reIsVarSnippet = /^\s*var\s+/;
 
-/** Used to match `getCallback` references. */
-var reGetCallback = /\bgetCallback(?:\(\))?/g;
+/** Used to match `getCallback` calls and references. */
+var reGetCallback = /\bgetCallback\b(?:\(\))?/g;
 
 /** Used to match string literals. */
 var reString = /(["'])(?:(?!\1)[^\n\\]|\\.)*?\1/g;
 
 /** Used to match string tokens. */
 var reStringToken = RegExp(_.escapeRegExp(stringToken), 'g');
+
+/** Used to match `toObject` calls. */
+var reToObject = /\btoObject\(([^)]+)\)/g;
 
 /** Shortcut to the `stdout` object. */
 var stdout = process.stdout;
@@ -2855,21 +2858,24 @@ function build(options, callback) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(Ctor\s+instanceof\s+Ctor[\s\S]+?\n\1\}\n/m, '');
         });
 
-        // Optimize `baseProperty` and `_.result` by removing `toObject`.
-        _.each(['baseProperty', 'result'], function(funcName) {
-          _.pull(funcDepMap[funcName], 'toObject');
-
+        // Optimize functions by moving `toObject`.
+        _.each(['baseGet', 'baseMatches'], function(funcName) {
           source = source.replace(matchFunction(source, funcName), function(match) {
-            return match.replace(/\btoObject\(([^)]+)\)/g, '$1');
+            if (funcName == 'baseGet') {
+              match = match.replace(reToObject, '$1');
+            }
+            return match
+              .replace(/^ *object\s*=[^;]+;\n/m, '')
+              .replace(/\b(key|pathKey)\s+in\s+object\b/, '$1 in toObject(object)');
           });
         });
 
-        // Optimize `baseMatches` by moving `toObject`.
-        source = source.replace(matchFunction(source, 'baseMatches'), function(match) {
-          match = removeVar(match, 'object');
-          return match
-            .replace(/^ *object\s*=[^;]+;\n/m, '')
-            .replace(/\bkey\s+in\s+object\b/, 'key in toObject(object)');
+        // Optimize functions by removing `toObject`.
+        _.each(['baseProperty', 'result'], function(funcName) {
+          _.pull(funcDepMap[funcName], 'toObject');
+          source = source.replace(matchFunction(source, funcName), function(match) {
+            return match.replace(reToObject, '$1');
+          });
         });
 
         // Replace `_.isRegExp`.
