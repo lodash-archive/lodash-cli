@@ -76,9 +76,9 @@
       "resolved": "https://registry.npmjs.org/semver/-/semver-4.3.3.tgz"
     },
     "uglify-js": {
-      "version": "2.4.19",
-      "from": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.4.19.tgz",
-      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.4.19.tgz",
+      "version": "2.4.20",
+      "from": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.4.20.tgz",
+      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.4.20.tgz",
       "dependencies": {
         "async": {
           "version": "0.2.10",
