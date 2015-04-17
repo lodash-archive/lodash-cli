@@ -1717,8 +1717,8 @@ function removeGetCallback(source, funcDepMap) {
 
   _.each([
     'baseSortByOrder', 'createAggregator', 'createExtremum', 'createFind',
-    'createFindIndex', 'createFindKey', 'createReduce', 'createSortedIndex',
-    'dropRightWhile', 'dropWhile', 'every', 'filter', 'map', 'mapValues',
+    'createFindIndex', 'createFindKey', 'createObjectMapper', 'createReduce',
+    'createSortedIndex', 'dropRightWhile', 'dropWhile', 'every', 'filter', 'map',
     'reject', 'remove', 'some', 'sortBy', 'sum', 'takeRightWhile', 'takeWhile',
     'transform', 'uniq'
   ], function(funcName) {

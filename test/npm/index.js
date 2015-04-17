@@ -124,6 +124,7 @@ lodash.keysIn = require('lodash.keysin');
 lodash.last = require('lodash.last');
 lodash.lastIndexOf = require('lodash.lastindexof');
 lodash.map = require('lodash.map');
+lodash.mapKeys = require('lodash.mapkeys');
 lodash.mapValues = require('lodash.mapvalues');
 lodash.matches = require('lodash.matches');
 lodash.matchesProperty = require('lodash.matchesproperty');
