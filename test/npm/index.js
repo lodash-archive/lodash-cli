@@ -200,6 +200,7 @@ lodash.union = require('lodash.union');
 lodash.uniq = require('lodash.uniq');
 lodash.uniqueId = require('lodash.uniqueid');
 lodash.unzip = require('lodash.unzip');
+lodash.unzipWith = require('lodash.unzipwith');
 lodash.values = require('lodash.values');
 lodash.valuesIn = require('lodash.valuesin');
 lodash.where = require('lodash.where');
@@ -208,6 +209,7 @@ lodash.words = require('lodash.words');
 lodash.wrap = require('lodash.wrap');
 lodash.xor = require('lodash.xor');
 lodash.zip = require('lodash.zip');
+lodash.zipWith = require('lodash.zipwith');
 lodash.zipObject = require('lodash.zipobject');
 
 // Add aliases.
