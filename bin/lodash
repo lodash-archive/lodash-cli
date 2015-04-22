@@ -367,7 +367,7 @@ function buildModule(state, onComplete) {
         if (fs.existsSync(data.outputPath)) {
           var semver = require('semver'),
               laxDeps = _.map(listing.laxSemVerDeps, toDepName),
-              oldPackage = JSON.parse(fs.readFileSync(path.join(path.dirname(data.outputPath), 'package.json'), 'utf-8')),
+              oldPackage = require(path.join(path.dirname(data.outputPath), 'package.json')),
               oldVersion = oldPackage.version,
               oldDeps = _.omit(oldPackage.dependencies || {}, laxDeps),
               pkgDeps = _.omit(templateData.dependencies, laxDeps);
