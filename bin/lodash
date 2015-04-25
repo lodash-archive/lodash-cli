@@ -1459,7 +1459,6 @@ function isPrivate(identifier) {
 function isVarUsed(source, varName) {
   source = source == null ? '' : String(source);
   var snippet = matchVar(source, varName);
-
   if (!snippet) {
     return false;
   }
@@ -2666,6 +2665,9 @@ function build(options, callback) {
     if (isNode) {
       _.pull(exportsOptions, 'iojs', 'node').push('node');
     }
+    if (isTemplate) {
+      isModern = isModularize = false;
+    }
     // The lodash.js source.
     var source = fs.readFileSync(filePath, 'utf8');
 
@@ -3149,14 +3151,17 @@ function build(options, callback) {
       if (!isAMD) {
         source = removeVar(source, 'undefined');
       }
-      source = removeRunInContext(source);
     }
-
-    // Tokenize functions to reduce build times.
-    funcTokenMap = _.transform(listing.funcs, function(result, funcName) {
-      result[funcName] = matchFunction(source, funcName, true);
-      source = source.replace(result[funcName], '<<' + funcName + '>>\n');
-    }, createMap());
+    if (!isTemplate) {
+      if (!_.includes(includeFuncs, 'runInContext')) {
+        source = removeRunInContext(source);
+      }
+      // Tokenize functions to reduce build times.
+      funcTokenMap = _.transform(_.without(listing.funcs, 'runInContext'), function(result, funcName) {
+        result[funcName] = matchFunction(source, funcName, true);
+        source = source.replace(result[funcName], '<<' + funcName + '>>\n');
+      }, createMap());
+    }
 
     /*------------------------------------------------------------------------*/
 
