@@ -102,9 +102,9 @@ var reIsFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|[a-z]+(?:[A-Z][a-z]+)+)\(/,
     reIsVarSnippet = /^\s*var\s+/;
 
 /** Used to match function and string tokens. */
-var reCommentToken = /<#token\d+#>\n/g,
+var reCommentToken = /<#com_token\d+#>\n/g,
     reNamedToken = /<<[$\w]+>>\n?/g,
-    reStringToken = /<@token\d+@>/g;
+    reStringToken = /<#str_token\d+#>/g;
 
 /** Used to determine if a variable search should be deep. */
 var reHasDeepVars = /^ *function +runInContext\b/m;
@@ -191,12 +191,16 @@ function buildModule(state, onComplete) {
       objDepMap = state.objDepMap,
       outputPath = state.outputPath,
       plusFuncs = state.plusFuncs,
+      stamp = state.stamp,
       varDepMap = state.varDepMap;
 
   var identifiers = _.without(_.union(buildFuncs, includeObjs, includeVars), 'main'),
+      moduleCount = 0,
       removedDeps = {};
 
   var buildCallback = function(data) {
+    moduleCount++;
+
     var source = data.source;
     source = addCommandsToHeader(source, state.options);
     data.source = cleanupSource(source);
@@ -704,7 +708,7 @@ function buildModule(state, onComplete) {
     });
   });
 
-  if (!isNpm && !isSilent) {
+  if (!isSilent) {
     // Warn of removed dependencies.
     _.forOwn(removedDeps, function(depNames, identifier) {
       if (!_.isEmpty(depNames)) {
@@ -712,10 +716,13 @@ function buildModule(state, onComplete) {
         console.warn('Warning: Removed ' + (plural ? '' : 'an ') + 'unused dependenc' + (plural ? 'ies' : 'y') + ' from `' + identifier + '`: ' + depNames.join(', '));
       }
     });
+
+    console.log('Created %d modules in %d seconds.', moduleCount, (_.now() - stamp) / 1000);
   }
   if (onComplete) {
     onComplete({ 'outputPath': fs.realpathSync(outputPath) });
   }
+
 }
 
 /**
@@ -943,8 +950,8 @@ function cleanupSource(source) {
 }
 
 /**
- * This function allows `callback` to modify `source` with comments
- * removed and returns the modified source with comments restored.
+ * Invokes `callback` providing `source` with comments removed and returns the
+ * modified source with comments restored.
  *
  * @private
  * @param {string} source The source to modify.
@@ -957,11 +964,12 @@ function commentFree(source, callback) {
   source = callback(source.replace(reComment, function(match) {
     var index = comments.length;
     comments.push(match);
-    return '<#token' + index + '#>\n';
+    return '<#com_token' + index + '#>\n';
   })) || '';
 
+  source = source == null ? '' : String(source);
   return source.replace(reCommentToken, function(match) {
-    return comments[match.slice(7, -3)];
+    return comments[match.slice(11, -3)];
   });
 }
 
@@ -2478,8 +2486,8 @@ function setUseStrictOption(source, value) {
 }
 
 /**
- * This function allows `callback` to modify `source` with string literals
- * removed and returns the modified source with string literals restored.
+ * Invokes `callback` providing `source` with strings removed and returns the
+ * modified source with strings restored.
  *
  * @private
  * @param {string} source The source to modify.
@@ -2492,11 +2500,12 @@ function stringFree(source, callback) {
   source = callback(source.replace(reString, function(match) {
     var index = strings.length;
     strings.push(match);
-    return '<@token' + index + '@>';
+    return '<#str_token' + index + '#>';
   })) || '';
 
+  source = source == null ? '' : String(source);
   return source.replace(reStringToken, function(match) {
-    return strings[match.slice(7, -2)];
+    return strings[match.slice(11, -2)];
   });
 }
 
@@ -2532,6 +2541,9 @@ function build(options, callback) {
 
   // Used to specify the source map URL.
   var sourceMapURL;
+
+  // Used to track the time it takes to complete a build.
+  var stamp = _.now();
 
   // Used to pre-populate the build state.
   var state = _.isPlainObject(options) && options;
@@ -3185,7 +3197,6 @@ function build(options, callback) {
       if (callback == defaultBuildCallback) {
         callback = null;
       }
-      var t = _.now();
       buildModule({
         'buildFuncs': buildFuncs,
         'filePath': filePath,
@@ -3209,10 +3220,10 @@ function build(options, callback) {
         'outputPath': outputPath,
         'plusFuncs': plusFuncs,
         'source': source,
+        'stamp': stamp,
         'tokenMap': tokenMap,
         'varDepMap': varDepMap
       }, callback);
-      console.log('finished in', (_.now() - t) / 1000);
       return;
     }
   }
@@ -3356,7 +3367,7 @@ function build(options, callback) {
         source = removeMethodAssignment(source, funcName);
       });
     }
-
+    // Detect variables before untokenizing functions.
     var varNames = _.difference(getVars(source), includeFuncs, includeObjs, includeVars.concat('freeGlobal'));
 
     // Untokenize functions to include in the build.
@@ -3369,29 +3380,10 @@ function build(options, callback) {
     // Remove remaining tokens.
     source = source.replace(reNamedToken, '');
 
+    // Remove unused variables.
     source = stringFree(source, function(source) {
       return commentFree(source, function(source) {
         var useMap = createMap();
-
-        _.each(varNames, function(varName) {
-          source = source.replace(RegExp('([^.$"\'\\w])' + _.escapeRegExp(varName) + '\\b(?!\\s*=)', 'g'), '$1<:' + varName + ':>');
-        });
-
-        // Tokenize variables to reduce build times.
-        var tokenMap = _.transform(varNames, function(result, varName) {
-          var varCode = result[varName] = matchVar(source, varName, true);
-          if (varCode.indexOf('<:') > -1) {
-            return;
-          }
-          var prelude = _.result(varCode.match(/^,\n */), 0, ''),
-              postlude =  _.result(varCode.match(/,\n *$/), 0, _.endsWith(varCode, '\n') ? '\n' : '');
-
-          source = source.replace(varCode, prelude + '<<' + varName + '>>' + postlude);
-        }, createMap());
-
-        source = source.replace(/<:([$\w]+):>/g, '$1');
-
-        // Remove unused variables.
         while (varNames.length) {
           varNames = _.sortBy(varNames, function(varName) {
             var result = isVarUsed(source, varName);
@@ -3403,30 +3395,14 @@ function build(options, callback) {
             varNames.shift();
           }
           while (varNames.length && !useMap[varNames[0]]) {
-            var length = source.length;
-            source = source.replace(RegExp('(,\\n *)?<<' + varNames[0] + '>>(\\n|,\\n *)?'), function(match, prelude, postlude) {
-              return (prelude && postlude) || '';
-            });
-            if (length == source.length) {
-              source = removeVar(source, varNames[0]);
-            }
+            source = removeVar(source, varNames[0]);
             varNames.shift();
           }
         }
-        // Untokenize variables to include in the build.
-        _.forOwn(useMap, function(value, varName) {
-          if (value) {
-            source = source.replace(RegExp('(?:,\\n *)?<<' + varName + '>>(?:\\n|,\\n *)?'), function() {
-              return tokenMap[varName];
-            });
-          }
-        });
-
-        return source.replace(/^ *var ;\n/gm, '');
+        return source;
       });
     });
   }
-
   // Customize lodash's IIFE.
   if (isIIFE) {
     source = replaceIIFE(source, iife);
