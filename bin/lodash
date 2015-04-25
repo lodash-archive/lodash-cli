@@ -2556,6 +2556,7 @@ function build(options, callback) {
     var buildFuncs = state.buildFuncs,
         filePath = state.filePath,
         funcDepMap = state.funcDepMap,
+        funcTokenMap = state.funcTokenMap,
         includeFuncs = state.includeFuncs,
         includeObjs = state.includeObjs,
         includeVars = state.includeVars,
@@ -2568,7 +2569,6 @@ function build(options, callback) {
         outputPath = state.outputPath,
         plusFuncs = [],
         source = state.source,
-        tokenMap = state.tokenMap,
         varDepMap = state.varDepMap;
   }
   else {
@@ -3153,7 +3153,7 @@ function build(options, callback) {
     }
 
     // Tokenize functions to reduce build times.
-    tokenMap = _.transform(listing.funcs, function(result, funcName) {
+    funcTokenMap = _.transform(listing.funcs, function(result, funcName) {
       result[funcName] = matchFunction(source, funcName, true);
       source = source.replace(result[funcName], '<<' + funcName + '>>\n');
     }, createMap());
@@ -3201,6 +3201,7 @@ function build(options, callback) {
         'buildFuncs': buildFuncs,
         'filePath': filePath,
         'funcDepMap': funcDepMap,
+        'funcTokenMap': funcTokenMap,
         'includeFuncs': includeFuncs,
         'includeObjs': includeObjs,
         'includeVars': includeVars,
@@ -3221,7 +3222,6 @@ function build(options, callback) {
         'plusFuncs': plusFuncs,
         'source': source,
         'stamp': stamp,
-        'tokenMap': tokenMap,
         'varDepMap': varDepMap
       }, callback);
       return;
@@ -3373,7 +3373,7 @@ function build(options, callback) {
     // Untokenize functions to include in the build.
     _.each(buildFuncs, function(funcName) {
       source = source.replace('<<' + funcName + '>>\n', function() {
-        return tokenMap[funcName];
+        return funcTokenMap[funcName];
       });
     });
 
