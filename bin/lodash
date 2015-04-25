@@ -93,8 +93,18 @@ var isBin = module == require.main;
 /** Native method references. */
 var push = Array.prototype.push;
 
-/** Used to replace string literals with tokens. */
-var stringToken = '[[lodash@' + _.VERSION + ' token]]';
+/** Used to match comments and string literals. */
+var reComment = /^ *(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.*)\n/gm,
+    reString = /(["'])(?:(?!\1)[^\n\\]|\\.)*?\1/g;
+
+/** Used to detect if a string is a function snippet or a variable declaration snippet. */
+var reIsFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|[a-z]+(?:[A-Z][a-z]+)+)\(/,
+    reIsVarSnippet = /^\s*var\s+/;
+
+/** Used to match function and string tokens. */
+var reCommentToken = /<#token\d+#>\n/g,
+    reNamedToken = /<<[$\w]+>>\n?/g,
+    reStringToken = /<@token\d+@>/g;
 
 /** Used to determine if a variable search should be deep. */
 var reHasDeepVars = /^ *function +runInContext\b/m;
@@ -102,20 +112,8 @@ var reHasDeepVars = /^ *function +runInContext\b/m;
 /** Used to detect a function by its JSDoc tags. */
 var reHasFuncTags = /^ *\* *(?:@param|@returns|@type +Function)\b/im;
 
-/** Used to detect if a string is a function snippet. */
-var reIsFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|[a-z]+(?:[A-Z][a-z]+)+)\(/;
-
-/** Used to detect if a string is a variable declaration snippet. */
-var reIsVarSnippet = /^\s*var\s+/;
-
 /** Used to match `getCallback` calls and references. */
 var reGetCallback = /\bgetCallback\b(?:\(\))?/g;
-
-/** Used to match string literals. */
-var reString = /(["'])(?:(?!\1)[^\n\\]|\\.)*?\1/g;
-
-/** Used to match string tokens. */
-var reStringToken = RegExp(_.escapeRegExp(stringToken), 'g');
 
 /** Used to match `toObject` calls. */
 var reToObject = /\btoObject\(([^)]+)\)/g;
@@ -925,6 +923,8 @@ function cleanupSource(source) {
       .replace(/(\{\s*)?(\n *\/\/.*)(\s*\})/g, function(match, prelude, comment, postlude) {
         return (!prelude && postlude) ? postlude : match;
       })
+      // Remove unattached multi-line and single line comments.
+      .replace(/^ *(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.*)\n\n/gm, '\n')
       // Remove unneeded horizontal rule comment separators.
       .replace(/(\{\s*\n) *\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*\})/gm, '$1$2')
       // Remove trailing horizontal rule comment separators.
@@ -939,6 +939,29 @@ function cleanupSource(source) {
       .replace(/^ *\n+/, '')
       // Add trailing newline.
       .trimRight() + '\n';
+  });
+}
+
+/**
+ * This function allows `callback` to modify `source` with comments
+ * removed and returns the modified source with comments restored.
+ *
+ * @private
+ * @param {string} source The source to modify.
+ * @param {Function} [callback] The function to modify the comment free source.
+ * @returns {string} Returns the modified source.
+ */
+function commentFree(source, callback) {
+  var comments = [];
+  source = source == null ? '' : String(source);
+  source = callback(source.replace(reComment, function(match) {
+    var index = comments.length;
+    comments.push(match);
+    return '<#token' + index + '#>\n';
+  })) || '';
+
+  return source.replace(reCommentToken, function(match) {
+    return comments[match.slice(7, -3)];
   });
 }
 
@@ -1365,14 +1388,6 @@ function getRealCategory(alias) {
  * @returns {Array} Returns a new array of variable names.
  */
 function getVars(source) {
-  source = removeStrings(removeComments(source));
-
-  // Remove all functions except `runInContext`.
-  source = source
-    .replace(/^( *)function\s+(?!runInContext\b)[\s\S]+?\{\n[\s\S]+?\n\1\}\n/gm, '')
-    .replace(/^( *)(?:var\s+)?[$\w]+\s*=\s*function\([\s\S]+?\{\n[\s\S]+?\n\1\};\n/gm, '')
-    .replace(/^( *)(?:var\s+)?[$\w]+\s*=.*?(?:create|rest)(?:[A-Z][a-z]+)+\((?:.+|[\s\S]+?\n\1(?:\S.*?)?)\);\n/gm, '');
-
   var isDeep = reHasDeepVars.test(source),
       indentA = isDeep ? ' {2,4}' : ' {2}',
       indentB = isDeep ? ' {6,8}' : ' {6}';
@@ -1386,6 +1401,7 @@ function getVars(source) {
     ['^(' + indentA + ')var\\s+([$\\w]+)\\s*(?:|=\\s*(?:.+?(?:[&+]\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n', 2, -1]
   ];
 
+  source = removeStrings(removeComments(source));
   return _.uniq(_.transform(reAttempts, function(result, data) {
     source = source.replace(RegExp(data[0], 'gm'), function() {
       result.push(arguments[data[1]]);
@@ -1614,7 +1630,7 @@ function removeChaining(source) {
  */
 function removeComments(source) {
   source = source == null ? '' : String(source);
-  return source.replace(/^ *(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.+)\n/gm, '');
+  return source.replace(reComment, '');
 }
 
 /**
@@ -2471,16 +2487,16 @@ function setUseStrictOption(source, value) {
  * @returns {string} Returns the modified source.
  */
 function stringFree(source, callback) {
-  source = source == null ? '' : String(source);
-
   var strings = [];
+  source = source == null ? '' : String(source);
   source = callback(source.replace(reString, function(match) {
+    var index = strings.length;
     strings.push(match);
-    return stringToken;
+    return '<@token' + index + '@>';
   })) || '';
 
-  return source.replace(reStringToken, function() {
-    return strings.shift();
+  return source.replace(reStringToken, function(match) {
+    return strings[match.slice(7, -2)];
   });
 }
 
@@ -2540,6 +2556,7 @@ function build(options, callback) {
         outputPath = state.outputPath,
         plusFuncs = [],
         source = state.source,
+        tokenMap = state.tokenMap,
         varDepMap = state.varDepMap;
   }
   else {
@@ -3123,6 +3140,12 @@ function build(options, callback) {
       source = removeRunInContext(source);
     }
 
+    // Tokenize functions to reduce build times.
+    tokenMap = _.transform(listing.funcs, function(result, funcName) {
+      result[funcName] = matchFunction(source, funcName, true);
+      source = source.replace(result[funcName], '<<' + funcName + '>>\n');
+    }, createMap());
+
     /*------------------------------------------------------------------------*/
 
     // Set the AMD module ID.
@@ -3155,11 +3178,14 @@ function build(options, callback) {
 
     /*------------------------------------------------------------------------*/
 
+    source = cleanupSource(source);
+
     // Exit early to create modules.
     if (isModularize) {
       if (callback == defaultBuildCallback) {
         callback = null;
       }
+      var t = _.now();
       buildModule({
         'buildFuncs': buildFuncs,
         'filePath': filePath,
@@ -3183,8 +3209,10 @@ function build(options, callback) {
         'outputPath': outputPath,
         'plusFuncs': plusFuncs,
         'source': source,
+        'tokenMap': tokenMap,
         'varDepMap': varDepMap
       }, callback);
+      console.log('finished in', (_.now() - t) / 1000);
       return;
     }
   }
@@ -3193,9 +3221,25 @@ function build(options, callback) {
 
   // Modify/remove references to removed functions/variables.
   if (!isTemplate) {
+    // Remove forks of removed functions.
+    _.forOwn({
+      'bufferClone': removeBufferCloneFork,
+      'isArguments': removeIsArgumentsFork,
+      'isArray': removeIsArrayFork,
+      'isElement': removeIsElementFork,
+      'isFunction': removeIsFunctionFork,
+      'now': removeNowFork,
+      'parseInt': removeParseIntFork
+    },
+    function(removeFork, funcName) {
+      if (isExcluded(funcName)) {
+        source = removeFork(source);
+      }
+    });
+
+    // Remove prototype assignments.
     _.each(['MapCache', 'SetCache'], function(funcName) {
       if (isExcluded(funcName)) {
-        // Remove prototype assignments.
         source = source.replace(RegExp('^(?: *\\/\\/.*\\n)* *' + funcName + '\\.prototype(?:\\.[$\\w]+|\\[\'[^\']+\'\\])\\s*=[^;]+;\\n', 'gm'), '');
       }
     });
@@ -3230,63 +3274,6 @@ function build(options, callback) {
     else if (isExcluded('wrapperValue')) {
       source = removeChaining(source);
     }
-    if (_.includes(includeObjs, 'support') && !_.isEmpty(buildFuncs)) {
-      if (isExcluded('isArguments', 'isPlainObject', 'shimIsPlainObject')) {
-        source = removeSupportArgsTag(source);
-      }
-      if (isExcluded('isElement')) {
-        source = removeSupportNodeTag(source);
-      }
-      if (isExcluded('isArguments')) {
-        source = replaceSupportProp(source, 'argsTag', 'true');
-      }
-      if (isExcluded('isElement')) {
-        source = removeSupportDom(source);
-      }
-      if (isExcluded('isPlainObject')) {
-        source = removeSupportOwnLast(source);
-      }
-      if (isExcluded('keysIn')) {
-        source = removeSupportNonEnumShadows(source);
-      }
-      if (isExcluded('keysIn', 'shimKeys')) {
-        source = removeSupportNonEnumArgs(source);
-        source = removeSupportNonEnumStrings(source);
-      }
-    }
-    // Remove functions from the build.
-    _.each(listing.funcs, function(funcName) {
-      if (!_.includes(buildFuncs, funcName)) {
-        source = removeFunction(source, funcName);
-        if (!isModularize) {
-          source = removeMethodAssignment(source, funcName);
-        }
-      }
-    });
-
-    // Remove forks of removed functions.
-    _.forOwn({
-      'bufferClone': removeBufferCloneFork,
-      'isArguments': removeIsArgumentsFork,
-      'isArray': removeIsArrayFork,
-      'isElement': removeIsElementFork,
-      'isFunction': removeIsFunctionFork,
-      'now': removeNowFork,
-      'parseInt': removeParseIntFork
-    },
-    function(removeFork, funcName) {
-      if (isExcluded(funcName)) {
-        source = removeFork(source);
-      }
-    });
-
-    // Remove unneeded property dependencies.
-    _.each(listing.objDeps, function(propName) {
-      if (!_.includes(includeObjs, propName)) {
-        source = removeProp(source, propName);
-      }
-    });
-
     // Remove placeholder assignments of removed functions.
     source = source.replace(/^((?: *\/\/.*\n)*)( *)(arrayEach\(\[')bind\b[\s\S]+?('\][\s\S]+?\n\2\}\))/m, function(match, comment, indent, prelude, postlude) {
       var funcNames = _.reject(listing.placeholderFuncs, isExcluded),
@@ -3300,66 +3287,144 @@ function build(options, callback) {
         : '';
     });
 
-    // Remove code used to resolve unneeded `support` properties.
-    source = source.replace(matchProp(source, 'support'), function(match) {
-      return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var\s+Ctor\s*=[\s\S]+?\n *for\b[\s\S]+?\}\n)([\s\S]+?)\}\(0,\s*0\)\);\n/m, function(match, setup, indent, body) {
-        var modified = setup;
+    // Remove unneeded `support` properties.
+    if (_.includes(includeObjs, 'support')) {
+      if (!_.isEmpty(buildFuncs)) {
+        if (isExcluded('isArguments', 'isPlainObject', 'shimIsPlainObject')) {
+          source = removeSupportArgsTag(source);
+        }
+        if (isExcluded('isElement')) {
+          source = removeSupportNodeTag(source);
+        }
+        if (isExcluded('isArguments')) {
+          source = replaceSupportProp(source, 'argsTag', 'true');
+        }
+        if (isExcluded('isElement')) {
+          source = removeSupportDom(source);
+        }
+        if (isExcluded('isPlainObject')) {
+          source = removeSupportOwnLast(source);
+        }
+        if (isExcluded('keysIn')) {
+          source = removeSupportNonEnumShadows(source);
+        }
+        if (isExcluded('keysIn', 'shimKeys')) {
+          source = removeSupportNonEnumArgs(source);
+          source = removeSupportNonEnumStrings(source);
+        }
+      }
+      source = source.replace(matchProp(source, 'support'), function(match) {
+        return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var\s+Ctor\s*=[\s\S]+?\n *for\b[\s\S]+?\}\n)([\s\S]+?)\}\(0,\s*0\)\);\n/m, function(match, setup, indent, body) {
+          var modified = setup;
 
-        if (!/\.spliceObjects\s*=\s*(?!false\b|true\b)/.test(body)) {
-          modified = removeVar(modified, 'object');
-        }
-        if (!/\.enumPrototypes\s*=\s*(?!false\b|true\b)/.test(body) &&
-            !/\.nonEnumShadows\s*=\s*(?!false\b|true\b)/.test(body) &&
-            !/\.ownLast\s*=\s*(?!false\b|true\b)/.test(body)) {
-          modified = removeVar(modified, 'Ctor');
-          modified = removeVar(modified, 'props');
-          modified = modified
-            .replace(/^ *Ctor\.prototype\b[\s\S]+?;\n/m, '')
-            .replace(/^ *for\s*\(var\s+key\b[\s\S]+?\}\n/m, '');
-        }
-        // If there's no setup code then remove the IIFE.
-        return (_.trim(modified) || /\barguments\b/.test(body))
-          ? match.replace(setup, modified)
-          : body.replace(RegExp('^' + indent, 'gm'), indent.slice(0, -2));
+          if (!/\.spliceObjects\s*=\s*(?!false\b|true\b)/.test(body)) {
+            modified = removeVar(modified, 'object');
+          }
+          if (!/\.enumPrototypes\s*=\s*(?!false\b|true\b)/.test(body) &&
+              !/\.nonEnumShadows\s*=\s*(?!false\b|true\b)/.test(body) &&
+              !/\.ownLast\s*=\s*(?!false\b|true\b)/.test(body)) {
+            modified = removeVar(modified, 'Ctor');
+            modified = removeVar(modified, 'props');
+            modified = modified
+              .replace(/^ *Ctor\.prototype\b[\s\S]+?;\n/m, '')
+              .replace(/^ *for\s*\(var\s+key\b[\s\S]+?\}\n/m, '');
+          }
+          // If there's no setup code then remove the IIFE.
+          return (_.trim(modified) || /\barguments\b/.test(body))
+            ? match.replace(setup, modified)
+            : body.replace(RegExp('^' + indent, 'gm'), indent.slice(0, -2));
+        });
       });
+    }
+    // Remove unneeded property dependencies.
+    _.each(_.difference(listing.objDeps, includeObjs), function(propName) {
+      source = removeProp(source, propName);
     });
 
     // Remove unneeded variable dependencies.
+    _.each(_.difference(listing.varDeps, includeVars.concat('root')), function(varName) {
+      source = removeVar(source, varName);
+    });
+
     if (!(isAMD || isGlobal) && !_.includes(includeVars, 'root')) {
       source = removeVar(source, 'freeGlobal');
       source = removeVar(source, 'root');
     }
-    _.each(_.without(listing.varDeps, 'root'), function(varName) {
-      if (!_.includes(includeVars, varName)) {
-        source = removeVar(source, varName);
-      }
+    // Remove method assignments from the build.
+    if (!isModularize) {
+      _.each(_.difference(listing.funcs, buildFuncs), function(funcName) {
+        source = removeMethodAssignment(source, funcName);
+      });
+    }
+
+    var varNames = _.difference(getVars(source), includeFuncs, includeObjs, includeVars.concat('freeGlobal'));
+
+    // Untokenize functions to include in the build.
+    _.each(buildFuncs, function(funcName) {
+      source = source.replace('<<' + funcName + '>>\n', function() {
+        return tokenMap[funcName];
+      });
     });
 
-    (function() {
-      var useMap = createMap(),
-          snippet = cleanupSource(removeStrings(removeComments(source))),
-          varNames = _.without(_.difference(getVars(snippet), includeFuncs, includeObjs, includeVars), 'freeGlobal');
+    // Remove remaining tokens.
+    source = source.replace(reNamedToken, '');
 
-      // Remove unused variables.
-      while (varNames.length) {
-        varNames = _.sortBy(varNames, function(varName) {
-          var result = isVarUsed(snippet, varName);
-          useMap[varName] = result;
-          return result;
+    source = stringFree(source, function(source) {
+      return commentFree(source, function(source) {
+        var useMap = createMap();
+
+        _.each(varNames, function(varName) {
+          source = source.replace(RegExp('([^.$"\'\\w])' + _.escapeRegExp(varName) + '\\b(?!\\s*=)', 'g'), '$1<:' + varName + ':>');
         });
 
-        if (useMap[varNames[0]]) {
-          varNames.shift();
-        }
-        else {
+        // Tokenize variables to reduce build times.
+        var tokenMap = _.transform(varNames, function(result, varName) {
+          var varCode = result[varName] = matchVar(source, varName, true);
+          if (varCode.indexOf('<:') > -1) {
+            return;
+          }
+          var prelude = _.result(varCode.match(/^,\n */), 0, ''),
+              postlude =  _.result(varCode.match(/,\n *$/), 0, _.endsWith(varCode, '\n') ? '\n' : '');
+
+          source = source.replace(varCode, prelude + '<<' + varName + '>>' + postlude);
+        }, createMap());
+
+        source = source.replace(/<:([$\w]+):>/g, '$1');
+
+        // Remove unused variables.
+        while (varNames.length) {
+          varNames = _.sortBy(varNames, function(varName) {
+            var result = isVarUsed(source, varName);
+            useMap[varName] = result;
+            return result;
+          });
+
+          while (varNames.length && useMap[varNames[0]]) {
+            varNames.shift();
+          }
           while (varNames.length && !useMap[varNames[0]]) {
-            snippet = removeVar(snippet, varNames[0]);
-            source = removeVar(source, varNames[0]);
+            var length = source.length;
+            source = source.replace(RegExp('(,\\n *)?<<' + varNames[0] + '>>(\\n|,\\n *)?'), function(match, prelude, postlude) {
+              return (prelude && postlude) || '';
+            });
+            if (length == source.length) {
+              source = removeVar(source, varNames[0]);
+            }
             varNames.shift();
           }
         }
-      }
-    }());
+        // Untokenize variables to include in the build.
+        _.forOwn(useMap, function(value, varName) {
+          if (value) {
+            source = source.replace(RegExp('(?:,\\n *)?<<' + varName + '>>(?:\\n|,\\n *)?'), function() {
+              return tokenMap[varName];
+            });
+          }
+        });
+
+        return source.replace(/^ *var ;\n/gm, '');
+      });
+    });
   }
 
   // Customize lodash's IIFE.
