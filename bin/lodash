@@ -3165,8 +3165,8 @@ function build(options, callback) {
       if (!_.includes(buildFuncs, 'runInContext')) {
         source = removeRunInContext(source);
       }
-      // Tokenize functions to reduce build times.
-      if (!_.isEqual(listing.funcs, buildFuncs)) {
+      // Tokenize functions to reduce modularized build times.
+      if (isModularize) {
         funcTokenMap = _.transform(_.without(listing.funcs, 'runInContext'), function(result, funcName) {
           var match = matchFunction(source, funcName, true);
           result[funcName] = _.includes(buildFuncs, funcName) ? match : '';
@@ -3378,26 +3378,24 @@ function build(options, callback) {
       source = removeVar(source, 'freeGlobal');
       source = removeVar(source, 'root');
     }
-    // Remove method assignments from the build.
-    if (!isModularize) {
-      _.each(_.difference(listing.funcs, buildFuncs), function(funcName) {
-        source = removeMethodAssignment(source, funcName);
-      });
-    }
     // Detect variables before untokenizing functions.
     var varNames = _.difference(getVars(source), buildFuncs, includeObjs, includeVars.concat('freeGlobal'));
 
-    // Untokenize functions to include in the build.
-    if (funcTokenMap) {
+    if (isModularize) {
+      // Untokenize functions to include in the build.
       _.each(buildFuncs, function(funcName) {
         source = source.replace('<<' + funcName + '>>\n', function() {
           return funcTokenMap[funcName];
         });
       });
+      source = source.replace(reNamedToken, '');
+    } else {
+      // Remove functions and method assignments from the build.
+      _.each(_.difference(listing.funcs, buildFuncs), function(funcName) {
+        source = removeFunction(source, funcName);
+        source = removeMethodAssignment(source, funcName);
+      });
     }
-    // Remove remaining tokens.
-    source = source.replace(reNamedToken, '');
-
     // Remove unused variables.
     source = stringFree(source, function(source) {
       return commentFree(source, function(source) {
