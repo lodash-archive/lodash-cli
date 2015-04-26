@@ -103,7 +103,7 @@ var reIsFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|[a-z]+(?:[A-Z][a-z]+)+)\(/,
 
 /** Used to match function and string tokens. */
 var reCommentToken = /<#com_token\d+#>\n/g,
-    reNamedToken = /<<[$\w]+>>\n?/g,
+    reNamedToken = /<<[$\w]+>>\n/g,
     reStringToken = /<#str_token\d+#>/g;
 
 /** Used to determine if a variable search should be deep. */
