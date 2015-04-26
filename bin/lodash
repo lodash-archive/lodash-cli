@@ -2959,6 +2959,13 @@ function build(options, callback) {
       if (isNpm) {
         source = removeMetadata(source, funcDepMap, objDepMap, varDepMap);
 
+        // Remove `nativeAssign` from `baseAssign`
+        _.pull(funcDepMap.baseAssign, 'isNative');
+
+        source = source.replace(matchFunction(source, 'baseAssign'), function(match) {
+          return match.replace(/\bnativeAssign\s*\|\|\s*/, '');
+        });
+
         // Replace `createFlow`.
         _.pull(funcDepMap.createFlow, 'getData', 'getFuncName', 'isArray', 'isLaziable', 'LodashWrapper');
 
@@ -2993,12 +3000,12 @@ function build(options, callback) {
         ].join('\n'));
       }
       // Remove "_.matches" or "_.property" style callback support from `baseCallback`.
-      _.pull(funcDepMap.callback, 'isObjectLike', 'matches');
-
-      source = source.replace(matchFunction(source, 'callback'), function(match) {
-        return match.replace(/^( *return\s+)[^:]+:\s*/m, '$1');
-      });
-
+      if (_.includes(minusFuncs, 'matches')) {
+        _.pull(funcDepMap.callback, 'isObjectLike', 'matches');
+        source = source.replace(matchFunction(source, 'callback'), function(match) {
+          return match.replace(/^( *return\s+)[^:]+:\s*/m, '$1');
+        });
+      }
       _.each(['baseMatches', 'baseMatchesProperty', 'property'], function(funcName) {
         var otherName = _.camelCase(_.trimLeft(funcName, 'base'));
         if (_.includes(minusFuncs, otherName)) {
