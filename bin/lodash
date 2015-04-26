@@ -2548,7 +2548,9 @@ function build(options, callback) {
   var state = _.isPlainObject(options) && options;
 
   var isExcluded = function() {
-    return _.every(arguments, _.negate(_.partial(_.includes, buildFuncs, _, 0)));
+    return _.every(arguments, function(value) {
+      return !_.includes(buildFuncs, value);
+    });
   };
 
   if (state) {
