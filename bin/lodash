@@ -3162,17 +3162,20 @@ function build(options, callback) {
       }
     }
     if (!isTemplate) {
-      if (!_.includes(buildFuncs, 'runInContext')) {
-        source = removeRunInContext(source);
-      }
+      // Remove functions and method assignments from the build.
+      _.each(_.difference(listing.funcs, buildFuncs), function(funcName) {
+        source = removeFunction(source, funcName);
+        if (!isModularize) {
+          source = removeMethodAssignment(source, funcName);
+        }
+      });
+
       // Tokenize functions to reduce modularized build times.
       if (isModularize) {
-        funcTokenMap = _.transform(_.without(listing.funcs, 'runInContext'), function(result, funcName) {
+        funcTokenMap = _.transform(buildFuncs, function(result, funcName) {
           var match = matchFunction(source, funcName, true);
           source = source.replace(match, '<<' + funcName + '>>\n');
-          if (_.includes(buildFuncs, funcName)) {
-            result[funcName] = match;
-          }
+          result[funcName] = match;
         }, createMap());
       }
     }
@@ -3391,12 +3394,6 @@ function build(options, callback) {
         });
       });
       source = source.replace(reNamedToken, '');
-    } else {
-      // Remove functions and method assignments from the build.
-      _.each(_.difference(listing.funcs, buildFuncs), function(funcName) {
-        source = removeFunction(source, funcName);
-        source = removeMethodAssignment(source, funcName);
-      });
     }
     // Remove unused variables.
     source = stringFree(source, function(source) {
