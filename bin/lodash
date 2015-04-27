@@ -3169,8 +3169,10 @@ function build(options, callback) {
       if (isModularize) {
         funcTokenMap = _.transform(_.without(listing.funcs, 'runInContext'), function(result, funcName) {
           var match = matchFunction(source, funcName, true);
-          result[funcName] = _.includes(buildFuncs, funcName) ? match : '';
           source = source.replace(match, '<<' + funcName + '>>\n');
+          if (_.includes(buildFuncs, funcName)) {
+            result[funcName] = match;
+          }
         }, createMap());
       }
     }
