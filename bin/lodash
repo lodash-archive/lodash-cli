@@ -2570,7 +2570,8 @@ function build(options, callback) {
         outputPath = state.outputPath,
         plusFuncs = [],
         source = state.source,
-        varDepMap = state.varDepMap;
+        varDepMap = state.varDepMap,
+        varNames = state.varNames;
   }
   else {
     // Clone dependencies to modify.
@@ -3178,6 +3179,8 @@ function build(options, callback) {
           result[funcName] = match;
         }, createMap());
       }
+      // Detect variables after tokenizing functions.
+      varNames = _.difference(getVars(source), buildFuncs.concat(includeObjs, includeVars, 'freeGlobal'));
     }
 
     /*------------------------------------------------------------------------*/
@@ -3244,7 +3247,8 @@ function build(options, callback) {
         'plusFuncs': plusFuncs,
         'source': source,
         'stamp': stamp,
-        'varDepMap': varDepMap
+        'varDepMap': varDepMap,
+        'varNames': varNames
       }, callback);
       return;
     }
@@ -3380,12 +3384,10 @@ function build(options, callback) {
     });
 
     if (!(isAMD || isGlobal) && !_.includes(includeVars, 'root')) {
+      varNames = _.without(varNames, 'root');
       source = removeVar(source, 'freeGlobal');
       source = removeVar(source, 'root');
     }
-    // Detect variables before untokenizing functions.
-    var varNames = _.difference(getVars(source), buildFuncs, includeObjs, includeVars.concat('freeGlobal'));
-
     if (isModularize) {
       // Untokenize functions to include in the build.
       _.each(buildFuncs, function(funcName) {
