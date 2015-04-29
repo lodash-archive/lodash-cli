@@ -2912,12 +2912,21 @@ function build(options, callback) {
           });
         });
 
+        // Replace `_.at`.
+        _.pull(funcDepMap.at, 'isArrayLike', 'toIterable');
+
+        source = replaceFunction(source, 'at', [
+          'var at = restParam(function(collection, props) {',
+          '  return baseAt(collection, baseFlatten(props));',
+          '});'
+        ].join('\n'));
+
         // Replace `_.isRegExp`.
         _.pull(funcDepMap.isRegExp, 'isObject').push('isObjectLike');
 
         source = replaceFunction(source, 'isRegExp', [
           'function isRegExp(value) {',
-          '  return (isObjectLike(value) && objToString.call(value) == regexpTag) || false;',
+          '  return isObjectLike(value) && objToString.call(value) == regexpTag;',
           '}'
         ].join('\n'));
 
