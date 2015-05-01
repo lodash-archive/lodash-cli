@@ -8,9 +8,9 @@
       "resolved": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.6.tgz"
     },
     "glob": {
-      "version": "5.0.3",
-      "from": "https://registry.npmjs.org/glob/-/glob-5.0.3.tgz",
-      "resolved": "https://registry.npmjs.org/glob/-/glob-5.0.3.tgz",
+      "version": "5.0.5",
+      "from": "https://registry.npmjs.org/glob/-/glob-5.0.5.tgz",
+      "resolved": "https://registry.npmjs.org/glob/-/glob-5.0.5.tgz",
       "dependencies": {
         "inflight": {
           "version": "1.0.4",
@@ -30,9 +30,9 @@
           "resolved": "https://registry.npmjs.org/inherits/-/inherits-2.0.1.tgz"
         },
         "minimatch": {
-          "version": "2.0.4",
-          "from": "https://registry.npmjs.org/minimatch/-/minimatch-2.0.4.tgz",
-          "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-2.0.4.tgz",
+          "version": "2.0.7",
+          "from": "https://registry.npmjs.org/minimatch/-/minimatch-2.0.7.tgz",
+          "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-2.0.7.tgz",
           "dependencies": {
             "brace-expansion": {
               "version": "1.1.0",
@@ -64,11 +64,16 @@
               "resolved": "https://registry.npmjs.org/wrappy/-/wrappy-1.0.1.tgz"
             }
           }
+        },
+        "path-is-absolute": {
+          "version": "1.0.0",
+          "from": "https://registry.npmjs.org/path-is-absolute/-/path-is-absolute-1.0.0.tgz",
+          "resolved": "https://registry.npmjs.org/path-is-absolute/-/path-is-absolute-1.0.0.tgz"
         }
       }
     },
     "lodash-compat": {
-      "version": "3.7.0"
+      "version": "3.8.0"
     },
     "semver": {
       "version": "4.3.3",
