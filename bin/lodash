@@ -1756,20 +1756,17 @@ function removeGetCallback(source, funcDepMap) {
   });
 
   _.each(['createExtremum', 'createSortedIndex', 'sum', 'uniq'], function(funcName) {
-    var isCreateSortedIndex = funcName == 'createSortedIndex',
-        useNoIteratee = /^(?:createExtremum|sum)$/.test(funcName);
+    var isCreateSortedIndex = funcName == 'createSortedIndex';
 
     source = source.replace(matchFunction(source, funcName), function(match) {
-      match = removeVar(match, 'func');
+      match = removeVar(match, 'callback');
       if (isCreateSortedIndex) {
         return match
-          .replace(/\(func[^)]+\)/, 'iteratee == null')
-          .replace(/\bfunc(?=\()/, 'baseCallback');
+          .replace(/\((iteratee\s*==\s*null)\b[^)]+\)/, '$1')
+          .replace(/\bcallback(?=\()/, 'baseCallback');
       }
-      return match.replace(/^( *)if\s*\(!\(func[\s\S]+?\n\1\}/m, function(match, indent) {
-        return indent +
-          'iteratee = ' + (useNoIteratee ? 'noIteratee' : 'iteratee == null') +
-          ' ? iteratee : baseCallback(iteratee, thisArg, 3);';
+      return match.replace(/^( *)if\s*\(!\((noIteratee|iteratee\s*==\s*null)\b[\s\S]+?\n\1\}/m, function(match, indent, check) {
+        return indent + 'iteratee = ' + check + ' ? iteratee : baseCallback(iteratee, thisArg, 3);';
       });
     });
   });
