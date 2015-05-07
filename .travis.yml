@@ -11,7 +11,7 @@ env:
   matrix:
     -
     - EXPORTS="node"
-    - BIN="rhino" OPTION="-require"
+    - BIN="rhino" OPTION="-opt -1 -require"
     - BIN="ringo"
     - BUILD="modern"
     - BUILD="modern" EXPORTS="es"  TRANSPILER="babel"
@@ -58,8 +58,8 @@ before_install:
   - "npm config set loglevel error"
   - "npm i -g npm@\"$NPM_VERSION\""
   - "git clone --depth=10 --branch=master git://github.com/lodash/lodash.git ./node_modules/lodash-compat && cd $_ && perl -pi -e 's|\"lodash\"|\"lodash-compat\"|' ./package.json && npm i && cd ../../"
-  - "[ $BIN != 'rhino' ] || (sudo mkdir /opt/rhino-1.7R5 && sudo wget --no-check-certificate -O $_/js.jar https://lodash.com/_travis/rhino-1.7R5.jar)"
-  - "[ $BIN != 'rhino' ] || (echo -e '#!/bin/sh\\njava -jar /opt/rhino-1.7R5/js.jar $@' | sudo tee /usr/local/bin/rhino && sudo chmod +x /usr/local/bin/rhino)"
+  - "[ $BIN != 'rhino' ] || (sudo mkdir /opt/rhino-1.7.6 && sudo wget --no-check-certificate -O $_/js.jar https://lodash.com/_travis/rhino-1.7.6.jar)"
+  - "[ $BIN != 'rhino' ] || (echo -e '#!/bin/sh\\njava -jar /opt/rhino-1.7.6/js.jar $@' | sudo tee /usr/local/bin/rhino && sudo chmod +x /usr/local/bin/rhino)"
   - "[ $BIN != 'ringo' ] || (wget --no-check-certificate https://lodash.com/_travis/ringojs-0.11.zip && sudo unzip ringojs-0.11 -d /opt && rm ringojs-0.11.zip)"
   - "[ $BIN != 'ringo' ] || (sudo ln -s /opt/ringojs-0.11/bin/ringo /usr/local/bin/ringo && sudo chmod +x $_)"
   - "OUTPUT_PATH=\"./$EXPORTS\" && TARGET_PATH=\"../../../$EXPORTS/index.js\""
