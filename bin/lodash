@@ -1755,12 +1755,10 @@ function removeGetCallback(source, funcDepMap) {
     });
   });
 
-  _.each(['createExtremum', 'createSortedIndex', 'sum', 'uniq'], function(funcName) {
-    var isCreateSortedIndex = funcName == 'createSortedIndex';
-
+  _.each(['createSortedIndex', 'sum', 'uniq'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       match = removeVar(match, 'callback');
-      if (isCreateSortedIndex) {
+      if (funcName == 'createSortedIndex') {
         return match
           .replace(/\((iteratee\s*==\s*null)\b[^)]+\)/, '$1')
           .replace(/\bcallback(?=\()/, 'baseCallback');
@@ -1769,6 +1767,13 @@ function removeGetCallback(source, funcDepMap) {
         return indent + 'iteratee = ' + check + ' ? iteratee : baseCallback(iteratee, thisArg, 3);';
       });
     });
+  });
+
+  source = source.replace(matchFunction(source, 'createExtremum'), function(match) {
+    match = removeVar(match, 'callback');
+    return match
+      .replace(/\s*&&\s*callback\s*===\s*baseCallback\b/, '')
+      .replace(/\bcallback(?=\()/, 'baseCallback');
   });
 
   source = source.replace(matchFunction(source, 'baseSortByOrder'), function(match) {
