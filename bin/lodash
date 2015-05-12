@@ -2180,17 +2180,6 @@ function removeSupportNodeTag(source, funcDepMap) {
 }
 
 /**
- * Removes all `support.nonEnumArgs` references from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeSupportNonEnumArgs(source) {
-  return removeSupportProp(source, 'nonEnumArgs');
-}
-
-/**
  * Removes all `support.nonEnumShadows` references from `source`.
  *
  * @private
@@ -2211,26 +2200,21 @@ function removeSupportNonEnumShadows(source) {
  * @returns {string} Returns the modified source.
  */
 function removeSupportNonEnumStrings(source, funcDepMap, objDepMap) {
-  var deps = _.result(funcDepMap, 'shimKeys', []);
-  _.pull(deps, 'isString');
-
-  deps = _.result(funcDepMap, 'has', []);
-  _.pull(deps, 'isIndex', 'isString');
-
-  deps = _.result(objDepMap, 'has', []);
+  var deps = _.result(objDepMap, 'has', []);
   _.pull(deps, 'support');
 
   source = removeSupportProp(source, 'nonEnumStrings');
 
-  source = source.replace(matchFunction(source, 'has'), function(match) {
-    return match.replace(/\s*\|\|\s*\(lodash\.support\.nonEnumStrings\b[\s\S]+?\)(?=;\n)/, '');
-  });
+  _.each(['has', 'shimKeys'], function(funcName) {
+    var deps = _.result(funcDepMap, funcName, []);
+    _.pull(deps, 'isString');
 
-  return source.replace(matchFunction(source, 'shimKeys'), function(match) {
-    return match.replace(/\s*\|\|\s*\(support\.nonEnumStrings\b[\s\S]+?\)\)(\s*\|\|\s*)?/, function(match, postlude) {
-      return postlude ? postlude.replace(/\s+$/, ' ') : '';
+    source = source.replace(matchFunction(source, funcName), function(match) {
+      return match.replace(/\s*\|\|\s*\(lodash\.support\.nonEnumStrings\b[\s\S]+?\)\)/, '');
     });
   });
+
+  return source;
 }
 
 /**
@@ -2934,6 +2918,7 @@ function build(options, callback) {
 
         // Replace `_.keysIn`.
         _.pull(funcDepMap.keysIn, 'arrayEach', 'isFunction', 'isString');
+        _.pull(objDepMap.keysIn, 'support');
 
         source = replaceFunction(source, 'keysIn', [
           'function keysIn(object) {',
@@ -2945,7 +2930,7 @@ function build(options, callback) {
           '  }',
           '  var length = object.length;',
           '  length = (length && isLength(length) &&',
-          '    (isArray(object) || (support.nonEnumArgs && isArguments(object))) && length) || 0;',
+          '    (isArray(object) || isArguments(object)) && length) || 0;',
           '',
           '  var Ctor = object.constructor,',
           '      index = -1,',
@@ -3353,8 +3338,7 @@ function build(options, callback) {
         if (isExcluded('keysIn')) {
           source = removeSupportNonEnumShadows(source);
         }
-        if (isExcluded('keysIn', 'shimKeys')) {
-          source = removeSupportNonEnumArgs(source);
+        if (isExcluded('has', 'keysIn', 'shimKeys')) {
           source = removeSupportNonEnumStrings(source);
         }
       }
