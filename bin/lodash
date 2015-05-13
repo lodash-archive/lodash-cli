@@ -1201,7 +1201,6 @@ function getFunctionSource(func, indent) {
   });
 }
 
-
 /**
  * Gets the copyright/license header of `source`.
  *
@@ -2191,33 +2190,6 @@ function removeSupportNonEnumShadows(source) {
 }
 
 /**
- * Removes all `support.nonEnumStrings` references from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @param {Object} [funcDepMap] The function dependency map to modify.
- * @param {Object} [objDepMap] The object dependency map to modify.
- * @returns {string} Returns the modified source.
- */
-function removeSupportNonEnumStrings(source, funcDepMap, objDepMap) {
-  var deps = _.result(objDepMap, 'has', []);
-  _.pull(deps, 'support');
-
-  source = removeSupportProp(source, 'nonEnumStrings');
-
-  _.each(['has', 'shimKeys'], function(funcName) {
-    var deps = _.result(funcDepMap, funcName, []);
-    _.pull(deps, 'isString');
-
-    source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(/\s*\|\|\s*\(lodash\.support\.nonEnumStrings\b[\s\S]+?\)\)/, '');
-    });
-  });
-
-  return source;
-}
-
-/**
  * Removes all `support.ownLast` references from `source`.
  *
  * @private
@@ -2866,7 +2838,6 @@ function build(options, callback) {
         source = removeSupportEnumPrototypes(source, objDepMap);
         source = removeSupportNodeTag(source, funcDepMap);
         source = removeSupportNonEnumShadows(source);
-        source = removeSupportNonEnumStrings(source, funcDepMap, objDepMap);
         source = removeSupportOwnLast(source);
         source = removeSupportSpliceObjects(source);
         source = removeSupportUnindexedChars(source, funcDepMap, objDepMap);
@@ -2898,6 +2869,14 @@ function build(options, callback) {
           });
         });
 
+        // Remove `isString` use from functions.
+        _.each(['has', 'keysIn', 'shimKeys'], function(funcName) {
+          _.pull(funcDepMap[funcName], 'isString');
+          source = source.replace(matchFunction(source, funcName), function(match) {
+            return match.replace(/\s*\|\|\s*isString\([^)]+\)/, '');
+          });
+        });
+
         // Replace `_.at`.
         _.pull(funcDepMap.at, 'isArrayLike', 'toIterable');
 
@@ -2917,7 +2896,7 @@ function build(options, callback) {
         ].join('\n'));
 
         // Replace `_.keysIn`.
-        _.pull(funcDepMap.keysIn, 'arrayEach', 'isFunction', 'isString');
+        _.pull(funcDepMap.keysIn, 'isFunction');
         _.pull(objDepMap.keysIn, 'support');
 
         source = replaceFunction(source, 'keysIn', [
@@ -3337,9 +3316,6 @@ function build(options, callback) {
         }
         if (isExcluded('keysIn')) {
           source = removeSupportNonEnumShadows(source);
-        }
-        if (isExcluded('has', 'keysIn', 'shimKeys')) {
-          source = removeSupportNonEnumStrings(source);
         }
       }
       source = source.replace(matchProp(source, 'support'), function(match) {
