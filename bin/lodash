@@ -2896,7 +2896,7 @@ function build(options, callback) {
         ].join('\n'));
 
         // Replace `_.keysIn`.
-        _.pull(funcDepMap.keysIn, 'isFunction');
+        _.pull(funcDepMap.keysIn, 'arrayEach', 'isFunction');
         _.pull(objDepMap.keysIn, 'support');
 
         source = replaceFunction(source, 'keysIn', [
