@@ -262,7 +262,7 @@ function buildModule(state, onComplete) {
     ).sort();
 
     if (isNpm) {
-      var hoistDeps = mapping.hoist[identifier],
+      var hoistDeps = _.intersection(identifiers, mapping.hoist[identifier]),
           forceInlineDeps = _.difference(mapping.forceInline[identifier], hoistDeps),
           uninlinees = _.difference(listing.uninlinables, forceInlineDeps);
 
