@@ -20,10 +20,10 @@
   "scripts": { "test": "echo \"See the repository CONTRIBUTING.md for testing instructions.\"" },
   "dependencies": {
     "closure-compiler": "0.2.6",
-    "glob": "5.0.5",
+    "glob": "5.0.6",
     "lodash-compat": "3.8.0",
-    "semver": "4.3.3",
-    "uglify-js": "2.4.20"
+    "semver": "4.3.4",
+    "uglify-js": "2.4.21"
   },
   "devDependencies": {
     "qunit-extras": "~1.4.0",
