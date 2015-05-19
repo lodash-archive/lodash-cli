@@ -3121,7 +3121,7 @@ function build(options, callback) {
       });
 
       if (isNode) {
-        source = source.replace(/\bcontext(?=\.)/g, 'global');
+        source = source.replace(/\bcontext(?=[.,])/g, 'global');
       }
       if (!isAMD) {
         source = removeVar(source, 'undefined');
