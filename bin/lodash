@@ -931,7 +931,9 @@ function cleanupSource(source) {
         return (!prelude && postlude) ? postlude : match;
       })
       // Remove unattached multi-line and single line comments.
-      .replace(/^ *(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.*)\n\n/gm, '\n')
+      .replace(/^ *(\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.*)\n\n/gm, function(match, comment) {
+        return /^\/\*-+\*\/$/.test(comment) ? match : '\n';
+      })
       // Remove unneeded horizontal rule comment separators.
       .replace(/(\{\s*\n) *\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*\})/gm, '$1$2')
       // Remove trailing horizontal rule comment separators.
