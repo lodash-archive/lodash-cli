@@ -262,7 +262,7 @@ function buildModule(state, onComplete) {
     ).sort();
 
     if (isNpm) {
-      var hoistDeps = _.intersection(identifiers, mapping.hoist[identifier]),
+      var hoistDeps = _.intersection(getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap), mapping.hoist[identifier]),
           forceInlineDeps = _.difference(mapping.forceInline[identifier], hoistDeps),
           uninlinees = _.difference(listing.uninlinables, forceInlineDeps);
 
@@ -1037,11 +1037,9 @@ function getCategoryAliases(identifier) {
  * @returns {Array} Returns an array of identifier dependencies.
  */
 function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack) {
-  var result = identifier;
-  if (!_.isArray(stack)) {
-    result = _.isArray(identifier) ? _.clone(identifier) : [identifier];
-    stack = [];
-  }
+  var result = _.isArray(identifier) ? (stack ? identifier : _.clone(identifier)) : [identifier];
+  stack || (stack = []);
+
   _.each(result, function(identifier) {
     if (!_.includes(stack, identifier)) {
       push.apply(result, getDependencies(identifier, funcDepMap));
