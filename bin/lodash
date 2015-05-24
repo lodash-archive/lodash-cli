@@ -271,7 +271,7 @@ function buildModule(state, onComplete) {
         return result;
       }));
 
-      depNames = _.union(_.intersection(uninlinees, depNames), _.intersection(uninlinees, inlinees), hoistDeps);
+      depNames = _.union(_.intersection(uninlinees, depNames), _.intersection(uninlinees, inlinees));
       inlinees = _.difference(inlinees, depNames).concat(identifier);
 
       var inlineFuncs = _.intersection(listing.funcs, inlinees),
@@ -292,7 +292,7 @@ function buildModule(state, onComplete) {
     build(state, function(data) {
       var iife = [],
           source = data.source,
-          unusedDeps = _.difference(getUnusedDeps(source, depNames), hoistDeps);
+          unusedDeps = getUnusedDeps(source, depNames);
 
       // Track and remove unused dependencies.
       removedDeps[identifier] = unusedDeps;
@@ -346,7 +346,8 @@ function buildModule(state, onComplete) {
             readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
 
         var type = 'function',
-            version = state.lodash.VERSION;
+            version = state.lodash.VERSION,
+            pkgDepPaths = _.sortBy(_.union(depPaths, _.map(hoistDeps, toDepName)), toDepName);
 
         if (_.includes(listing.objDeps, identifier)) {
           type = 'object';
@@ -359,7 +360,7 @@ function buildModule(state, onComplete) {
           'name': moduleName,
           'type': type,
           'version': version,
-          'dependencies': _.transform(depPaths, function(result, depPath) {
+          'dependencies': _.transform(pkgDepPaths, function(result, depPath) {
             var parts = version.split('.');
             result[depPath] = '^' + parts[0] + '.0.0';
           }, {})
