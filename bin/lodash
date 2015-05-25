@@ -2032,6 +2032,7 @@ function removeProp(source, propName) {
 function removeRunInContext(source) {
   source = removeVar(source, 'clearTimeout');
   source = removeVar(source, 'contextProps');
+  source = removeVar(source, 'parseFloat');
   source = removeVar(source, 'setTimeout');
   source = removeMethodAssignment(source, 'runInContext');
 
