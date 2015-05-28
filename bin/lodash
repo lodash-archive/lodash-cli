@@ -1215,19 +1215,6 @@ function getIndent(func) {
 }
 
 /**
- * Gets the `_.isArray` fork from `source`.
- *
- * @private
- * @param {string} source The source to inspect.
- * @returns {string} Returns the fork.
- */
-function getIsArrayFork(source) {
-  return matchFunction(source, 'isArray')
-    .replace(/^[\s\S]+?(?=\|\|)/, '')
-    .replace(/[;\s]+$/, '');
-}
-
-/**
  * Gets the lodash method assignments snippet from `source`.
  *
  * @private
@@ -1748,18 +1735,6 @@ function removeGetIndexOf(source, funcDepMap) {
 function removeHeader(source) {
   source = source == null ? '' : String(source);
   return source.replace(getHeader(source), '');
-}
-
-/**
- * Removes the `_.isArray` fork from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeIsArrayFork(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(getIsArrayFork(source), '');
 }
 
 /**
@@ -2974,9 +2949,6 @@ function build(options, callback) {
       }
     });
 
-    if (isExcluded('isArray')) {
-      source = removeIsArrayFork(source);
-    }
     if (isExcluded('LazyWrapper')) {
       // Remove `LazyWrapper.prototype` assignment.
       source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype(\.constructor)?\s*=[^;]+;\n/gm, '');
