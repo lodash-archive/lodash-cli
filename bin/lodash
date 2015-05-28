@@ -1068,17 +1068,6 @@ function getCategory(identifier, funcDepMap) {
 }
 
 /**
- * Gets the `bufferClone` fork from `source`.
- *
- * @private
- * @param {string} source The source to inspect.
- * @returns {string} Returns the fork.
- */
-function getBufferCloneFork(source) {
-  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(!bufferSlice\b[\s\S]+?\n\1  bufferClone\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
-}
-
-/**
  * Resolves the path of the given module dependency. If `fromPath` is
  * provided the resolved path will be relative to `fromPath`.
  *
@@ -1226,17 +1215,6 @@ function getIndent(func) {
 }
 
 /**
- * Gets the `_.isArguments` fork from `source`.
- *
- * @private
- * @param {string} source The source to inspect.
- * @returns {string} Returns the fork.
- */
-function getIsArgumentsFork(source) {
-  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\((?:!support\.argsTag|!isArguments)\b[\s\S]+?\n\1  isArguments\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
-}
-
-/**
  * Gets the `_.isArray` fork from `source`.
  *
  * @private
@@ -1247,28 +1225,6 @@ function getIsArrayFork(source) {
   return matchFunction(source, 'isArray')
     .replace(/^[\s\S]+?(?=\|\|)/, '')
     .replace(/[;\s]+$/, '');
-}
-
-/**
- * Gets the `_.isElement` fork from `source`.
- *
- * @private
- * @param {string} source The source to inspect.
- * @returns {string} Returns the fork.
- */
-function getIsElementFork(source) {
-  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(!support\.dom\b[\s\S]+?\n\1  isElement\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
-}
-
-/**
- * Gets the `_.isFunction` fork from `source`.
- *
- * @private
- * @param {string} source The source to inspect.
- * @returns {string} Returns the fork.
- */
-function getIsFunctionFork(source) {
-  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(isFunction\(\/x\/[\s\S]+?\n\1  isFunction\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
 }
 
 /**
@@ -1320,19 +1276,6 @@ function getNamesByCategory(category) {
 }
 
 /**
- * Gets the `_.isArray` fork from `source`.
- *
- * @private
- * @param {string} source The source to inspect.
- * @returns {string} Returns the fork.
- */
-function getNowFork(source) {
-  return matchFunction(source, 'now')
-    .replace(/^[\s\S]+?(?=\|\|)/, '')
-    .replace(/[;\s]+$/, '');
-}
-
-/**
  * Gets the value of a given name from the `options` array. If no value is
  * available the `defaultValue` is returned.
  *
@@ -1352,17 +1295,6 @@ function getOption(options, name, defaultValue) {
     value = optionToValue(name, value);
     return value == null ? result : value;
   }, defaultValue);
-}
-
-/**
- * Gets the `_.parseInt` fork from `source`.
- *
- * @private
- * @param {string} source The source to inspect.
- * @returns {string} Returns the fork.
- */
-function getParseIntFork(source) {
-  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(nativeParseInt\(whitespace\b[\s\S]+?\n\1  parseInt\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
 }
 
 /**
@@ -1599,18 +1531,6 @@ function removeAssignments(source) {
 }
 
 /**
- * Removes the `bufferClone` fork from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeBufferCloneFork(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(getBufferCloneFork(source), '');
-}
-
-/**
  * Removes support for lodash wrapper chaining in `source`.
  *
  * @private
@@ -1840,18 +1760,6 @@ function removeHeader(source) {
 }
 
 /**
- * Removes the `_.isArguments` fork from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeIsArgumentsFork(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(getIsArgumentsFork(source), '');
-}
-
-/**
  * Removes the `_.isArray` fork from `source`.
  *
  * @private
@@ -1861,30 +1769,6 @@ function removeIsArgumentsFork(source) {
 function removeIsArrayFork(source) {
   source = source == null ? '' : String(source);
   return source.replace(getIsArrayFork(source), '');
-}
-
-/**
- * Removes the `_.isElement` fork from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeIsElementFork(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(getIsElementFork(source), '');
-}
-
-/**
- * Removes the `_.isFunction` fork from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeIsFunctionFork(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(getIsFunctionFork(source), '');
 }
 
 /**
@@ -1898,12 +1782,12 @@ function removeIsFunctionFork(source) {
 function removeIsHostObject(source, funcDepMap) {
   source = source == null ? '' : String(source);
 
-  _.each(['baseClone', 'baseIsEqualDeep', 'isElement', 'isNative', 'shimIsPlainObject'], function(funcName) {
+  _.each(['baseClone', 'baseIsEqualDeep', 'isNative', 'isPlainObject'], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'isHostObject');
   });
 
-  _.each(['baseIsEqualDeep', 'shimIsPlainObject'], function(funcName) {
+  _.each(['baseIsEqualDeep', 'isPlainObject'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       return match.replace(/\s*&&\s*!isHostObject\([^)]+\)/g, '');
     });
@@ -1911,10 +1795,6 @@ function removeIsHostObject(source, funcDepMap) {
 
   source = source.replace(matchFunction(source, 'baseClone'), function(match) {
     return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(isHostObject\b[\s\S]+?\n\1\}\n/m, '');
-  });
-
-  source = source.replace(matchFunction(source, 'isElement'), function(match) {
-    return match.replace(/\(lodash\.support\.nodeTag\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)\)/, '$1');
   });
 
   return source.replace(matchFunction(source, 'isNative'), function(match) {
@@ -1983,30 +1863,6 @@ function removeMethodAssignments(source) {
 function removeMixinCalls(source) {
   source = source == null ? '' : String(source);
   return source.replace(/^(?: *\/\/.*\n)*( *)mixin\(.+?(?:\{[\s\S]+?\n\1\}.+?)?\);\n/gm, '');
-}
-
-/**
- * Removes the `_.now` fork from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeNowFork(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(getNowFork(source), '');
-}
-
-/**
- * Removes the `_.parseInt` fork from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeParseIntFork(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(getParseIntFork(source), '');
 }
 
 /**
@@ -2086,54 +1942,6 @@ function removeStrings(source) {
 }
 
 /**
- * Removes all `support.argsTag` references from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @param {Object} [funcDepMap] The function dependency map to modify.
- * @param {Object} [objDepMap] The object dependency map to modify.
- * @returns {string} Returns the modified source.
- */
-function removeSupportArgsTag(source, funcDepMap, objDepMap) {
-  source = removeIsArgumentsFork(source);
-  source = removeSupportProp(source, 'argsTag');
-
-  _.each(['isArguments', 'isPlainObject', 'shimIsPlainObject'], function(funcName) {
-    var deps = _.result(funcDepMap, funcName, []);
-    _.pull(deps, 'isArguments');
-
-    if (funcName != 'shimIsPlainObject') {
-      deps = _.result(objDepMap, funcName, []);
-      _.pull(deps, 'support');
-    }
-  });
-
-  _.each(['shimIsPlainObject', 'isPlainObject'], function(funcName) {
-    source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(/\s*\|\|\s*\(!(?:lodash\.)?support\.argsTag\b[\s\S]+?\)\)/, '');
-    });
-  });
-
-  return source;
-}
-
-/**
- * Removes all `support.dom` references from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @param {Object} [objDepMap] The object dependency map to modify.
- * @returns {string} Returns the modified source.
- */
-function removeSupportDom(source, objDepMap) {
-  var deps = _.result(objDepMap, 'isElement', []);
-  _.pull(deps, 'support');
-
-  source = removeSupportProp(source, 'dom');
-  return removeIsElementFork(source);
-}
-
-/**
  * Removes all `support.enumErrorProps` references from `source`.
  *
  * @private
@@ -2159,24 +1967,6 @@ function removeSupportEnumPrototypes(source, objDepMap) {
   source = removeSupportProp(source, 'enumPrototypes');
   return source.replace(matchFunction(source, 'keys'), function(match) {
     return match.replace(/typeof\s+object[^:]+:/, "typeof object != 'function' &&");
-  });
-}
-
-/**
- * Removes all `support.nodeTag` references from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @param {Object} [funcDepMap] The function dependency map to modify.
- * @returns {string} Returns the modified source.
- */
-function removeSupportNodeTag(source, funcDepMap) {
-  var deps = _.result(funcDepMap, 'isElement', []);
-  _.pull(deps, 'isHostObject');
-
-  source = removeSupportProp(source, 'nodeTag');
-  return source.replace(matchFunction(source, 'isElement'), function(match) {
-    return match.replace(/\(lodash\.support\.nodeTag\s*\?\s*([\s\S]+?)\s*:[\s\S]+?\)\)/, '$1');
   });
 }
 
@@ -2835,10 +2625,8 @@ function build(options, callback) {
         _.pull(objDepMap.shimIsPlainObject, 'support');
 
         source = removeIsHostObject(source, funcDepMap);
-        source = removeSupportArgsTag(source, funcDepMap, objDepMap);
         source = removeSupportEnumErrorProps(source);
         source = removeSupportEnumPrototypes(source, objDepMap);
-        source = removeSupportNodeTag(source, funcDepMap);
         source = removeSupportNonEnumShadows(source);
         source = removeSupportOwnLast(source);
         source = removeSupportSpliceObjects(source);
@@ -3225,22 +3013,6 @@ function build(options, callback) {
 
   // Modify/remove references to removed functions/variables.
   if (!isTemplate) {
-    // Remove forks of removed functions.
-    _.forOwn({
-      'bufferClone': removeBufferCloneFork,
-      'isArguments': removeIsArgumentsFork,
-      'isArray': removeIsArrayFork,
-      'isElement': removeIsElementFork,
-      'isFunction': removeIsFunctionFork,
-      'now': removeNowFork,
-      'parseInt': removeParseIntFork
-    },
-    function(removeFork, funcName) {
-      if (isExcluded(funcName)) {
-        source = removeFork(source);
-      }
-    });
-
     // Remove prototype assignments.
     _.each(['MapCache', 'SetCache'], function(funcName) {
       if (isExcluded(funcName)) {
@@ -3248,9 +3020,8 @@ function build(options, callback) {
       }
     });
 
-    if (isExcluded('memoize')) {
-      // Remove `memoize.Cache` assignment.
-      source = source.replace(/^(?: *\/\/.*\n)* *memoize\.Cache\s*=[^;]+;\n/m, '');
+    if (isExcluded('isArray')) {
+      source = removeIsArrayFork(source);
     }
     if (isExcluded('LazyWrapper')) {
       // Remove `LazyWrapper.prototype` assignment.
@@ -3263,6 +3034,10 @@ function build(options, callback) {
     if (isExcluded('LodashWrapper')) {
       // Remove `LodashWrapper.prototype` assignment.
       source = source.replace(/^(?: *\/\/.*\n)* *LodashWrapper\.prototype(\.constructor)?\s*=[^;]+;\n/gm, '');
+    }
+    if (isExcluded('memoize')) {
+      // Remove `memoize.Cache` assignment.
+      source = source.replace(/^(?: *\/\/.*\n)* *memoize\.Cache\s*=[^;]+;\n/m, '');
     }
     if (isExcluded(isModularize ? 'main' : 'mixin')) {
       source = removeMixinCalls(source);
@@ -3294,18 +3069,6 @@ function build(options, callback) {
     // Remove unneeded `support` properties.
     if (_.includes(includeObjs, 'support')) {
       if (!_.isEmpty(buildFuncs)) {
-        if (isExcluded('isArguments', 'isPlainObject', 'shimIsPlainObject')) {
-          source = removeSupportArgsTag(source);
-        }
-        if (isExcluded('isElement')) {
-          source = removeSupportNodeTag(source);
-        }
-        if (isExcluded('isArguments')) {
-          source = replaceSupportProp(source, 'argsTag', 'true');
-        }
-        if (isExcluded('isElement')) {
-          source = removeSupportDom(source);
-        }
         if (isExcluded('isPlainObject')) {
           source = removeSupportOwnLast(source);
         }
