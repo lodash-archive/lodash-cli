@@ -2043,12 +2043,7 @@ function removeSupportProp(source, propName) {
   return source.replace(matchProp(source, 'support'), function(match) {
     return match.replace(RegExp(
       '\\n+' + commentPattern +
-      // Match a `try` block.
-      '(?:( *)try\\b.+\\n)?' +
-      // Match the `support` property assignment.
-      ' *support\\.' + propName + '\\s*=[\\s\\S]+?;(?=\\n)' +
-      // Match the `catch` block.
-      '(?:\\n\\1\\}\\s*catch\\b[\\s\\S]+?\\n\\1\\})?'
+      ' *support\\.' + propName + '\\s*=[\\s\\S]+?;(?=\\n)'
     , 'm'), '');
   });
 }
