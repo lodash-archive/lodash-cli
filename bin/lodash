@@ -2148,30 +2148,6 @@ function replaceIndent(source, from, to) {
 }
 
 /**
- * Replaces the `support` object `propName` property value in `source` with `propValue`.
- *
- * @private
- * @param {string} source The source to process.
- * @param {string} varName The name of the `support` property to replace.
- * @returns {string} Returns the modified source.
- */
-function replaceSupportProp(source, propName, propValue) {
-  source = source == null ? '' : String(source);
-  propName = _.escapeRegExp(propName);
-
-  return source.replace(RegExp(
-    // Match a `try` block.
-    '^(?: *try\\b.+\\n)?' +
-    // Match the `support` property assignment.
-    '( *support\\.' + propName + '\\s*=).+\\n' +
-    // Match the `catch` block.
-    '(?:( *).+?catch\\b[\\s\\S]+?\\n\\2\\}\\n)?'
-  , 'm'), function(match, left) {
-    return left + ' ' + propValue + ';\n';
-  });
-}
-
-/**
  * Replaces the `varName` variable declaration value in `source` with `varValue`.
  *
  * @private
