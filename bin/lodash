@@ -2676,15 +2676,6 @@ function build(options, callback) {
           '});'
         ].join('\n'));
 
-        // Replace `_.isRegExp`.
-        _.pull(funcDepMap.isRegExp, 'isObject').push('isObjectLike');
-
-        source = replaceFunction(source, 'isRegExp', [
-          'function isRegExp(value) {',
-          '  return isObjectLike(value) && objToString.call(value) == regexpTag;',
-          '}'
-        ].join('\n'));
-
         // Replace `_.keysIn`.
         _.pull(funcDepMap.keysIn, 'arrayEach', 'isFunction');
         _.pull(objDepMap.keysIn, 'support');
