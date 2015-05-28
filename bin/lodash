@@ -1604,15 +1604,6 @@ function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
   deps = _.result(funcDepMap, 'createHybridWrapper', []);
   _.pull(deps, 'isLaziable', 'setData');
 
-  deps = _.result(funcDepMap, 'support', []);
-  _.pull(deps, 'isNative');
-
-  deps = _.result(varDepMap, 'support', []);
-  _.pull(deps, 'root');
-
-  source = removeSupportProp(source, 'funcDecomp');
-  source = removeSupportProp(source, 'funcNames');
-
   // Remove metadata related code.
   source = source.replace(matchFunction(source, 'createWrapper'), function(match) {
     match = _.reduce(['data', 'funcBitmask', 'funcIsPartialed', 'setter'], removeVar, match);
@@ -1990,7 +1981,7 @@ function removeSupportNonEnumShadows(source) {
  */
 function removeSupportOwnLast(source) {
   source = removeSupportProp(source, 'ownLast');
-  return source.replace(matchFunction(source, 'shimIsPlainObject'), function(match) {
+  return source.replace(matchFunction(source, 'isPlainObject'), function(match) {
     return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(support\.ownLast\b[\s\S]+?\n\1\}\n/m, '');
   });
 }
@@ -2622,9 +2613,11 @@ function build(options, callback) {
         });
       }
       if (isModern) {
-        _.pull(objDepMap.shimIsPlainObject, 'support');
+        // Remove `support` from `objDepMap` identifiers.
+        _.forOwn(objDepMap, function(depNames) {
+          _.pull(depNames, 'support');
+        });
 
-        source = removeIsHostObject(source, funcDepMap);
         source = removeSupportEnumErrorProps(source);
         source = removeSupportEnumPrototypes(source, objDepMap);
         source = removeSupportNonEnumShadows(source);
@@ -2632,9 +2625,9 @@ function build(options, callback) {
         source = removeSupportSpliceObjects(source);
         source = removeSupportUnindexedChars(source, funcDepMap, objDepMap);
 
-        // Simplify `initCloneByTag`.
-        _.pull(varDepMap.initCloneByTag, 'root');
+        source = removeIsHostObject(source, funcDepMap);
 
+        // Simplify `initCloneByTag`.
         source = source.replace(matchFunction(source, 'initCloneByTag'), function(match) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(Ctor\s+instanceof\s+Ctor[\s\S]+?\n\1\}\n/m, '');
         });
@@ -2678,7 +2671,6 @@ function build(options, callback) {
 
         // Replace `_.keysIn`.
         _.pull(funcDepMap.keysIn, 'arrayEach', 'isFunction');
-        _.pull(objDepMap.keysIn, 'support');
 
         source = replaceFunction(source, 'keysIn', [
           'function keysIn(object) {',
@@ -3068,15 +3060,14 @@ function build(options, callback) {
         }
       }
       source = source.replace(matchProp(source, 'support'), function(match) {
-        return match.replace(/^ *\(function\(x\)[^{]+\{\n(( *)var\s+Ctor\s*=[\s\S]+?\n *for\b[\s\S]+?\}\n)([\s\S]+?)\}\(0,\s*0\)\);\n/m, function(match, setup, indent, body) {
+        return match.replace(/^ *\(function[^{]+\{\n(( *)var\s+Ctor\s*=[\s\S]+?\n *for\b[\s\S]+?\}\n)([\s\S]+?)\}\(1,\s*0\)\);\n/m, function(match, setup, indent, body) {
           var modified = setup;
-
-          if (!/\.spliceObjects\s*=\s*(?!false\b|true\b)/.test(body)) {
+          if (!/\.spliceObjects\b/.test(body)) {
             modified = removeVar(modified, 'object');
           }
-          if (!/\.enumPrototypes\s*=\s*(?!false\b|true\b)/.test(body) &&
-              !/\.nonEnumShadows\s*=\s*(?!false\b|true\b)/.test(body) &&
-              !/\.ownLast\s*=\s*(?!false\b|true\b)/.test(body)) {
+          if (!/\.enumPrototypes\b/.test(body) &&
+              !/\.nonEnumShadows\b/.test(body) &&
+              !/\.ownLast\b/.test(body)) {
             modified = removeVar(modified, 'Ctor');
             modified = removeVar(modified, 'props');
             modified = modified
@@ -3084,7 +3075,7 @@ function build(options, callback) {
               .replace(/^ *for\s*\(var\s+key\b[\s\S]+?\}\n/m, '');
           }
           // If there's no setup code then remove the IIFE.
-          return (_.trim(modified) || /\barguments\b/.test(body))
+          return _.trim(modified)
             ? match.replace(setup, modified)
             : body.replace(RegExp('^' + indent, 'gm'), indent.slice(0, -2));
         });
