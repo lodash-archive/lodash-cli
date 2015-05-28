@@ -2560,8 +2560,10 @@ function build(options, callback) {
       }
       if (isModern) {
         // Remove `support` from `objDepMap` identifiers.
-        _.forOwn(objDepMap, function(depNames) {
-          _.pull(depNames, 'support');
+        _.forOwn(objDepMap, function(depNames, identifier) {
+          if (identifier != 'main') {
+            _.pull(depNames, 'support');
+          }
         });
 
         source = removeSupportEnumErrorProps(source);
