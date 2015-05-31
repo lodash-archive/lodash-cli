@@ -91,7 +91,8 @@ var cwd = process.cwd();
 var isBin = module == require.main;
 
 /** Native method references. */
-var push = Array.prototype.push;
+var floor = Math.floor,
+    push = Array.prototype.push;
 
 /** Used to match comments and string literals. */
 var reComment = /^ *(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.*)\n/gm,
@@ -334,7 +335,7 @@ function buildModule(state, onComplete) {
         );
       }
       if (!isAMD) {
-        source = trimIndent(source);
+        source = replaceIndent(source, 0, 1);
       }
       source = _.includes(includeHeaders, identifier) ? removeLicenseTag(source) : removeHeader(source);
       source = replaceIIFE(source, iife.join('\n'));
@@ -625,7 +626,7 @@ function buildModule(state, onComplete) {
         );
       }
       if (!isAMD) {
-        source = trimIndent(source);
+        source = replaceIndent(source, 0, 1);
       }
       if (!_.includes(includeHeaders, identifier)) {
         source = removeHeader(source);
@@ -1204,11 +1205,11 @@ function getHeader(source) {
 }
 
 /**
- * Gets the indent of the given function.
+ * Gets the indent string of the given function.
  *
  * @private
- * @param {Function} func The function to process.
- * @returns {string} Returns the indent.
+ * @param {Function|string} func The function or function source to process.
+ * @returns {string} Returns the indent string.
  */
 function getIndent(func) {
   return /^ *(?=\S)/m.exec(func.source || func)[0];
@@ -1860,7 +1861,7 @@ function removeRunInContext(source) {
 
   // Remove function scaffolding, leaving most of its content.
   source = source.replace(matchFunction(source, 'runInContext', true), function(match) {
-    match = replaceIndent(match, 2, 1);
+    match = replaceIndent(match, 1, 2);
     return match
       // Remove function frame.
       .replace(/^[\s\S]+?function\s+runInContext\b[\s\S]+?context\s*=\s*context.+?\n+| *return\s+lodash;[\s\S]+$/g, '')
@@ -2113,13 +2114,16 @@ function replaceIIFE(source, iife) {
  *
  * @private
  * @param {string} source The source to process.
- * @param {number} from The indent level to be replaced.
  * @param {number} to The indent level to replace with.
+ * @param {number} from The indent level to be replaced.
  * @returns {string} Returns the modified source.
  */
-function replaceIndent(source, from, to) {
+function replaceIndent(source, to, from) {
   source = source == null ? '' : String(source);
-  return source.replace(RegExp('^(?:  ){' + (from || 1) + '}', 'gm'), _.repeat('  ', to));
+  if (from === undefined) {
+    from = floor(getIndent(source).length / 2);
+  }
+  return source.replace(RegExp('^(?:  ){' + (from || 1) + '}', 'gm'), _.repeat('  ', to || 0));
 }
 
 /**
@@ -2193,18 +2197,6 @@ function stringFree(source, callback) {
   return source.replace(reStringToken, function(match) {
     return strings[match.slice(11, -2)];
   });
-}
-
-/**
- * Trims the indent of the specified level from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @param {number} level The level of indent to trim.
- * @returns {string} Returns the modified source.
- */
-function trimIndent(source, level) {
-  return replaceIndent(source, level || 1);
 }
 
 /*----------------------------------------------------------------------------*/
