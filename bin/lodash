@@ -1532,7 +1532,7 @@ function removeChaining(source) {
 
   // Remove all `lodash.prototype` additions.
   return source
-    .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['concat\b[\s\S]+?\n\1\}\);\n/m, '')
+    .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['join\b[\s\S]+?\n\1\}\);\n/m, '')
     .replace(/^(?: *\/\/.*\n)*( *)lodash\.prototype\.(?!constructor\b)[$\w]+\s*=\s*(?:function\([\s\S]+?\n\1\}|.+?);\n/gm, '');
 }
 
@@ -1889,7 +1889,7 @@ function removeRunInContext(source) {
 function removeSpliceObjectsFix(source) {
   source = source == null ? '' : String(source);
 
-  return source.replace(/^( *)arrayEach\(\['concat\b[\s\S]+?\n\1\}\);/m, function(match) {
+  return source.replace(/^( *)arrayEach\(\['join\b[\s\S]+?\n\1\}\);/m, function(match) {
     match = removeVar(match, 'fixObjects');
     match = removeVar(match, 'func');
     return match.replace(/\bprotoFunc\b/g, 'func');
