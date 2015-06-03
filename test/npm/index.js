@@ -139,6 +139,7 @@ lodash.memoize = require('lodash.memoize');
 lodash.merge = require('lodash.merge');
 lodash.min = require('lodash.min');
 lodash.mixin = mixin;
+lodash.modArgs = require('lodash.modargs');
 lodash.negate = require('lodash.negate');
 lodash.noop = require('lodash.noop');
 lodash.now = require('lodash.now');
