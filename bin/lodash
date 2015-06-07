@@ -211,7 +211,7 @@ function buildModule(state, onComplete) {
   var getUnusedDeps = function(source, depNames) {
     source = cleanupSource(removeStrings(removeComments(source)));
     return _.reject(depNames, function(depName) {
-      return RegExp('\\b' + depName + '\\b').test(source);
+      return RegExp('[^.$"\'\\w]' + depName + '\\b').test(source);
     });
   };
 
