@@ -2568,6 +2568,8 @@ function build(options, callback) {
         source = removeIsHostObject(source, funcDepMap);
 
         // Simplify `initCloneByTag`.
+        _.pull(varDepMap.initCloneByTag, 'root');
+
         source = source.replace(matchFunction(source, 'initCloneByTag'), function(match) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(Ctor\s+instanceof\s+Ctor[\s\S]+?\n\1\}\n/m, '');
         });
