@@ -403,8 +403,12 @@ function buildModule(state, onComplete) {
           });
         }
         if (!isSameVersion) {
+          var oldPath = path.join(outputPath, modulePath, 'LICENSE.txt');
+          if (fs.existsSync(oldPath)) {
+            fs.unlinkSync(oldPath);
+          }
           fs.writeFileSync(path.join(outputPath, modulePath, 'package.json'), _.template(packageTemplate)(templateData), 'utf-8');
-          fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE.txt'), _.template(licenseTemplate)(templateData), 'utf-8');
+          fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE'), _.template(licenseTemplate)(templateData), 'utf-8');
           fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate)(templateData), 'utf-8');
         }
       }
