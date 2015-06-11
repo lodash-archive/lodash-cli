@@ -2206,8 +2206,8 @@ function stringFree(source, callback) {
 /*----------------------------------------------------------------------------*/
 
 /**
- * Creates a debug and/or minified build, invoking the callback for each. The
- * `callback` is invoked with one argument; (data).
+ * Creates a development and/or production build invoking `callback` for each.
+ * The `callback` is invoked with one argument: (data).
  *
  * Note: For a list of commands see `HELP_TEXT` or run `lodash --help`.
  *
