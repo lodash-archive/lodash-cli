@@ -8,9 +8,9 @@
       "resolved": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.6.tgz"
     },
     "glob": {
-      "version": "5.0.9",
-      "from": "https://registry.npmjs.org/glob/-/glob-5.0.9.tgz",
-      "resolved": "https://registry.npmjs.org/glob/-/glob-5.0.9.tgz",
+      "version": "5.0.12",
+      "from": "https://registry.npmjs.org/glob/-/glob-5.0.12.tgz",
+      "resolved": "https://registry.npmjs.org/glob/-/glob-5.0.12.tgz",
       "dependencies": {
         "inflight": {
           "version": "1.0.4",
@@ -76,9 +76,9 @@
       "version": "3.9.3"
     },
     "semver": {
-      "version": "4.3.4",
-      "from": "https://registry.npmjs.org/semver/-/semver-4.3.4.tgz",
-      "resolved": "https://registry.npmjs.org/semver/-/semver-4.3.4.tgz"
+      "version": "4.3.6",
+      "from": "https://registry.npmjs.org/semver/-/semver-4.3.6.tgz",
+      "resolved": "https://registry.npmjs.org/semver/-/semver-4.3.6.tgz"
     },
     "uglify-js": {
       "version": "2.4.23",
@@ -96,9 +96,9 @@
           "resolved": "https://registry.npmjs.org/source-map/-/source-map-0.1.34.tgz",
           "dependencies": {
             "amdefine": {
-              "version": "0.1.0",
-              "from": "https://registry.npmjs.org/amdefine/-/amdefine-0.1.0.tgz",
-              "resolved": "https://registry.npmjs.org/amdefine/-/amdefine-0.1.0.tgz"
+              "version": "0.1.1",
+              "from": "https://registry.npmjs.org/amdefine/-/amdefine-0.1.1.tgz",
+              "resolved": "https://registry.npmjs.org/amdefine/-/amdefine-0.1.1.tgz"
             }
           }
         },
