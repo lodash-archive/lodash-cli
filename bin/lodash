@@ -1658,7 +1658,7 @@ function removeGetCallback(source, funcDepMap) {
     });
   });
 
-  _.each(['createSortedIndex', 'sum', 'uniq'], function(funcName) {
+  _.each(['createSortedIndex', 'uniq'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
       match = removeVar(match, 'callback');
       if (funcName == 'createSortedIndex') {
@@ -1666,17 +1666,10 @@ function removeGetCallback(source, funcDepMap) {
           .replace(/\((iteratee\s*==\s*null)\b[^)]+\)/, '$1')
           .replace(/\bcallback(?=\()/, 'baseCallback');
       }
-      return match.replace(/^( *)if\s*\(!\((noIteratee|iteratee\s*==\s*null)\b[\s\S]+?\n\1\}/m, function(match, indent, check) {
-        return indent + 'iteratee = ' + check + ' ? iteratee : baseCallback(iteratee, thisArg, 3);';
+      return match.replace(/^( *)if\s*\(!\(iteratee\s*==\s*null\b[\s\S]+?\n\1\}/m, function(match, indent) {
+        return indent + 'iteratee = iteratee == null ? iteratee : baseCallback(iteratee, thisArg, 3);';
       });
     });
-  });
-
-  source = source.replace(matchFunction(source, 'createExtremum'), function(match) {
-    match = removeVar(match, 'callback');
-    return match
-      .replace(/\s*&&\s*callback\s*===\s*baseCallback\b/, '')
-      .replace(/\bcallback(?=\()/, 'baseCallback');
   });
 
   source = source.replace(matchFunction(source, 'baseSortByOrder'), function(match) {
