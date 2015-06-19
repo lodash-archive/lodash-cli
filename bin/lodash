@@ -728,7 +728,6 @@ function buildModule(state, onComplete) {
   if (onComplete) {
     onComplete({ 'outputPath': fs.realpathSync(outputPath) });
   }
-
 }
 
 /**
