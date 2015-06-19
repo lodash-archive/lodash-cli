@@ -54,6 +54,7 @@ lodash.curryRight = require('lodash.curryright');
 lodash.debounce = require('lodash.debounce');
 lodash.deburr = require('lodash.deburr');
 lodash.defaults = require('lodash.defaults');
+lodash.defaultsDeep = require('lodash.defaultsdeep');
 lodash.defer = require('lodash.defer');
 lodash.delay = require('lodash.delay');
 lodash.difference = require('lodash.difference');
