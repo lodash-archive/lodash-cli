@@ -2861,33 +2861,39 @@ function build(options, callback) {
 
     /*------------------------------------------------------------------------*/
 
-    // Set the AMD module ID.
-    if (isAMD && !isModularize && !isTemplate && moduleId != null && moduleId != 'none') {
-      source = source.replace(/^ *define\((?=function)/m, "$&'" + moduleId + "', ");
-    }
-    // Customize lodash's export bootstrap.
-    if (!isAMD || isModularize) {
-      source = source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(typeof\s+define\b[\s\S]+?else\s+/m, '$1');
-    }
-    if (!isNode || isModularize) {
-      source = source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(moduleExports\b[\s\S]+?else\s*\{([\s\S]+?\n)\1\}\n+/m, '$1$2');
-    }
-    if (!isCommonJS || isModularize) {
-      source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)\}?)\s*else\s*\{)?\s*freeExports\.[$\w]+\s*=[\s\S]+?(?:\n\2\})?\n+/m, function(match, prelude) {
-        return _.trim(prelude) ? prelude + '\n' : '';
-      });
-    }
-    if (!isGlobal || isModularize) {
-      source = source.replace(/^(?: *\/\/.*\n)*(?:(( *)\}?)\s*else(?:\s*if\s*\(_\))?\s*\{)?(?:\s*\/\/.*)*\s*(?:root\._|_\.templates)\s*=[\s\S]+?(?:\n\2\})?\n+/gm, function(match, prelude) {
-        return _.trim(prelude) ? prelude + '\n' : '';
-      });
-    }
-    // Remove `if (freeExports && freeModule) {...}` if it's empty.
-    if (isAMD && isGlobal) {
-      source = source.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*\}\n+/m, '');
-    } else {
-      source = source.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*\}(?:\s*else\s*\{([\s\S]+?\n)\s*\})?\n+/m, '$1');
-    }
+    (function() {
+      var snippet = isTemplate ? source : source.slice(-(getMethodAssignments(source), RegExp.rightContext.length)),
+          modified = snippet;
+
+      // Set the AMD module ID.
+      if (isAMD && !isModularize && !isTemplate && moduleId != null && moduleId != 'none') {
+        modified = modified.replace(/^ *define\((?=function)/m, "$&'" + moduleId + "', ");
+      }
+      // Customize lodash's export bootstrap.
+      if (!isAMD || isModularize) {
+        modified = modified.replace(/^(?: *\/\/.*\n)*( *)if\s*\(typeof\s+define\b[\s\S]+?else\s+/m, '$1');
+      }
+      if (!isNode || isModularize) {
+        modified = modified.replace(/^(?: *\/\/.*\n)*( *)if\s*\(moduleExports\b[\s\S]+?else\s*\{([\s\S]+?\n)\1\}\n+/m, '$1$2');
+      }
+      if (!isCommonJS || isModularize) {
+        modified = modified.replace(/^(?: *\/\/.*\n)*(?:(( *)\}?)\s*else\s*\{)?\s*freeExports\.[$\w]+\s*=[\s\S]+?(?:\n\2\})?\n+/m, function(match, prelude) {
+          return _.trim(prelude) ? prelude + '\n' : '';
+        });
+      }
+      if (!isGlobal || isModularize) {
+        modified = modified.replace(/^(?: *\/\/.*\n)*(?:(( *)\}?)\s*else(?:\s*if\s*\(_\))?\s*\{)?(?:\s*\/\/.*)*\s*(?:root\._|_\.templates)\s*=[\s\S]+?(?:\n\2\})?\n+/gm, function(match, prelude) {
+          return _.trim(prelude) ? prelude + '\n' : '';
+        });
+      }
+      // Remove `if (freeExports && freeModule) {...}` if it's empty.
+      if (isAMD && isGlobal) {
+        modified = modified.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*\}\n+/m, '');
+      } else {
+        modified = modified.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*\}(?:\s*else\s*\{([\s\S]+?\n)\s*\})?\n+/m, '$1');
+      }
+      source = isTemplate ? modified : source.replace(snippet, modified);
+    }());
 
     /*------------------------------------------------------------------------*/
 
