@@ -967,6 +967,7 @@ function cleanupSource(source) {
  */
 function commentFree(source, callback) {
   var comments = [];
+
   source = source == null ? '' : String(source);
   source = callback(source.replace(reComment, function(match) {
     var index = comments.length;
@@ -1788,7 +1789,6 @@ function removeLicenseTag(source) {
  */
 function removeMethodAssignment(source, methodName) {
   source = source == null ? '' : String(source);
-
   return source.replace(getMethodAssignments(source), function(match) {
     var reAssignment = RegExp(
       '^( *//.*\\n)* *' +
@@ -1884,7 +1884,6 @@ function removeRunInContext(source) {
  */
 function removeSpliceObjectsFix(source) {
   source = source == null ? '' : String(source);
-
   return source.replace(/^( *)arrayEach\(\['join\b[\s\S]+?\n\1\}\);/m, function(match) {
     match = removeVar(match, 'fixObjects');
     match = removeVar(match, 'func');
@@ -2182,6 +2181,7 @@ function setUseStrictOption(source, value) {
  */
 function stringFree(source, callback) {
   var strings = [];
+
   source = source == null ? '' : String(source);
   source = callback(source.replace(reString, function(match) {
     var index = strings.length;
