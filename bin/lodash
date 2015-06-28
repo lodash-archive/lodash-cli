@@ -1402,17 +1402,17 @@ function isVarUsed(source, varName) {
  * @returns {string} Returns the matched function snippet.
  */
 function matchFunction(source, funcName, leadingComments) {
-  funcName = _.escapeRegExp(funcName);
+  var escapedName = _.escapeRegExp(funcName);
 
   var reAttempts = [
     // Match a function declaration.
-    '( *)function\\s+' + funcName + '\\((?:\\)\\s*\\{\\s*|[\\s\\S]+?\\n\\3)\\}\\n',
+    '( *)function\\s+' + escapedName + '\\((?:\\)\\s*\\{\\s*|[\\s\\S]+?\\n\\3)\\}\\n',
     // Match a simple variable declaration.
-    ' *var\\s+' + funcName + '\\s*=.+?;\\n',
+    ' *var\\s+' + escapedName + '\\s*=.+?;\\n',
     // Match variable declarations using creator functions.
-    '( *)var\\s+' + funcName + '\\s*=.*?(?:create|rest)(?:[A-Z][a-z]+)+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
+    '( *)var\\s+' + escapedName + '\\s*=.*?(?:create|rest)(?:[A-Z][a-z]+)+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
     // Match a variable declaration with function expression.
-    '( *)var\\s+' + funcName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n'
+    '( *)var\\s+' + escapedName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n'
   ];
 
   return _.reduce(reAttempts, function(result, reSource, index) {
@@ -1435,11 +1435,11 @@ function matchFunction(source, funcName, leadingComments) {
  * @returns {string} Returns the matched property snippet.
  */
 function matchProp(source, propName, leadingComments) {
-  propName = _.escapeRegExp(propName);
+  var escapedName = _.escapeRegExp(propName);
 
   return _.result(RegExp(
     '^' + (leadingComments ? commentPattern : '') +
-    '(?: {2,4}var\\s+' + propName + '\\b.+|(?:\\s*|.*?=\\s*)lodash\\._?' + propName + '\\s*)=[\\s\\S]+?' +
+    '(?: {2,4}var\\s+' + escapedName + '\\b.+|(?:\\s*|.*?=\\s*)lodash\\._?' + escapedName + '\\s*)=[\\s\\S]+?' +
     '(?:\\(function\\([\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
     '[;}]\\n(?=\\n(?!\\s*\\(function\\b)))'
   , 'm').exec(source), 0, '');
@@ -1456,20 +1456,20 @@ function matchProp(source, propName, leadingComments) {
  * @returns {string} Returns the matched variable snippet.
  */
 function matchVar(source, varName, leadingComments) {
-  varName = _.escapeRegExp(varName);
+  var escapedName = _.escapeRegExp(varName);
 
   var reAttempts = [
     // Match a varaible at the start of a declaration list.
-    ['^( *var\\s+)(' + varName + '\\s*=.+?,\\n *)', 2, 2],
+    ['^( *var\\s+)(' + escapedName + '\\s*=.+?,\\n *)', 2, 2],
     // Match a variable declaration in a declaration list.
-    ['(,\\n' + commentPattern + ')( *' + varName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
+    ['(,\\n' + commentPattern + ')( *' + escapedName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
     // Match a variable that is not part of a declaration list.
-    ['^(' + commentPattern + ')(( *)var\\s+' + varName + '\\s*(?:|=\\s*(?:.+?(?:[&+]\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\3\\S+?));\\n)', 2, 0]
+    ['^(' + commentPattern + ')(( *)var\\s+' + escapedName + '\\s*(?:|=\\s*(?:.+?(?:[&+]\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\3\\S+?));\\n)', 2, 0]
   ];
 
   // Match complex variable assignments.
   if (_.includes(listing.complexVars, varName)) {
-    reAttempts.splice(2, 0, ['^(' + commentPattern + ')(( *)var\\s+' + varName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]);
+    reAttempts.splice(2, 0, ['^(' + commentPattern + ')(( *)var\\s+' + escapedName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]);
   }
   return _.reduce(reAttempts, function(result, data) {
     return result || _.result(RegExp(data[0], 'm').exec(source), data[leadingComments ? 2 : 1], '');
@@ -1503,10 +1503,9 @@ function optionToValue(name, string) {
     result = _.result(result, 1);
     result = result ? _.trim(result) : true;
   }
-  if (result === 'false') {
-    return false;
-  }
-  return result || undefined;
+  return (result === 'false')
+    ? false
+    : (result || undefined);
 }
 
 /**
@@ -2009,12 +2008,10 @@ function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
  */
 function removeSupportProp(source, propName) {
   source = source == null ? '' : String(source);
-  propName = _.escapeRegExp(propName);
-
   return source.replace(matchProp(source, 'support'), function(match) {
     return match.replace(RegExp(
       '\\n+' + commentPattern +
-      ' *support\\.' + propName + '\\s*=[\\s\\S]+?;(?=\\n)'
+      ' *support\\.' + _.escapeRegExp(propName) + '\\s*=[\\s\\S]+?;(?=\\n)'
     , 'm'), '');
   });
 }
@@ -2131,12 +2128,13 @@ function replaceIndent(source, to, from) {
  * @returns {string} Returns the modified source.
  */
 function replaceVar(source, varName, varValue) {
+  var escapedName = _.escapeRegExp(varName);
+
   source = source == null ? '' : String(source);
-  varName = _.escapeRegExp(varName);
 
   // Replace a variable that's not part of a declaration list.
   var result = source.replace(RegExp(
-    '(( *)var\\s+' + varName + '\\s*=)' +
+    '(( *)var\\s+' + escapedName + '\\s*=)' +
     '(?:.+?;|(?:Function\\(.+?|.*?[^,])\\n[\\s\\S]+?\\n\\2.+?;)\\n'
   ), function(match, left) {
     return left + ' ' + varValue + ';\n';
@@ -2144,13 +2142,13 @@ function replaceVar(source, varName, varValue) {
 
   if (source == result) {
     // Replace a varaible at the start or middle of a declaration list.
-    result = source.replace(RegExp('((?:var|\\n)\\s+' + varName + '\\s*=).+?(?=,\\n)'), function(match, left) {
+    result = source.replace(RegExp('((?:var|\\n)\\s+' + escapedName + '\\s*=).+?(?=,\\n)'), function(match, left) {
       return left + ' ' + varValue;
     });
   }
   if (source == result) {
     // Replace a variable at the end of a variable declaration list.
-    result = source.replace(RegExp('(,\\s*' + varName + '\\s*=).+?(?=;\\n)'), function(match, left) {
+    result = source.replace(RegExp('(,\\s*' + escapedName + '\\s*=).+?(?=;\\n)'), function(match, left) {
       return left + ' ' + varValue;
     });
   }
