@@ -12,7 +12,7 @@ env:
     -
     - EXPORTS="node"
     - BIN="rhino" OPTION="-opt -1 -require"
-    - BIN="ringo"
+    - BIN="ringo" OPTION="-o -1"
     - BUILD="modern"
     - BUILD="modern" EXPORTS="es"  TRANSPILER="babel"
     - BUILD="modern" EXPORTS="es"  TRANSPILER="es6-module-transpiler"
