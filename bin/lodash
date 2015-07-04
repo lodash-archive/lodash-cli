@@ -113,8 +113,8 @@ var reHasDeepVars = /^ *function +runInContext\b/m;
 /** Used to detect a function by its JSDoc tags. */
 var reHasFuncTags = /^ *\* *(?:@param|@returns|@type +Function)\b/im;
 
-/** Used to match `getCallback` calls and references. */
-var reGetCallback = /\bgetCallback\b(?:\(\))?/g;
+/** Used to match `getIteratee` calls and references. */
+var reGetCallback = /\bgetIteratee\b(?:\(\))?/g;
 
 /** Used to match `toObject` calls. */
 var reToObject = /\btoObject\(([^)]+)\)/g;
@@ -1635,59 +1635,58 @@ function removeFunction(source, funcName) {
 }
 
 /**
- * Removes all references to `getGetCallback` from `source` and replaces calls
- * with `baseCallback`.
+ * Removes all references to `getIteratee` from `source` and replaces calls
+ * with `baseIteratee`.
  *
  * @private
  * @param {string} source The source to process.
  * @param {Object} [funcDepMap] The dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeGetCallback(source, funcDepMap) {
-  source = removeFunction(source, 'getCallback');
+function removeGetIteratee(source, funcDepMap) {
+  source = removeFunction(source, 'getIteratee');
 
   _.each([
     'baseSortByOrder', 'createAggregator', 'createExtremum', 'createFind',
     'createFindIndex', 'createFindKey', 'createObjectMapper', 'createReduce',
     'createSortedIndex', 'dropRightWhile', 'dropWhile', 'every', 'filter', 'map',
-    'reject', 'remove', 'some', 'sortBy', 'sum', 'takeRightWhile', 'takeWhile',
-    'transform', 'uniq'
+    'reject', 'remove', 'some', 'sum', 'takeRightWhile', 'takeWhile', 'transform', 'uniq'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
-    _.pull(deps, 'getCallback');
-    if (!_.includes(deps, 'baseCallback')) {
-      deps.push('baseCallback');
+    _.pull(deps, 'getIteratee');
+    if (!_.includes(deps, 'baseIteratee')) {
+      deps.push('baseIteratee');
     }
     source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(reGetCallback, 'baseCallback');
+      return match.replace(reGetCallback, 'baseIteratee');
     });
   });
 
   _.each(['createSortedIndex', 'uniq'], function(funcName) {
     source = source.replace(matchFunction(source, funcName), function(match) {
-      match = removeVar(match, 'callback');
+      match = removeVar(match, 'toIteratee');
       if (funcName == 'createSortedIndex') {
         return match
           .replace(/\((iteratee\s*==\s*null)\b[^)]+\)/, '$1')
-          .replace(/\bcallback(?=\()/, 'baseCallback');
+          .replace(/\btoIteratee(?=\()/, 'baseIteratee');
       }
       return match.replace(/^( *)if\s*\(!\(iteratee\s*==\s*null\b[\s\S]+?\n\1\}/m, function(match, indent) {
-        return indent + 'iteratee = iteratee == null ? iteratee : baseCallback(iteratee, thisArg, 3);';
+        return indent + 'iteratee = iteratee == null ? iteratee : baseIteratee(iteratee);';
       });
     });
   });
 
   source = source.replace(matchFunction(source, 'baseSortByOrder'), function(match) {
-    match = removeVar(match, 'callback');
-    return match.replace(/\bcallback(?=\()/, 'baseCallback');
+    match = removeVar(match, 'toIteratee');
+    return match.replace(/\btoIteratee(?=\()/, 'baseIteratee');
   });
 
   return source.replace(getMethodAssignments(source), function(match) {
     _.each(['main', 'wrapperValue'], function(funcName) {
       var deps = _.result(funcDepMap, funcName, []);
-      if (_.includes(deps, 'getCallback')) {
-        _.pull(deps, 'getCallback').push('baseCallback');
-        match = match.replace(reGetCallback, 'baseCallback');
+      if (_.includes(deps, 'getIteratee')) {
+        _.pull(deps, 'getIteratee').push('baseIteratee');
+        match = match.replace(reGetCallback, 'baseIteratee');
         return false;
       }
     });
@@ -2647,7 +2646,7 @@ function build(options, callback) {
       }
       if (isModularize) {
         source = removeGetIndexOf(source, funcDepMap);
-        source = removeGetCallback(source, funcDepMap);
+        source = removeGetIteratee(source, funcDepMap);
       }
       if (isNpm) {
         source = removeMetadata(source, funcDepMap, objDepMap, varDepMap);
@@ -2682,18 +2681,18 @@ function build(options, callback) {
           '}'
         ].join('\n'));
       }
-      // Remove "_.matches" or "_.property" style callback support from `baseCallback`.
+      // Remove "_.matches" or "_.property" style callback support from `baseIteratee`.
       if (_.includes(minusFuncs, 'matches')) {
-        _.pull(funcDepMap.callback, 'isObjectLike', 'matches');
-        source = source.replace(matchFunction(source, 'callback'), function(match) {
+        _.pull(funcDepMap.iteratee, 'isArray', 'isObjectLike', 'matches');
+        source = source.replace(matchFunction(source, 'iteratee'), function(match) {
           return match.replace(/^( *return\s+)[^:]+:\s*/m, '$1');
         });
       }
       _.each(['baseMatches', 'baseMatchesProperty', 'property'], function(funcName) {
         var otherName = _.camelCase(_.trimLeft(funcName, 'base'));
         if (_.includes(minusFuncs, otherName)) {
-          _.pull(funcDepMap.baseCallback, funcName);
-          source = source.replace(matchFunction(source, 'baseCallback'), function(match) {
+          _.pull(funcDepMap.baseIteratee, funcName);
+          source = source.replace(matchFunction(source, 'baseIteratee'), function(match) {
             return match.replace(RegExp('\\b' + funcName + '\\([\\s\\S]+?\\)(?=[;\\n])', 'm'), 'identity');
           });
         }
