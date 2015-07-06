@@ -189,6 +189,7 @@ lodash.spread = require('lodash.spread');
 lodash.startCase = require('lodash.startcase');
 lodash.startsWith = require('lodash.startswith');
 lodash.sum = require('lodash.sum');
+lodash.sumBy = require('lodash.sumby');
 lodash.take = require('lodash.take');
 lodash.takeRight = require('lodash.takeright');
 lodash.takeRightWhile = require('lodash.takerightwhile');

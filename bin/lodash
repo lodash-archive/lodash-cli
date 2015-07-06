@@ -1651,7 +1651,7 @@ function removeGetIteratee(source, funcDepMap) {
     'dropWhile', 'every', 'filter', 'find', 'findIndex', 'findKey', 'findLast',
     'findLastIndex', 'findLastKey', 'map', 'mapKeys', 'mapValues', 'reduce',
     'reduceRight', 'reject', 'remove', 'some', 'sortedIndex', 'sortedLastIndex',
-    'sum', 'takeRightWhile', 'takeWhile', 'transform', 'uniqBy'
+    'sumBy', 'takeRightWhile', 'takeWhile', 'transform', 'uniqBy'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'getIteratee');
