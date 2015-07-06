@@ -1635,7 +1635,8 @@ function removeFunction(source, funcName) {
 }
 
 /**
- * Removes all references to `getIteratee` from `source` and replaces calls with `baseIteratee`.
+ * Removes all references to `getIteratee` from `source` and replaces calls
+ * with `baseIteratee`.
  *
  * @private
  * @param {string} source The source to process.
@@ -1697,7 +1698,8 @@ function removeGetIteratee(source, funcDepMap) {
 }
 
 /**
- * Removes all references to `getIndexOf from `source` and replaces calls with `baseIndexOf`.
+ * Removes all references to `getIndexOf from `source` and replaces calls
+ * with `baseIndexOf`.
  *
  * @private
  * @param {string} source The source to process.
@@ -1707,7 +1709,10 @@ function removeGetIteratee(source, funcDepMap) {
 function removeGetIndexOf(source, funcDepMap) {
   source = removeFunction(source, 'getIndexOf');
 
-  _.each(['baseDifference', 'baseUniq', 'includes', 'intersection', 'pull', 'uniq', 'uniqBy'], function(funcName) {
+  _.each([
+    'baseDifference', 'baseUniq', 'includes', 'intersection', 'pull',
+    'uniq', 'uniqBy'
+  ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []),
         isUniq = _.startsWith(funcName, 'uniq');
 
