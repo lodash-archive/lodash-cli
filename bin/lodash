@@ -114,7 +114,7 @@ var reHasDeepVars = /^ *function +runInContext\b/m;
 var reHasFuncTags = /^ *\* *(?:@param|@returns|@type +Function)\b/im;
 
 /** Used to match `getIteratee` calls and references. */
-var reGetCallback = /\bgetIteratee\b(?:\(\))?/g;
+var reGetIteratee = /\bgetIteratee\b(?:\(\))?/g;
 
 /** Used to match `toObject` calls. */
 var reToObject = /\btoObject\(([^)]+)\)/g;
@@ -1658,7 +1658,7 @@ function removeGetIteratee(source, funcDepMap) {
       deps.push('baseIteratee');
     }
     source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(reGetCallback, 'baseIteratee');
+      return match.replace(reGetIteratee, 'baseIteratee');
     });
   });
 
@@ -1688,7 +1688,7 @@ function removeGetIteratee(source, funcDepMap) {
       var deps = _.result(funcDepMap, funcName, []);
       if (_.includes(deps, 'getIteratee')) {
         _.pull(deps, 'getIteratee').push('baseIteratee');
-        match = match.replace(reGetCallback, 'baseIteratee');
+        match = match.replace(reGetIteratee, 'baseIteratee');
         return false;
       }
     });
