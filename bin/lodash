@@ -867,7 +867,7 @@ function buildTemplate(state) {
     source.push(
       "    define(['" + moduleId + "'], function(lodash) {",
       '      _ = lodash;',
-      '      lodash.templates = lodash.extend(lodash.templates || {}, templates);'
+      '      lodash.templates = lodash.assign(lodash.templates || {}, templates);'
     );
   }
   source.push(
@@ -899,7 +899,7 @@ function buildTemplate(state) {
     source.push(
       '  }',
       '  else if (_) {',
-      '    _.templates = _.extend(_.templates || {}, templates);',
+      '    _.templates = _.assign(_.templates || {}, templates);',
       '  }'
     );
   }
