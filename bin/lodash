@@ -1650,7 +1650,7 @@ function removeGetIteratee(source, funcDepMap) {
     'baseSortByOrder', 'createAggregator', 'createExtremum', 'dropRightWhile',
     'dropWhile', 'every', 'filter', 'find', 'findIndex', 'findKey', 'findLast',
     'findLastIndex', 'findLastKey', 'map', 'mapKeys', 'mapValues', 'reduce',
-    'reduceRight', 'reject', 'remove', 'some', 'sortedIndex', 'sortedLastIndex',
+    'reduceRight', 'reject', 'remove', 'some', 'sortedIndexBy', 'sortedLastIndexBy',
     'sumBy', 'takeRightWhile', 'takeWhile', 'transform', 'uniqBy'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
@@ -1663,12 +1663,12 @@ function removeGetIteratee(source, funcDepMap) {
     });
   });
 
-  _.each(['sortedIndex', 'sortedLastIndex', 'uniqBy'], function(funcName) {
-    var isSortedIndex = _.startsWith(funcName, 'sorted');
+  _.each(['sortedIndexBy', 'sortedLastIndexBy', 'uniqBy'], function(funcName) {
+    var isSortedIndexBy = _.startsWith(funcName, 'sorted');
 
     source = source.replace(matchFunction(source, funcName), function(match) {
       match = removeVar(match, 'toIteratee');
-      if (isSortedIndex) {
+      if (isSortedIndexBy) {
         return match
           .replace(/\((iteratee\s*==\s*null)\b[^)]+\)/, '$1')
           .replace(/\btoIteratee(?=\()/, 'baseIteratee');
