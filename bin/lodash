@@ -1714,8 +1714,8 @@ function removeGetIndexOf(source, funcDepMap) {
           // Replace all `getIndexOf` calls with `baseIndexOf`.
           .replace(/\bgetIndexOf\b(?:\(\))?/g, 'baseIndexOf')
           // Remove "indexOf" comparisons.
-          .replace(/\bindexOf\s*==\s*baseIndexOf\b/, 'true')
-          .replace(/\s*&&\s*baseIndexOf\s*==\s*baseIndexOf\b/, '');
+          .replace(/\bindexOf\s*===\s*baseIndexOf\b/, 'true')
+          .replace(/\s*&&\s*baseIndexOf\s*===\s*baseIndexOf\b/, '');
       });
     }
   });
