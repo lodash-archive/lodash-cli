@@ -424,13 +424,8 @@ function buildModule(state, onComplete) {
     }
     var aliases = getAliases(identifier),
         realCategory = getCategory(identifier, funcDepMap),
-        categoryAliases = getCategoryAliases(identifier),
         categories = realCategory ? [realCategory] : [];
 
-    if (!_.isEmpty(categoryAliases)) {
-      aliases.push(identifier);
-      categories = _.union(categories, categoryAliases);
-    }
     if (_.isEmpty(categories)) {
       categories.push(null);
     }
@@ -1021,21 +1016,6 @@ function getAliases(identifier) {
 }
 
 /**
- * Gets the category aliases associated with a given identifier.
- *
- * @private
- * @param {string} identifier The identifier to get category aliases for.
- * @returns {Array} Returns an array of aliases.
- */
-function getCategoryAliases(identifier) {
-  return _.transform(mapping.aliasCategory, function(result, identifiers, category) {
-    if (_.includes(identifiers, identifier)) {
-      result.push(category);
-    }
-  }, []);
-}
-
-/**
  * Creates an array of all function, object, and variable dependencies for the
  * given identifier(s).
  *
@@ -1270,7 +1250,7 @@ function getModulePath(identifier, category, funcDepMap) {
  * @returns {Array} Returns a new array of names.
  */
 function getNamesByCategory(category) {
-  return _.union(mapping.category[category], mapping.aliasCategory[category]);
+  return _.result(mapping.category, category, []);
 }
 
 /**
