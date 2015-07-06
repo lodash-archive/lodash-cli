@@ -206,6 +206,7 @@ lodash.trunc = require('lodash.trunc');
 lodash.unescape = require('lodash.unescape');
 lodash.union = require('lodash.union');
 lodash.uniq = require('lodash.uniq');
+lodash.uniqBy = require('lodash.uniqby');
 lodash.uniqueId = require('lodash.uniqueid');
 lodash.unzip = require('lodash.unzip');
 lodash.unzipWith = require('lodash.unzipwith');
