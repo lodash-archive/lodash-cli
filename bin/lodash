@@ -2506,6 +2506,9 @@ function build(options, callback) {
     var buildFuncs = !isTemplate && (function() {
       source = setUseStrictOption(source, isStrict);
 
+      if (!isGlobal) {
+        _.pull(varDepMap.main, 'root');
+      }
       if (isModularize) {
         if (isNode) {
           // Remove `root` from `varDepMap` identifiers.
