@@ -1028,7 +1028,9 @@ function getAliases(identifier) {
  * @returns {Array} Returns an array of identifier dependencies.
  */
 function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack) {
-  var result = _.isArray(identifier) ? (stack ? identifier : _.clone(identifier)) : [identifier];
+  var isInit = !stack,
+      result = _.isArray(identifier) ? (isInit ? _.clone(identifier) : identifier) : [identifier];
+
   stack || (stack = []);
 
   _.each(result, function(identifier) {
@@ -1040,7 +1042,7 @@ function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack)
       getAllDependencies(result, funcDepMap, objDepMap, varDepMap, stack);
     }
   });
-  return stack ? result : _.uniq(result);
+  return isInit ? _.uniq(result) : result;
 }
 
 /**
@@ -1106,11 +1108,13 @@ function getDepPaths(depNames, fromPath, funcDepMap) {
  * @returns {Array} Returns an array of identifier dependants.
  */
 function getDependants(identifier, depMap, isDeep, stack) {
-  var identifiers = _.isArray(identifier) ? identifier : [identifier];
+  var isInit = !stack,
+      identifiers = _.isArray(identifier) ? identifier : [identifier];
+
   stack || (stack = []);
 
   // Iterate over the dependency map, adding names of functions that have `identifier` as a dependency.
-  return _.uniq(_.transform(depMap, function(result, depNames, otherName) {
+  var result = _.transform(depMap, function(result, depNames, otherName) {
     if (!_.includes(stack, otherName) &&
         _.some(identifiers, _.partial(_.includes, depNames, _, 0))) {
       result.push(otherName);
@@ -1119,7 +1123,9 @@ function getDependants(identifier, depMap, isDeep, stack) {
         push.apply(result, getDependants(otherName, depMap, isDeep, stack));
       }
     }
-  }, []));
+  }, []);
+
+  return isInit ? _.uniq(result) : result;
 }
 
 /**
@@ -1133,21 +1139,25 @@ function getDependants(identifier, depMap, isDeep, stack) {
  * @returns {Array} Returns an array of identifier dependencies.
  */
 function getDependencies(identifier, depMap, isDeep, stack) {
-  var depNames = _.isArray(identifier) ? identifier : depMap[identifier];
+  var isInit = !stack,
+      depNames = _.isArray(identifier) ? identifier : depMap[identifier];
+
+  stack || (stack = []);
+
   if (!isDeep) {
     return depNames ? _.difference(depNames, stack) : [];
   }
-  stack || (stack = []);
-
   // Recursively accumulate the dependencies of the `identifier` function,
   // the dependencies of its dependencies, and so on.
-  return _.uniq(_.transform(depNames, function(result, otherName) {
+  var result = _.transform(depNames, function(result, otherName) {
     if (!_.includes(stack, otherName)) {
       stack.push(otherName);
       result.push(otherName);
       push.apply(result, getDependencies(otherName, depMap, isDeep, stack));
     }
-  }));
+  }, []);
+
+  return isInit ? _.uniq(result) : result;
 }
 
 /**
@@ -2717,7 +2727,7 @@ function build(options, callback) {
       result = _.uniq(result);
 
       var hasLodash = _.includes(result, 'lodash');
-      result = getDependencies(_.without(result, 'lodash'), funcDepMap, true, ['lodash']);
+      result = getDependencies(result, funcDepMap, true, ['lodash']);
 
       // Simplify `lodash` when not capable of chaining.
       if (!_.includes(result, 'main') && !_.includes(result, 'mixin') && !_.includes(result, 'wrapperValue')) {
@@ -2737,6 +2747,7 @@ function build(options, callback) {
 
     // Expand properties, variables, and their function dependencies to include in the build.
     var allDeps = getAllDependencies(buildFuncs, funcDepMap, objDepMap, varDepMap).sort();
+
     buildFuncs = _.intersection(listing.funcs, allDeps);
     includeObjs = _.intersection(listing.objDeps, allDeps);
     includeVars = _.intersection(listing.varDeps, allDeps);
