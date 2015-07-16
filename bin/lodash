@@ -5,7 +5,7 @@
 var vm = require('vm');
 
 /** Load other modules. */
-var _ = require('lodash-compat'),
+var _ = require('lodash'),
     listing = require('../lib/listing.js'),
     mapping = require('../lib/mapping.js'),
     minify = require('../lib/minify.js'),
@@ -23,8 +23,6 @@ var HELP_TEXT = [
   '',
   'Commands:',
   '',
-  '  compat       Build with support for old & new environments (default)',
-  '  modern       Build tailored for newer environments',
   '  strict       Build with ES strict mode enabled',
   '  modularize   Splits lodash into modules',
   '',
@@ -56,8 +54,6 @@ var HELP_TEXT = [
   '',
   '               Use “none” as the module ID to create compiled templates without',
   '               a dependency on lodash.',
-  '',
-  '  All commands except `compat` & `modern` may be combined.',
   '',
   '  The `exports` values “es” & “npm” may only be used in conjunction with',
   '  the `modularize` command.',
@@ -115,9 +111,6 @@ var reHasFuncTags = /^ *\* *(?:@param|@returns|@type +Function)\b/im;
 
 /** Used to match `getIteratee` calls and references. */
 var reGetIteratee = /\bgetIteratee\b(?:\(\))?/g;
-
-/** Used to match `toObject` calls. */
-var reToObject = /\btoObject\(([^)]+)\)/g;
 
 /** Shortcut to the `stdout` object. */
 var stdout = process.stdout;
@@ -220,12 +213,6 @@ function buildModule(state, onComplete) {
   };
 
   if (isNpm) {
-    // Load package templates.
-    var templatePath = fs.realpathSync(path.join(__dirname, '..', 'template')),
-        licenseTemplate = fs.readFileSync(path.join(templatePath, 'license.jst'), 'utf-8'),
-        packageTemplate = fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf-8'),
-        readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
-
     // Exclude "Chain" methods and most internal functions when exporting for npm.
     identifiers = _.reject(_.difference(identifiers, mapping.category.Chain), function(identifier) {
       return isPrivate(identifier) && !_.includes(listing.uninlinables, identifier) && !_.includes(includeFuncs, identifier);
@@ -252,9 +239,9 @@ function buildModule(state, onComplete) {
   }
   // Create modules for each identifier.
   _.each(identifiers, function(identifier) {
-    var category = getCategory(identifier, funcDepMap),
+    var category = getCategory(identifier),
         moduleName = isNpm ? toDepName(identifier) : identifier,
-        modulePath = isNpm ? moduleName : getModulePath(identifier, category, funcDepMap);
+        modulePath = isNpm ? moduleName : getModulePath(identifier, category);
 
     var depNames = _.union(
       getDependencies(identifier, funcDepMap),
@@ -301,7 +288,7 @@ function buildModule(state, onComplete) {
 
       var depPaths = isNpm
         ? _.map(depNames, toDepName)
-        : getDepPaths(depNames, modulePath, funcDepMap);
+        : getDepPaths(depNames, modulePath);
 
       if (isAMD) {
         iife.push(
@@ -423,15 +410,15 @@ function buildModule(state, onComplete) {
       return;
     }
     var aliases = getAliases(identifier),
-        realCategory = getCategory(identifier, funcDepMap),
+        realCategory = getCategory(identifier),
         categories = realCategory ? [realCategory] : [];
 
     if (_.isEmpty(categories)) {
       categories.push(null);
     }
     _.each(categories, function(category) {
-      var modulePath = getModulePath(identifier, category, funcDepMap),
-          depPath = getDepPath(identifier, modulePath, funcDepMap);
+      var modulePath = getModulePath(identifier, category),
+          depPath = getDepPath(identifier, modulePath);
 
       _.each(aliases, function(alias) {
         if (alias == identifier && category == realCategory) {
@@ -471,10 +458,10 @@ function buildModule(state, onComplete) {
     if (isNpm || !_.includes(buildFuncs, identifier)) {
       return;
     }
-    var modulePath = getModulePath(identifier, funcDepMap);
+    var modulePath = getModulePath(identifier);
 
     var categories = _.uniq(_.compact(_.map(identifiers, function(identifier) {
-      return getCategory(identifier, funcDepMap);
+      return getCategory(identifier);
     }))).sort();
 
     var categoryDeps = _.map(categories, function(category) {
@@ -574,7 +561,7 @@ function buildModule(state, onComplete) {
         if (_.includes(deps, identifier)) {
           return match;
         }
-        var category = mapping.categoryToDepName[getCategory(identifier, funcDepMap)];
+        var category = mapping.categoryToDepName[getCategory(identifier)];
         return left + (category ? category + '.' : '') + _.result(mapping.forceAlias, identifier, identifier);
       });
 
@@ -591,7 +578,7 @@ function buildModule(state, onComplete) {
       }
       var iife = [],
           depArgs = depNames.join(', '),
-          depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath, funcDepMap));
+          depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath));
 
       if (isAMD) {
         iife.push(
@@ -638,7 +625,7 @@ function buildModule(state, onComplete) {
   }());
 
   // Create category modules.
-  _.each(_.uniq(_.compact(_.flatten(_.map(identifiers, _.partial(getCategory, _, funcDepMap))))), function(category) {
+  _.each(_.uniq(_.compact(_.flatten(_.map(identifiers, getCategory)))), function(category) {
     if (isNpm) {
       return;
     }
@@ -651,7 +638,7 @@ function buildModule(state, onComplete) {
     .sort();
 
     var iife = [],
-        depPaths = getDepPaths(depNames, null, funcDepMap);
+        depPaths = getDepPaths(depNames);
 
     if (isAMD) {
       iife.push(
@@ -1050,10 +1037,9 @@ function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack)
  *
  * @private
  * @param {string} identifier The identifier to query.
- * @param {Object} [funcDepMap] The dependency map used to resolve the identifier.
  * @returns {string|undefined} Returns the category.
  */
-function getCategory(identifier, funcDepMap) {
+function getCategory(identifier) {
   identifier = getRealName(identifier);
   return _.find(listing.categories, function(category) {
     return _.includes(mapping.category[category], identifier);
@@ -1067,12 +1053,11 @@ function getCategory(identifier, funcDepMap) {
  * @private
  * @param {string} depName The name of the dependency.
  * @param {string} [fromPath=''] The path to resolve the dependency relative to.
- * @param {Object} [funcDepMap] The dependency map used to resolve identifiers.
  * @returns {string} Returns the dependency path.
  */
-function getDepPath(depName, fromPath, funcDepMap) {
+function getDepPath(depName, fromPath) {
   var sep = '/',
-      toPath = getModulePath(depName, funcDepMap),
+      toPath = getModulePath(depName),
       relative = path.relative(fromPath || '', toPath).replace(RegExp(path.sepEscaped, 'g'), sep);
 
   if (relative.charAt(0) != '.') {
@@ -1088,12 +1073,11 @@ function getDepPath(depName, fromPath, funcDepMap) {
  * @private
  * @param {Array} depNames The array dependency names.
  * @param {string} [fromPath=''] The path to resolve dependencies relative to.
- * @param {Object} [funcDepMap] The dependency map used to resolve identifiers.
  * @returns {string[]} Returns the dependency paths.
  */
-function getDepPaths(depNames, fromPath, funcDepMap) {
+function getDepPaths(depNames, fromPath) {
   return _.map(depNames, function(depName) {
-    return getDepPath(depName, fromPath, funcDepMap);
+    return getDepPath(depName, fromPath);
   });
 }
 
@@ -1232,22 +1216,17 @@ function getMethodAssignments(source) {
  * @private
  * @param {string} identifier The module identifier.
  * @param {string} [category] The category of the identifier.
- * @param {Object} [funcDepMap] The dependency map used to resolve identifiers.
  * @returns {string} Returns the module path.
  */
-function getModulePath(identifier, category, funcDepMap) {
+function getModulePath(identifier, category) {
   if (_.includes(listing.topLevelDeps, identifier)) {
     return '';
   }
   if (isPrivate(identifier)) {
     return 'internal';
   }
-  if (_.isObject(category)) {
-    funcDepMap = category;
-    category = null;
-  }
   if (category == null) {
-    category = getCategory(identifier, funcDepMap);
+    category = getCategory(identifier);
   }
   return category.toLowerCase();
 }
@@ -1411,7 +1390,7 @@ function matchFunction(source, funcName, leadingComments) {
     '( *)var\\s+' + escapedName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n'
   ];
 
-  return _.reduce(reAttempts, function(result, reSource, index) {
+  return _.reduce(reAttempts, function(result, reSource) {
     if (result) {
       return result;
     }
@@ -1580,11 +1559,9 @@ function removeLazyChaining(source) {
  * @private
  * @param {string} source The source to process.
  * @param {Object} [funcDepMap] The function dependency map to modify.
- * @param {Object} [objDepMap] The object dependency map to modify.
- * @param {Object} [varDepMap] The variable dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeMetadata(source, funcDepMap, objDepMap, varDepMap) {
+function removeMetadata(source, funcDepMap) {
   var deps = _.result(funcDepMap, 'createWrapper', []);
   _.pull(deps, 'baseSetData', 'getData', 'mergeData', 'setData');
 
@@ -1738,37 +1715,6 @@ function removeHeader(source) {
 }
 
 /**
- * Removes all `isHostObject` references from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @param {Object} [funcDepMap] The dependency map to modify.
- * @returns {string} Returns the modified source.
- */
-function removeIsHostObject(source, funcDepMap) {
-  source = source == null ? '' : String(source);
-
-  _.each(['baseClone', 'baseIsEqualDeep', 'isNative', 'isPlainObject'], function(funcName) {
-    var deps = _.result(funcDepMap, funcName, []);
-    _.pull(deps, 'isHostObject');
-  });
-
-  _.each(['baseIsEqualDeep', 'isPlainObject'], function(funcName) {
-    source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(/\s*&&\s*!isHostObject\([^)]+\)/g, '');
-    });
-  });
-
-  source = source.replace(matchFunction(source, 'baseClone'), function(match) {
-    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(isHostObject\b[\s\S]+?\n\1\}\n/m, '');
-  });
-
-  return source.replace(matchFunction(source, 'isNative'), function(match) {
-    return match.replace(/\s*\(isHostObject\b[^:]+:([\s\S]+?)\)/, '$1');
-  });
-}
-
-/**
  * Removes the `@license` tag from the copyright header so minifiers and
  * build optimizers may strip them.
  *
@@ -1877,23 +1823,6 @@ function removeRunInContext(source) {
 }
 
 /**
- * Removes the `support.spliceObjects` fix from the `Array` function mixins
- * snippet of `source`.
- *
- * @private
- * @param {string} source The source to inspect.
- * @returns {string} Returns the modified source.
- */
-function removeSpliceObjectsFix(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(/^( *)arrayEach\(\['join\b[\s\S]+?\n\1\}\);/m, function(match) {
-    match = removeVar(match, 'fixObjects');
-    match = removeVar(match, 'func');
-    return match.replace(/\bprotoFunc\b/g, 'func');
-  });
-}
-
-/**
  * Removes all strings from `source`.
  *
  * @private
@@ -1903,120 +1832,6 @@ function removeSpliceObjectsFix(source) {
 function removeStrings(source) {
   source = source == null ? '' : String(source);
   return source.replace(reString, '');
-}
-
-/**
- * Removes all `support.enumErrorProps` references from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeSupportEnumErrorProps(source) {
-  return removeSupportProp(source, 'enumErrorProps');
-}
-
-/**
- * Removes all `support.enumPrototypes` references from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @param {Object} [objDepMap] The object dependency map to modify.
- * @returns {string} Returns the modified source.
- */
-function removeSupportEnumPrototypes(source, objDepMap) {
-  var deps = _.result(objDepMap, 'keys', []);
-  _.pull(deps, 'support');
-
-  source = removeSupportProp(source, 'enumPrototypes');
-  return source.replace(matchFunction(source, 'keys'), function(match) {
-    return match.replace(/typeof\s+object[^:]+:/, "typeof object != 'function' &&");
-  });
-}
-
-/**
- * Removes all `support.nonEnumShadows` references from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeSupportNonEnumShadows(source) {
-  return removeSupportProp(source, 'nonEnumShadows');
-}
-
-/**
- * Removes all `support.ownLast` references from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeSupportOwnLast(source) {
-  source = removeSupportProp(source, 'ownLast');
-  return source.replace(matchFunction(source, 'isPlainObject'), function(match) {
-    return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(lodash\.support\.ownLast\b[\s\S]+?\n\1\}\n/m, '');
-  });
-}
-
-/**
- * Removes all `support.spliceObjects` references from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeSupportSpliceObjects(source) {
-  return removeSpliceObjectsFix(removeSupportProp(source, 'spliceObjects'));
-}
-
-/**
- * Removes all `support.unindexedChars` references from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @param {Object} [funcDepMap] The function dependency map to modify.
- * @param {Object} [objDepMap] The object dependency map to modify.
- * @returns {string} Returns the modified source.
- */
-function removeSupportUnindexedChars(source, funcDepMap, objDepMap) {
-  _.each(['toIterable', 'toArray', 'toObject'], function(funcName) {
-    var deps = _.result(funcDepMap, funcName, []);
-    _.pull(deps, 'isString');
-
-    deps =  _.result(objDepMap, funcName, []);
-    _.pull(deps, 'support');
-  });
-
-  source = removeSupportProp(source, 'unindexedChars');
-
-  _.each(['toIterable', 'toObject'], function(funcName) {
-    source = source.replace(matchFunction(source, funcName), function(match) {
-      return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(lodash\.support\.unindexedChars\b[\s\S]+?\n\1\}\n/m, '');
-    });
-  });
-
-  return source.replace(matchFunction(source, 'toArray'), function(match) {
-    return match.replace(/\(lodash\.support\.unindexedChars\b[\s\S]+?:\s*/, '');
-  });
-}
-
-/**
- * Removes a given property from the `support` object in `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @param {string} varName The name of the `support` property to remove.
- * @returns {string} Returns the modified source.
- */
-function removeSupportProp(source, propName) {
-  source = source == null ? '' : String(source);
-  return source.replace(matchProp(source, 'support'), function(match) {
-    return match.replace(RegExp(
-      '\\n+' + commentPattern +
-      ' *support\\.' + _.escapeRegExp(propName) + '\\s*=[\\s\\S]+?;(?=\\n)'
-    , 'm'), '');
-  });
 }
 
 /**
@@ -2256,7 +2071,7 @@ function build(options, callback) {
         varDepMap = createMap(_.cloneDeep(mapping.varDep));
 
     // The path to the source file.
-    var filePath = require.resolve('lodash-compat');
+    var filePath = require.resolve('lodash');
 
     // Used to specify a custom IIFE to wrap lodash.
     var iife = getOption(options, 'iife');
@@ -2280,9 +2095,6 @@ function build(options, callback) {
 
     // A flag to specify creating a source map for the minified source.
     var isMapped = getOption(options, '-m') || getOption(options, '--source-map');
-
-    // A flag to specify a modern build.
-    var isModern = getOption(options, 'modern');
 
     // A flag to specify a modularize build.
     var isModularize = getOption(options, 'modularize');
@@ -2324,8 +2136,7 @@ function build(options, callback) {
 
     // A flag to specify creating a custom build.
     var isCustom = !isModularize && (
-      isMapped || isModern || isStrict || isTemplate || outputPath ||
-      getOption(options, 'compat') ||
+      isMapped || isStrict || isTemplate || outputPath ||
       /\b(?:category|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
       !_.isEqual(exportsOptions, listing.exports)
     );
@@ -2345,7 +2156,7 @@ function build(options, callback) {
       _.pull(exportsOptions, 'iojs', 'node').push('node');
     }
     if (isTemplate) {
-      isModern = isModularize = false;
+      isModularize = false;
     }
     // The lodash.js source.
     var source = fs.readFileSync(filePath, 'utf8');
@@ -2401,8 +2212,6 @@ function build(options, callback) {
         return true;
       }
       var result = _.includes([
-        'compat',
-        'modern',
         'modularize',
         'strict',
         '-c', '--stdout',
@@ -2425,15 +2234,6 @@ function build(options, callback) {
     // Report invalid command and option arguments.
     if (!_.isEmpty(invalidArgs)) {
       warnings.push('Invalid argument' + (_.size(invalidArgs) > 1 ? 's' : '') + ' passed: ' + invalidArgs.join(', '));
-    }
-    // Report invalid command combinations.
-    invalidArgs = _.intersection(options, ['compat', 'modern']);
-
-    if (isTemplate) {
-      invalidArgs.push('template');
-    }
-    if (_.size(invalidArgs) > 1) {
-      warnings.push('The `' + invalidArgs.slice(0, -1).join('`, `') + '`' + (_.size(invalidArgs) > 2 ? ',' : '') + ' and `' + invalidArgs.slice(-1) + '` commands may not be combined.');
     }
     // Report invalid command entries.
     _.forOwn({
@@ -2550,107 +2350,12 @@ function build(options, callback) {
           funcDepMap[funcName].push('wrapperValue');
         });
       }
-      if (isModern) {
-        // Remove `support` from `objDepMap` identifiers.
-        _.forOwn(objDepMap, function(depNames, identifier) {
-          if (identifier != 'main') {
-            _.pull(depNames, 'support');
-          }
-        });
-
-        source = removeSupportEnumErrorProps(source);
-        source = removeSupportEnumPrototypes(source, objDepMap);
-        source = removeSupportNonEnumShadows(source);
-        source = removeSupportOwnLast(source);
-        source = removeSupportSpliceObjects(source);
-        source = removeSupportUnindexedChars(source, funcDepMap, objDepMap);
-
-        source = removeIsHostObject(source, funcDepMap);
-
-        // Simplify `initCloneByTag`.
-        _.pull(varDepMap.initCloneByTag, 'root');
-
-        source = source.replace(matchFunction(source, 'initCloneByTag'), function(match) {
-          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(Ctor\s+instanceof\s+Ctor[\s\S]+?\n\1\}\n/m, '');
-        });
-
-        // Optimize functions by moving `toObject`.
-        _.each(['baseGet', 'baseMatches'], function(funcName) {
-          source = source.replace(matchFunction(source, funcName), function(match) {
-            if (funcName == 'baseGet') {
-              match = match.replace(reToObject, '$1');
-            }
-            return match
-              .replace(/^ *object\s*=[^;]+;\n/m, '')
-              .replace(/\b(key|pathKey)\s+in\s+object\b/, '$1 in toObject(object)');
-          });
-        });
-
-        // Optimize functions by removing `toObject`.
-        _.each(['baseProperty', 'result'], function(funcName) {
-          _.pull(funcDepMap[funcName], 'toObject');
-          source = source.replace(matchFunction(source, funcName), function(match) {
-            return match.replace(reToObject, '$1');
-          });
-        });
-
-        // Remove `isString` use from functions.
-        _.each(['has', 'keysIn', 'shimKeys'], function(funcName) {
-          _.pull(funcDepMap[funcName], 'isString');
-          source = source.replace(matchFunction(source, funcName), function(match) {
-            return match.replace(/\s*\|\|\s*isString\([^)]+\)/, '');
-          });
-        });
-
-        // Replace `_.at`.
-        _.pull(funcDepMap.at, 'isArrayLike', 'toIterable');
-
-        source = replaceFunction(source, 'at', [
-          'var at = restParam(function(collection, props) {',
-          '  return baseAt(collection, baseFlatten(props));',
-          '});'
-        ].join('\n'));
-
-        // Replace `_.keysIn`.
-        _.pull(funcDepMap.keysIn, 'arrayEach', 'isFunction');
-
-        source = replaceFunction(source, 'keysIn', [
-          'function keysIn(object) {',
-          '  if (object == null) {',
-          '    return [];',
-          '  }',
-          '  if (!isObject(object)) {',
-          '    object = Object(object);',
-          '  }',
-          '  var length = object.length;',
-          '  length = (length && isLength(length) &&',
-          '    (isArray(object) || isArguments(object)) && length) || 0;',
-          '',
-          '  var Ctor = object.constructor,',
-          '      index = -1,',
-          "      isProto = typeof Ctor == 'function' && Ctor.prototype === object,",
-          '      result = Array(length),',
-          '      skipIndexes = length > 0;',
-          '',
-          '  while (++index < length) {',
-          "    result[index] = (index + '');",
-          '  }',
-          '  for (var key in object) {',
-          '    if (!(skipIndexes && isIndex(key, length)) &&',
-          "        !(key == 'constructor' && (isProto || !hasOwnProperty.call(object, key)))) {",
-          '      result.push(key);',
-          '    }',
-          '  }',
-          '  return result;',
-          '}'
-        ].join('\n'));
-      }
       if (isModularize) {
         source = removeGetIndexOf(source, funcDepMap);
         source = removeGetIteratee(source, funcDepMap);
       }
       if (isNpm) {
-        source = removeMetadata(source, funcDepMap, objDepMap, varDepMap);
+        source = removeMetadata(source, funcDepMap);
 
         // Replace `createFlow`.
         _.pull(funcDepMap.createFlow, 'getData', 'getFuncName', 'isArray', 'isLaziable', 'LodashWrapper');
@@ -2923,7 +2628,6 @@ function build(options, callback) {
         'isAMD': isAMD,
         'isCommonJS': isCommonJS,
         'isES': isES,
-        'isModern': isModern,
         'isNode': isNode,
         'isNpm': isNpm,
         'isSilent': isSilent,

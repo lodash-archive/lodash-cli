@@ -5,7 +5,7 @@ env:
   global:
     - BIN="node" BUILD="compat" EXPORTS="commonjs" NPM_VERSION="^2.0.0"
     - OPTION="" TEST_BUILDS=false TRANSPILER="none"
-    - LOADER="requirejs" RUNNER_PATH="node_modules/lodash-compat/test"
+    - LOADER="requirejs" RUNNER_PATH="node_modules/lodash/test"
     - SAUCE_PATH="$RUNNER_PATH/saucelabs.js" SAUCE_USERNAME="lodash"
     - secure: "HUCzn6i9XZ53278fYMICHuHWaVtTZmJCfY4wv3BEu57CGshw9T399Vxul849vIusw3x9cf4iNrrry0RaZga7KfaJIVSESy4zeY4vnsJ+5QCiXGbobpNPYnhU50eTo95MqDh1/Uds+cv2HCo+4VH8yb+6k/p9xX0CC3TvvToX60M="
   matrix:
@@ -57,7 +57,7 @@ before_install:
   - "nvm use $TRAVIS_NODE_VERSION"
   - "npm config set loglevel error"
   - "npm i -g npm@\"$NPM_VERSION\""
-  - "git clone --depth=10 --branch=master git://github.com/lodash/lodash ./node_modules/lodash-compat && cd $_ && perl -pi -e 's|\"lodash\"|\"lodash-compat\"|' ./package.json && npm i && cd ../../"
+  - "git clone --depth=10 --branch=master git://github.com/lodash/lodash ./node_modules/lodash && cd $_ && npm i && cd ../../"
   - "[ $BIN != 'rhino' ] || (sudo mkdir /opt/rhino-1.7.6 && sudo wget --no-check-certificate -O $_/js.jar https://lodash.com/_travis/rhino-1.7.6.jar)"
   - "[ $BIN != 'rhino' ] || (echo -e '#!/bin/sh\\njava -jar /opt/rhino-1.7.6/js.jar $@' | sudo tee /usr/local/bin/rhino && sudo chmod +x /usr/local/bin/rhino)"
   - "[ $BIN != 'ringo' ] || (wget --no-check-certificate https://lodash.com/_travis/ringojs-0.11.zip && sudo unzip ringojs-0.11 -d /opt && rm ringojs-0.11.zip)"

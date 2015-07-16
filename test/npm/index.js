@@ -234,6 +234,6 @@ lodash.eq = lodash.isEqual;
 // Add other properties.
 lodash.support = support;
 (lodash.templateSettings = templateSettings).imports._ = lodash;
-lodash.VERSION = require('lodash-compat').VERSION;
+lodash.VERSION = require('lodash').VERSION;
 
 module.exports = lodash;

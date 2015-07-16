@@ -4,7 +4,7 @@
 var vm = require('vm');
 
 /** Load other modules. */
-var _ = require('lodash-compat'),
+var _ = require('lodash'),
     build = require('../bin/lodash'),
     listing = require('../lib/listing.js'),
     mapping = require('../lib/mapping.js'),

@@ -21,7 +21,7 @@
   "dependencies": {
     "closure-compiler": "0.2.6",
     "glob": "5.0.12",
-    "lodash-compat": "3.10.1",
+    "lodash": "3.10.1",
     "semver": "4.3.6",
     "uglify-js": "2.4.23"
   },
