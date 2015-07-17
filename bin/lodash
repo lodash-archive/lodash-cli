@@ -1526,7 +1526,6 @@ function removeBaseKeysInFork(source) {
 function removeChaining(source) {
   source = removeLazyChaining(source);
   source = removeMixinCalls(source);
-  source = removeSpliceObjectsFix(source);
 
   // Remove all `lodash.prototype` additions.
   return source
