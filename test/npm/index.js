@@ -64,6 +64,7 @@ lodash.dropRight = require('lodash.dropright');
 lodash.dropRightWhile = require('lodash.droprightwhile');
 lodash.dropWhile = require('lodash.dropwhile');
 lodash.endsWith = require('lodash.endswith');
+lodash.eq = require('lodash.eq');
 lodash.escape = require('lodash.escape');
 lodash.escapeRegExp = require('lodash.escaperegexp');
 lodash.every = require('lodash.every');
@@ -235,7 +236,6 @@ lodash.zipObject = require('lodash.zipobject');
 // Add aliases.
 lodash.each = lodash.forEach;
 lodash.eachRight = lodash.forEachRight;
-lodash.eq = lodash.isEqual;
 
 // Add other properties.
 (lodash.templateSettings = templateSettings).imports._ = lodash;
