@@ -2601,7 +2601,7 @@ function build(options, callback) {
         modified = modified.replace(/^(?: *\/\/.*\n)* *\(freeWindow\s*\|\|\s*freeSelf\b[\s\S]+?=[\s\S]+?\n+/m, '');
       }
       if (!isGlobal || isModularize) {
-        modified = modified.replace(/^(?: *\/\/.*\n)*(( *)\}?)\s*else(?:\s*if\s*\(_\))?\s*\{(?:\s*\/\/.*)*\s*(?:root\._|_\.templates)\s*=[\s\S]+?\n\2\}\n+/m, function(match, prelude) {
+        modified = modified.replace(/^(?: *\/\/.*\n)*(( *)\}?)\s*else(?:\s*if\s*\(_\))?\s*\{(?:\s*\/\/.*)*\s*(?:[$\w]+\._|_\.templates)\s*=[\s\S]+?\n\2\}\n+/m, function(match, prelude) {
           return _.trim(prelude) ? prelude + '\n' : '';
         });
       }
