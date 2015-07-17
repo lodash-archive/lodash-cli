@@ -526,12 +526,9 @@ function buildModule(state, onComplete) {
         return code.join('\n');
       });
 
-      // Add `lodash.support`, `lodash.templateSettings`, and placeholder assignments.
+      // Add `lodash.templateSettings` and placeholder assignments.
       source = source.replace(/^ *lodash\.VERSION\b.+\n/m, function(match) {
-        var code = [
-          '',
-          '  lodash.support = support;'
-        ];
+        var code = [];
 
         if (_.includes(identifiers, 'templateSettings')) {
           code.push('  (lodash.templateSettings = ' + mapping.categoryToDepName.String + '.templateSettings).imports._ = lodash;');
@@ -2485,19 +2482,6 @@ function build(options, callback) {
       });
     }
     else if (isModularize) {
-      // Unexpose `lodash.support`.
-      _.forOwn(mapping.objDep, function(deps, funcName) {
-        if (_.includes(deps, 'support')) {
-          source = source.replace(matchFunction(source, funcName), function(match) {
-            return removeVar(match, 'support');
-          });
-        }
-      });
-
-      source = source
-        .replace(/\blodash\.support\s*=\s*/, '')
-        .replace(/\blodash\.(?=support\b)/g, '');
-
       // Replace the `lodash.templateSettings` property assignment with a variable assignment.
       source = source.replace(/\b(lodash\.)(?=templateSettings\s*=)/, 'var ');
 
@@ -2702,38 +2686,6 @@ function build(options, callback) {
         : '';
     });
 
-    // Remove unneeded `support` properties.
-    if (_.includes(includeObjs, 'support')) {
-      if (!_.isEmpty(buildFuncs)) {
-        if (isExcluded('isPlainObject')) {
-          source = removeSupportOwnLast(source);
-        }
-        if (isExcluded('keysIn')) {
-          source = removeSupportNonEnumShadows(source);
-        }
-      }
-      source = source.replace(matchProp(source, 'support'), function(match) {
-        return match.replace(/^ *\(function[^{]+\{\n(( *)var\s+Ctor\s*=[\s\S]+?\n *for\b[\s\S]+?\}\n)([\s\S]+?)\}\(1,\s*0\)\);\n/m, function(match, setup, indent, body) {
-          var modified = setup;
-          if (!/\.spliceObjects\b/.test(body)) {
-            modified = removeVar(modified, 'object');
-          }
-          if (!/\.enumPrototypes\b/.test(body) &&
-              !/\.nonEnumShadows\b/.test(body) &&
-              !/\.ownLast\b/.test(body)) {
-            modified = removeVar(modified, 'Ctor');
-            modified = removeVar(modified, 'props');
-            modified = modified
-              .replace(/^ *Ctor\.prototype\b[\s\S]+?;\n/m, '')
-              .replace(/^ *for\s*\(var\s+key\b[\s\S]+?\}\n/m, '');
-          }
-          // If there's no setup code then remove the IIFE.
-          return _.trim(modified)
-            ? match.replace(setup, modified)
-            : body.replace(RegExp('^' + indent, 'gm'), indent.slice(0, -2));
-        });
-      });
-    }
     // Remove unneeded property dependencies.
     _.each(_.difference(listing.objDeps, includeObjs), function(propName) {
       source = removeProp(source, propName);

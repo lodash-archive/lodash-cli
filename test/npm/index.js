@@ -2,7 +2,6 @@ var baseFunctions = require('lodash._basefunctions'),
     isObject = require('lodash.isobject'),
     keys = require('lodash.keys'),
     mixin = require('lodash.mixin'),
-    support = require('lodash.support'),
     templateSettings = require('lodash.templatesettings');
 
 // Wrap `_.mixin` so it works when provided only one argument.
@@ -232,7 +231,6 @@ lodash.eachRight = lodash.forEachRight;
 lodash.eq = lodash.isEqual;
 
 // Add other properties.
-lodash.support = support;
 (lodash.templateSettings = templateSettings).imports._ = lodash;
 lodash.VERSION = require('lodash').VERSION;
 
