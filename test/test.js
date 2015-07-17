@@ -284,8 +284,7 @@ QUnit.module('build command checks');
     'csp',
     'exports=es',
     'exports=es6',
-    'exports=npm',
-    'modern template=./*.jst'
+    'exports=npm'
   ];
 
   _.each(commands, function(command) {
@@ -666,7 +665,7 @@ QUnit.module('independent builds');
 
     asyncTest('development custom build using `' + option + '`', function() {
       var start = _.once(QUnit.start);
-      build([option, 'modern'], function(data) {
+      build([option], function(data) {
         var comment = _.result(data.source.match(reLicense), 0, '');
         ok(_.includes(comment, 'Custom Build'));
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
@@ -692,59 +691,13 @@ QUnit.module('independent builds');
 
     asyncTest('production custom build using `' + option + '`', function() {
       var start = _.once(QUnit.start);
-      build([option, 'modern'], function(data) {
+      build([option], function(data) {
         var comment = _.result(data.source.match(reLicense), 0, '');
         ok(_.includes(comment, 'Custom Build'));
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
 
         start();
       });
-    });
-  });
-}());
-
-/*----------------------------------------------------------------------------*/
-
-QUnit.module('compat modifier');
-
-(function() {
-  asyncTest('`lodash compat`', function() {
-    var sources = [];
-
-    var check = _.after(2, _.once(function() {
-      strictEqual(sources[0], sources[1]);
-      QUnit.start();
-    }));
-
-    var callback = function(data) {
-      // Remove copyright header before adding to `sources`.
-      sources.push(data.source.replace(reHeader, ''));
-      check();
-    };
-
-    build(['-d'], callback);
-    build(['-d', 'compat'], callback);
-  });
-}());
-
-/*----------------------------------------------------------------------------*/
-
-QUnit.module('modern modifier');
-
-(function() {
-  asyncTest('`lodash modern`', function() {
-    var start = _.after(2, _.once(QUnit.start));
-
-    build(['modern'], function(data) {
-      var basename = path.basename(data.outputPath, '.js'),
-          context = createContext();
-
-      vm.runInContext(data.source, context);
-
-      var lodash = context._;
-      strictEqual(lodash.isPlainObject(Object.create(null)), true, basename);
-
-      start();
     });
   });
 }());
@@ -770,7 +723,7 @@ QUnit.module('modularize modifier');
   }
 
   _.each(funcNames, function(funcName) {
-    asyncTest('`lodash modularize modern include=' + funcName + ' exports=node`', function() {
+    asyncTest('`lodash modularize include=' + funcName + ' exports=node`', function() {
       var start = _.once(function() {
         process.chdir(cwd);
         QUnit.start();
@@ -778,7 +731,7 @@ QUnit.module('modularize modifier');
 
       setup();
 
-      build(['modularize', 'modern', 'include=' + funcName, 'exports=node', '-o', outputPath], function() {
+      build(['modularize', 'include=' + funcName, 'exports=node', '-o', outputPath], function() {
         emptyObject(require.cache);
 
         if (funcName == 'main') {
@@ -814,7 +767,7 @@ QUnit.module('modularize modifier');
 
       setup();
 
-      build(['modularize', 'modern', command, '-o', outputPath], function() {
+      build(['modularize', command, '-o', outputPath], function() {
         emptyObject(require.cache);
         var lodash = require(outputPath);
 
@@ -1346,12 +1299,10 @@ QUnit.module('lodash build');
       reComma = /, */,
       reMinus = /\bminus=/,
       reMinusValue = /\bminus=(\S*)/,
-      reNonCombinable = /\b(?:compat|modern)\b/,
       rePlus =/\bplus=/,
       rePlusValue = /\bplus=(\S*)/;
 
   var commands = [
-    'modern',
     'strict',
     'category=array',
     'category=arrays',
@@ -1373,80 +1324,73 @@ QUnit.module('lodash build');
     'include=each,filter,map',
     'include=once plus=bind,Chain',
     'category=collection,function',
-    'compat include=defer',
+    'include=defer',
     'strict category=function exports=amd,global plus=pick,uniq',
-    'modern strict include=isArguments,isArray,isFunction,isPlainObject,keys'
+    'strict include=isArguments,isArray,isFunction,isPlainObject,keys'
   ];
 
   push.apply(commands, _.map(includes, function(funcName) {
     return 'include=' + funcName;
   }));
 
-  _.each(commands, function(origCommand) {
-    _.each(['', 'modern'], function(otherCommand) {
-      if (otherCommand && reNonCombinable.test(origCommand)) {
-        return;
-      }
-      var command = _.trim(otherCommand + ' ' + origCommand);
+  _.each(commands, function(command) {
+    asyncTest('`lodash ' + command +'`', function() {
+      var start = _.after(2, _.once(QUnit.start));
 
-      asyncTest('`lodash ' + command +'`', function() {
-        var start = _.after(2, _.once(QUnit.start));
+      build(command.split(' '), function(data) {
+        var basename = path.basename(data.outputPath, '.js'),
+            context = createContext();
 
-        build(command.split(' '), function(data) {
-          var basename = path.basename(data.outputPath, '.js'),
-              context = createContext();
-
-          try {
-            vm.runInContext(data.source, context);
-          } catch(e) {
-            console.log(e);
-          }
-          // Add function names explicitly.
-          if (reInclude.test(command)) {
-            var funcNames = command.match(reIncludeValue)[1].split(reComma);
-          }
-          if (reCategory.test(command)) {
-            var categories = command.match(reCategoryValue)[1].split(reComma);
-            funcNames || (funcNames = []);
-            push.apply(funcNames, _.map(categories, function(category) {
-              return getRealCategory(_.capitalize(category.toLowerCase()));
-            }));
-          }
-          if (!funcNames) {
-            funcNames = includes.slice();
-          }
-          if (rePlus.test(command)) {
-            var otherNames = command.match(rePlusValue)[1].split(reComma);
-            push.apply(funcNames, expandFuncNames(otherNames));
-          }
-          if (reMinus.test(command)) {
-            otherNames = command.match(reMinusValue)[1].split(reComma);
-            funcNames = _.difference(funcNames, expandFuncNames(otherNames));
-          }
-          // Expand categories to function names.
-          _.each(funcNames.slice(), function(category) {
-            var otherNames = _.filter(mapping.category[category], function(key) {
-              var type = typeof _[key];
-              return type == 'function' || type == 'undefined';
-            });
-
-            // Limit function names to those available for specific builds.
-            otherNames = _.intersection(otherNames, includes);
-
-            if (!_.isEmpty(otherNames)) {
-              _.pull(funcNames, category);
-              push.apply(funcNames, otherNames);
-            }
+        try {
+          vm.runInContext(data.source, context);
+        } catch(e) {
+          console.log(e);
+        }
+        // Add function names explicitly.
+        if (reInclude.test(command)) {
+          var funcNames = command.match(reIncludeValue)[1].split(reComma);
+        }
+        if (reCategory.test(command)) {
+          var categories = command.match(reCategoryValue)[1].split(reComma);
+          funcNames || (funcNames = []);
+          push.apply(funcNames, _.map(categories, function(category) {
+            return getRealCategory(_.capitalize(category.toLowerCase()));
+          }));
+        }
+        if (!funcNames) {
+          funcNames = includes.slice();
+        }
+        if (rePlus.test(command)) {
+          var otherNames = command.match(rePlusValue)[1].split(reComma);
+          push.apply(funcNames, expandFuncNames(otherNames));
+        }
+        if (reMinus.test(command)) {
+          otherNames = command.match(reMinusValue)[1].split(reComma);
+          funcNames = _.difference(funcNames, expandFuncNames(otherNames));
+        }
+        // Expand categories to function names.
+        _.each(funcNames.slice(), function(category) {
+          var otherNames = _.filter(mapping.category[category], function(key) {
+            var type = typeof _[key];
+            return type == 'function' || type == 'undefined';
           });
 
-          // Expand aliases and remove nonexistent and duplicate function names.
-          funcNames = _.uniq(_.intersection(expandFuncNames(funcNames), includes));
+          // Limit function names to those available for specific builds.
+          otherNames = _.intersection(otherNames, includes);
 
-          var lodash = context._ || {};
-          _.each(funcNames, _.partial(testMethod, lodash, _, basename));
-
-          start();
+          if (!_.isEmpty(otherNames)) {
+            _.pull(funcNames, category);
+            push.apply(funcNames, otherNames);
+          }
         });
+
+        // Expand aliases and remove nonexistent and duplicate function names.
+        funcNames = _.uniq(_.intersection(expandFuncNames(funcNames), includes));
+
+        var lodash = context._ || {};
+        _.each(funcNames, _.partial(testMethod, lodash, _, basename));
+
+        start();
       });
     });
   });
