@@ -491,7 +491,7 @@ function buildModule(state, onComplete) {
     build(state, function(data) {
       var source = data.source;
 
-      // Remove unneeded method and alias assignments.
+      // Remove unused method and alias assignments.
       _.each(_.difference(listing.funcs, buildFuncs), function(funcName) {
         source = removeMethodAssignment(source, funcName);
       });
@@ -916,7 +916,7 @@ function cleanupSource(source) {
         var indent = /^\s*/.exec(separators)[0];
         return indent + separators.slice(separators.lastIndexOf('/*'));
       })
-      // Remove unneeded single line comments.
+      // Remove unused single line comments.
       .replace(/(\{\s*)?(\n *\/\/.*)(\s*\})/g, function(match, prelude, comment, postlude) {
         return (!prelude && postlude) ? postlude : match;
       })
@@ -924,7 +924,7 @@ function cleanupSource(source) {
       .replace(/^ *(\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.*)\n\n/gm, function(match, comment) {
         return /^\/\*-+\*\/$/.test(comment) ? match : '\n';
       })
-      // Remove unneeded horizontal rule comment separators.
+      // Remove unused horizontal rule comment separators.
       .replace(/(\{\s*\n) *\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*\})/gm, '$1$2')
       // Remove trailing horizontal rule comment separators.
       .replace(/\s*\/\*-+\*\/\s*$/, '')
@@ -2711,12 +2711,12 @@ function build(options, callback) {
         : '';
     });
 
-    // Remove unneeded property dependencies.
+    // Remove unused property dependencies.
     _.each(_.difference(listing.objDeps, includeObjs), function(propName) {
       source = removeProp(source, propName);
     });
 
-    // Remove unneeded variable dependencies.
+    // Remove unused variable dependencies.
     _.each(_.difference(listing.varDeps, includeVars.concat('root')), function(varName) {
       source = removeVar(source, varName);
     });
