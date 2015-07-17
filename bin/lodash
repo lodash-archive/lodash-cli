@@ -1030,6 +1030,17 @@ function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack)
 }
 
 /**
+ * Gets the `baseKeysIn` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to inspect.
+ * @returns {string} Returns the fork.
+ */
+function getBaseKeysInFork(source) {
+  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(enumerate\b[\s\S]+?\n\1  baseKeysIn\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
+}
+
+/**
  * Gets the category of the given identifier.
  *
  * @private
@@ -1491,6 +1502,18 @@ function removeAssignments(source) {
   // Remove method and intermediate assignments.
   source = removeMethodAssignments(source);
   return source.replace(/(=\s*)lodash\.[$\w]+\s*=\s*/g, '$1');
+}
+
+/**
+ * Removes the `baseKeysIn` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to process.
+ * @returns {string} Returns the modified source.
+ */
+function removeBaseKeysInFork(source) {
+  source = source == null ? '' : String(source);
+  return source.replace(getBaseKeysInFork(source), '');
 }
 
 /**
@@ -2643,6 +2666,9 @@ function build(options, callback) {
       }
     });
 
+    if (isExcluded('baseKeysIn')) {
+      source = removeBaseKeysInFork(source);
+    }
     if (isExcluded('LazyWrapper')) {
       // Remove `LazyWrapper.prototype` assignment.
       source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype(\.constructor)?\s*=[^;]+;\n/gm, '');
