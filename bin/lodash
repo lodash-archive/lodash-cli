@@ -2693,9 +2693,6 @@ function build(options, callback) {
         source = removeAssignments(source);
       }
     }
-    else if (isExcluded('wrapperValue')) {
-      source = removeChaining(source);
-    }
     // Remove placeholder assignments of removed functions.
     source = source.replace(/^((?: *\/\/.*\n)*)( *)(arrayEach\(\[')bind\b[\s\S]+?('\][\s\S]+?\n\2\}\))/m, function(match, comment, indent, prelude, postlude) {
       var funcNames = _.reject(listing.placeholderFuncs, isExcluded),
