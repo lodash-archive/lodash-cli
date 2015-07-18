@@ -2446,13 +2446,16 @@ function build(options, callback) {
       if (!_.isEmpty(minusFuncs)) {
         result = _.difference(result, minusFuncs.concat(getDependants(minusFuncs, funcDepMap, true)));
       }
+      if (!isModularize) {
+        result.push('main');
+      }
       result = _.uniq(result);
 
       var hasLodash = _.includes(result, 'lodash');
       result = getDependencies(result, funcDepMap, true, ['lodash']);
 
       // Simplify `lodash` when not capable of chaining.
-      if (!_.includes(result, 'main') && !_.includes(result, 'mixin') && !_.includes(result, 'wrapperValue')) {
+      if (!_.includes(result, 'mixin') && !_.includes(result, 'wrapperValue')) {
         funcDepMap.lodash.length = 0;
 
         source = replaceFunction(source, 'lodash', [
