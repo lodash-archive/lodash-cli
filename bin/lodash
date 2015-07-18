@@ -2085,7 +2085,8 @@ function build(options, callback) {
   }
   else {
     // Clone dependencies to modify.
-    var funcDepMap = createMap(_.cloneDeep(mapping.funcDep)),
+    var chainDepMap = createMap(_.cloneDeep(mapping.chainDep)),
+        funcDepMap = createMap(_.cloneDeep(mapping.funcDep)),
         objDepMap = createMap(_.cloneDeep(mapping.objDep)),
         varDepMap = createMap(_.cloneDeep(mapping.varDep));
 
@@ -2337,8 +2338,13 @@ function build(options, callback) {
 
           delete varDepMap.root;
         }
+        // Redistribute `chainDepMap` deps.
+        funcDepMap.main = _.union(funcDepMap.main, chainDepMap.funcDep);
+        objDepMap.main = _.union(objDepMap.main, chainDepMap.objDep);
+        varDepMap.main = _.union(varDepMap.main, chainDepMap.varDep);
+
         // Add deps to wrap `_.mixin` in `main`.
-        funcDepMap.main.push('baseFunctions', 'isObject', 'keys');
+        funcDepMap.main.push('baseFunctions', 'isObject', 'keys', 'mixin');
 
         // Remove `lodash` from function deps.
         _.each(listing.placeholderFuncs.concat('createCurry', 'createPartial', 'mixin'), function(funcName) {
@@ -2346,9 +2352,11 @@ function build(options, callback) {
         });
       }
       else {
-        // Redistribute `main` deps for chaining.
+        // Redistribute `chainDepMap` deps.
         funcDepMap.chain.push('wrapperChain');
-        funcDepMap.wrapperValue = _.union(funcDepMap.wrapperValue, _.without(funcDepMap.main, 'lodash', 'LodashWrapper'));
+        funcDepMap.wrapperValue = _.union(funcDepMap.wrapperValue, _.without(chainDepMap.funcDep, 'lodash', 'LodashWrapper'));
+        objDepMap.wrapperValue = _.union(objDepMap.wrapperValue, chainDepMap.objDep);
+        varDepMap.wrapperValue = _.union(varDepMap.wrapperValue, chainDepMap.varDep);
 
         // Add `arrayEach` to functions with placeholder support because it's
         // used to reduce code for placeholder assignments
