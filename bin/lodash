@@ -2430,11 +2430,8 @@ function build(options, callback) {
         result = _.clone(listing.includes);
       }
       // Remove special "none" entry.
-      if (_.isEqual(result, ['none'])) {
-        result = [];
-      } else {
-        _.pull(result, 'none');
-      }
+      _.pull(result, 'none');
+
       // Force removing or adding deps.
       if (isModularize) {
         minusFuncs.push('noConflict', 'runInContext');
