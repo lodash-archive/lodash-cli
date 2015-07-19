@@ -665,7 +665,7 @@ QUnit.module('independent builds');
 
     asyncTest('development custom build using `' + option + '`', function() {
       var start = _.once(QUnit.start);
-      build([option], function(data) {
+      build([option, 'strict'], function(data) {
         var comment = _.result(data.source.match(reLicense), 0, '');
         ok(_.includes(comment, 'Custom Build'));
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
@@ -691,7 +691,7 @@ QUnit.module('independent builds');
 
     asyncTest('production custom build using `' + option + '`', function() {
       var start = _.once(QUnit.start);
-      build([option], function(data) {
+      build([option, 'strict'], function(data) {
         var comment = _.result(data.source.match(reLicense), 0, '');
         ok(_.includes(comment, 'Custom Build'));
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
@@ -793,7 +793,7 @@ QUnit.module('modularize modifier');
     });
   });
 
-  asyncTest('`lodash modularize include=callback minus=matches,property`', function() {
+  asyncTest('`lodash modularize include=iteratee minus=matches,property`', function() {
     var start = _.once(function() {
       process.chdir(cwd);
       QUnit.start();
@@ -801,18 +801,18 @@ QUnit.module('modularize modifier');
 
     setup();
 
-    build(['modularize', 'include=callback', 'minus=matches,property', 'exports=node', '-o', outputPath], function() {
+    build(['modularize', 'include=iteratee', 'minus=matches,property', 'exports=node', '-o', outputPath], function() {
       emptyObject(require.cache);
 
       var modulePath = path.join(outputPath, 'utility'),
           utility = require(modulePath),
-          callback = utility.callback('x'),
+          iteratee = utility.iteratee('x'),
           object = { 'x': 1 };
 
-      strictEqual(callback(object), object);
+      strictEqual(iteratee(object), object);
 
-      callback = utility.callback(object);
-      strictEqual(callback(object), object);
+      iteratee = utility.iteratee(object);
+      strictEqual(iteratee(object), object);
 
       start();
     });
@@ -898,7 +898,7 @@ QUnit.module('strict modifier');
         var lodash = context._;
 
         var actual = _.every([
-          function() { lodash.bindAll(object); },
+          function() { lodash.bindAll(object, 'a'); },
           function() { lodash.extend(object, { 'a': 1 }); },
           function() { lodash.defaults(object, { 'b': 2 }); }
         ], function(fn) {
@@ -933,14 +933,7 @@ QUnit.module('minus command');
 
       vm.runInContext(data.source, context);
 
-      var lodash = context._,
-          array = [0];
-
-      var actual = lodash.map(array, function() {
-        return String(this[0]);
-      }, array);
-
-      deepEqual(actual, ['0'], basename);
+      var lodash = context._;
       ok(!('runInContext' in lodash), basename);
 
       start();
@@ -974,13 +967,13 @@ QUnit.module('minus command');
       vm.runInContext(data.source, context);
 
       var lodash = context._,
-          callback = lodash.callback('x'),
+          iteratee = lodash.iteratee('x'),
           object = { 'x': 1 };
 
-      strictEqual(callback(object), 1, basename);
+      strictEqual(iteratee(object), 1, basename);
 
-      callback = lodash.callback(object);
-      strictEqual(callback(object), object, basename);
+      iteratee = lodash.iteratee(object);
+      strictEqual(iteratee(object), object, basename);
 
       start();
     });
@@ -996,13 +989,13 @@ QUnit.module('minus command');
       vm.runInContext(data.source, context);
 
       var lodash = context._,
-          callback = lodash.callback('x'),
+          iteratee = lodash.iteratee('x'),
           object = { 'x': 1 };
 
-      strictEqual(callback(object), object, basename);
+      strictEqual(iteratee(object), object, basename);
 
-      callback = lodash.callback(object);
-      strictEqual(callback(object), true, basename);
+      iteratee = lodash.iteratee(object);
+      strictEqual(iteratee(object), true, basename);
 
       start();
     });
@@ -1018,13 +1011,13 @@ QUnit.module('minus command');
       vm.runInContext(data.source, context);
 
       var lodash = context._,
-          callback = lodash.callback('x'),
+          iteratee = lodash.iteratee('x'),
           object = { 'x': 1 };
 
-      strictEqual(callback(object), object, basename);
+      strictEqual(iteratee(object), object, basename);
 
-      callback = lodash.callback(object);
-      strictEqual(callback(object), object, basename);
+      iteratee = lodash.iteratee(object);
+      strictEqual(iteratee(object), object, basename);
 
       start();
     });
