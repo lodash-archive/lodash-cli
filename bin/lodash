@@ -2732,12 +2732,12 @@ function build(options, callback) {
       var funcNames = _.reject(listing.placeholderFuncs, isExcluded),
           length = funcNames.length;
 
-      if (length > 1) {
-        return (comment + indent + prelude + funcNames.join("', '") + postlude);
+      if (length && _.includes(buildFuncs, 'replaceHolders')) {
+        return length > 1
+            ? (comment + indent + prelude + funcNames.join("', '") + postlude)
+            : (comment + indent + funcNames[0] + '.placeholder = ') + (isModularize ? '{}' : 'lodash');
       }
-      return length
-        ? (comment + indent + funcNames[0] + '.placeholder = ') + (isModularize ? '{}' : 'lodash')
-        : '';
+      return '';
     });
 
     // Remove unused property dependencies.
