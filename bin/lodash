@@ -1556,7 +1556,7 @@ function removeComments(source) {
  */
 function removeLazyChaining(source, funcDepMap) {
   // Replace `createFlow`.
-  funcDepMap.createFlow = [];
+  _.result(funcDepMap, 'createFlow', []).length = 0;
 
   source = replaceFunction(source, 'createFlow', [
     'function createFlow(fromRight) {',
