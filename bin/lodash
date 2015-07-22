@@ -1521,10 +1521,11 @@ function removeBaseKeysInFork(source) {
  *
  * @private
  * @param {string} source The source to process.
+ * @param {Object} [funcDepMap] The function dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeChaining(source) {
-  source = removeLazyChaining(source);
+function removeChaining(source, funcDepMap) {
+  source = removeLazyChaining(source, funcDepMap);
   source = removeMixinCalls(source);
 
   // Remove all `lodash.prototype` additions.
@@ -1550,9 +1551,42 @@ function removeComments(source) {
  *
  * @private
  * @param {string} source The source to process.
+ * @param {Object} [funcDepMap] The function dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeLazyChaining(source) {
+function removeLazyChaining(source, funcDepMap) {
+  // Replace `createFlow`.
+  funcDepMap.createFlow = [];
+
+  source = replaceFunction(source, 'createFlow', [
+    'function createFlow(fromRight) {',
+    '  return function() {',
+    '    var length = arguments.length,',
+    '        index = fromRight ? length : -1,',
+    '        leftIndex = 0,',
+    '        funcs = Array(length);',
+    '',
+    '    while ((fromRight ? index-- : ++index < length)) {',
+    '      var func = funcs[leftIndex++] = arguments[index];',
+    "      if (typeof func != 'function') {",
+    '        throw new TypeError(FUNC_ERROR_TEXT);',
+    '      }',
+    '    }',
+    '    return function() {',
+    '      var index = 0,',
+    '          result = length ? funcs[index].apply(this, arguments) : arguments[0];',
+    '',
+    '      while (++index < length) {',
+    '        result = funcs[index].call(this, result);',
+    '      }',
+    '      return result;',
+    '    };',
+    '  };',
+    '}'
+  ].join('\n'));
+
+  source = removeVar(source, 'realNames');
+
   // Remove bulk `LazyWrapper.prototype` assignments.
   source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial)\b[\s\S]+?\n\1\}\);\n/gm, '');
 
