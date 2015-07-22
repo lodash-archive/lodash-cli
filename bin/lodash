@@ -1789,14 +1789,14 @@ function removeMethodAssignment(source, methodName) {
   source = source == null ? '' : String(source);
   return source.replace(getMethodAssignments(source), function(match) {
     var reAssignment = RegExp(
-      '^( *//.*\\n)* *' +
+      '^( *//.*\\n)*( *)' +
       '(?:lodash(?:\\.prototype)?\\.[$\\w]+\\s*=\\s*)*' +
       'lodash(?:\\.prototype)?\\.' +
-      '(?:[$\\w]+\\s*=\\s*' + methodName + '|' + methodName + '\\s*=\\s*[$\\w]+);' +
+      '(?:[$\\w]+\\s*=\\s*' + methodName + '|' + methodName + '\\s*=\\s*(?:[$\\w]+|function\\b[\\s\\S]+?\\n\\2\\}));' +
       '\\n(\\n)?'
     , 'gm');
 
-    return match.replace(reAssignment, function(match, comment, newline) {
+    return match.replace(reAssignment, function(match, comment, indent, newline) {
       return (!newline && comment) || newline || '';
     });
   });
