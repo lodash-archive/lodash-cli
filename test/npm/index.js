@@ -186,6 +186,7 @@ lodash.result = require('lodash.result');
 lodash.round = require('lodash.round');
 lodash.sample = require('lodash.sample');
 lodash.set = require('lodash.set');
+lodash.setWith = require('lodash.setwith');
 lodash.shuffle = require('lodash.shuffle');
 lodash.size = require('lodash.size');
 lodash.slice = require('lodash.slice');
