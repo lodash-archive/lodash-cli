@@ -1592,8 +1592,9 @@ function removeLazyChaining(source, funcDepMap, objDepMap) {
     '}'
   ].join('\n'));
 
-  source = removeVar(source, 'realNames');
-
+  if (objDepMap) {
+    source = removeVar(source, 'realNames');
+  }
   // Remove bulk `LazyWrapper.prototype` assignments.
   source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial)\b[\s\S]+?\n\1\}\);\n/gm, '');
 
@@ -2411,7 +2412,6 @@ function build(options, callback) {
       if (isModularize) {
         source = removeGetIndexOf(source, funcDepMap);
         source = removeGetIteratee(source, funcDepMap);
-        source = removeChaining(source, funcDepMap, objDepMap);
       }
       if (isNpm) {
         source = removeMetadata(source, funcDepMap);
