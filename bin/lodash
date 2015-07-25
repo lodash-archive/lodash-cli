@@ -2374,8 +2374,6 @@ function build(options, callback) {
           _.forOwn(varDepMap, function(depNames, identifier) {
             _.pull(depNames, 'root');
           });
-
-          delete varDepMap.root;
         }
         // Redistribute `chainDepMap` deps.
         funcDepMap.main = _.union(funcDepMap.main, chainDepMap.funcDep);
