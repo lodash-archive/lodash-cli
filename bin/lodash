@@ -1522,10 +1522,11 @@ function removeBaseKeysInFork(source) {
  * @private
  * @param {string} source The source to process.
  * @param {Object} [funcDepMap] The function dependency map to modify.
+ * @param {Object} [objDepMap] The object dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeChaining(source, funcDepMap) {
-  source = removeLazyChaining(source, funcDepMap);
+function removeChaining(source, funcDepMap, objDepMap) {
+  source = removeLazyChaining(source, funcDepMap, objDepMap);
   source = removeMixinCalls(source);
 
   // Remove all `lodash.prototype` additions.
@@ -1552,9 +1553,15 @@ function removeComments(source) {
  * @private
  * @param {string} source The source to process.
  * @param {Object} [funcDepMap] The function dependency map to modify.
+ * @param {Object} [objDepMap] The object dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeLazyChaining(source, funcDepMap) {
+function removeLazyChaining(source, funcDepMap, objDepMap) {
+  // Remove `realNames` from `objDepMap` identifiers.
+  _.forOwn(objDepMap, function(depNames, identifier) {
+    _.pull(depNames, 'realNames');
+  });
+
   // Replace `createFlow`.
   _.result(funcDepMap, 'createFlow', []).length = 0;
 
@@ -1657,7 +1664,7 @@ function removeFunction(source, funcName) {
  *
  * @private
  * @param {string} source The source to process.
- * @param {Object} [funcDepMap] The dependency map to modify.
+ * @param {Object} [funcDepMap] The function dependency map to modify.
  * @returns {string} Returns the modified source.
  */
 function removeGetIteratee(source, funcDepMap) {
@@ -1720,7 +1727,7 @@ function removeGetIteratee(source, funcDepMap) {
  *
  * @private
  * @param {string} source The source to process.
- * @param {Object} [funcDepMap] The dependency map to modify.
+ * @param {Object} [funcDepMap] The function dependency map to modify.
  * @returns {string} Returns the modified source.
  */
 function removeGetIndexOf(source, funcDepMap) {
@@ -2404,39 +2411,10 @@ function build(options, callback) {
       if (isModularize) {
         source = removeGetIndexOf(source, funcDepMap);
         source = removeGetIteratee(source, funcDepMap);
+        source = removeChaining(source, funcDepMap, objDepMap);
       }
       if (isNpm) {
         source = removeMetadata(source, funcDepMap);
-
-        // Replace `createFlow`.
-        _.pull(funcDepMap.createFlow, 'getData', 'getFuncName', 'isArray', 'isLaziable', 'LodashWrapper');
-
-        source = replaceFunction(source, 'createFlow', [
-          'function createFlow(fromRight) {',
-          '  return function() {',
-          '    var length = arguments.length,',
-          '        index = fromRight ? length : -1,',
-          '        leftIndex = 0,',
-          '        funcs = Array(length);',
-          '',
-          '    while ((fromRight ? index-- : ++index < length)) {',
-          '      var func = funcs[leftIndex++] = arguments[index];',
-          "      if (typeof func != 'function') {",
-          '        throw new TypeError(FUNC_ERROR_TEXT);',
-          '      }',
-          '    }',
-          '    return function() {',
-          '      var index = 0,',
-          '          result = length ? funcs[index].apply(this, arguments) : arguments[0];',
-          '',
-          '      while (++index < length) {',
-          '        result = funcs[index].call(this, result);',
-          '      }',
-          '      return result;',
-          '    };',
-          '  };',
-          '}'
-        ].join('\n'));
       }
       // Remove "_.matches" or "_.property" style callback support from `baseIteratee`.
       if (_.includes(minusFuncs, 'matches')) {
