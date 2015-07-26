@@ -1521,12 +1521,13 @@ function removeBaseKeysInFork(source) {
  *
  * @private
  * @param {string} source The source to process.
+ * @param {Object} [chainDepMap] The chain dependency map to modify.
  * @param {Object} [funcDepMap] The function dependency map to modify.
  * @param {Object} [objDepMap] The object dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeChaining(source, funcDepMap, objDepMap) {
-  source = removeLazyChaining(source, funcDepMap, objDepMap);
+function removeChaining(source, chainDepMap, funcDepMap, objDepMap) {
+  source = removeLazyChaining(source, chainDepMap, funcDepMap, objDepMap);
   source = removeMixinCalls(source);
 
   // Remove all `lodash.prototype` additions.
@@ -1552,21 +1553,25 @@ function removeComments(source) {
  *
  * @private
  * @param {string} source The source to process.
+ * @param {Object} [chainDepMap] The chain dependency map to modify.
  * @param {Object} [funcDepMap] The function dependency map to modify.
  * @param {Object} [objDepMap] The object dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeLazyChaining(source, funcDepMap, objDepMap) {
-  // Remove `realNames` from `objDepMap` identifiers.
+function removeLazyChaining(source, chainDepMap, funcDepMap, objDepMap) {
+  if (chainDepMap) {
+    chainDepMap.funcDep = ['arrayEach', 'arrayPush', 'baseForOwn', 'identity', 'LodashWrapper', 'mixin', 'thru'];
+    chainDepMap.objDep = [];
+  }
+  if (funcDepMap) {
+    funcDepMap.createFlow = [];
+  }
   if (objDepMap) {
     source = removeVar(source, 'realNames');
     _.forOwn(objDepMap, function(depNames, identifier) {
       _.pull(depNames, 'realNames');
     });
   }
-  // Replace `createFlow`.
-  _.result(funcDepMap, 'createFlow', []).length = 0;
-
   source = replaceFunction(source, 'createFlow', [
     'function createFlow(fromRight) {',
     '  return function() {',
@@ -2369,50 +2374,47 @@ function build(options, callback) {
       }
       if (isModularize) {
         if (isNode) {
-          // Remove `root` from `varDepMap` identifiers.
           _.forOwn(varDepMap, function(depNames, identifier) {
             _.pull(depNames, 'root');
           });
         }
-        // Redistribute `chainDepMap` deps.
-        funcDepMap.main = _.union(funcDepMap.main, chainDepMap.funcDep);
-        objDepMap.main = _.union(objDepMap.main, chainDepMap.objDep);
-        varDepMap.main = _.union(varDepMap.main, chainDepMap.varDep);
+        _.each(listing.placeholderFuncs.concat('createCurry', 'createPartial', 'mixin'), function(funcName) {
+          _.pull(funcDepMap[funcName], 'lodash');
+        });
 
         // Add deps to wrap `_.mixin` in `main`.
         funcDepMap.main.push('baseFunctions', 'isObject', 'keys', 'mixin');
 
-        // Remove `lodash` from function deps.
-        _.each(listing.placeholderFuncs.concat('createCurry', 'createPartial', 'mixin'), function(funcName) {
-          _.pull(funcDepMap[funcName], 'lodash');
-        });
+        source = removeGetIndexOf(source, funcDepMap);
+        source = removeGetIteratee(source, funcDepMap);
       }
       else {
-        // Redistribute `chainDepMap` deps.
-        funcDepMap.chain.push('wrapperChain');
-        funcDepMap.wrapperValue = _.union(funcDepMap.wrapperValue, _.without(chainDepMap.funcDep, 'lodash', 'LodashWrapper'));
-        objDepMap.wrapperValue = _.union(objDepMap.wrapperValue, chainDepMap.objDep);
-        varDepMap.wrapperValue = _.union(varDepMap.wrapperValue, chainDepMap.varDep);
-
         // Add `arrayEach` to functions with placeholder support because it's
         // used to reduce code for placeholder assignments
         _.each(listing.placeholderFuncs, function(funcName) {
           funcDepMap[funcName].push('arrayEach');
         });
+      }
+      if (isNpm) {
+        source = removeChaining(source, chainDepMap, funcDepMap, objDepMap);
+        source = removeMetadata(source, funcDepMap);
+      }
+      // Redistribute `chainDepMap` deps.
+      if (isModularize) {
+        funcDepMap.main = _.union(funcDepMap.main, chainDepMap.funcDep);
+        objDepMap.main = _.union(objDepMap.main, chainDepMap.objDep);
+        varDepMap.main = _.union(varDepMap.main, chainDepMap.varDep);
+      }
+      else {
+        funcDepMap.chain.push('wrapperChain');
+        funcDepMap.wrapperValue = _.union(funcDepMap.wrapperValue, _.without(chainDepMap.funcDep, 'lodash', 'LodashWrapper'));
+        objDepMap.wrapperValue = _.union(objDepMap.wrapperValue, chainDepMap.objDep);
+        varDepMap.wrapperValue = _.union(varDepMap.wrapperValue, chainDepMap.varDep);
 
-        // Associate "Chain" methods with `wrapperValue`.
         _.each(_.without(mapping.category.Chain, 'lodash', 'wrapperValue'), function(funcName) {
           funcDepMap.wrapperValue.push(funcName);
           funcDepMap[funcName].push('wrapperValue');
         });
-      }
-      if (isModularize) {
-        source = removeGetIndexOf(source, funcDepMap);
-        source = removeGetIteratee(source, funcDepMap);
-      }
-      if (isNpm) {
-        source = removeChaining(source, funcDepMap, objDepMap);
-        source = removeMetadata(source, funcDepMap);
       }
       // Remove "_.matches" or "_.property" style callback support from `baseIteratee`.
       if (_.includes(minusFuncs, 'matches')) {
