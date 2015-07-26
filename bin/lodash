@@ -1558,10 +1558,12 @@ function removeComments(source) {
  */
 function removeLazyChaining(source, funcDepMap, objDepMap) {
   // Remove `realNames` from `objDepMap` identifiers.
-  _.forOwn(objDepMap, function(depNames, identifier) {
-    _.pull(depNames, 'realNames');
-  });
-
+  if (objDepMap) {
+    source = removeVar(source, 'realNames');
+    _.forOwn(objDepMap, function(depNames, identifier) {
+      _.pull(depNames, 'realNames');
+    });
+  }
   // Replace `createFlow`.
   _.result(funcDepMap, 'createFlow', []).length = 0;
 
@@ -1592,9 +1594,6 @@ function removeLazyChaining(source, funcDepMap, objDepMap) {
     '}'
   ].join('\n'));
 
-  if (objDepMap) {
-    source = removeVar(source, 'realNames');
-  }
   // Remove bulk `LazyWrapper.prototype` assignments.
   source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial)\b[\s\S]+?\n\1\}\);\n/gm, '');
 
