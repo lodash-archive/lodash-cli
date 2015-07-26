@@ -2411,6 +2411,7 @@ function build(options, callback) {
         source = removeGetIteratee(source, funcDepMap);
       }
       if (isNpm) {
+        source = removeChaining(source, funcDepMap, objDepMap);
         source = removeMetadata(source, funcDepMap);
       }
       // Remove "_.matches" or "_.property" style callback support from `baseIteratee`.
