@@ -2623,14 +2623,7 @@ function build(options, callback) {
 
       // Add core function names.
       if (isCore) {
-        var result = [
-          'bind', 'chain', 'clone', 'defaults', 'defer', 'delay', 'escape',
-          'extend', 'filter', 'find', 'first', 'flatten', 'forEach', 'has',
-          'indexOf', 'invoke', 'isArray', 'isEmpty', 'isEqual', 'isFunction',
-          'isRegExp', 'isString', 'iteratee', 'keys', 'last', 'map', 'mixin',
-          'once', 'pick', 'result', 'size', 'some', 'sortBy', 'uniqueId',
-          'value', 'values'
-        ];
+        var result = _.clone(listing.coreFuncs);
       }
       // Add function names explicitly.
       else if (!_.isEmpty(includeFuncs)) {
