@@ -2388,9 +2388,6 @@ function build(options, callback) {
 
         // Add deps to wrap `_.mixin` in `main`.
         funcDepMap.main.push('baseFunctions', 'isObject', 'keys', 'mixin');
-
-        source = removeGetIndexOf(source, funcDepMap);
-        source = removeGetIteratee(source, funcDepMap);
       }
       else {
         // Add `arrayEach` to functions with placeholder support because it's
@@ -2592,6 +2589,9 @@ function build(options, callback) {
         funcDepMap.main = _.union(funcDepMap.main, chainDepMap.funcDep);
         objDepMap.main = _.union(objDepMap.main, chainDepMap.objDep);
         varDepMap.main = _.union(varDepMap.main, chainDepMap.varDep);
+
+        source = removeGetIndexOf(source, funcDepMap);
+        source = removeGetIteratee(source, funcDepMap);
       }
       else {
         funcDepMap.chain.push('wrapperChain');
