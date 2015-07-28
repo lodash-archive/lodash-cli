@@ -2414,7 +2414,7 @@ function build(options, callback) {
 
         // Remove switch statement from `_.restParam`.
         source = source.replace(matchFunction(source, 'restParam'), function(match) {
-          return match.replace(/^ *switch\b[\s\S]+?\}\n/gm, '');
+          return match.replace(/^(?: *\/\/.*\n)*( *)switch\b[\s\S]+?\n\1\}\n/gm, '');
         });
 
         // Remove `_.isTypedArray` use from `baseIsEqualDeep`.
