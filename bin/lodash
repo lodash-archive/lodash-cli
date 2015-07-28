@@ -2412,23 +2412,15 @@ function build(options, callback) {
           source = removeMethodAssignment(source, funcName);
         });
 
+        // Remove switch statement from `_.restParam`.
         source = source.replace(matchFunction(source, 'restParam'), function(match) {
           return match.replace(/^ *switch\b[\s\S]+?\}\n/gm, '');
         });
 
+        // Remove `_.isTypedArray` use from `baseIsEqualDeep`.
         source = source.replace(matchFunction(source, 'baseIsEqualDeep'), function(match) {
           return match.replace(/\s*else\s+if\s*\(...Tag[\s\S]+?}/gm, '');
         });
-
-        funcDepMap.baseDifference = ['arrayFilter', 'baseIndexOf'];
-
-        source = replaceFunction(source, 'baseDifference', [
-          'function baseDifference(array, values) {',
-          '  return arrayFilter(array, function(value) {',
-          '    return baseIndexOf(values, value) < 0;',
-          '  });',
-          '}'
-        ].join('\n'));
 
         funcDepMap.baseIteratee = ['baseMatches', 'baseProperty', 'identity'];
 
@@ -2471,22 +2463,22 @@ function build(options, callback) {
 
         source = replaceFunction(source, 'bind', [
           'var bind = restParam(function(func, thisArg, partials) {',
-          '  return createPartialWrapper(func, BIND_FLAG | PARTIAL_FLAG, thisArg, partials);',
+          '  return createPartialWrapper(func, BIND_FLAG | PARTIAL_FLAG, thisArg, partials, []);',
           '});'
         ].join('\n'));
 
-        funcDepMap.clone = ['arraySlice', 'baseAssign', 'isArray', 'isObject'];
+        funcDepMap.clone = ['baseAssign', 'copyArray', 'isArray', 'isObject'];
 
         source = replaceFunction(source, 'clone', [
           'function clone(value) {',
           '  if (!isObject(value)) {',
           '    return value;',
           '  }',
-          '  return isArray(value) ? arraySlice(value) : baseAssign({}, value);',
+          '  return isArray(value) ? copyArray(value) : baseAssign({}, value);',
           '}'
         ].join('\n'));
 
-        funcDepMap.find = ['baseFind'];
+        funcDepMap.find = ['baseFind', 'baseIteratee'];
 
         source = replaceFunction(source, 'find', [
           'function find(collection, predicate) {',
@@ -2507,13 +2499,10 @@ function build(options, callback) {
         source = replaceFunction(source, 'indexOf', [
           'function indexOf(array, value, fromIndex) {',
           '  var length = array ? array.length : 0;',
-          '  if (!length) {',
-          '    return -1;',
-          '  }',
           "  if (typeof fromIndex == 'number') {",
           '    fromIndex = fromIndex < 0 ? nativeMax(length + fromIndex, 0) : fromIndex;',
           '  }',
-          '  return baseIndexOf(array, value, fromIndex || 0);',
+          '  return length ? baseIndexOf(array, value, fromIndex || 0) : -1;',
           '}'
         ].join('\n'));
 
