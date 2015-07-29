@@ -2404,8 +2404,9 @@ function build(options, callback) {
         source = removeLazyChaining(source, chainDepMap, funcDepMap, objDepMap);
         source = removeMetadata(source, funcDepMap);
 
-        source = replaceFunction(source, 'LazyWrapper', 'function LazyWrapper() {}');
+        source = source.replace(/^(?: *\/\/.*\n)* *lodash\.prototype\s*=[^;]+;\n/m, '');
         source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype(?:\.[$\w]+)?\s*=[^;]+;\n/gm, '');
+        source = source.replace(/\bbaseLodash\.prototype\b/g, 'lodash.prototype');
 
         _.each(['isTypedArray', 'wrapperCommit', 'wrapperPlant', 'wrapperReverse'], function(funcName) {
           source = removeFunction(source, funcName);
@@ -2421,6 +2422,23 @@ function build(options, callback) {
         source = source.replace(matchFunction(source, 'baseIsEqualDeep'), function(match) {
           return match.replace(/\s*else\s+if\s*\(...Tag[\s\S]+?}/gm, '');
         });
+
+        // Remove `guard` check from `createAssigner`.
+        _.pull(funcDepMap.createAssigner, 'isIterateeCall');
+
+        source  = source.replace(matchFunction(source, 'createAssigner'), function(match) {
+          match = removeVar(match, 'guard');
+          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[\s\S]+?\n\1\}\n/m, '');
+        });
+
+        funcDepMap.iteratee = ['baseIteratee'];
+        source = replaceFunction(source, 'iteratee', 'var iteratee = baseIteratee;');
+
+        funcDepMap.LazyWrapper = ['baseLodash'];
+        source = replaceFunction(source, 'LazyWrapper', 'var LazyWrapper = baseLodash;');
+
+        funcDepMap.property = ['baseProperty'];
+        source = replaceFunction(source, 'property', 'var property = baseProperty;');
 
         funcDepMap.baseIteratee = ['baseMatches', 'baseProperty', 'identity'];
 
@@ -2518,12 +2536,6 @@ function build(options, callback) {
           '});'
         ].join('\n'));
 
-        funcDepMap.iteratee = ['baseIteratee'];
-
-        source = replaceFunction(source, 'iteratee', [
-          'var iteratee = baseIteratee;'
-        ].join('\n'));
-
         funcDepMap.matches = ['baseAssign', 'baseMatches'];
 
         source = replaceFunction(source, 'matches', [
@@ -2538,12 +2550,6 @@ function build(options, callback) {
           'var partial = restParam(function(func, partials) {',
           '  return createPartialWrapper(func, PARTIAL_FLAG, undefined, partials, []);',
           '});'
-        ].join('\n'));
-
-        funcDepMap.property = ['baseProperty'];
-
-        source = replaceFunction(source, 'property', [
-          'var property = baseProperty;'
         ].join('\n'));
 
         funcDepMap.result = ['isFunction'];
@@ -2578,9 +2584,6 @@ function build(options, callback) {
         funcDepMap.main = _.union(funcDepMap.main, chainDepMap.funcDep);
         objDepMap.main = _.union(objDepMap.main, chainDepMap.objDep);
         varDepMap.main = _.union(varDepMap.main, chainDepMap.varDep);
-
-        source = removeGetIndexOf(source, funcDepMap);
-        source = removeGetIteratee(source, funcDepMap);
       }
       else {
         funcDepMap.chain.push('wrapperChain');
@@ -2592,6 +2595,10 @@ function build(options, callback) {
           funcDepMap.wrapperValue.push(funcName);
           funcDepMap[funcName].push('wrapperValue');
         });
+      }
+      if (isCore || isModularize) {
+        source = removeGetIndexOf(source, funcDepMap);
+        source = removeGetIteratee(source, funcDepMap);
       }
       // Remove "_.matches" or "_.property" style callback support from `baseIteratee`.
       if (_.includes(minusFuncs, 'matches')) {
