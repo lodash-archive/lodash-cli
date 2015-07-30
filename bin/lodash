@@ -2510,18 +2510,34 @@ function build(options, callback) {
 
         source = replaceFunction(source, 'bind', [
           'var bind = restParam(function(func, thisArg, partials) {',
-          '  return createPartialWrapper(func, BIND_FLAG | PARTIAL_FLAG, thisArg, partials, []);',
+          '  return createPartialWrapper(func, BIND_FLAG | PARTIAL_FLAG, thisArg, partials);',
           '});'
         ].join('\n'));
 
-        funcDepMap.clone = ['baseAssign', 'copyArray', 'isArray', 'isObject'];
+        funcDepMap.clone = ['copyArray', 'copyObject', 'isArray', 'isObject', 'keys'];
 
         source = replaceFunction(source, 'clone', [
           'function clone(value) {',
           '  if (!isObject(value)) {',
           '    return value;',
           '  }',
-          '  return isArray(value) ? copyArray(value) : baseAssign({}, value);',
+          '  return isArray(value) ? copyArray(value) : copyObject(value, keys(value));',
+          '}'
+        ].join('\n'));
+
+        funcDepMap.forEach = ['baseEach', 'toFunction'];
+
+        source = replaceFunction(source, 'forEach', [
+          'function forEach(collection, iteratee) {',
+          '  return baseEach(collection, toFunction(iteratee));',
+          '}'
+        ].join('\n'));
+
+        funcDepMap.filter = ['baseFilter', 'baseIteratee'];
+
+        source = replaceFunction(source, 'filter', [
+          'function filter(collection, predicate) {',
+          '  return baseFilter(collection, baseIteratee(predicate));',
           '}'
         ].join('\n'));
 
@@ -2533,6 +2549,15 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        funcDepMap.every = ['baseEvery', 'baseIteratee'];
+
+        source = replaceFunction(source, 'every', [
+          'function every(collection, predicate, guard) {',
+          '  predicate = guard ? undefined : predicate;',
+          '  return baseEvery(collection, baseIteratee(predicate));',
+          '}'
+        ].join('\n'));
+
         funcDepMap.has = [];
 
         source = replaceFunction(source, 'has', [
@@ -2541,7 +2566,7 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.indexOf = ['baseIndexOf'];
+        funcDepMap.indexOf = [];
 
         source = replaceFunction(source, 'indexOf', [
           'function indexOf(array, value, fromIndex) {',
@@ -2549,7 +2574,16 @@ function build(options, callback) {
           "  if (typeof fromIndex == 'number') {",
           '    fromIndex = fromIndex < 0 ? nativeMax(length + fromIndex, 0) : fromIndex;',
           '  }',
-          '  return length ? baseIndexOf(array, value, fromIndex || 0) : -1;',
+          '  var index = (fromIndex || 0) - 1,',
+          '      isReflexive = value === value;',
+          '',
+          '  while (++index < length) {',
+          '    var other = array[index];',
+          '    if ((isReflexive ? other === value : other !== other)) {',
+          '      return index;',
+          '    }',
+          '  }',
+          '  return -1;',
           '}'
         ].join('\n'));
 
@@ -2565,6 +2599,14 @@ function build(options, callback) {
           '});'
         ].join('\n'));
 
+        funcDepMap.map = ['baseMap', 'baseIteratee'];
+
+        source = replaceFunction(source, 'map', [
+          'function map(collection, iteratee) {',
+          '  return baseMap(collection, baseIteratee(iteratee));',
+          '}'
+        ].join('\n'));
+
         funcDepMap.matches = ['baseAssign', 'baseMatches'];
 
         source = replaceFunction(source, 'matches', [
@@ -2577,8 +2619,16 @@ function build(options, callback) {
 
         source = replaceFunction(source, 'partial', [
           'var partial = restParam(function(func, partials) {',
-          '  return createPartialWrapper(func, PARTIAL_FLAG, undefined, partials, []);',
+          '  return createPartialWrapper(func, PARTIAL_FLAG, undefined, partials);',
           '});'
+        ].join('\n'));
+
+        funcDepMap.reduce = ['baseEach', 'baseIteratee', 'baseReduce'];
+
+        source = replaceFunction(source, 'reduce', [
+          'function reduce(collection, iteratee, accumulator) {',
+          '  return baseReduce(collection, baseIteratee(iteratee), accumulator, arguments.length < 3, baseEach);',
+          '}'
         ].join('\n'));
 
         funcDepMap.result = ['isFunction'];
@@ -2593,14 +2643,23 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.sortBy = ['arrayMap', 'baseIteratee', 'baseMap', 'baseProperty', 'compareAscending'];
+        funcDepMap.some = ['baseSome', 'baseIteratee'];
+
+        source = replaceFunction(source, 'some', [
+          'function some(collection, predicate, guard) {',
+          '  predicate = guard ? undefined : predicate;',
+          '  return baseSome(collection, baseIteratee(predicate));',
+          '}'
+        ].join('\n'));
+
+        funcDepMap.sortBy = ['baseIteratee', 'baseMap', 'baseProperty', 'compareAscending'];
 
         source = replaceFunction(source, 'sortBy', [
           'function sortBy(collection, iteratee) {',
           '  iteratee = baseIteratee(iteratee);',
           '',
           '  var index = 0;',
-          '  return arrayMap(baseMap(collection, function(value, key, collection) {',
+          '  return baseMap(baseMap(collection, function(value, key, collection) {',
           "    return { 'value': value, 'index': index++, 'criteria': iteratee(value, key, collection) };",
           '  }).sort(function(object, other) {',
           '    return compareAscending(object.criteria, other.criteria) || (object.index - other.index);',
