@@ -2431,6 +2431,21 @@ function build(options, callback) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[\s\S]+?\n\1\}\n/m, '');
         });
 
+        // Replace `arraySome` with `baseSome` in `equalArrays`.
+        _.pull(funcDepMap.equalArrays, 'arraySome').push('baseSome');
+
+        source  = source.replace(matchFunction(source, 'equalArrays'), function(match) {
+          return match.replace(/\barraySome\b/g, 'baseSome');
+        });
+
+        // Replace `arrayEach` with `baseEach` in the chain scaffolding.
+        _.pull(chainDepMap.funcDep, 'arrayEach').push('baseEach');
+
+        source = source.replace(/^(?: *\/\/.*\n)*( *)[$\w]+\(\['join\b[\s\S]+?\n\1\}\);\n/m, function(match) {
+          match = match.replace(/\barrayEach\b/g, 'baseEach');
+          return match.replace("'replace',", "$& 'reverse',");
+        });
+
         funcDepMap.iteratee = ['baseIteratee'];
         source = replaceFunction(source, 'iteratee', 'var iteratee = baseIteratee;');
 
@@ -2439,6 +2454,20 @@ function build(options, callback) {
 
         funcDepMap.property = ['baseProperty'];
         source = replaceFunction(source, 'property', 'var property = baseProperty;');
+
+        funcDepMap.arrayConcat = ['arrayPush', 'copyArray'];
+
+        source = replaceFunction(source, 'arrayConcat', [
+          'function arrayConcat(array, other) {',
+          '  return arrayPush(copyArray(array), values);',
+          '}'
+        ].join('\n'));
+
+        source = replaceFunction(source, 'arrayPush', [
+          'function arrayPush(array, values) {',
+          '  return array.push.apply(array, values);',
+          '}'
+        ].join('\n'));
 
         funcDepMap.baseIteratee = ['baseMatches', 'baseProperty', 'identity'];
 
