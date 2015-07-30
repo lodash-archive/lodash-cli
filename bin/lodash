@@ -2463,6 +2463,26 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        source = replaceFunction(source, 'arrayExtremum', [
+          'function arrayExtremum(array, iteratee, comparator, exValue) {',
+          '  var index = -1,',
+          '      length = array.length,',
+          '      computed = exValue,',
+          '      result = computed;',
+          '',
+          '  while (++index < length) {',
+          '    var value = array[index],',
+          '        current = +iteratee(value);',
+          '',
+          '    if (comparator(current, computed) || (current === exValue && current === result)) {',
+          '      computed = current;',
+          '      result = value;',
+          '    }',
+          '  }',
+          '  return result;',
+          '}'
+        ].join('\n'));
+
         source = replaceFunction(source, 'arrayPush', [
           'function arrayPush(array, values) {',
           '  return array.push.apply(array, values);',
