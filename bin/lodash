@@ -2676,9 +2676,9 @@ function build(options, callback) {
 
         source = replaceFunction(source, 'sortBy', [
           'function sortBy(collection, iteratee) {',
+          '  var index = 0;',
           '  iteratee = baseIteratee(iteratee);',
           '',
-          '  var index = 0;',
           '  return baseMap(baseMap(collection, function(value, key, collection) {',
           "    return { 'value': value, 'index': index++, 'criteria': iteratee(value, key, collection) };",
           '  }).sort(function(object, other) {',
