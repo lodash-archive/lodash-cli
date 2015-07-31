@@ -19,7 +19,7 @@
   "repository": "lodash/lodash-cli",
   "scripts": { "test": "echo \"See the repository CONTRIBUTING.md for testing instructions.\"" },
   "dependencies": {
-    "closure-compiler": "0.2.6",
+    "closure-compiler": "0.2.7",
     "glob": "5.0.14",
     "lodash": "3.10.1",
     "semver": "5.0.1",

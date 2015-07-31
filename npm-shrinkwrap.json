@@ -3,9 +3,9 @@
   "version": "3.10.1",
   "dependencies": {
     "closure-compiler": {
-      "version": "0.2.6",
-      "from": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.6.tgz",
-      "resolved": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.6.tgz"
+      "version": "0.2.7",
+      "from": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.7.tgz",
+      "resolved": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.7.tgz"
     },
     "glob": {
       "version": "5.0.14",
