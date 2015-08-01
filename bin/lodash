@@ -2545,6 +2545,14 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        funcDepMap.compact = ['baseFilter'];
+
+        source = replaceFunction(source, 'compact', [
+          'function compact(array) {',
+          '  return baseFilter(array, Boolean);',
+          '}'
+        ].join('\n'));
+
         funcDepMap.forEach = ['baseEach', 'toFunction'];
 
         source = replaceFunction(source, 'forEach', [
@@ -2686,6 +2694,12 @@ function build(options, callback) {
           "  }), baseProperty('value'));",
           '}'
         ].join('\n'));
+
+        _.pull(funcDepMap.wrap, 'createWrapper').push('partial');
+
+        source = source.replace(matchFunction(source, 'wrap'), function(match) {
+          return match.replace(/\bcreateWrapper\([\s\S]+?(?=;\n)/, 'partial(wrapper, value)');
+        });
       }
       // Redistribute `chainDepMap` deps.
       if (isModularize) {
