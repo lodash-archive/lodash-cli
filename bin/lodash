@@ -2413,6 +2413,18 @@ function build(options, callback) {
           source = removeMethodAssignment(source, funcName);
         });
 
+        // Add `func` check to `createPartialWrapper`.
+        source = source.replace(matchFunction(source, 'createPartialWrapper'), function(match) {
+          return match.replace(/^( *)(?=var\b)/m, function(match, indent) {
+            var prelude = '\n' + indent;
+            return indent + [
+              "if (typeof func != 'function') {",
+              '  throw new TypeError(FUNC_ERROR_TEXT);',
+              '}'
+            ].join(prelude) + prelude;
+          });
+        });
+
         // Remove switch statement from `_.restParam`.
         source = source.replace(matchFunction(source, 'restParam'), function(match) {
           return match.replace(/^(?: *\/\/.*\n)*( *)switch\b[\s\S]+?\n\1\}\n/gm, '');
