@@ -109,8 +109,9 @@ var reHasDeepVars = /^ *function +runInContext\b/m;
 /** Used to detect a function by its JSDoc tags. */
 var reHasFuncTags = /^ *\* *(?:@param|@returns|@type +Function)\b/im;
 
-/** Used to match `getIteratee` calls and references. */
-var reGetIteratee = /\bgetIteratee\b(?:\(\))?/g;
+/** Used to match various calls and references. */
+var reArrayEach = /\barrayEach\b/g,
+    reGetIteratee = /\bgetIteratee\b(?:\(\))?/g;
 
 /** Shortcut to the `stdout` object. */
 var stdout = process.stdout;
@@ -2404,15 +2405,6 @@ function build(options, callback) {
         source = removeLazyChaining(source, chainDepMap, funcDepMap, objDepMap);
         source = removeMetadata(source, funcDepMap);
 
-        source = source.replace(/^(?: *\/\/.*\n)* *lodash\.prototype\s*=[^;]+;\n/m, '');
-        source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype(?:\.[$\w]+)?\s*=[^;]+;\n/gm, '');
-        source = source.replace(/\bbaseLodash\.prototype\b/g, 'lodash.prototype');
-
-        _.each(['isTypedArray', 'wrapperCommit', 'wrapperPlant', 'wrapperReverse'], function(funcName) {
-          source = removeFunction(source, funcName);
-          source = removeMethodAssignment(source, funcName);
-        });
-
         // Add `func` check to `createPartialWrapper`.
         source = source.replace(matchFunction(source, 'createPartialWrapper'), function(match) {
           return match.replace(/^( *)(?=var\b)/m, function(match, indent) {
@@ -2425,15 +2417,22 @@ function build(options, callback) {
           });
         });
 
-        // Remove switch statement from `_.restParam`.
-        source = source.replace(matchFunction(source, 'restParam'), function(match) {
-          return match.replace(/^(?: *\/\/.*\n)*( *)switch\b[\s\S]+?\n\1\}\n/gm, '');
-        });
+        // Remove chain dependencies.
+        _.pull(chainDepMap.funcDep, 'baseLodash', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'wrapperCommit', 'wrapperPlant', 'wrapperReverse');
 
         // Remove `_.isTypedArray` use from `baseIsEqualDeep`.
+        _.pull(funcDepMap.baseIsEqualDeep, 'isTypedArray');
+
         source = source.replace(matchFunction(source, 'baseIsEqualDeep'), function(match) {
           return match.replace(/\s*else\s+if\s*\(...Tag[\s\S]+?}/gm, '');
         });
+
+        // Remove `baseLodash` references.
+        _.each(['lodash', 'LodashWrapper'], function(funcName) {
+          _.pull(funcDepMap[funcName], 'baseLodash');
+        });
+
+        source = source.replace(/\bbaseLodash\.prototype\b/g, 'lodash.prototype');
 
         // Remove `guard` check from `createAssigner`.
         _.pull(funcDepMap.createAssigner, 'isIterateeCall');
@@ -2443,6 +2442,38 @@ function build(options, callback) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[\s\S]+?\n\1\}\n/m, '');
         });
 
+        // Remove `LazyWrapper` references.
+        _.each(['baseWrapperValue', 'lodash'], function(funcName) {
+          _.pull(funcDepMap[funcName], 'LazyWrapper');
+        });
+
+        source = source.replace(matchFunction(source, 'baseWrapperValue'), function(match) {
+          return match.replace(/^( *)if\b.+?LazyWrapper\b[\s\S]+?\n\1}\n/m, '');
+        });
+
+        source = source.replace(matchFunction(source, 'lodash'), function(match) {
+          return match.replace(/\s*&&\s*!\(.+?LazyWrapper\)/, '');
+        });
+
+        // Remove switch statement from `_.restParam`.
+        source = source.replace(matchFunction(source, 'restParam'), function(match) {
+          return match.replace(/^(?: *\/\/.*\n)*( *)switch\b[\s\S]+?\n\1\}\n/gm, '');
+        });
+
+        // Replace `arrayEach` with `baseEach` in the chain scaffolding.
+        _.each([chainDepMap.funcDep, funcDepMap.mixin], function(depMap) {
+          _.pull(depMap, 'arrayEach').push('baseEach');
+        });
+
+        source = source.replace(matchFunction(source, 'mixin'), function(match) {
+          return match.replace(reArrayEach, 'baseEach');
+        });
+
+        source = source.replace(/^(?: *\/\/.*\n)*( *)[$\w]+\(\['join\b[\s\S]+?\n\1\}\);\n/m, function(match) {
+          match = match.replace(reArrayEach, 'baseEach');
+          return match.replace("'replace',", "$& 'reverse',");
+        });
+
         // Replace `arraySome` with `baseSome` in `equalArrays`.
         _.pull(funcDepMap.equalArrays, 'arraySome').push('baseSome');
 
@@ -2450,19 +2481,16 @@ function build(options, callback) {
           return match.replace(/\barraySome\b/g, 'baseSome');
         });
 
-        // Replace `arrayEach` with `baseEach` in the chain scaffolding.
-        _.pull(chainDepMap.funcDep, 'arrayEach').push('baseEach');
+        // Replace `createWrapper` with `_.partial` in `_.wrap`.
+        _.pull(funcDepMap.wrap, 'createWrapper').push('partial');
 
-        source = source.replace(/^(?: *\/\/.*\n)*( *)[$\w]+\(\['join\b[\s\S]+?\n\1\}\);\n/m, function(match) {
-          match = match.replace(/\barrayEach\b/g, 'baseEach');
-          return match.replace("'replace',", "$& 'reverse',");
+        source = source.replace(matchFunction(source, 'wrap'), function(match) {
+          return match.replace(/\bcreateWrapper\([\s\S]+?(?=;\n)/, 'partial(wrapper, value)');
         });
 
+        // Replace method implementations.
         funcDepMap.iteratee = ['baseIteratee'];
         source = replaceFunction(source, 'iteratee', 'var iteratee = baseIteratee;');
-
-        funcDepMap.LazyWrapper = ['baseLodash'];
-        source = replaceFunction(source, 'LazyWrapper', 'var LazyWrapper = baseLodash;');
 
         funcDepMap.property = ['baseProperty'];
         source = replaceFunction(source, 'property', 'var property = baseProperty;');
@@ -2683,6 +2711,15 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        funcDepMap.slice = ['baseSlice'];
+
+        source = replaceFunction(source, 'slice', [
+          'function slice(array, start, end) {',
+          '  var length = array ? array.length : 0;',
+          '  return length ? baseSlice(array, start, end) : [];',
+          '}'
+        ].join('\n'));
+
         funcDepMap.some = ['baseSome', 'baseIteratee'];
 
         source = replaceFunction(source, 'some', [
@@ -2707,11 +2744,13 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        _.pull(funcDepMap.wrap, 'createWrapper').push('partial');
+        funcDepMap.wrapperClone = ['LodashWrapper'];
 
-        source = source.replace(matchFunction(source, 'wrap'), function(match) {
-          return match.replace(/\bcreateWrapper\([\s\S]+?(?=;\n)/, 'partial(wrapper, value)');
-        });
+        source = replaceFunction(source, 'wrapperClone', [
+          'function wrapperClone(wrapper) {',
+          '  return new LodashWrapper(wrapper.__wrapped__, wrapper.__chain__, copyArray(wrapper.__actions__));',
+          '}'
+        ].join('\n'));
       }
       // Redistribute `chainDepMap` deps.
       if (isModularize) {
@@ -2726,7 +2765,6 @@ function build(options, callback) {
         varDepMap.wrapperValue = _.union(varDepMap.wrapperValue, chainDepMap.varDep);
 
         _.each(_.without(mapping.category.Chain, 'lodash', 'wrapperValue'), function(funcName) {
-          funcDepMap.wrapperValue.push(funcName);
           funcDepMap[funcName].push('wrapperValue');
         });
       }
