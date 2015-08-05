@@ -2754,12 +2754,11 @@ function build(options, callback) {
       }
       // Redistribute `chainDepMap` deps.
       if (isModularize) {
-        funcDepMap.main = _.union(funcDepMap.main, chainDepMap.funcDep);
+        funcDepMap.main = _.union(funcDepMap.main, _.difference(chainDepMap.funcDep, _.without(mapping.category.Chain, 'thru')));
         objDepMap.main = _.union(objDepMap.main, chainDepMap.objDep);
         varDepMap.main = _.union(varDepMap.main, chainDepMap.varDep);
       }
       else {
-        funcDepMap.chain.push('wrapperChain');
         funcDepMap.wrapperValue = _.union(funcDepMap.wrapperValue, _.without(chainDepMap.funcDep, 'lodash', 'LodashWrapper'));
         objDepMap.wrapperValue = _.union(objDepMap.wrapperValue, chainDepMap.objDep);
         varDepMap.wrapperValue = _.union(varDepMap.wrapperValue, chainDepMap.varDep);
