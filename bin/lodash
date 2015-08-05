@@ -1205,7 +1205,7 @@ function getHeader(source) {
  * @returns {string} Returns the indent string.
  */
 function getIndent(func) {
-  return /^ *(?=\S)/m.exec(func.source || func)[0];
+  return _.result(/^ *(?=\S)/m.exec(func.source || func), 0, '');
 }
 
 /**
