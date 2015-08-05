@@ -1561,8 +1561,8 @@ function removeComments(source) {
  */
 function removeLazyChaining(source, chainDepMap, funcDepMap, objDepMap) {
   if (chainDepMap) {
-    chainDepMap.funcDep = ['arrayEach', 'arrayPush', 'baseForOwn', 'identity', 'LodashWrapper', 'mixin', 'thru'];
-    chainDepMap.objDep = [];
+    _.pull(chainDepMap.funcDep, 'createHybridWrapper', 'getIteratee', 'identity', 'isArray', 'last', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'toInteger');
+    _.pull(chainDepMap.objDep, 'realNames');
   }
   if (funcDepMap) {
     funcDepMap.createFlow = [];
