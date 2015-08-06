@@ -119,7 +119,7 @@ var stdout = process.stdout;
 /*----------------------------------------------------------------------------*/
 
 /**
- * Adds build `commands` to the copyright/license header of `source`.
+ * Adds build `commands` to the copyright header of `source`.
  *
  * @private
  * @param {string} source The source to process.
@@ -135,8 +135,8 @@ function addCommandsToHeader(source, commands) {
       var separator = /[= ]/.exec(command);
       if (separator) {
         separator = separator[0];
-        var pair = command.split(separator);
-        command = pair[0] + separator + '"' + pair[1] + '"';
+        var parts = command.split(separator);
+        command = parts[0] + separator + '"' + parts.slice(1).join(separator) + '"';
       }
       // Escape newlines, carriage returns, multi-line comment end tokens.
       return command
@@ -150,7 +150,7 @@ function addCommandsToHeader(source, commands) {
       .replace(' (Custom Build)', '')
       .replace(/^ *\* *Build:.+\n/m, '');
 
-    // Add build commands to copyright/license header.
+    // Add build commands to copyright header.
     return header.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *lodash [.$\w\-]+)(.*)/, function() {
       return (
         arguments[1] +
@@ -233,7 +233,7 @@ function buildModule(state, onComplete) {
       fs.rmdirSync(pathname);
     });
   }
-  // List of identifiers that keep their copyright/license headers.
+  // List of identifiers that keep their copyright headers.
   var includeHeaders = isNpm ? identifiers : _.difference(_.union(includeFuncs, plusFuncs), minusFuncs);
   if (_.isEmpty(includeHeaders)) {
     includeHeaders = ['main'];
@@ -1186,11 +1186,11 @@ function getFunctionSource(func, indent) {
 }
 
 /**
- * Gets the copyright/license header of `source`.
+ * Gets the copyright header of `source`.
  *
  * @private
  * @param {string} source The source to process.
- * @returns {string} Returns the copyright/license header.
+ * @returns {string} Returns the copyright header.
  */
 function getHeader(source) {
   source = source == null ? '' : String(source);
@@ -1766,7 +1766,7 @@ function removeGetIndexOf(source, funcDepMap) {
 }
 
 /**
- * Removes the copyright/license header from `source`.
+ * Removes the copyright header from `source`.
  *
  * @private
  * @param {string} source The source to process.
@@ -1778,8 +1778,8 @@ function removeHeader(source) {
 }
 
 /**
- * Removes the `@license` tag from the copyright header so minifiers and
- * build optimizers may strip them.
+ * Removes the `@license` tag from the copyright header so minifiers
+ * and build optimizers may strip them.
  *
  * @private
  * @param {string} source The source to inspect.

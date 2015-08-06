@@ -32,7 +32,7 @@ var isWindows = process.platform == 'win32';
 var relativePrefix = '.' + path.sep;
 
 /** Used to match the copyright header in builds. */
-var reHeader = /^\/\*[\s\S]+?\*\/\n/;
+var reHeader = /^\/\**\s+\* @license[\s\S]+?\*\/\n/;
 
 /** Shortcut used to push arrays of values to an array. */
 var push = Array.prototype.push;
@@ -647,8 +647,6 @@ QUnit.module('template builds');
 QUnit.module('independent builds');
 
 (function() {
-  var reLicense = /^\/\**\s+\* @license[\s\S]+?\*\/\n/;
-
   var options = [
     '-d',
     '--development'
@@ -666,7 +664,7 @@ QUnit.module('independent builds');
     asyncTest('development custom build using `' + option + '`', function() {
       var start = _.once(QUnit.start);
       build([option, 'strict'], function(data) {
-        var comment = _.result(data.source.match(reLicense), 0, '');
+        var comment = _.result(data.source.match(reHeader), 0, '');
         ok(_.includes(comment, 'Custom Build'));
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
 
@@ -692,7 +690,7 @@ QUnit.module('independent builds');
     asyncTest('production custom build using `' + option + '`', function() {
       var start = _.once(QUnit.start);
       build([option, 'strict'], function(data) {
-        var comment = _.result(data.source.match(reLicense), 0, '');
+        var comment = _.result(data.source.match(reHeader), 0, '');
         ok(_.includes(comment, 'Custom Build'));
         strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
 
@@ -708,8 +706,6 @@ QUnit.module('modularize modifier');
 
 (function() {
   var outputPath = path.join(__dirname, 'a');
-
-  var reLicense = /@license\b/;
 
   var funcNames = [
     'main',
@@ -737,7 +733,7 @@ QUnit.module('modularize modifier');
         if (funcName == 'main') {
           var lodash = require(outputPath);
           ok(lodash(1) instanceof lodash, outputPath, '`lodash()` should return a `lodash` instance');
-          ok(reLicense.test(fs.readFileSync(require.resolve(outputPath), 'utf-8')), 'lodash module should preserve the copyright header');
+          ok(reHeader.test(fs.readFileSync(require.resolve(outputPath), 'utf-8')), 'lodash module should preserve the copyright header');
         }
         else {
           var modulePath = path.join(outputPath, funcName == 'mixin' ? 'utility' : 'string', funcName);
@@ -745,7 +741,7 @@ QUnit.module('modularize modifier');
           lodash[funcName] = require(modulePath);
 
           ok(!fs.existsSync(path.join(outputPath, 'index.js')), 'should not create an index.js file');
-          ok(!reLicense.test(fs.readFileSync(require.resolve(modulePath), 'utf-8')), funcName + ' module should not preserve the copyright header');
+          ok(!reHeader.test(fs.readFileSync(require.resolve(modulePath), 'utf-8')), funcName + ' module should not preserve the copyright header');
           testMethod(lodash, funcName);
         }
         start();
@@ -1127,6 +1123,21 @@ QUnit.module('iife command');
 
         start();
       });
+    });
+  });
+
+  asyncTest('should add `iife` commands to the copyright header', function() {
+    var command = 'iife=;(function(){/*\r\n*/%output%; root.lodash = _}.call(this))',
+        expected = 'iife=";(function(){/*\\r\\n*\\/%output%; root.lodash = _}.call(this))"',
+        start = _.once(QUnit.start);
+
+    build([command], function(data) {
+      var basename = path.basename(data.outputPath, '.js'),
+          comment = _.result(data.source.match(reHeader), 0, '');
+
+      ok(_.includes(comment, expected), basename);
+
+      start();
     });
   });
 }());
