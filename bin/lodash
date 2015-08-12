@@ -2523,12 +2523,6 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        source = replaceFunction(source, 'arrayPush', [
-          'function arrayPush(array, values) {',
-          '  return array.push.apply(array, values);',
-          '}'
-        ].join('\n'));
-
         funcDepMap.baseIteratee = ['baseMatches', 'baseProperty', 'identity'];
 
         source = replaceFunction(source, 'baseIteratee', [
@@ -2547,10 +2541,10 @@ function build(options, callback) {
 
         source = replaceFunction(source, 'baseMatches', [
           'function baseMatches(source) {',
-          '  return function(object) {',
-          '    var props = keys(object),',
-          '        length = props.length;',
+          '  var props = keys(source),',
+          '      length = props.length;',
           '',
+          '  return function(object) {',
           '    if (object == null) {',
           '      return !length;',
           '    }',
@@ -2641,6 +2635,8 @@ function build(options, callback) {
           '  var length = array ? array.length : 0;',
           "  if (typeof fromIndex == 'number') {",
           '    fromIndex = fromIndex < 0 ? nativeMax(length + fromIndex, 0) : fromIndex;',
+          '  } else {',
+          '    fromIndex = 0;',
           '  }',
           '  var index = (fromIndex || 0) - 1,',
           '      isReflexive = value === value;',
