@@ -121,6 +121,7 @@ lodash.isMatch = require('lodash.ismatch');
 lodash.isMatchWith = require('lodash.ismatchwith');
 lodash.isNaN = require('lodash.isnan');
 lodash.isNative = require('lodash.isnative');
+lodash.isNil = require('lodash.isnil');
 lodash.isNull = require('lodash.isnull');
 lodash.isNumber = require('lodash.isnumber');
 lodash.isObject = require('lodash.isobject');
