@@ -96,6 +96,7 @@ lodash.groupBy = require('lodash.groupby');
 lodash.gt = require('lodash.gt');
 lodash.gte = require('lodash.gte');
 lodash.has = require('lodash.has');
+lodash.hasIn = require('lodash.hasin');
 lodash.identity = require('lodash.identity');
 lodash.includes = require('lodash.includes');
 lodash.indexBy = require('lodash.indexby');
