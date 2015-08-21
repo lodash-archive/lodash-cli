@@ -2442,6 +2442,13 @@ function build(options, callback) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[\s\S]+?\n\1\}\n/m, '');
         });
 
+        // Remove `customizer` use from `equalArrays` and `equalObjects`.
+        _.each(['equalArrays', 'equalObjects'], function(funcName) {
+          source = source.replace(matchFunction(source, funcName), function(match) {
+            return match.replace(/^( *)if\s*\(customizer\b[\s\S]+?\n\1}\n/m, '');
+          });
+        });
+
         // Remove `LazyWrapper` references.
         _.each(['baseWrapperValue', 'lodash'], function(funcName) {
           _.pull(funcDepMap[funcName], 'LazyWrapper');
