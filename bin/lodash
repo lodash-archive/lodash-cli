@@ -2935,6 +2935,12 @@ function build(options, callback) {
         }
       });
 
+      // Remove method assignments for non-core methods.
+      if (isCore) {
+        _.each(_.difference(buildFuncs, listing.coreFuncs), function(funcName) {
+          source = removeMethodAssignment(source, funcName);
+        });
+      }
       // Tokenize functions to reduce modularized build times.
       if (isModularize) {
         funcTokenMap = _.transform(buildFuncs, function(result, funcName) {
