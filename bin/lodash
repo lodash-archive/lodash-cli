@@ -2496,6 +2496,9 @@ function build(options, callback) {
         });
 
         // Replace method implementations.
+        funcDepMap.copyArray = ['baseSlice'];
+        source = replaceFunction(source, 'copyArray', 'var copyArray = baseSlice;');
+
         funcDepMap.iteratee = ['baseIteratee'];
         source = replaceFunction(source, 'iteratee', 'var iteratee = baseIteratee;');
 
