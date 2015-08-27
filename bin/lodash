@@ -1681,7 +1681,7 @@ function removeGetIteratee(source, funcDepMap) {
     'filter', 'find', 'findIndex', 'findKey', 'findLast', 'findLastIndex', 'findLastKey',
     'map', 'mapKeys', 'mapValues', 'maxBy', 'minBy', 'omitBy', 'pickBy', 'reduce',
     'reduceRight', 'reject', 'remove', 'some', 'sortedIndexBy', 'sortedLastIndexBy',
-    'sumBy', 'takeRightWhile', 'takeWhile', 'transform', 'uniqBy'
+    'sortedUniqBy', 'sumBy', 'takeRightWhile', 'takeWhile', 'transform', 'uniqBy'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'getIteratee');
@@ -1740,17 +1740,14 @@ function removeGetIndexOf(source, funcDepMap) {
   source = removeFunction(source, 'getIndexOf');
 
   _.each([
-    'baseDifference', 'baseUniq', 'includes', 'intersection', 'pull',
-    'uniq', 'uniqBy'
+    'baseDifference', 'baseSortedUniq', 'baseUniqBy',
+    'includes', 'intersection', 'pull'
   ], function(funcName) {
-    var deps = _.result(funcDepMap, funcName, []),
-        isUniq = _.startsWith(funcName, 'uniq');
+    var deps = _.result(funcDepMap, funcName, []);
 
     if (_.includes(deps, 'getIndexOf')) {
-      _.pull(deps, 'getIndexOf');
-      if (!isUniq) {
-        deps.push('baseIndexOf');
-      }
+      _.pull(deps, 'getIndexOf').push('baseIndexOf');
+
       source = source.replace(matchFunction(source, funcName), function(match) {
         match = replaceVar(match, 'indexOf', 'baseIndexOf');
         return match
