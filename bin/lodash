@@ -1744,20 +1744,20 @@ function removeGetIndexOf(source, funcDepMap) {
     'includes', 'intersection', 'pull'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
-
-    if (_.includes(deps, 'getIndexOf')) {
-      _.pull(deps, 'getIndexOf').push('baseIndexOf');
-
-      source = source.replace(matchFunction(source, funcName), function(match) {
-        match = replaceVar(match, 'indexOf', 'baseIndexOf');
-        return match
-          // Replace all `getIndexOf` calls with `baseIndexOf`.
-          .replace(/\bgetIndexOf\b(?:\(\))?/g, 'baseIndexOf')
-          // Remove "indexOf" comparisons.
-          .replace(/\bindexOf\s*===\s*baseIndexOf\b/, 'true')
-          .replace(/\s*&&\s*baseIndexOf\s*===\s*baseIndexOf\b/, '');
-      });
+    if (!_.includes(deps, 'getIndexOf')) {
+      return;
     }
+    _.pull(deps, 'getIndexOf').push('baseIndexOf');
+
+    source = source.replace(matchFunction(source, funcName), function(match) {
+      match = replaceVar(match, 'indexOf', 'baseIndexOf');
+      return match
+        // Replace all `getIndexOf` calls with `baseIndexOf`.
+        .replace(/\bgetIndexOf\b(?:\(\))?/g, 'baseIndexOf')
+        // Remove "indexOf" comparisons.
+        .replace(/\bindexOf\s*===\s*baseIndexOf\b/, 'true')
+        .replace(/\s*&&\s*baseIndexOf\s*===\s*baseIndexOf\b/, '');
+    });
   });
   return source;
 }
