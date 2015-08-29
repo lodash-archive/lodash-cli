@@ -110,8 +110,7 @@ var reHasDeepVars = /^ *function +runInContext\b/m;
 var reHasFuncTags = /^ *\* *(?:@param|@returns|@type +Function)\b/im;
 
 /** Used to match various calls and references. */
-var reArrayEach = /\barrayEach\b/g,
-    reGetIteratee = /\bgetIteratee\b(?:\(\))?/g;
+var reGetIteratee = /\bgetIteratee\b(?:\(\))?/g;
 
 /** Shortcut to the `stdout` object. */
 var stdout = process.stdout;
@@ -2464,25 +2463,30 @@ function build(options, callback) {
           return match.replace(/^(?: *\/\/.*\n)*( *)switch\b[\s\S]+?\n\1\}\n/gm, '');
         });
 
+        // Replace array functions with their base counterparts.
+        _.each(['arrayEach', 'arrayFilter', 'arrayMap', 'arraySome'], function(arrayName) {
+          var baseName = arrayName.replace(/^array/, 'base'),
+              reArrayName = RegExp('\\b' + arrayName + '\\b', 'g');
+
+          _.forOwn(funcDepMap, function(deps, funcName) {
+            if (_.includes(deps, arrayName)) {
+              _.pull(deps, arrayName).push(baseName);
+
+              source  = source.replace(matchFunction(source, funcName), function(match) {
+                return match.replace(reArrayName, baseName);
+              });
+            }
+          });
+        });
+
         // Replace `arrayEach` with `baseEach` in the chain scaffolding.
         _.each([chainDepMap.funcDep, funcDepMap.mixin], function(depMap) {
           _.pull(depMap, 'arrayEach').push('baseEach');
         });
 
-        source = source.replace(matchFunction(source, 'mixin'), function(match) {
-          return match.replace(reArrayEach, 'baseEach');
-        });
-
         source = source.replace(/^(?: *\/\/.*\n)*( *)[$\w]+\(\['join\b[\s\S]+?\n\1\}\);\n/m, function(match) {
-          match = match.replace(reArrayEach, 'baseEach');
+          match = match.replace(/\barrayEach\b/g, 'baseEach');
           return match.replace("'replace',", "$& 'reverse',");
-        });
-
-        // Replace `arraySome` with `baseSome` in `equalArrays`.
-        _.pull(funcDepMap.equalArrays, 'arraySome').push('baseSome');
-
-        source  = source.replace(matchFunction(source, 'equalArrays'), function(match) {
-          return match.replace(/\barraySome\b/g, 'baseSome');
         });
 
         // Replace `createWrapper` with `_.partial` in `_.wrap`.
