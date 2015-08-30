@@ -2440,6 +2440,13 @@ function build(options, callback) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[\s\S]+?\n\1\}\n/m, '');
         });
 
+        // Remove `Map` and `Set` support from `equalByTag`.
+        _.pull(funcDepMap.equalByTag, 'mapToArray', 'setToArray');
+
+        source = source.replace(matchFunction(source, 'equalByTag'), function(match) {
+          return match.replace(/\s*case\s*(?:map|set)Tag[\s\S]+?;/g, '');
+        });
+
         // Remove `customizer` use from `equalArrays` and `equalObjects`.
         _.each(['equalArrays', 'equalObjects'], function(funcName) {
           source = source.replace(matchFunction(source, funcName), function(match) {
@@ -2500,7 +2507,16 @@ function build(options, callback) {
 
         // Replace method implementations.
         funcDepMap.copyArray = ['baseSlice'];
+
         source = replaceFunction(source, 'copyArray', 'var copyArray = baseSlice;');
+
+        (function() {
+          var copyArray = matchFunction(source, 'copyArray', true);
+          source = removeFunction(source, 'copyArray');
+          source = source.replace(matchFunction(source, 'baseSlice'), function(match) {
+            return match + '\n' + copyArray;
+          });
+        }());
 
         funcDepMap.iteratee = ['baseIteratee'];
         source = replaceFunction(source, 'iteratee', 'var iteratee = baseIteratee;');
@@ -2750,6 +2766,17 @@ function build(options, callback) {
           '  }).sort(function(object, other) {',
           '    return compareAscending(object.criteria, other.criteria) || (object.index - other.index);',
           "  }), baseProperty('value'));",
+          '}'
+        ].join('\n'));
+
+        funcDepMap.toArray = ['copyArray', 'isArrayLike', 'values'];
+
+        source = replaceFunction(source, 'toArray', [
+          'function toArray(value) {',
+          '  if (!isArrayLike(value)) {',
+          '    return values(value);',
+          '  }',
+          '  return value.length ? copyArray(value) : [];',
           '}'
         ].join('\n'));
 
