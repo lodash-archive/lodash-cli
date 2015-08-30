@@ -2464,7 +2464,7 @@ function build(options, callback) {
         });
 
         // Replace array functions with their base counterparts.
-        _.each(['arrayEach', 'arrayFilter', 'arrayMap', 'arraySome'], function(arrayName) {
+        _.each(['arrayEach', 'arrayFilter', 'arrayMap', 'arraySome', 'arrayReduce'], function(arrayName) {
           var baseName = arrayName.replace(/^array/, 'base'),
               reArrayName = RegExp('\\b' + arrayName + '\\b', 'g');
 
