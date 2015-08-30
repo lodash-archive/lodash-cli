@@ -1739,7 +1739,7 @@ function removeGetIndexOf(source, funcDepMap) {
   source = removeFunction(source, 'getIndexOf');
 
   _.each([
-    'baseDifference', 'baseSortedUniq', 'baseUniqBy',
+    'baseDifference', 'baseSortedUniqBy', 'baseUniqBy',
     'includes', 'intersection', 'pull'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
