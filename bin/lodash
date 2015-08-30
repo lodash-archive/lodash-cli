@@ -1869,7 +1869,9 @@ function removeRunInContext(source) {
       // Remove function frame.
       .replace(/^[\s\S]+?function\s+runInContext\b[\s\S]+?context\s*=\s*context.+?\n+| *return\s+lodash;[\s\S]+$/g, '')
       // Remove native constructor references.
-      .replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)? *var\s+Array\s*=[\s\S]+?;\n/m, '')
+      .replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)? *var\s+Date\s*=[\s\S]+?;\n/m, '')
+      // Remove `context` from built-in constructor references.
+      .replace(/\bcontext\.(?=(?:Array|Function|Object|String)\b)/g, '')
       // Replace `context` references with `root`.
       .replace(/\bcontext\b/g, 'root');
   });
