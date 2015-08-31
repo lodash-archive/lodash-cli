@@ -2422,7 +2422,7 @@ function build(options, callback) {
         _.pull(funcDepMap.baseIsEqualDeep, 'isTypedArray');
 
         source = source.replace(matchFunction(source, 'baseIsEqualDeep'), function(match) {
-          return match.replace(/\s*else\s+if\s*\(...Tag[\s\S]+?}/gm, '');
+          return match.replace(/\s*else\s+if\s*\(...Tag[\s\S]+?\}/gm, '');
         });
 
         // Remove `baseLodash` references.
