@@ -2417,7 +2417,7 @@ function build(options, callback) {
         });
 
         // Remove chain dependencies.
-        _.pull(chainDepMap.funcDep, 'baseLodash', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'wrapperCommit', 'wrapperPlant', 'wrapperReverse');
+        _.pull(chainDepMap.funcDep, 'baseLodash', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'wrapperCommit', 'wrapperNext', 'wrapperPlant', 'wrapperReverse', 'wrapperToIterator');
 
         // Remove `_.isTypedArray` use from `baseIsEqualDeep`.
         _.pull(funcDepMap.baseIsEqualDeep, 'isTypedArray');
@@ -3095,6 +3095,10 @@ function build(options, callback) {
     if (isExcluded('memoize')) {
       // Remove `memoize.Cache` assignment.
       source = source.replace(/^(?: *\/\/.*\n)* *memoize\.Cache\s*=[^;]+;\n/m, '');
+    }
+    if (isExcluded('wrapperToIterator')) {
+      // Remove conditional `wrapperToIterator` assignment.
+      source = source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(iteratorSymbol\)[\s\S]+?\n\1\}\n/gm, '')
     }
     if (isExcluded(isModularize ? 'main' : 'mixin')) {
       source = removeMixinCalls(source);
