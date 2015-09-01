@@ -2274,7 +2274,7 @@ function build(options, callback) {
     // Used to detect invalid command-line arguments.
     var invalidArgs = _.reject(options, function(value, index, options) {
       if (/^(?:-o|--output)$/.test(options[index - 1]) ||
-          /^(?:category|exports|iife|include|moduleId|minus|plus|settings|template)=[\s\S]*$/.test(value)) {
+          /^(?:category|exports|iife|include|minus|moduleId|plus|settings|template)=[\s\S]*$/.test(value)) {
         return true;
       }
       var result = _.includes([
