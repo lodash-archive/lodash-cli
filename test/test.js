@@ -777,8 +777,19 @@ QUnit.module('modularize modifier');
           _.each(funcNames, function(funcName) {
             var aliases = getAliases(funcName);
             _.each(aliases, function(alias) {
-              _.each([(category == 'chain' ? lodash.prototype : lodash), categoryModule], function(object, index) {
-                ok(_.isFunction(object[alias]), '`' + command + '` should have `' + alias + '` as an alias of `' + funcName + '` in lodash' + (index ? ('/' + category) : ''));
+              var objects = [(category == 'chain' ? lodash.prototype : lodash), categoryModule];
+              _.each(objects, function(object, index) {
+                var message = (
+                  '`' + command + '` should have `' + alias + '` ' +
+                  'as an alias of `' + funcName + '` in lodash' +
+                  (index ? ('/' + category) : '')
+                );
+
+                var value = (!index && alias == 'toIterator')
+                  ? object[Symbol.iterator]
+                  : object[alias];
+
+                ok(_.isFunction(value), message);
               });
             });
           });
