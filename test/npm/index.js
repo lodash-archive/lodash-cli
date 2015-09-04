@@ -219,6 +219,7 @@ lodash.template = require('lodash.template');
 lodash.throttle = require('lodash.throttle');
 lodash.times = require('lodash.times');
 lodash.toArray = require('lodash.toarray');
+lodash.toInteger = require('lodash.tointeger');
 lodash.toPath = require('lodash.topath');
 lodash.toPlainObject = require('lodash.toplainobject');
 lodash.transform = require('lodash.transform');
