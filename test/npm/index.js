@@ -156,6 +156,7 @@ lodash.min = require('lodash.min');
 lodash.minBy = require('lodash.minby');
 lodash.mixin = mixin;
 lodash.modArgs = require('lodash.modargs');
+lodash.modArgsSet = require('lodash.modargsset');
 lodash.negate = require('lodash.negate');
 lodash.noop = require('lodash.noop');
 lodash.now = require('lodash.now');
