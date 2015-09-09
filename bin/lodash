@@ -434,8 +434,7 @@ function buildModule(state, onComplete) {
         }
         else if (isES) {
           iife.push(
-            'import ' + identifier + " from '" + depPath + "'",
-            'export default ' + identifier + ';'
+            "export { default } from '" + depPath + "'"
           );
         }
         else {
