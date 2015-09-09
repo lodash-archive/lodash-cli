@@ -164,11 +164,12 @@ function getRealCategory(alias) {
  * Tests if a given method can be called successfully.
  *
  * @private
+ * @param {Object} assert The QUnit assert object.
  * @param {Object} lodash The built lodash object.
  * @param {string} funcName The name of the method to test.
  * @param {string} message The unit test message.
  */
-function testMethod(lodash, methodName, message) {
+function testMethod(assert, lodash, methodName, message) {
   var pass = true,
       array = [['a', 1], ['b', 2], ['c', 3]],
       object = { 'a': 1, 'b': 2, 'c': 3 },
@@ -268,7 +269,7 @@ function testMethod(lodash, methodName, message) {
     console.log(e);
     pass = false;
   }
-  ok(pass, '_.' + methodName + ': ' + message);
+  assert.ok(pass, '_.' + methodName + ': ' + message);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -288,9 +289,9 @@ QUnit.module('build command checks');
   ];
 
   _.each(commands, function(command) {
-    asyncTest('`lodash ' + command +'` is invalid', function() {
+    QUnit.asyncTest('`lodash ' + command +'` is invalid', function(assert) {
       build(command.split(' '), function(data) {
-        ok(reHelp.test(data.source));
+        assert.ok(reHelp.test(data.source));
         QUnit.start();
       });
     });
@@ -302,7 +303,7 @@ QUnit.module('build command checks');
 QUnit.module('minified AMD snippet');
 
 (function() {
-  asyncTest('r.js build optimizer check', function() {
+  QUnit.asyncTest('r.js build optimizer check', function(assert) {
     var start = _.after(2, _.once(QUnit.start));
 
     build(['minus='], function(data) {
@@ -310,18 +311,18 @@ QUnit.module('minified AMD snippet');
       var basename = path.basename(data.outputPath, '.js'),
           defineHasRegExp = /typeof\s+define\s*==(=)?\s*['"]function['"]\s*&&\s*typeof\s+define\.amd\s*==(=)?\s*['"]object['"]\s*&&\s*define\.amd/g;
 
-      ok(defineHasRegExp.test(data.source), basename);
+      assert.ok(defineHasRegExp.test(data.source), basename);
       start();
     });
   });
 
-  asyncTest('Dojo builder check', function() {
+  QUnit.asyncTest('Dojo builder check', function(assert) {
     var reSpaceDefine = /\sdefine\(/,
         start = _.after(2, _.once(QUnit.start));
 
     build(['minus='], function(data) {
       var basename = path.basename(data.outputPath, '.js');
-      ok(reSpaceDefine.test(data.source), basename);
+      assert.ok(reSpaceDefine.test(data.source), basename);
       start();
     });
   });
@@ -344,7 +345,7 @@ QUnit.module('template builds');
   ];
 
   _.each(commands, function(command) {
-    asyncTest('`lodash ' + command +'`', function() {
+    QUnit.asyncTest('`lodash ' + command +'`', function(assert) {
       var start = _.after(2, _.once(function() {
         process.chdir(cwd);
         QUnit.start();
@@ -365,14 +366,14 @@ QUnit.module('template builds');
         context._ = _;
         vm.runInContext(data.source, context);
 
-        ok(_.includes(basename, 'lodash.templates'), basename);
+        assert.ok(_.includes(basename, 'lodash.templates'), basename);
 
         var actual = _.templates.a(object.a);
-        strictEqual(actual.replace(/[\r\n]+/g, ''), '<ul><li>fred</li><li>barney</li><li>pebbles</li></ul>', basename);
+        assert.strictEqual(actual.replace(/[\r\n]+/g, ''), '<ul><li>fred</li><li>barney</li><li>pebbles</li></ul>', basename);
 
-        strictEqual(_.templates.b(object.b), 'hello fred!', basename);
-        strictEqual(_.templates.c(object.c), 'hello es', basename);
-        deepEqual(_.difference(['a', 'b', 'c', 'd', 'e'], _.keys(_.templates)), [], basename);
+        assert.strictEqual(_.templates.b(object.b), 'hello fred!', basename);
+        assert.strictEqual(_.templates.c(object.c), 'hello es', basename);
+        assert.deepEqual(_.difference(['a', 'b', 'c', 'd', 'e'], _.keys(_.templates)), [], basename);
 
         delete _.templates;
         start();
@@ -388,7 +389,7 @@ QUnit.module('template builds');
   _.each(commands, function(command) {
     var expectedId = _.result(/underscore/.exec(command), 0, 'lodash');
 
-    asyncTest('`lodash exports=amd' + (command ? ' ' + command + '`' : '` using the default `moduleId`'), function() {
+    QUnit.asyncTest('`lodash exports=amd' + (command ? ' ' + command + '`' : '` using the default `moduleId`'), function(assert) {
       var start = _.after(2, _.once(QUnit.start));
 
       build(['template=' + path.join(templatePath, '*.jst'), 'exports=amd'].concat(command || []), function(data) {
@@ -404,14 +405,14 @@ QUnit.module('template builds');
         context.define.amd = {};
         vm.runInContext(data.source, context);
 
-        strictEqual(actualId, expectedId, basename);
+        assert.strictEqual(actualId, expectedId, basename);
 
         delete _.templates;
         start();
       });
     });
 
-    asyncTest('`lodash settings=...' + (command ? ' ' + command : '') + '`', function() {
+    QUnit.asyncTest('`lodash settings=...' + (command ? ' ' + command : '') + '`', function(assert) {
       var start = _.after(2, _.once(QUnit.start));
 
       build(['template=' + path.join(templatePath, '*.tpl'), 'settings={interpolate:/{{([\\s\\S]+?)}}/}'].concat(command || []), function(data) {
@@ -427,8 +428,8 @@ QUnit.module('template builds');
         context.define.amd = {};
         vm.runInContext(data.source, context);
 
-        strictEqual(actualId, expectedId, basename);
-        strictEqual(_.templates.f({ 'name': 'mustache' }), 'hall\xe5 mustache!', basename);
+        assert.strictEqual(actualId, expectedId, basename);
+        assert.strictEqual(_.templates.f({ 'name': 'mustache' }), 'hall\xe5 mustache!', basename);
 
         delete _.templates;
         start();
@@ -442,7 +443,7 @@ QUnit.module('template builds');
   ];
 
   _.each(commands, function(command, index) {
-    asyncTest('recursive path `' + command + '`', function() {
+    QUnit.asyncTest('recursive path `' + command + '`', function(assert) {
       var start = _.after(2, _.once(function() {
         if (!isWindows) {
           fs.unlinkSync(quotesTemplatePath);
@@ -465,12 +466,12 @@ QUnit.module('template builds');
         context._ = _;
         vm.runInContext(data.source, context);
 
-        strictEqual(_.templates.b({ 'name': 'fred' }), 'hello fred!', basename);
-        strictEqual(_.templates.c({ 'name': 'barney' }), 'hello barney', basename);
-        strictEqual(_.templates.c.c({ 'name': 'pebbles' }), 'hello pebbles!', basename);
+        assert.strictEqual(_.templates.b({ 'name': 'fred' }), 'hello fred!', basename);
+        assert.strictEqual(_.templates.c({ 'name': 'barney' }), 'hello barney', basename);
+        assert.strictEqual(_.templates.c.c({ 'name': 'pebbles' }), 'hello pebbles!', basename);
 
         if (!isWindows) {
-          strictEqual(_.templates.c['\'"']({ 'name': 'quotes' }), 'hello quotes', basename);
+          assert.strictEqual(_.templates.c['\'"']({ 'name': 'quotes' }), 'hello quotes', basename);
         }
         delete _.templates;
         start();
@@ -487,7 +488,7 @@ QUnit.module('template builds');
   ];
 
   _.each(exportsCommands, function(command, index) {
-    asyncTest('should work with `' + command +'`', function() {
+    QUnit.asyncTest('should work with `' + command +'`', function(assert) {
       var start = _.after(2, _.once(QUnit.start));
 
       build([ 'template=' + path.join(templatePath, 'c.jst'), command], function(data) {
@@ -533,10 +534,10 @@ QUnit.module('template builds');
 
           case 4:
             vm.runInContext(source, context);
-            strictEqual(context._, undefined, basename);
+            assert.strictEqual(context._, undefined, basename);
         }
         if (templates) {
-          strictEqual(templates.c({ 'name': 'fred' }), 'hello fred', basename);
+          assert.strictEqual(templates.c({ 'name': 'fred' }), 'hello fred', basename);
         }
         delete _.templates;
         start();
@@ -552,7 +553,7 @@ QUnit.module('template builds');
   _.each(idCommands, function(command) {
     var expectedId = _.result(/underscore/.exec(command), 0, '');
 
-    asyncTest('should work with `' + command + '`', function() {
+    QUnit.asyncTest('should work with `' + command + '`', function(assert) {
       var start = _.after(2, _.once(QUnit.start));
 
       build(['template=' + path.join(templatePath, 'd.jst'), command], function(data) {
@@ -578,8 +579,8 @@ QUnit.module('template builds');
         var templates = context.module.exports || { 'd': function() { return ''; } },
             actual = templates.d({ 'name': 'fred & barney' });
 
-        strictEqual(actualId, expectedId, basename);
-        strictEqual(actual, '<span>hello fred &amp; barney!</span>', basename);
+        assert.strictEqual(actualId, expectedId, basename);
+        assert.strictEqual(actual, '<span>hello fred &amp; barney!</span>', basename);
 
         delete _.templates;
         start();
@@ -587,7 +588,7 @@ QUnit.module('template builds');
     });
   });
 
-  asyncTest('`lodash iife=%output%`', function() {
+  QUnit.asyncTest('`lodash iife=%output%`', function(assert) {
     var start = _.after(2, _.once(QUnit.start));
 
     build(['template=' + path.join(templatePath, 'c.jst'), 'iife=%output%'], function(data) {
@@ -595,19 +596,19 @@ QUnit.module('template builds');
           context = createContext(),
           source = data.source;
 
-      ok(!_.startsWith(source, 'null'), basename);
+      assert.notOk(_.startsWith(source, 'null'), basename);
 
       context._ = _;
       vm.runInContext(source, context);
 
-      strictEqual(_.templates.c({ 'name': 'fred' }), 'hello fred', basename);
+      assert.strictEqual(_.templates.c({ 'name': 'fred' }), 'hello fred', basename);
 
       delete _.templates;
       start();
     });
   });
 
-  asyncTest('should normalize template file path patterns', function() {
+  QUnit.asyncTest('should normalize template file path patterns', function(assert) {
     var start = _.after(2, _.once(QUnit.start));
 
     build(['template=' + templatePath + path.sep + path.sep + 'c.jst'], function(data) {
@@ -617,14 +618,14 @@ QUnit.module('template builds');
       context._ = _;
       vm.runInContext(data.source, context);
 
-      strictEqual(_.templates.c({ 'name': 'fred' }), 'hello fred', basename);
+      assert.strictEqual(_.templates.c({ 'name': 'fred' }), 'hello fred', basename);
 
       delete _.templates;
       start();
     });
   });
 
-  asyncTest('should not modify whitespace in templates', function() {
+  QUnit.asyncTest('should not modify whitespace in templates', function(assert) {
     var start = _.after(2, _.once(QUnit.start));
 
     build(['template=' + path.join(templatePath, 'e.jst')], function(data) {
@@ -634,7 +635,7 @@ QUnit.module('template builds');
       context._ = _;
       vm.runInContext(data.source, context);
 
-      strictEqual(_.templates.e({ 'value': '1' }), 'function  () {\n;\n  return 1 ;\n} ;', basename);
+      assert.strictEqual(_.templates.e({ 'value': '1' }), 'function  () {\n;\n  return 1 ;\n} ;', basename);
 
       delete _.templates;
       start();
@@ -653,20 +654,20 @@ QUnit.module('independent builds');
   ];
 
   _.each(options, function(option) {
-    asyncTest('development build using `' + option + '`' , function() {
+    QUnit.asyncTest('development build using `' + option + '`' , function(assert) {
       var start = _.once(QUnit.start);
       build([option], function(data) {
-        strictEqual(path.basename(data.outputPath, '.js'), 'lodash');
+        assert.strictEqual(path.basename(data.outputPath, '.js'), 'lodash');
         start();
       });
     });
 
-    asyncTest('development custom build using `' + option + '`', function() {
+    QUnit.asyncTest('development custom build using `' + option + '`', function(assert) {
       var start = _.once(QUnit.start);
       build([option, 'strict'], function(data) {
         var comment = _.result(data.source.match(reHeader), 0, '');
-        ok(_.includes(comment, 'Custom Build'));
-        strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
+        assert.ok(_.includes(comment, 'Custom Build'));
+        assert.strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
 
         start();
       });
@@ -679,20 +680,20 @@ QUnit.module('independent builds');
   ];
 
   _.each(options, function(option) {
-    asyncTest('production build using `' + option + '`', function() {
+    QUnit.asyncTest('production build using `' + option + '`', function(assert) {
       var start = _.once(QUnit.start);
       build([option], function(data) {
-        strictEqual(path.basename(data.outputPath, '.js'), 'lodash.min');
+        assert.strictEqual(path.basename(data.outputPath, '.js'), 'lodash.min');
         start();
       });
     });
 
-    asyncTest('production custom build using `' + option + '`', function() {
+    QUnit.asyncTest('production custom build using `' + option + '`', function(assert) {
       var start = _.once(QUnit.start);
       build([option, 'strict'], function(data) {
         var comment = _.result(data.source.match(reHeader), 0, '');
-        ok(_.includes(comment, 'Custom Build'));
-        strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
+        assert.ok(_.includes(comment, 'Custom Build'));
+        assert.strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
 
         start();
       });
@@ -719,7 +720,7 @@ QUnit.module('modularize modifier');
   }
 
   _.each(funcNames, function(funcName) {
-    asyncTest('`lodash modularize include=' + funcName + ' exports=node`', function() {
+    QUnit.asyncTest('`lodash modularize include=' + funcName + ' exports=node`', function(assert) {
       var start = _.once(function() {
         process.chdir(cwd);
         QUnit.start();
@@ -732,17 +733,17 @@ QUnit.module('modularize modifier');
 
         if (funcName == 'main') {
           var lodash = require(outputPath);
-          ok(lodash(1) instanceof lodash, outputPath, '`lodash()` should return a `lodash` instance');
-          ok(reHeader.test(fs.readFileSync(require.resolve(outputPath), 'utf-8')), 'lodash module should preserve the copyright header');
+          assert.ok(lodash(1) instanceof lodash, outputPath, '`lodash()` should return a `lodash` instance');
+          assert.ok(reHeader.test(fs.readFileSync(require.resolve(outputPath), 'utf-8')), 'lodash module should preserve the copyright header');
         }
         else {
           var modulePath = path.join(outputPath, funcName == 'mixin' ? 'utility' : 'string', funcName);
           lodash = {};
           lodash[funcName] = require(modulePath);
 
-          ok(!fs.existsSync(path.join(outputPath, 'index.js')), 'should not create an index.js file');
-          ok(!reHeader.test(fs.readFileSync(require.resolve(modulePath), 'utf-8')), funcName + ' module should not preserve the copyright header');
-          testMethod(lodash, funcName);
+          assert.notOk(fs.existsSync(path.join(outputPath, 'index.js')), 'should not create an index.js file');
+          assert.notOk(reHeader.test(fs.readFileSync(require.resolve(modulePath), 'utf-8')), funcName + ' module should not preserve the copyright header');
+          testMethod(assert, lodash, funcName);
         }
         start();
       });
@@ -755,7 +756,7 @@ QUnit.module('modularize modifier');
   ];
 
   _.each(commands, function(command, index) {
-    asyncTest('module aliases for `' + command + '`', function() {
+    QUnit.asyncTest('module aliases for `' + command + '`', function(assert) {
       var start = _.once(function() {
         process.chdir(cwd);
         QUnit.start();
@@ -789,7 +790,7 @@ QUnit.module('modularize modifier');
                   ? object[Symbol.iterator]
                   : object[alias];
 
-                ok(_.isFunction(value), message);
+                assert.ok(_.isFunction(value), message);
               });
             });
           });
@@ -800,7 +801,7 @@ QUnit.module('modularize modifier');
     });
   });
 
-  asyncTest('`lodash modularize include=iteratee minus=matches,property`', function() {
+  QUnit.asyncTest('`lodash modularize include=iteratee minus=matches,property`', function(assert) {
     var start = _.once(function() {
       process.chdir(cwd);
       QUnit.start();
@@ -816,10 +817,10 @@ QUnit.module('modularize modifier');
           iteratee = utility.iteratee('x'),
           object = { 'x': 1 };
 
-      strictEqual(iteratee(object), object);
+      assert.strictEqual(iteratee(object), object);
 
       iteratee = utility.iteratee(object);
-      strictEqual(iteratee(object), object);
+      assert.strictEqual(iteratee(object), object);
 
       start();
     });
@@ -846,16 +847,16 @@ QUnit.module('source-map modifier');
 
   _.each(mapCommands, function(mapCommand) {
     _.each(outputCommands, function(outputCommand) {
-      asyncTest('`lodash ' + mapCommand + (outputCommand ? ' ' + outputCommand : '') + '`', function() {
+      QUnit.asyncTest('`lodash ' + mapCommand + (outputCommand ? ' ' + outputCommand : '') + '`', function(assert) {
         var callback = _.once(function(data) {
           var basename = path.basename(data.outputPath, '.js'),
               sources = [_.result(/\w+\.js$/.exec(outputCommand), 0, 'lodash.custom.js')],
               sourceMap = JSON.parse(data.sourceMap),
               sourceMapURL = _.result(/\w+\.map$/.exec(mapCommand), 0, basename + '.map');
 
-          ok(RegExp('\\n//# sourceMappingURL=' + sourceMapURL + '$').test(data.source), basename);
-          strictEqual(sourceMap.file, basename + '.js', basename);
-          deepEqual(sourceMap.sources, sources, basename);
+          assert.ok(RegExp('\\n//# sourceMappingURL=' + sourceMapURL + '$').test(data.source), basename);
+          assert.strictEqual(sourceMap.file, basename + '.js', basename);
+          assert.deepEqual(sourceMap.sources, sources, basename);
 
           process.chdir(cwd);
           QUnit.start();
@@ -889,7 +890,7 @@ QUnit.module('strict modifier');
   ];
 
   _.each(modes, function(strictMode, index) {
-    asyncTest(strictMode + ' should ' + (index ? 'error': 'silently fail') + ' attempting to overwrite read-only properties', function() {
+    QUnit.asyncTest(strictMode + ' should ' + (index ? 'error': 'silently fail') + ' attempting to overwrite read-only properties', function(assert) {
       var commands = ['include=bindAll,defaults,extend'],
           start = _.after(2, _.once(QUnit.start));
 
@@ -918,7 +919,7 @@ QUnit.module('strict modifier');
           return pass;
         });
 
-        ok(actual, basename);
+        assert.ok(actual, basename);
 
         start();
       });
@@ -931,7 +932,7 @@ QUnit.module('strict modifier');
 QUnit.module('minus command');
 
 (function() {
-  asyncTest('`lodash minus=runInContext`', function() {
+  QUnit.asyncTest('`lodash minus=runInContext`', function(assert) {
     var start = _.after(2, _.once(QUnit.start));
 
     build(['minus=runInContext'], function(data) {
@@ -941,13 +942,13 @@ QUnit.module('minus command');
       vm.runInContext(data.source, context);
 
       var lodash = context._;
-      ok(!('runInContext' in lodash), basename);
+      assert.notOk('runInContext' in lodash, basename);
 
       start();
     });
   });
 
-  asyncTest('`lodash minus=value`', function() {
+  QUnit.asyncTest('`lodash minus=value`', function(assert) {
     var start = _.after(2, _.once(QUnit.start));
 
     build(['minus=value'], function(data) {
@@ -957,14 +958,14 @@ QUnit.module('minus command');
       vm.runInContext(data.source, context);
 
       var lodash = context._;
-      ok(lodash() instanceof lodash, basename);
-      deepEqual(_.keys(lodash.prototype), [], basename);
+      assert.ok(lodash() instanceof lodash, basename);
+      assert.deepEqual(_.keys(lodash.prototype), [], basename);
 
       start();
     });
   });
 
-  asyncTest('`lodash minus=matches`', function() {
+  QUnit.asyncTest('`lodash minus=matches`', function(assert) {
     var start = _.after(2, _.once(QUnit.start));
 
     build(['minus=matches'], function(data) {
@@ -977,16 +978,16 @@ QUnit.module('minus command');
           iteratee = lodash.iteratee('x'),
           object = { 'x': 1 };
 
-      strictEqual(iteratee(object), 1, basename);
+      assert.strictEqual(iteratee(object), 1, basename);
 
       iteratee = lodash.iteratee(object);
-      strictEqual(iteratee(object), object, basename);
+      assert.strictEqual(iteratee(object), object, basename);
 
       start();
     });
   });
 
-  asyncTest('`lodash minus=property`', function() {
+  QUnit.asyncTest('`lodash minus=property`', function(assert) {
     var start = _.after(2, _.once(QUnit.start));
 
     build(['minus=property'], function(data) {
@@ -999,16 +1000,16 @@ QUnit.module('minus command');
           iteratee = lodash.iteratee('x'),
           object = { 'x': 1 };
 
-      strictEqual(iteratee(object), object, basename);
+      assert.strictEqual(iteratee(object), object, basename);
 
       iteratee = lodash.iteratee(object);
-      strictEqual(iteratee(object), true, basename);
+      assert.strictEqual(iteratee(object), true, basename);
 
       start();
     });
   });
 
-  asyncTest('`lodash minus=matches,property`', function() {
+  QUnit.asyncTest('`lodash minus=matches,property`', function(assert) {
     var start = _.after(2, _.once(QUnit.start));
 
     build(['minus=matches,property'], function(data) {
@@ -1021,10 +1022,10 @@ QUnit.module('minus command');
           iteratee = lodash.iteratee('x'),
           object = { 'x': 1 };
 
-      strictEqual(iteratee(object), object, basename);
+      assert.strictEqual(iteratee(object), object, basename);
 
       iteratee = lodash.iteratee(object);
-      strictEqual(iteratee(object), object, basename);
+      assert.strictEqual(iteratee(object), object, basename);
 
       start();
     });
@@ -1050,7 +1051,7 @@ QUnit.module('exports command');
     var type = command.split('=')[1],
         types = type == 'umd' ? ['amd', 'commonjs', 'global', 'node'] : [type];
 
-    asyncTest('`lodash ' + command +'`', function() {
+    QUnit.asyncTest('`lodash ' + command +'`', function(assert) {
       var start = _.after(2, _.once(QUnit.start));
 
       build([command], function(data) {
@@ -1069,31 +1070,31 @@ QUnit.module('exports command');
               context.define.amd = {};
               vm.runInContext(source, context);
 
-              ok(pass, basename);
-              ok(_.isFunction(context._), basename);
+              assert.ok(pass, basename);
+              assert.ok(_.isFunction(context._), basename);
               break;
 
             case 'commonjs':
               vm.runInContext(source, context);
-              ok(_.isFunction(context.exports._), basename);
-              strictEqual(context._, undefined, basename);
+              assert.ok(_.isFunction(context.exports._), basename);
+              assert.strictEqual(context._, undefined, basename);
               break;
 
             case 'global':
               vm.runInContext(source, context);
-              ok(_.isFunction(context._), basename);
+              assert.ok(_.isFunction(context._), basename);
               break;
 
             case 'iojs':
             case 'node':
               vm.runInContext(source, context);
-              ok(_.isFunction(context.module.exports), basename);
-              strictEqual(context._, undefined, basename);
+              assert.ok(_.isFunction(context.module.exports), basename);
+              assert.strictEqual(context._, undefined, basename);
               break;
 
             case 'none':
               vm.runInContext(source, context);
-              strictEqual(context._, undefined, basename);
+              assert.strictEqual(context._, undefined, basename);
           }
         });
         start();
@@ -1113,7 +1114,7 @@ QUnit.module('iife command');
   ];
 
   _.each(commands, function(command) {
-    asyncTest('`lodash ' + command +'`', function() {
+    QUnit.asyncTest('`lodash ' + command +'`', function(assert) {
       var start = _.after(2, _.once(QUnit.start));
 
       build(['exports=none', command], function(data) {
@@ -1130,14 +1131,14 @@ QUnit.module('iife command');
           console.log(e);
         }
         var lodash = context.lodash || {};
-        ok(_.isString(lodash.VERSION), basename);
+        assert.ok(_.isString(lodash.VERSION), basename);
 
         start();
       });
     });
   });
 
-  asyncTest('should add `iife` commands to the copyright header', function() {
+  QUnit.asyncTest('should add `iife` commands to the copyright header', function(assert) {
     var command = 'iife=;(function(){/*\r\n*/%output%; root.lodash = _}.call(this))',
         expected = 'iife=";(function(){/*\\r\\n*\\/%output%; root.lodash = _}.call(this))"',
         start = _.once(QUnit.start);
@@ -1146,7 +1147,7 @@ QUnit.module('iife command');
       var basename = path.basename(data.outputPath, '.js'),
           comment = _.result(data.source.match(reHeader), 0, '');
 
-      ok(_.includes(comment, expected), basename);
+      assert.ok(_.includes(comment, expected), basename);
 
       start();
     });
@@ -1166,7 +1167,7 @@ QUnit.module('include command');
   ];
 
   _.each(commands, function(command, index) {
-    asyncTest('`lodash ' + command +'`', function() {
+    QUnit.asyncTest('`lodash ' + command +'`', function(assert) {
       var start = _.after(2, _.once(QUnit.start));
 
       build([command], function(data) {
@@ -1178,9 +1179,9 @@ QUnit.module('include command');
         var lodash = context._;
         lodash.mixin({ 'x': _.noop });
 
-        strictEqual(lodash.x, _.noop, basename);
-        strictEqual(typeof lodash.prototype.x, 'function', basename);
-        ok(lodash() instanceof lodash, basename);
+        assert.strictEqual(lodash.x, _.noop, basename);
+        assert.strictEqual(typeof lodash.prototype.x, 'function', basename);
+        assert.ok(lodash() instanceof lodash, basename);
 
         start();
       });
@@ -1201,7 +1202,7 @@ QUnit.module('moduleId command');
   _.each(commands, function(command) {
     var expectedId = _.result(/underscore/.exec(command), 0, 'lodash');
 
-    asyncTest('`lodash ' + command +'`', function() {
+    QUnit.asyncTest('`lodash ' + command +'`', function(assert) {
       var start = _.after(2, _.once(QUnit.start));
 
       build(command.split(' '), function(data) {
@@ -1217,8 +1218,8 @@ QUnit.module('moduleId command');
         context.define.amd = {};
         vm.runInContext(data.source, context);
 
-        strictEqual(actualId, expectedId, basename);
-        ok(_.isFunction(context._), basename);
+        assert.strictEqual(actualId, expectedId, basename);
+        assert.ok(_.isFunction(context._), basename);
 
         start();
       });
@@ -1244,7 +1245,7 @@ QUnit.module('output option');
   ];
 
   _.each(commands, function(command) {
-    asyncTest('`lodash ' + command +'`', function() {
+    QUnit.asyncTest('`lodash ' + command +'`', function(assert) {
       var counter = 0,
           dirs = _.includes(command, 'c.js'),
           expected = /(\w+)(?=\.js$)/.exec(command)[0];
@@ -1261,7 +1262,7 @@ QUnit.module('output option');
 
       build(command.split(' '), function(data) {
         var basename = path.basename(data.outputPath, '.js');
-        strictEqual(basename, expected + (counter++ ? '.min' : ''), command);
+        assert.strictEqual(basename, expected + (counter++ ? '.min' : ''), command);
         start();
       });
     });
@@ -1282,7 +1283,7 @@ QUnit.module('stdout option');
   ];
 
   _.each(commands, function(command, index) {
-    asyncTest('`lodash ' + command +'`', function() {
+    QUnit.asyncTest('`lodash ' + command +'`', function(assert) {
       var written,
           start = _.once(QUnit.start);
 
@@ -1291,9 +1292,9 @@ QUnit.module('stdout option');
       };
 
       build(['exports=none', 'include=none'].concat(command.split(' ')), function(data) {
-        ok(!('outputPath' in data));
-        strictEqual(written, data.source);
-        strictEqual(arguments.length, 1);
+        assert.notOk('outputPath' in data);
+        assert.strictEqual(written, data.source);
+        assert.strictEqual(arguments.length, 1);
 
         process.stdout.write = write;
         start();
@@ -1349,7 +1350,7 @@ QUnit.module('lodash build');
   }));
 
   _.each(commands, function(command) {
-    asyncTest('`lodash ' + command +'`', function() {
+    QUnit.asyncTest('`lodash ' + command +'`', function(assert) {
       var start = _.after(2, _.once(QUnit.start));
 
       build(command.split(' '), function(data) {
@@ -1403,7 +1404,10 @@ QUnit.module('lodash build');
         funcNames = _.uniq(_.intersection(expandFuncNames(funcNames), includes));
 
         var lodash = context._ || {};
-        _.each(funcNames, _.partial(testMethod, lodash, _, basename));
+
+        _.each(funcNames, function(funcName) {
+          testMethod(assert, lodash, funcName, basename);
+        });
 
         start();
       });
