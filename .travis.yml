@@ -36,12 +36,6 @@ matrix:
       env: EXPORTS="amd" LOADER="curl"
     - node_js: "4"
       env: EXPORTS="amd" LOADER="dojo"
-    - node_js: "4"
-      env: EXPORTS="amd"
-    - node_js: "4"
-      env: EXPORTS="amd" LOADER="curl"
-    - node_js: "4"
-      env: EXPORTS="amd" LOADER="dojo"
 git:
   depth: 10
 branches:
