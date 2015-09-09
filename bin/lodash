@@ -657,15 +657,18 @@ function buildModule(state, onComplete) {
           })
         );
 
-        iife.push(
-          '',
-          'export default {',
-          _.map(depNames, function(depName) {
-            return "  '" + depName + "': " + depName;
-          })
-          .join(',\n'),
-          '};'
-        );
+        _.times(2, function(index) {
+          iife.push(
+            '',
+            'export ' + (index ? 'default ' : '') + '{',
+              _(depNames)
+                .chunk(5)
+                .map(function(chunk) { return "  " + chunk.join(', '); })
+                .join(',\n')
+            ,
+            '};'
+          );
+        });
       }
       else if (isCommonJS) {
         push.apply(iife,
