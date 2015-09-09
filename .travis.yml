@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-  - "0.12"
+  - "4"
 env:
   global:
     - BIN="node" EXPORTS="commonjs" NPM_VERSION="^2.0.0"
@@ -18,8 +18,6 @@ env:
     - TEST_BUILDS=true
 matrix:
   include:
-    - node_js: "iojs"
-      env: EXPORTS="iojs"
     - node_js: "0.8"
       env: NPM_VERSION="~1.4.0"
     - node_js: "0.8"
@@ -29,16 +27,20 @@ matrix:
     - node_js: "0.10"
       env: EXPORTS="npm"
     - node_js: "0.12"
+      env:
+    - node_js: "0.12"
+      env: EXPORTS="npm"
+    - node_js: "4"
       env: EXPORTS="amd"
-    - node_js: "0.12"
+    - node_js: "4"
       env: EXPORTS="amd" LOADER="curl"
-    - node_js: "0.12"
+    - node_js: "4"
       env: EXPORTS="amd" LOADER="dojo"
-    - node_js: "0.12"
+    - node_js: "4"
       env: EXPORTS="amd"
-    - node_js: "0.12"
+    - node_js: "4"
       env: EXPORTS="amd" LOADER="curl"
-    - node_js: "0.12"
+    - node_js: "4"
       env: EXPORTS="amd" LOADER="dojo"
 git:
   depth: 10
