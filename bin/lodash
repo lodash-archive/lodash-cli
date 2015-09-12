@@ -592,6 +592,10 @@ function buildModule(state, onComplete) {
               'import ' + depName + " from '" + depPath + "'";
           }, '') + ';',
           '%output%',
+          _.map(categoryDepPaths, function(depPath) {
+            return 'export * from "' + depPath + '";';
+          })
+          .join('\n'),
           'export default lodash;'
         );
       }
