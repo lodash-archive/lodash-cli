@@ -579,28 +579,29 @@ function buildModule(state, onComplete) {
         );
       }
       else if (isES) {
+        var exportedDepNames = _.reject(identifiers, isPrivate).sort(),
+            exportedDepPaths = getDepPaths(exportedDepNames, modulePath)
+
         iife.push(
-          _.reduce(depPaths, function(result, depPath, index) {
-            var depName = depNames[index];
-            return result + (result ? ';\n' : '') +
-              'import ' + depName + " from '" + depPath + "'";
-          }, '') + ';',
+          _.map(depPaths, function(depPath, index) {
+            return 'import ' + depNames[index] + " from '" + depPath + "';";
+          }).join('\n'),
           '%output%',
-          _.map(categoryDepPaths, function(depPath) {
-            return 'export * from "' + depPath + '";';
-          })
-          .join('\n'),
+          _.map(exportedDepPaths, function(depPath, index) {
+            var depName = exportedDepNames[index];
+            return 'export { default as ' + _.result(mapping.forceAlias, depName, depName) + " } from '" + depPath + "';";
+          }).join('\n'),
           'export default lodash;'
         );
       }
       else {
         iife.push(
-          _.reduce(depPaths, function(result, depPath, index) {
+          _.map(depPaths, function(depPath, index) {
             var depName = depNames[index];
-            return result + (result ? ',\n    ' : 'var ') +
+            return (index ? '' : 'var ') +
               depName + " = require('" + depPath + "')" +
-              (isCommonJS && !_.includes(categoryDepPaths, depPath) ? '.' + depName : '');
-          }, '') + ';',
+              (isCommonJS && !_.includes(categoryDepPaths, depPath) ? '.' + depName : '') + ';';
+          }).join(',\n    '),
           '%output%',
           (isCommonJS ? 'exports._' : 'module.exports') + ' = lodash;'
         );
@@ -654,18 +655,20 @@ function buildModule(state, onComplete) {
           })
         );
 
-        _.times(2, function(index) {
-          iife.push(
-            '',
-            'export ' + (index ? 'default ' : '') + '{',
-              _(depNames)
-                .chunk(5)
-                .map(function(chunk) { return "  " + chunk.join(', '); })
-                .join(',\n')
-            ,
-            '};'
-          );
-        });
+        iife.push(
+          '',
+          _.map(depNames, function(depName, index) {
+            return 'export { default as ' + depName + " from '" + depPaths[index] + "';";
+          })
+          .join('\n'),
+          '',
+          'export default {',
+            _(depNames)
+              .chunk(5)
+              .map(function(chunk) { return "  " + chunk.join(', '); })
+              .join(',\n'),
+          '};'
+        );
       }
       else if (isCommonJS) {
         push.apply(iife,
