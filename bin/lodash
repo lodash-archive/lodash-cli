@@ -2421,11 +2421,14 @@ function build(options, callback) {
         // Remove chain dependencies.
         _.pull(chainDepMap.funcDep, 'baseLodash', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'wrapperCommit', 'wrapperNext', 'wrapperPlant', 'wrapperReverse', 'wrapperToIterator');
 
-        // Remove `_.isTypedArray` use from `baseIsEqualDeep`.
-        _.pull(funcDepMap.baseIsEqualDeep, 'isTypedArray');
+        // Remove map, set, and typed array support from `baseIsEqualDeep`.
+        _.pull(funcDepMap.baseIsEqualDeep, 'isMap', 'isSet', 'isTypedArray');
+        _.pull(varDepMap.baseIsEqualDeep, 'noMapSetTag');
 
         source = source.replace(matchFunction(source, 'baseIsEqualDeep'), function(match) {
-          return match.replace(/\s*else\s+if\s*\(...Tag[\s\S]+?\}/gm, '');
+          return match
+            .replace(/^( *)if\s*\(noMapSetTag\b[\s\S]+?\}\s*else\s*/gm, '$1')
+            .replace(/\s*else\s+if\s*\((?:obj|oth)Tag\b[\s\S]+?\}/g, '');
         });
 
         // Remove `baseLodash` references.
@@ -2443,17 +2446,24 @@ function build(options, callback) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[\s\S]+?\n\1\}\n/m, '');
         });
 
-        // Remove `Map` and `Set` support from `equalByTag`.
+        // Remove map and set support from `equalByTag`.
         _.pull(funcDepMap.equalByTag, 'mapToArray', 'setToArray');
 
         source = source.replace(matchFunction(source, 'equalByTag'), function(match) {
-          return match.replace(/\s*case\s*(?:map|set)Tag[\s\S]+?;/g, '');
+          return match.replace(/\s*case\s*(?:map|set)Tag\b[\s\S]+?;(?=\s*case\b|\s*\})/g, '');
         });
 
         // Remove `customizer` use from `equalArrays` and `equalObjects`.
         _.each(['equalArrays', 'equalObjects'], function(funcName) {
           source = source.replace(matchFunction(source, funcName), function(match) {
             return match.replace(/^( *)if\s*\(customizer\b[\s\S]+?\n\1}\n/m, '');
+          });
+        });
+
+        // Remove switch statements from `createCtorWrapper` and `_.restParam`.
+        _.each(['createCtorWrapper', 'restParam'], function(funcName) {
+          source = source.replace(matchFunction(source, funcName), function(match) {
+            return match.replace(/^(?: *\/\/.*\n)*( *)switch\b[\s\S]+?\n\1\}\n/m, '');
           });
         });
 
@@ -2470,9 +2480,9 @@ function build(options, callback) {
           return match.replace(/\s*&&\s*!\(.+?LazyWrapper\)/, '');
         });
 
-        // Remove switch statement from `_.restParam`.
-        source = source.replace(matchFunction(source, 'restParam'), function(match) {
-          return match.replace(/^(?: *\/\/.*\n)*( *)switch\b[\s\S]+?\n\1\}\n/gm, '');
+        // Remove unneeded properties from `LodashWrapper.
+        source = source.replace(matchFunction(source, 'LodashWrapper'), function(match) {
+          return match.replace(/^ *this\.__(?:index|values)__\s*=[^;]+;\n/gm, '');
         });
 
         // Replace array functions with their base counterparts.
@@ -2773,6 +2783,7 @@ function build(options, callback) {
         ].join('\n'));
 
         funcDepMap.toArray = ['copyArray', 'isArrayLike', 'values'];
+        varDepMap.toArray = [];
 
         source = replaceFunction(source, 'toArray', [
           'function toArray(value) {',
@@ -2783,11 +2794,13 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.wrapperClone = ['LodashWrapper'];
+        funcDepMap.wrapperClone = ['copyArray', 'LodashWrapper'];
 
         source = replaceFunction(source, 'wrapperClone', [
           'function wrapperClone(wrapper) {',
-          '  return new LodashWrapper(wrapper.__wrapped__, wrapper.__chain__, copyArray(wrapper.__actions__));',
+          '  var result = new LodashWrapper(wrapper.__wrapped__, wrapper.__chain__);',
+          '  result.__actions__ = copyArray(wrapper.__actions__);',
+          '  return result;',
           '}'
         ].join('\n'));
       }
