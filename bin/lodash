@@ -248,7 +248,7 @@ function buildModule(state, onComplete) {
       getDependencies(identifier, funcDepMap),
       getDependencies(identifier, objDepMap),
       getDependencies(identifier, varDepMap)
-    ).sort();
+    );
 
     if (isNpm) {
       var hoistDeps = _.intersection(getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap), mapping.hoist[identifier]),
@@ -287,6 +287,10 @@ function buildModule(state, onComplete) {
       removedDeps[identifier] = unusedDeps;
       depNames = _.sortBy(_.difference(depNames, unusedDeps), toDepName);
 
+      depNames = _.map(depNames, function(depName) {
+        return _.result(mapping.forceAlias, depName, depName);
+      }).sort();
+
       var depPaths = isNpm
         ? _.map(depNames, toDepName)
         : getDepPaths(depNames, modulePath);
@@ -312,14 +316,17 @@ function buildModule(state, onComplete) {
       else {
         iife.push(
           _.map(depPaths, function(depPath, index) {
-            var depName = depNames[index];
+            var depName = depNames[index],
+                lastIndex = depPaths.length - 1;
+
             return (index ? '' : 'var ') +
               depName + " = require('" + depPath + "')" +
-              (isCommonJS ? '.' + depName : '') + ';';
+              (isCommonJS ? '.' + depName : '') +
+              (index == lastIndex ? ';' : '');
           })
           .join(',\n    '),
           '%output%',
-          (isCommonJS ? 'exports.' + identifier : 'module.exports') + ' = ' + identifier + ';'
+          (isCommonJS ? 'exports.' + basename : 'module.exports') + ' = ' + identifier + ';'
         );
       }
       if (!isAMD) {
@@ -410,19 +417,20 @@ function buildModule(state, onComplete) {
     if (isNpm) {
       return;
     }
-    var aliases = _.without(getAliases(identifier), mapping.forceAlias[identifier]),
+    var basename = _.result(mapping.forceAlias, identifier, identifier),
+        aliases = _.without(getAliases(identifier), basename),
         categories = [getCategory(identifier)];
 
     _.each(categories, function(category) {
-      var modulePath = getModulePath(identifier, category),
-          depPath = getDepPath(identifier, modulePath);
+      var modulePath = getModulePath(basename, category),
+          depPath = getDepPath(basename, modulePath);
 
       _.each(aliases, function(alias) {
         var iife = [];
         if (isAMD) {
           iife.push(
-            'define(["' + depPath + '"], function(' + identifier + ') {',
-            '  return ' + identifier + ';',
+            'define(["' + depPath + '"], function(' + basename + ') {',
+            '  return ' + basename + ';',
             '});'
           );
         }
@@ -434,7 +442,7 @@ function buildModule(state, onComplete) {
         else {
           iife.push(
             (isCommonJS ? ('exports.' + alias) : 'module.exports') +
-            " = require('" + depPath + "')" + (isCommonJS ? '.' + identifier : '') + ';'
+            " = require('" + depPath + "')" + (isCommonJS ? '.' + basename : '') + ';'
           );
         }
         buildCallback({
@@ -469,7 +477,7 @@ function buildModule(state, onComplete) {
       getDependencies(identifier, funcDepMap),
       getDependencies(identifier, objDepMap),
       getDependencies(identifier, varDepMap)
-    ).sort();
+    );
 
     var basename = 'index';
     if (isAMD) {
@@ -560,7 +568,12 @@ function buildModule(state, onComplete) {
       removedDeps[identifier] = unusedDeps;
       deps = _.difference(deps, unusedDeps);
 
+      deps = _.map(deps, function(depName) {
+        return _.result(mapping.forceAlias, depName, depName);
+      }).sort();
+
       var depNames = categoryDeps.concat(deps);
+
       if (isES) {
         // Avoid a syntax error caused by reassigning `mixin` by naming the
         // dependency `_mixin` instead.
@@ -579,8 +592,11 @@ function buildModule(state, onComplete) {
         );
       }
       else if (isES) {
-        var exportedDepNames = _.reject(identifiers, isPrivate).sort(),
-            exportedDepPaths = getDepPaths(exportedDepNames, modulePath)
+        var exportedDepNames = _.map(_.reject(identifiers, isPrivate), function(depName) {
+          return _.result(mapping.forceAlias, depName, depName);
+        }).sort();
+
+        var exportedDepPaths = getDepPaths(exportedDepNames, modulePath)
 
         iife.push(
           _.map(depPaths, function(depPath, index) {
@@ -597,10 +613,13 @@ function buildModule(state, onComplete) {
       else {
         iife.push(
           _.map(depPaths, function(depPath, index) {
-            var depName = depNames[index];
+            var depName = depNames[index],
+                lastIndex = depPaths.length - 1;
+
             return (index ? '' : 'var ') +
               depName + " = require('" + depPath + "')" +
-              (isCommonJS && !_.includes(categoryDepPaths, depPath) ? '.' + depName : '') + ';';
+              (isCommonJS && !_.includes(categoryDepPaths, depPath) ? '.' + depName : '') +
+              (index == lastIndex ? ';' : '');
           }).join(',\n    '),
           '%output%',
           (isCommonJS ? 'exports._' : 'module.exports') + ' = lodash;'
@@ -629,8 +648,7 @@ function buildModule(state, onComplete) {
         result.push(depName);
       }
       push.apply(result, getAliases(depName));
-    })
-    .sort();
+    }).sort();
 
     var iife = [],
         depPaths = getDepPaths(depNames);
@@ -658,7 +676,7 @@ function buildModule(state, onComplete) {
         iife.push(
           '',
           _.map(depNames, function(depName, index) {
-            return 'export { default as ' + depName + " from '" + depPaths[index] + "';";
+            return 'export { default as ' + depName + " } from '" + depPaths[index] + "';";
           })
           .join('\n'),
           '',
@@ -701,7 +719,7 @@ function buildModule(state, onComplete) {
     _.forOwn(removedDeps, function(depNames, identifier) {
       if (!_.isEmpty(depNames)) {
         var plural = _.size(depNames) > 1;
-        console.warn('Warning: Removed ' + (plural ? '' : 'an ') + 'unused dependenc' + (plural ? 'ies' : 'y') + ' from `' + identifier + '`: ' + depNames.join(', '));
+        console.warn('Warning: Removed ' + (plural ? '' : 'an ') + 'unused dependenc' + (plural ? 'ies' : 'y') + ' from `' + identifier + '`: ' + depNames.sort().join(', '));
       }
     });
 
