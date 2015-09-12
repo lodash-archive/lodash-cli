@@ -301,23 +301,23 @@ function buildModule(state, onComplete) {
       }
       else if (isES) {
         iife.push(
-          _.reduce(depPaths, function(result, depPath, index) {
-            var depName = depNames[index];
-            return result + (result ? ';\n' : '') +
-              'import ' + depName + " from '" + depPath + "'";
-          }, '') + ';',
+          _.map(depPaths, function(depPath, index) {
+            return 'import ' + depNames[index] + " from '" + depPath + "';";
+          })
+          .join('\n'),
           '%output%',
           'export default ' + identifier + ';'
         );
       }
       else {
         iife.push(
-          _.reduce(depPaths, function(result, depPath, index) {
+          _.map(depPaths, function(depPath, index) {
             var depName = depNames[index];
-            return result + (result ? ',\n    ' : 'var ') +
+            return (index ? '' : 'var ') +
               depName + " = require('" + depPath + "')" +
-              (isCommonJS ? '.' + depName : '');
-          }, '') + ';',
+              (isCommonJS ? '.' + depName : '') + ';';
+          })
+          .join(',\n    '),
           '%output%',
           (isCommonJS ? 'exports.' + identifier : 'module.exports') + ' = ' + identifier + ';'
         );
