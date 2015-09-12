@@ -239,9 +239,10 @@ function buildModule(state, onComplete) {
   }
   // Create modules for each identifier.
   _.each(identifiers, function(identifier) {
-    var category = getCategory(identifier),
-        moduleName = isNpm ? toDepName(identifier) : identifier,
-        modulePath = isNpm ? moduleName : getModulePath(identifier, category);
+    var basename = _.result(mapping.forceAlias, identifier, identifier),
+        category = getCategory(identifier),
+        moduleName = isNpm ? toDepName(basename) : basename,
+        modulePath = isNpm ? moduleName : getModulePath(basename, category);
 
     var depNames = _.union(
       getDependencies(identifier, funcDepMap),
@@ -272,7 +273,7 @@ function buildModule(state, onComplete) {
       inlineObjs = _.includes(listing.objDeps, identifier) ? inlinees : [];
       inlineVars = _.includes(listing.varDeps, identifier) ? inlinees : [];
     }
-    state.outputPath = path.join(outputPath, modulePath, (isNpm ? 'index' : identifier) + '.js');
+    state.outputPath = path.join(outputPath, modulePath, (isNpm ? 'index' : basename) + '.js');
     state.buildFuncs = state.includeFuncs = inlineFuncs;
     state.includeObjs = inlineObjs;
     state.includeVars = inlineVars;
@@ -409,21 +410,14 @@ function buildModule(state, onComplete) {
     if (isNpm) {
       return;
     }
-    var aliases = getAliases(identifier),
-        realCategory = getCategory(identifier),
-        categories = realCategory ? [realCategory] : [];
+    var aliases = _.without(getAliases(identifier), mapping.forceAlias[identifier]),
+        categories = [getCategory(identifier)];
 
-    if (_.isEmpty(categories)) {
-      categories.push(null);
-    }
     _.each(categories, function(category) {
       var modulePath = getModulePath(identifier, category),
           depPath = getDepPath(identifier, modulePath);
 
       _.each(aliases, function(alias) {
-        if (alias == identifier && category == realCategory) {
-          return;
-        }
         var iife = [];
         if (isAMD) {
           iife.push(
@@ -1233,7 +1227,7 @@ function getMethodAssignments(source) {
  * @returns {string} Returns the module path.
  */
 function getModulePath(identifier, category) {
-  if (_.includes(listing.topLevelDeps, identifier)) {
+  if (_.includes(listing.topLevelDeps, getRealName(identifier))) {
     return '';
   }
   if (isPrivate(identifier)) {
