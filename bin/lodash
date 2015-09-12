@@ -2384,6 +2384,7 @@ function build(options, callback) {
       }
       if (isModularize) {
         if (isNode) {
+          _.pull(chainDepMap.varDep, 'root');
           _.forOwn(varDepMap, function(depNames, identifier) {
             _.pull(depNames, 'root');
           });
