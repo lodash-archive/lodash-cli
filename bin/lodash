@@ -1776,10 +1776,14 @@ function removeGetIndexOf(source, funcDepMap) {
         // Replace all `getIndexOf` calls with `baseIndexOf`.
         .replace(/\bgetIndexOf\b(?:\(\))?/g, 'baseIndexOf')
         // Remove "indexOf" comparisons.
-        .replace(/\bindexOf\s*===\s*baseIndexOf\b/, 'true')
-        .replace(/\s*&&\s*baseIndexOf\s*===\s*baseIndexOf\b/, '');
+        .replace(/\bindexOf\s*===\s*baseIndexOf\b/, 'true');
     });
   });
+
+  source = source.replace(matchFunction(source, 'baseSortedUniqBy'), function(match) {
+    return match.replace(/\s*else\s+if\s*\(indexOf\b[\s\S]+?\}/, '');
+  });
+
   return source;
 }
 
@@ -1818,6 +1822,7 @@ function removeLicenseTag(source) {
  */
 function removeMethodAssignment(source, methodName) {
   source = source == null ? '' : String(source);
+
   return source.replace(getMethodAssignments(source), function(match) {
     var reAssignment = RegExp(
       '^( *//.*\\n)*( *)' +
