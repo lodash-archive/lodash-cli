@@ -1214,7 +1214,7 @@ function getFunctionSource(func, indent) {
  */
 function getHeader(source) {
   source = source == null ? '' : String(source);
-  return _.result(/^\s*\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n|(?:\s*\/\/.*\n)+/.exec(source), 0, '');
+  return _.result(/^\s*\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n|^(?:\s*\/\/.*\n)+/.exec(source), 0, '');
 }
 
 /**
