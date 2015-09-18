@@ -251,8 +251,7 @@ function buildModule(state, onComplete) {
     );
 
     if (isNpm) {
-      var hoistDeps = _.intersection(getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap), mapping.hoist[identifier]),
-          forceInlineDeps = _.difference(mapping.forceInline[identifier], hoistDeps),
+      var forceInlineDeps = mapping.forceInline[identifier],
           uninlinees = _.difference(listing.uninlinables, forceInlineDeps);
 
       var inlinees = _.uniq(_.transform(_.difference(depNames, uninlinees), function(result, identifier) {
@@ -343,7 +342,7 @@ function buildModule(state, onComplete) {
 
         var type = 'function',
             version = state.lodash.VERSION,
-            pkgDepPaths = _.sortBy(_.union(depPaths, _.map(hoistDeps, toDepName)), toDepName);
+            pkgDepPaths = _.sortBy(depPaths, toDepName);
 
         if (_.includes(listing.objDeps, identifier)) {
           type = 'object';
