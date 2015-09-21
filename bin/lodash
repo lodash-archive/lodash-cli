@@ -1325,7 +1325,8 @@ function getRealCategory(alias) {
 function getVars(source) {
   var isDeep = reHasDeepVars.test(source),
       indentA = isDeep ? ' {2,4}' : ' {2}',
-      indentB = isDeep ? ' {6,8}' : ' {6}';
+      indentB = isDeep ? ' {6,8}' : ' {6}',
+      result = [];
 
   var reAttempts = [
     // Match a varaible at the start of a declaration list.
@@ -1337,12 +1338,20 @@ function getVars(source) {
   ];
 
   source = removeStrings(removeComments(source));
+
+  _.each(listing.complexVars, function(varName) {
+    source = source.replace(matchVar(source, varName), function() {
+      result.push(varName);
+      return '';
+    });
+  });
+
   return _.uniq(_.transform(reAttempts, function(result, data) {
     source = source.replace(RegExp(data[0], 'gm'), function() {
       result.push(arguments[data[1]]);
       return data[2] > -1 ? arguments[data[2]] : '';
     });
-  }));
+  }, result));
 }
 
 /**
