@@ -1942,14 +1942,14 @@ function removeVar(source, varName) {
   source = source == null ? '' : String(source);
 
   _.some([
-    function(source) {
+    function(source, varName) {
       return removeFunction(source, varName);
     },
-    function(source) {
+    function(source, varName) {
       return source.replace(matchVar(source, varName, true), '');
     }
   ], function(func) {
-    var result = func(source);
+    var result = func(source, varName);
     if (result !== source) {
       source = result;
       return true;
