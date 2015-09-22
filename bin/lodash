@@ -77,9 +77,6 @@ var HELP_TEXT = [
   ''
 ].join('\n');
 
-/** Used to create regexes that detect single and multi-line comment blocks. */
-var commentPattern = '(?: *(?:/\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/|\/\/.*)\\n)*';
-
 /** The current working directory. */
 var cwd = process.cwd();
 
@@ -89,6 +86,9 @@ var isBin = module == require.main;
 /** Native method references. */
 var floor = Math.floor,
     push = Array.prototype.push;
+
+/** Used to create regexes that detect single and multi-line comment blocks. */
+var rsComment = '(?: *(?:/\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/|\/\/.*)\\n)*';
 
 /** Used to match comments and string literals. */
 var reComment = /^ *(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.*)\n/gm,
@@ -126,9 +126,7 @@ var stdout = process.stdout;
  * @returns {string} Returns the modified source.
  */
 function addCommandsToHeader(source, commands) {
-  source = source == null ? '' : String(source);
-
-  return source.replace(getHeader(source), function(header) {
+  return replace(source, getHeader(source), function(header) {
     // Add quotes to commands with spaces or equals signs.
     commands = _.map(commands, function(command) {
       var separator = /[= ]/.exec(command);
@@ -973,15 +971,14 @@ function cleanupSource(source) {
 function commentFree(source, callback) {
   var comments = [];
 
-  source = source == null ? '' : String(source);
+  source = toString(source);
   source = callback(source.replace(reComment, function(match) {
     var index = comments.length;
     comments.push(match);
     return '<#com_token' + index + '#>\n';
   })) || '';
 
-  source = source == null ? '' : String(source);
-  return source.replace(reCommentToken, function(match) {
+  return replace(source, reCommentToken, function(match) {
     return comments[match.slice(11, -3)];
   });
 }
@@ -1212,7 +1209,7 @@ function getFunctionSource(func, indent) {
  * @returns {string} Returns the copyright header.
  */
 function getHeader(source) {
-  source = source == null ? '' : String(source);
+  source = toString(source);
   return _.result(/^\s*\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n|^(?:\s*\/\/.*\n)+/.exec(source), 0, '');
 }
 
@@ -1235,6 +1232,7 @@ function getIndent(func) {
  * @returns {string} Returns the method assignments snippet.
  */
 function getMethodAssignments(source) {
+  source = toString(source);
   return _.result(/\n\n(?: *\/\/.*\n)* *lodash(?:\.(?!prototype\b)[$\w]+)+\s*=[\s\S]+\n *lodash(?:\.[$\w]+)+\s=[^;]+;(?=\n)/.exec(source), 0, '');
 }
 
@@ -1332,7 +1330,7 @@ function getVars(source) {
     // Match a varaible at the start of a declaration list.
     ['^(' + indentA + 'var\\s+)([$\\w]+)\\s*=.+?,\\n *', 2, 1],
     // Match a variable declaration in a declaration list.
-    [',\\n' + commentPattern + indentB + '([$\\w]+)\\s*=[\\s\\S]+?(?=[,;]\\n)', 1, -1],
+    [',\\n' + rsComment + indentB + '([$\\w]+)\\s*=[\\s\\S]+?(?=[,;]\\n)', 1, -1],
     // Match a variable that is not part of a declaration list.
     ['^(' + indentA + ')var\\s+([$\\w]+)\\s*(?:|=\\s*(?:.+?(?:[&+]\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n', 2, -1]
   ];
@@ -1362,9 +1360,8 @@ function getVars(source) {
  * @returns {boolean} Returns `true` for a function snippet, else `false`.
  */
 function isFunctionSnippet(source) {
-  source = source == null ? '' : String(source);
   var header = getHeader(source);
-  return (header && reHasFuncTags.test(header)) || reIsFuncSnippet.test(source.replace(header, ''));
+  return reHasFuncTags.test(header) || reIsFuncSnippet.test(replace(source, header, ''));
 }
 
 /**
@@ -1379,9 +1376,9 @@ function isPrivate(identifier) {
   if (_.includes(listing.topLevelDeps, identifier)) {
     return false;
   }
-  return _.findKey(mapping.category, function(identifiers) {
+  return _.isUndefined(_.findKey(mapping.category, function(identifiers) {
     return _.includes(identifiers, identifier);
-  }) === undefined;
+  }));
 }
 
 /**
@@ -1393,13 +1390,8 @@ function isPrivate(identifier) {
  * @returns {boolean} Returns `true` if the variable is used, else `false`.
  */
 function isVarUsed(source, varName) {
-  source = source == null ? '' : String(source);
-  var snippet = matchVar(source, varName);
-  if (!snippet) {
-    return false;
-  }
   // Remove the variable assignment from the source.
-  source = source.replace(snippet, '');
+  source = replace(source, matchVar(source, varName), '');
   return RegExp('[^.$"\'\\w]' + _.escapeRegExp(varName) + '\\b(?!\\s*=)').test(source);
 }
 
@@ -1431,7 +1423,7 @@ function matchFunction(source, funcName, leadingComments) {
     if (result) {
       return result;
     }
-    result = RegExp('^(' + commentPattern + ')(' + reSource + ')', 'm').exec(source);
+    result = RegExp('^(' + rsComment + ')(' + reSource + ')', 'm').exec(source);
     return (result && isFunctionSnippet(result)) ? result[leadingComments ? 0 : 2] : '';
   }, '');
 }
@@ -1450,7 +1442,7 @@ function matchProp(source, propName, leadingComments) {
   var escapedName = _.escapeRegExp(propName);
 
   return _.result(RegExp(
-    '^' + (leadingComments ? commentPattern : '') +
+    '^' + (leadingComments ? rsComment : '') +
     '(?: {2,4}var\\s+' + escapedName + '\\b.+|(?:\\s*|.*?=\\s*)lodash\\._?' + escapedName + '\\s*)=[\\s\\S]+?' +
     '(?:\\(function\\([\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
     '[;}]\\n(?=\\n(?!\\s*\\(function\\b)))'
@@ -1474,14 +1466,14 @@ function matchVar(source, varName, leadingComments) {
     // Match a varaible at the start of a declaration list.
     ['^( *var\\s+)(' + escapedName + '\\s*=.+?,\\n *)', 2, 2],
     // Match a variable declaration in a declaration list.
-    ['(,\\n' + commentPattern + ')( *' + escapedName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
+    ['(,\\n' + rsComment + ')( *' + escapedName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
     // Match a variable that is not part of a declaration list.
-    ['^(' + commentPattern + ')(( *)var\\s+' + escapedName + '\\s*(?:|=\\s*(?:.+?(?:[&+]\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\3\\S+?));\\n)', 2, 0]
+    ['^(' + rsComment + ')(( *)var\\s+' + escapedName + '\\s*(?:|=\\s*(?:.+?(?:[&+]\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\3\\S+?));\\n)', 2, 0]
   ];
 
   // Match complex variable assignments.
   if (_.includes(listing.complexVars, varName)) {
-    reAttempts.splice(2, 0, ['^(' + commentPattern + ')(( *)var\\s+' + escapedName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]);
+    reAttempts.splice(2, 0, ['^(' + rsComment + ')(( *)var\\s+' + escapedName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]);
   }
   return _.reduce(reAttempts, function(result, data) {
     return result || _.result(RegExp(data[0], 'm').exec(source), data[leadingComments ? 2 : 1], '');
@@ -1541,8 +1533,7 @@ function removeAssignments(source) {
  * @returns {string} Returns the modified source.
  */
 function removeBaseKeysInFork(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(getBaseKeysInFork(source), '');
+  return replace(source, getBaseKeysInFork(source), '');
 }
 
 /**
@@ -1574,8 +1565,7 @@ function removeChaining(source, chainDepMap, funcDepMap, objDepMap) {
  * @returns {string} Returns the modified source.
  */
 function removeComments(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(reComment, '');
+  return replace(source, reComment, '');
 }
 
 /**
@@ -1687,7 +1677,7 @@ function removeMetadata(source, funcDepMap) {
  * @returns {string} Returns the modified source.
  */
 function removeFunction(source, funcName) {
-  source = source == null ? '' : String(source);
+  source = toString(source);
   return (funcName == 'runInContext')
     ? removeRunInContext(source, funcName)
     : source.replace(matchFunction(source, funcName, true), '');
@@ -1803,8 +1793,7 @@ function removeGetIndexOf(source, funcDepMap) {
  * @returns {string} Returns the modified source.
  */
 function removeHeader(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(getHeader(source), '');
+  return replace(source, getHeader(source), '');
 }
 
 /**
@@ -1816,8 +1805,7 @@ function removeHeader(source) {
  * @returns {string} Returns the modified source.
  */
 function removeLicenseTag(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(/^ \* *@license\n/m, '');
+  return replace(source, /^ \* *@license\n/m, '');
 }
 
 /**
@@ -1829,9 +1817,7 @@ function removeLicenseTag(source) {
  * @returns {string} Returns the modified source.
  */
 function removeMethodAssignment(source, methodName) {
-  source = source == null ? '' : String(source);
-
-  return source.replace(getMethodAssignments(source), function(match) {
+  return replace(source, getMethodAssignments(source), function(match) {
     var reAssignment = RegExp(
       '^( *//.*\\n)*( *)' +
       '(?:lodash(?:\\.prototype)?\\.[$\\w]+\\s*=\\s*)*' +
@@ -1854,8 +1840,7 @@ function removeMethodAssignment(source, methodName) {
  * @returns {string} Returns the modified source.
  */
 function removeMethodAssignments(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(getMethodAssignments(source), '');
+  return replace(source, getMethodAssignments(source), '');
 }
 
 /**
@@ -1866,8 +1851,7 @@ function removeMethodAssignments(source) {
  * @returns {string} Returns the modified source.
  */
 function removeMixinCalls(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(/^(?: *\/\/.*\n)*( *)mixin\(.+?(?:\{[\s\S]+?\n\1\}.+?)?\);\n/gm, '');
+  return replace(source, /^(?: *\/\/.*\n)*( *)mixin\(.+?(?:\{[\s\S]+?\n\1\}.+?)?\);\n/gm, '');
 }
 
 /**
@@ -1879,8 +1863,7 @@ function removeMixinCalls(source) {
  * @returns {string} Returns the modified source.
  */
 function removeProp(source, propName) {
-  source = source == null ? '' : String(source);
-  return source.replace(matchProp(source, propName, true), '');
+  return replace(source, matchProp(source, propName, true), '');
 }
 
 /**
@@ -1926,8 +1909,7 @@ function removeRunInContext(source) {
  * @returns {string} Returns the modified source.
  */
 function removeStrings(source) {
-  source = source == null ? '' : String(source);
-  return source.replace(reString, '');
+  return replace(source, reString, '');
 }
 
 /**
@@ -1939,7 +1921,7 @@ function removeStrings(source) {
  * @returns {string} Returns the modified source.
  */
 function removeVar(source, varName) {
-  source = source == null ? '' : String(source);
+  source = toString(source);
 
   _.some([
     function(source, varName) {
@@ -1959,6 +1941,20 @@ function removeVar(source, varName) {
 }
 
 /**
+ * Replaces `pattern` matches in `string` with the resolved `replacement` value.
+ *
+ * @private
+ * @param {string} string The string to modify.
+ * @param {RegExp|string} pattern The pattern to match.
+ * @returns {Function|string} replacement The replacement value.
+ * @returns {string} Returns the modified string.
+ */
+function replace(string, pattern, replacement) {
+  string = toString(string);
+  return pattern ? string.replace(pattern, replacement) : string;
+}
+
+/**
  * Replaces the `funcName` function body in `source` with `funcValue`.
  *
  * @private
@@ -1968,23 +1964,17 @@ function removeVar(source, varName) {
  * @returns {string} Returns the modified source.
  */
 function replaceFunction(source, funcName, funcValue) {
-  source = source == null ? '' : String(source);
+  var checkFuncTag = reIsVarSnippet.test(funcValue);
 
-  var checkFuncTag = reIsVarSnippet.test(funcValue),
-      snippet = matchFunction(source, funcName, checkFuncTag);
-
-  if (!snippet) {
-    return source;
-  }
-  return source.replace(snippet, function(match) {
+  return replace(source, matchFunction(source, funcName, checkFuncTag), function(match) {
     var header = checkFuncTag ? getHeader(match) : '';
-    if (header && !isFunctionSnippet(snippet)) {
+    if (header && !isFunctionSnippet(match)) {
       header = header.replace(/^( *)\* *(?:@(?:category|param|returns)\b|\/)/m, function(match, indent) {
         return indent + '* @type Function\n' + match;
       });
     }
     return header + funcValue
-      .replace(RegExp('^' + getIndent(funcValue), 'gm'), getIndent(snippet))
+      .replace(RegExp('^' + getIndent(funcValue), 'gm'), getIndent(match))
       .trimRight() + '\n';
   });
 }
@@ -1999,8 +1989,8 @@ function replaceFunction(source, funcName, funcValue) {
  * @returns {string} Returns the modified source.
  */
 function replaceIIFE(source, iife) {
-  source = source == null ? '' : String(source);
-  iife = iife == null ? '' : String(iife);
+  source = toString(source);
+  iife = toString(iife);
 
   var token = '%output%',
       header = getHeader(source),
@@ -2025,7 +2015,7 @@ function replaceIIFE(source, iife) {
  * @returns {string} Returns the modified source.
  */
 function replaceIndent(source, to, from) {
-  source = source == null ? '' : String(source);
+  source = toString(source);
   if (from === undefined) {
     from = floor(getIndent(source).length / 2);
   }
@@ -2042,9 +2032,9 @@ function replaceIndent(source, to, from) {
  * @returns {string} Returns the modified source.
  */
 function replaceVar(source, varName, varValue) {
-  var escapedName = _.escapeRegExp(varName);
+  source = toString(source);
 
-  source = source == null ? '' : String(source);
+  var escapedName = _.escapeRegExp(varName);
 
   // Replace a variable that's not part of a declaration list.
   var result = source.replace(RegExp(
@@ -2078,8 +2068,7 @@ function replaceVar(source, varName, varValue) {
  * @returns {string} Returns the modified source.
  */
 function setUseStrictOption(source, value) {
-  source = source == null ? '' : String(source);
-  return source.replace(/^([\s\S]*?function[^{]+\{)(?:\s*'use strict';)?/, '$1' + (value ? "\n  'use strict';" : ''));
+  return replace(source, /^([\s\S]*?function[^{]+\{)(?:\s*'use strict';)?/, '$1' + (value ? "\n  'use strict';" : ''));
 }
 
 /**
@@ -2094,17 +2083,28 @@ function setUseStrictOption(source, value) {
 function stringFree(source, callback) {
   var strings = [];
 
-  source = source == null ? '' : String(source);
+  source = toString(source);
   source = callback(source.replace(reString, function(match) {
     var index = strings.length;
     strings.push(match);
     return '<#str_token' + index + '#>';
   })) || '';
 
-  source = source == null ? '' : String(source);
-  return source.replace(reStringToken, function(match) {
+  return replace(source, reStringToken, function(match) {
     return strings[match.slice(11, -2)];
   });
+}
+
+/**
+ * Converts `value` to a string. An empty string is returned for `null`
+ * and `undefined` values.
+ *
+ * @private
+ * @param {*} value The value to convert.
+ * @returns {string} Returns the converted string.
+ */
+function toString(value) {
+  return value == null ? '' : String(value);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -2113,7 +2113,7 @@ function stringFree(source, callback) {
  * Creates a development and/or production build invoking `callback` for each.
  * The `callback` is invoked with one argument: (data).
  *
- * Note: For a list of commands see `HELP_TEXT` or run `lodash --help`.
+ * **Note:** For a list of commands see `HELP_TEXT` or run `lodash --help`.
  *
  * @param {Array|Object} [options=[]] An array of build commands or the state object.
  * @param {Function} [callback=defaultBuildCallback] The function called per build.
