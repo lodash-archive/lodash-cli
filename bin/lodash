@@ -969,9 +969,9 @@ function cleanupSource(source) {
  * @returns {string} Returns the modified source.
  */
 function commentFree(source, callback) {
-  var comments = [];
-
   source = toString(source);
+
+  var comments = [];
   source = callback(source.replace(reComment, function(match) {
     var index = comments.length;
     comments.push(match);
@@ -2081,9 +2081,9 @@ function setUseStrictOption(source, value) {
  * @returns {string} Returns the modified source.
  */
 function stringFree(source, callback) {
-  var strings = [];
-
   source = toString(source);
+
+  var strings = [];
   source = callback(source.replace(reString, function(match) {
     var index = strings.length;
     strings.push(match);
