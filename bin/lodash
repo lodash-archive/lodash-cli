@@ -2783,6 +2783,18 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        funcDepMap.size = ['isArrayLike', 'keys'];
+
+        source = replaceFunction(source, 'size', [
+          'function size(collection) {',
+          '  if (collection == null) {',
+          '    return 0;',
+          '  }',
+          '  collection = isArrayLike(collection) ? collection : keys(collection);',
+          '  return collection.length;',
+          '}'
+        ].join('\n'));
+
         funcDepMap.slice = ['baseSlice'];
 
         source = replaceFunction(source, 'slice', [
