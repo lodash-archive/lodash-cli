@@ -1696,11 +1696,12 @@ function removeGetIteratee(source, funcDepMap) {
   source = removeFunction(source, 'getIteratee');
 
   _.each([
-    'baseSortByOrder', 'createAggregator', 'dropRightWhile', 'dropWhile', 'every',
-    'filter', 'find', 'findIndex', 'findKey', 'findLast', 'findLastIndex', 'findLastKey',
-    'map', 'mapKeys', 'mapValues', 'maxBy', 'minBy', 'omitBy', 'pickBy', 'reduce',
-    'reduceRight', 'reject', 'remove', 'some', 'sortedIndexBy', 'sortedLastIndexBy',
-    'sortedUniqBy', 'sumBy', 'takeRightWhile', 'takeWhile', 'transform', 'uniqBy'
+    'baseSortByOrder', 'createAggregator', 'createInvoker', 'dropRightWhile',
+    'dropWhile', 'every', 'filter', 'find', 'findIndex', 'findKey', 'findLast',
+    'findLastIndex', 'findLastKey', 'map', 'mapKeys', 'mapValues', 'maxBy',
+    'minBy', 'omitBy', 'pickBy', 'reduce', 'reduceRight', 'reject', 'remove',
+    'some', 'sortedIndexBy', 'sortedLastIndexBy', 'sortedUniqBy', 'sumBy',
+    'takeRightWhile', 'takeWhile', 'transform', 'uniqBy'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'getIteratee');
