@@ -1178,7 +1178,7 @@ function getDependencies(identifier, depMap, isDeep, stack) {
  * @returns {string} Returns the formatted source.
  */
 function getFunctionSource(func, indent) {
-  var source = String(func.source || func),
+  var source = toString(func.source || func),
       srcIndent = getIndent(source),
       forceIndent = _.size(source.match(RegExp('^' + srcIndent + '}', 'gm'))) > 1;
 
