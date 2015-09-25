@@ -2545,6 +2545,13 @@ function build(options, callback) {
           return match.replace("'replace',", "$& 'reverse',");
         });
 
+        // Replace `baseAssign` with `assign` in `_.create`
+        _.pull(funcDepMap.create, 'baseAssign').push('assign');
+
+        source = source.replace(matchFunction(source, 'create'), function(match) {
+          return match.replace(/\bbaseAssign\b/, 'assign');
+        });
+
         // Replace `createWrapper` with `_.partial` in `_.wrap`.
         _.pull(funcDepMap.wrap, 'createWrapper').push('partial');
 
