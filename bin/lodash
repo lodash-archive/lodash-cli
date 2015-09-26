@@ -640,15 +640,23 @@ function buildModule(state, onComplete) {
     if (isNpm) {
       return;
     }
-    var depNames = _.transform(_.intersection(getNamesByCategory(category), identifiers), function(result, depName) {
-      if (!mapping.forceAlias[depName]) {
-        result.push(depName);
-      }
-      push.apply(result, getAliases(depName));
-    }).sort();
+    var deps = _.intersection(getNamesByCategory(category), identifiers);
 
-    var iife = [],
-        depPaths = getDepPaths(depNames);
+    var depData = _.sortBy(_.transform(deps, function(result, depName) {
+      var aliases = getAliases(depName),
+          forceAlias = mapping.forceAlias[depName],
+          dataName = forceAlias === undefined ? depName : forceAlias,
+          dataPath = _.includes(aliases, forceAlias) ? getDepPath(forceAlias) : getDepPath(depName).replace(/[^\/]+$/, dataName);
+
+      result.push({ 'name': dataName, 'path': dataPath });
+      push.apply(result, _.map(_.without(aliases, forceAlias), function(alias) {
+        return { 'name': alias, 'path': getDepPath(alias) }
+      }));
+    }), 'name');
+
+    var depNames = _.map(depData, 'name'),
+        depPaths = _.map(depData, 'path'),
+        iife = [];
 
     if (isAMD) {
       iife.push(

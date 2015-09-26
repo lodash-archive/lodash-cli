@@ -229,6 +229,7 @@ lodash.toArray = require('lodash.toarray');
 lodash.toInteger = require('lodash.tointeger');
 lodash.toPath = require('lodash.topath');
 lodash.toPlainObject = require('lodash.toplainobject');
+lodash.toString = require('lodash.tostring');
 lodash.transform = require('lodash.transform');
 lodash.trim = require('lodash.trim');
 lodash.trimLeft = require('lodash.trimleft');
