@@ -3010,13 +3010,6 @@ function build(options, callback) {
         });
       });
 
-      // Replace `sample` references in `lodash.prototype.sample` method with `collection.sample`.
-      source = source.replace(getMethodAssignments(source), function(match) {
-        return match.replace(/^( *)lodash\.prototype\.sample\s*=[\s\S]+?\n\1\}/m, function(match) {
-          return match.replace(/\bsample(?=\()/g, 'collection.sample');
-        });
-      });
-
       // Replace `lodash` use in `_.templateSettings.imports`.
       source = replace(source, matchProp(source, 'templateSettings'), function(match) {
         return match.replace(/(:\s*)lodash\b/, "$1{ 'escape': escape }");
