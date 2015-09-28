@@ -1562,7 +1562,7 @@ function removeChaining(source, chainDepMap, funcDepMap, objDepMap) {
   return source
     .replace(/^(?: *\/\/.*\n)*( *)[$\w]+\(\['join\b[\s\S]+?\n\1\}\);\n/m, '')
     .replace(/^(?: *\/\/.*\n)*( *)if\s*\(iteratorSymbol\)[\s\S]+?\n\1\}\n/gm, '')
-    .replace(/^(?: *\/\/.*\n)*( *)lodash\.prototype\.(?!constructor\b)[$\w]+\s*=\s*(?:function\([\s\S]+?\n\1\}|.+?);\n/gm, '');
+    .replace(/^(?: *\/\/.*\n)*( *)lodash\.prototype\.(?!constructor\b)[$\w]+\s*=[\s\S]+?;\n/gm, '');
 }
 
 /**
