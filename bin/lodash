@@ -3143,7 +3143,7 @@ function build(options, callback) {
   // Modify/remove references to removed functions/variables.
   if (!isTemplate) {
     // Remove prototype assignments.
-    _.each(['MapCache', 'SetCache'], function(funcName) {
+    _.each(['MapCache', 'SetCache', 'Stack'], function(funcName) {
       if (isExcluded(funcName)) {
         source = source.replace(RegExp('^(?: *\\/\\/.*\\n)* *' + funcName + '\\.prototype(?:\\.[$\\w]+|\\[\'[^\']+\'\\])\\s*=[^;]+;\\n', 'gm'), '');
       }
@@ -3151,6 +3151,10 @@ function build(options, callback) {
 
     if (isExcluded('baseKeysIn')) {
       source = removeBaseKeysInFork(source);
+    }
+    if (isExcluded('Hash')) {
+      // Remove `Hash.prototype` assignment.
+      source = source.replace(/^(?: *\/\/.*\n)* *Hash\.prototype(\.constructor)?\s*=[^;]+;\n/gm, '');
     }
     if (isExcluded('LazyWrapper')) {
       // Remove `LazyWrapper.prototype` assignment.
