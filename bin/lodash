@@ -1210,6 +1210,17 @@ function getFunctionSource(func, indent) {
 }
 
 /**
+ * Gets the `getTag` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to inspect.
+ * @returns {string} Returns the fork.
+ */
+function getGetTagFork(source) {
+  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(\(Map\s*&&[\s\S]+?\n\1  getTag\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
+}
+
+/**
  * Gets the copyright header of `source`.
  *
  * @private
@@ -1574,6 +1585,17 @@ function removeChaining(source, chainDepMap, funcDepMap, objDepMap) {
  */
 function removeComments(source) {
   return replace(source, reComment, '');
+}
+
+/**
+ * Removes the `getTag` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to process.
+ * @returns {string} Returns the modified source.
+ */
+function removeGetTagFork(source) {
+  return replace(source, getGetTagFork(source), '');
 }
 
 /**
@@ -3151,6 +3173,9 @@ function build(options, callback) {
 
     if (isExcluded('baseKeysIn')) {
       source = removeBaseKeysInFork(source);
+    }
+    if (isExcluded('getTag')) {
+      source = removeGetTagFork(source);
     }
     if (isExcluded('Hash')) {
       // Remove `Hash.prototype` assignment.
