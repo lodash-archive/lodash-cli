@@ -2554,18 +2554,6 @@ function build(options, callback) {
         });
 
         // Replace method implementations.
-        funcDepMap.copyArray = ['baseSlice'];
-
-        source = replaceFunction(source, 'copyArray', 'var copyArray = baseSlice;');
-
-        (function() {
-          var copyArray = matchFunction(source, 'copyArray', true);
-          source = removeFunction(source, 'copyArray');
-          source = replace(source, matchFunction(source, 'baseSlice'), function(match) {
-            return match + '\n' + copyArray;
-          });
-        }());
-
         funcDepMap.iteratee = ['baseIteratee'];
         source = replaceFunction(source, 'iteratee', 'var iteratee = baseIteratee;');
 
@@ -2669,6 +2657,18 @@ function build(options, callback) {
           '  return baseFilter(array, Boolean);',
           '}'
         ].join('\n'));
+
+        funcDepMap.copyArray = ['baseSlice'];
+
+        source = replaceFunction(source, 'copyArray', 'var copyArray = baseSlice;');
+
+        (function() {
+          var copyArray = matchFunction(source, 'copyArray', true);
+          source = removeFunction(source, 'copyArray');
+          source = replace(source, matchFunction(source, 'baseSlice'), function(match) {
+            return match + '\n' + copyArray;
+          });
+        }());
 
         funcDepMap.forEach = ['baseEach', 'toFunction'];
 
