@@ -2601,6 +2601,12 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        source = replaceFunction(source, 'baseHas', [
+          'function baseHas(object, key) {',
+          '  return object != null && hasOwnProperty.call(object, key);',
+          '}'
+        ].join('\n'));
+
         funcDepMap.baseIteratee = ['baseMatches', 'baseProperty', 'identity'];
 
         source = replaceFunction(source, 'baseIteratee', [
