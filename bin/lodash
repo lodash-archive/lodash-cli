@@ -1727,11 +1727,12 @@ function removeGetIteratee(source, funcDepMap) {
 
   _.each([
     'baseSortByOrder', 'createAggregator', 'createInvoker', 'createModArgs',
-    'dropRightWhile', 'dropWhile', 'every', 'filter', 'find', 'findIndex', 'findKey',
-    'findLast', 'findLastIndex', 'findLastKey', 'map', 'mapKeys', 'mapValues', 'maxBy',
-    'minBy', 'omitBy', 'pickBy', 'reduce', 'reduceRight', 'reject', 'remove', 'some',
+    'differenceBy', 'dropRightWhile', 'dropWhile', 'every', 'filter', 'find',
+    'findIndex', 'findKey', 'findLast', 'findLastIndex', 'findLastKey',
+    'intersectionBy', 'map', 'mapKeys', 'mapValues', 'maxBy', 'minBy', 'omitBy',
+    'pickBy', 'pullAllBy', 'reduce', 'reduceRight', 'reject', 'remove', 'some',
     'sortedIndexBy', 'sortedLastIndexBy', 'sortedUniqBy', 'sumBy', 'takeRightWhile',
-    'takeWhile', 'transform', 'uniqBy'
+    'takeWhile', 'transform', 'unionBy', 'uniqBy', 'xorBy'
   ], function(funcName) {
     var deps = _.result(funcDepMap, funcName, []);
     _.pull(deps, 'getIteratee');
@@ -1775,45 +1776,6 @@ function removeGetIteratee(source, funcDepMap) {
     });
     return match;
   });
-}
-
-/**
- * Removes all references to `getIndexOf from `source` and replaces calls
- * with `baseIndexOf`.
- *
- * @private
- * @param {string} source The source to process.
- * @param {Object} [funcDepMap] The function dependency map to modify.
- * @returns {string} Returns the modified source.
- */
-function removeGetIndexOf(source, funcDepMap) {
-  source = removeFunction(source, 'getIndexOf');
-
-  _.each([
-    'baseDifference', 'baseSortedUniqBy', 'baseUniqBy',
-    'includes', 'intersection', 'pull'
-  ], function(funcName) {
-    var deps = _.result(funcDepMap, funcName, []);
-    if (!_.includes(deps, 'getIndexOf')) {
-      return;
-    }
-    _.pull(deps, 'getIndexOf').push('baseIndexOf');
-
-    source = replace(source, matchFunction(source, funcName), function(match) {
-      match = replaceVar(match, 'indexOf', 'baseIndexOf');
-      return match
-        // Replace all `getIndexOf` calls with `baseIndexOf`.
-        .replace(/\bgetIndexOf\b(?:\(\))?/g, 'baseIndexOf')
-        // Remove "indexOf" comparisons.
-        .replace(/\bindexOf\s*===\s*baseIndexOf\b/, 'true');
-    });
-  });
-
-  source = replace(source, matchFunction(source, 'baseSortedUniqBy'), function(match) {
-    return match.replace(/\s*else\s+if\s*\(indexOf\b[\s\S]+?\}/, '');
-  });
-
-  return source;
 }
 
 /**
@@ -2906,7 +2868,6 @@ function build(options, callback) {
         });
       }
       if (isCore || isModularize) {
-        source = removeGetIndexOf(source, funcDepMap);
         source = removeGetIteratee(source, funcDepMap);
       }
       // Remove "_.matches" or "_.property" style callback support from `baseIteratee`.
