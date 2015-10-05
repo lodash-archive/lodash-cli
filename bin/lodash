@@ -2451,12 +2451,22 @@ function build(options, callback) {
         _.pull(chainDepMap.funcDep, 'baseLodash', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'wrapperCommit', 'wrapperNext', 'wrapperPlant', 'wrapperReverse', 'wrapperToIterator');
 
         // Remove map, set, and typed array support from `baseIsEqualDeep`.
-        _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isTypedArray', 'Stack');
+        _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isTypedArray', 'Stack').push('find', 'result');
 
         source = replace(source, matchFunction(source, 'baseIsEqualDeep'), function(match) {
           return match
             .replace(/\bgetTag\b/g, 'objToString.call')
-            .replace(/\s*else\s+if\s*\((?:obj|oth)Tag\b[\s\S]+?\}/g, '');
+            .replace(/\s*else\s+if\s*\((?:obj|oth)Tag\b[\s\S]+?\}/g, '')
+            .replace(/\bnew\s+Stack\b/, '[]')
+            .replace(/\bstack\.set\(object,\s*other\)/, 'stack.push([object, other])')
+            .replace(/\bstack\['delete'\]\(object\)/, 'stack.pop()')
+            .replace(/^( *)var\s+stacked\s*=\s*stack\.get\(object\)/m, function(match, indent) {
+              return indent + [
+                'var stacked = result(find(stack, function(entry) {',
+                '  return entry[0] === object;',
+                '}), 1)'
+              ].join('\n' + indent);
+            });
         });
 
         // Remove `baseLodash` references.
