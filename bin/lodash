@@ -2451,12 +2451,11 @@ function build(options, callback) {
         _.pull(chainDepMap.funcDep, 'baseLodash', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'wrapperCommit', 'wrapperNext', 'wrapperPlant', 'wrapperReverse', 'wrapperToIterator');
 
         // Remove map, set, and typed array support from `baseIsEqualDeep`.
-        _.pull(funcDepMap.baseIsEqualDeep, 'isMap', 'isSet', 'isTypedArray');
-        _.pull(varDepMap.baseIsEqualDeep, 'noMapSetTag');
+        _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isTypedArray', 'Stack');
 
         source = replace(source, matchFunction(source, 'baseIsEqualDeep'), function(match) {
           return match
-            .replace(/^( *)if\s*\(noMapSetTag\b[\s\S]+?\}\s*else\s*/gm, '$1')
+            .replace(/\bgetTag\b/g, 'objToString.call')
             .replace(/\s*else\s+if\s*\((?:obj|oth)Tag\b[\s\S]+?\}/g, '');
         });
 
