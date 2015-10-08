@@ -53,11 +53,9 @@ before_install:
   - "OUTPUT_PATH=\"./$EXPORTS\" && TARGET_PATH=\"../../../$EXPORTS/index.js\""
   - "[ $EXPORTS != 'amd' ] || TARGET_PATH=\"../../../amd/main.js\""
   - "[ $EXPORTS != 'amd' ] || (QUERY=\"build=$TARGET_PATH&loader=$LOADER&noglobals=true\" && TAGS=\"$LOADER,amd,development\")"
-  - "[ $EXPORTS != 'amd' ] || npm i chalk@\"^1.0.0\" ecstatic@\"0.8.0\" request@\"^2.0.0\" sauce-tunnel@\"2.2.3\""
   - "[ $EXPORTS != 'es' ]  || TARGET_PATH=\"../../../$EXPORTS/lodash.js\""
   - "[ $EXPORTS != 'npm' ] || OUTPUT_PATH=\"./npm/node_modules\""
   - "[ $TEST_BUILDS == true ]   || (npm i && node ./bin/lodash modularize exports=$EXPORTS -o $OUTPUT_PATH)"
-  - "[ $TRANSPILER != 'babel' ] || npm i -g babel@\"^5.0.0\""
   - "[ $TRANSPILER != 'babel' ] || babel ./$EXPORTS --out-dir ./$EXPORTS"
   - "[ $EXPORTS != 'npm' ] || (cd ./npm && cp ../test/npm/index.js ./index.js && cd ../)"
 script:

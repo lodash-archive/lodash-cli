@@ -26,8 +26,13 @@
     "uglify-js": "2.4.24"
   },
   "devDependencies": {
+    "babel": "^5.0.0",
+    "chalk": "^1.0.0",
+    "ecstatic": "0.8.0",
     "qunit-extras": "~1.4.0",
-    "qunitjs": "~1.19.0"
+    "qunitjs": "~1.19.0",
+    "request": "^2.0.0",
+    "sauce-tunnel": "2.2.3"
   },
   "files": [
     "npm-shrinkwrap.json",
