@@ -2553,7 +2553,16 @@ function build(options, callback) {
         _.pull(funcDepMap.create, 'baseAssign').push('assign');
 
         source = source.replace(matchFunction(source, 'create'), function(match) {
-          return match.replace(/\bbaseAssign\b/, 'assign');
+          return match.replace(/\bbaseAssign\b/g, 'assign');
+        });
+
+        // Replace `baseHas` with `hasOwnProperty`
+        _.each(['equalObjects', 'keys'], function(funcName) {
+          _.pull(funcDepMap[funcName], 'baseHas');
+
+          source = source.replace(matchFunction(source, funcName), function(match) {
+            return match.replace(/\bbaseHas\b/g, 'hasOwnProperty.call');
+          });
         });
 
         // Replace `createWrapper` with `_.partial` in `_.wrap`.
