@@ -3,14 +3,21 @@
   "version": "3.10.1",
   "dependencies": {
     "closure-compiler": {
-      "version": "0.2.7",
-      "from": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.7.tgz",
-      "resolved": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.7.tgz"
+      "version": "0.2.9",
+      "from": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.9.tgz",
+      "resolved": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.9.tgz",
+      "dependencies": {
+        "google-closure-compiler": {
+          "version": "20150901.0.0",
+          "from": "https://registry.npmjs.org/google-closure-compiler/-/google-closure-compiler-20150901.0.0.tgz",
+          "resolved": "https://registry.npmjs.org/google-closure-compiler/-/google-closure-compiler-20150901.0.0.tgz"
+        }
+      }
     },
     "glob": {
-      "version": "5.0.14",
-      "from": "https://registry.npmjs.org/glob/-/glob-5.0.14.tgz",
-      "resolved": "https://registry.npmjs.org/glob/-/glob-5.0.14.tgz",
+      "version": "5.0.15",
+      "from": "https://registry.npmjs.org/glob/-/glob-5.0.15.tgz",
+      "resolved": "https://registry.npmjs.org/glob/-/glob-5.0.15.tgz",
       "dependencies": {
         "inflight": {
           "version": "1.0.4",
@@ -30,14 +37,14 @@
           "resolved": "https://registry.npmjs.org/inherits/-/inherits-2.0.1.tgz"
         },
         "minimatch": {
-          "version": "2.0.10",
-          "from": "https://registry.npmjs.org/minimatch/-/minimatch-2.0.10.tgz",
-          "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-2.0.10.tgz",
+          "version": "3.0.0",
+          "from": "https://registry.npmjs.org/minimatch/-/minimatch-3.0.0.tgz",
+          "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-3.0.0.tgz",
           "dependencies": {
             "brace-expansion": {
-              "version": "1.1.0",
-              "from": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.0.tgz",
-              "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.0.tgz",
+              "version": "1.1.1",
+              "from": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.1.tgz",
+              "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.1.tgz",
               "dependencies": {
                 "balanced-match": {
                   "version": "0.2.0",
@@ -76,9 +83,9 @@
       "version": "4.0.0"
     },
     "semver": {
-      "version": "5.0.1",
-      "from": "https://registry.npmjs.org/semver/-/semver-5.0.1.tgz",
-      "resolved": "https://registry.npmjs.org/semver/-/semver-5.0.1.tgz"
+      "version": "5.0.3",
+      "from": "https://registry.npmjs.org/semver/-/semver-5.0.3.tgz",
+      "resolved": "https://registry.npmjs.org/semver/-/semver-5.0.3.tgz"
     },
     "uglify-js": {
       "version": "2.4.24",
@@ -113,9 +120,9 @@
           "resolved": "https://registry.npmjs.org/yargs/-/yargs-3.5.4.tgz",
           "dependencies": {
             "camelcase": {
-              "version": "1.1.0",
-              "from": "https://registry.npmjs.org/camelcase/-/camelcase-1.1.0.tgz",
-              "resolved": "https://registry.npmjs.org/camelcase/-/camelcase-1.1.0.tgz"
+              "version": "1.2.1",
+              "from": "https://registry.npmjs.org/camelcase/-/camelcase-1.2.1.tgz",
+              "resolved": "https://registry.npmjs.org/camelcase/-/camelcase-1.2.1.tgz"
             },
             "decamelize": {
               "version": "1.0.0",
