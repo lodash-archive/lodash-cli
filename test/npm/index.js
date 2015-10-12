@@ -200,6 +200,7 @@ lodash.repeat = require('lodash.repeat');
 lodash.rest = require('lodash.rest');
 lodash.restParam = require('lodash.restparam');
 lodash.result = require('lodash.result');
+lodash.reverse = require('lodash.reverse');
 lodash.round = require('lodash.round');
 lodash.sample = require('lodash.sample');
 lodash.sampleSize = require('lodash.samplesize');
