@@ -1345,7 +1345,7 @@ function getVars(source) {
       indentB = isDeep ? ' {6,8}' : ' {6}',
       result = [];
 
-  var reAttempts = [
+  var patterns = [
     // Match a varaible at the start of a declaration list.
     ['^(' + indentA + 'var\\s+)([$\\w]+)\\s*=.+?,\\n *', 2, 1],
     // Match a variable declaration in a declaration list.
@@ -1363,7 +1363,7 @@ function getVars(source) {
     });
   });
 
-  return _.uniq(_.transform(reAttempts, function(result, data) {
+  return _.uniq(_.transform(patterns, function(result, data) {
     source = source.replace(RegExp(data[0], 'gm'), function() {
       result.push(arguments[data[1]]);
       return data[2] > -1 ? arguments[data[2]] : '';
@@ -1427,7 +1427,7 @@ function isVarUsed(source, varName) {
 function matchFunction(source, funcName, leadingComments) {
   var escapedName = _.escapeRegExp(funcName);
 
-  var reAttempts = [
+  var patterns = [
     // Match a function declaration.
     '( *)function\\s+' + escapedName + '\\((?:\\)\\s*\\{\\s*|[\\s\\S]+?\\n\\3)\\}\\n',
     // Match a simple variable declaration.
@@ -1440,12 +1440,12 @@ function matchFunction(source, funcName, leadingComments) {
     '( *)var\\s+' + escapedName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n'
   ];
 
-  return _.reduce(reAttempts, function(result, reSource) {
-    if (result) {
-      return result;
+  return _.reduce(patterns, function(result, pattern) {
+    if (!result) {
+      result = RegExp('^(' + rsComment + ')(' + pattern + ')', 'm').exec(source),
+      result = isFunctionSnippet(result) ? _.result(result, leadingComments ? 0 : 2, '') : '';
     }
-    result = RegExp('^(' + rsComment + ')(' + reSource + ')', 'm').exec(source);
-    return (result && isFunctionSnippet(result)) ? result[leadingComments ? 0 : 2] : '';
+    return result;
   }, '');
 }
 
@@ -1483,7 +1483,7 @@ function matchProp(source, propName, leadingComments) {
 function matchVar(source, varName, leadingComments) {
   var escapedName = _.escapeRegExp(varName);
 
-  var reAttempts = [
+  var patterns = [
     // Match a varaible at the start of a declaration list.
     ['^( *var\\s+)(' + escapedName + '\\s*=.+?,\\n *)', 2, 2],
     // Match a variable declaration in a declaration list.
@@ -1494,9 +1494,9 @@ function matchVar(source, varName, leadingComments) {
 
   // Match complex variable assignments.
   if (_.includes(listing.complexVars, varName)) {
-    reAttempts.splice(2, 0, ['^(' + rsComment + ')(( *)var\\s+' + escapedName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]);
+    patterns.splice(2, 0, ['^(' + rsComment + ')(( *)var\\s+' + escapedName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]);
   }
-  return _.reduce(reAttempts, function(result, data) {
+  return _.reduce(patterns, function(result, data) {
     return result || _.result(RegExp(data[0], 'm').exec(source), data[leadingComments ? 2 : 1], '');
   }, '');
 }
@@ -1523,14 +1523,11 @@ function optionToArray(name, string) {
  */
 function optionToValue(name, string) {
   var result = RegExp('^' + _.escapeRegExp(name) + '(?:=([\\s\\S]+))?$').exec(string);
-
   if (result) {
     result = _.result(result, 1);
     result = result ? _.trim(result) : true;
   }
-  return (result === 'false')
-    ? false
-    : (result || undefined);
+  return (result !== 'false') && (result || undefined);
 }
 
 /**
@@ -1813,7 +1810,7 @@ function removeLicenseTag(source) {
  */
 function removeMethodAssignment(source, methodName) {
   return replace(source, getMethodAssignments(source), function(match) {
-    var reAssignment = RegExp(
+    var pattern = RegExp(
       '^( *//.*\\n)*( *)' +
       '(?:lodash(?:\\.prototype)?\\.[$\\w]+\\s*=\\s*)*' +
       'lodash(?:\\.prototype)?\\.' +
@@ -1821,8 +1818,8 @@ function removeMethodAssignment(source, methodName) {
       '\\n(\\n)?'
     , 'gm');
 
-    return match.replace(reAssignment, function(match, comment, indent, newline) {
-      return (!newline && comment) || newline || '';
+    return match.replace(pattern, function(match, comment, indent, newline) {
+      return newline || comment || '';
     });
   });
 }
@@ -1963,7 +1960,7 @@ function replaceFunction(source, funcName, funcValue) {
 
   return replace(source, matchFunction(source, funcName, checkFuncTag), function(match) {
     var header = checkFuncTag ? getHeader(match) : '';
-    if (header && !isFunctionSnippet(match)) {
+    if (!isFunctionSnippet(match)) {
       header = header.replace(/^( *)\* *(?:@(?:category|param|returns)\b|\/)/m, function(match, indent) {
         return indent + '* @type Function\n' + match;
       });
