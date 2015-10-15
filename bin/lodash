@@ -1432,8 +1432,10 @@ function matchFunction(source, funcName, leadingComments) {
     '( *)function\\s+' + escapedName + '\\((?:\\)\\s*\\{\\s*|[\\s\\S]+?\\n\\3)\\}\\n',
     // Match a simple variable declaration.
     ' *var\\s+' + escapedName + '\\s*=.+?;\\n',
+    // Match variable declarations using `_.rest`.
+    '( *)var\\s+' + escapedName + '\\s*=\\s*rest\\((?:.+|[\\s\\S]+?\\n\\3\\})\\);\\n',
     // Match variable declarations using creator functions.
-    '( *)var\\s+' + escapedName + '\\s*=.*?(?:create|rest)(?:[A-Z][a-z]+)+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
+    '( *)var\\s+' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
     // Match a variable declaration with function expression.
     '( *)var\\s+' + escapedName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n'
   ];
@@ -1650,7 +1652,7 @@ function removeLazyChaining(source, chainDepMap, funcDepMap, objDepMap) {
   ].join('\n'));
 
   // Remove bulk `LazyWrapper.prototype` assignments.
-  source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|first|initial)\b[\s\S]+?\n\1\}\);\n/gm, '');
+  source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|head|initial)\b[\s\S]+?\n\1\}\);\n/gm, '');
 
   // Remove individual `LazyWrapper` method assignments.
   source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:compact|find|findLast|reject|slice|takeRightWhile|toArray)\s*=[\s\S]+?\n\1\};\n/gm, '');
@@ -2498,8 +2500,8 @@ function build(options, callback) {
           });
         });
 
-        // Remove switch statements from `createCtorWrapper` and `_.restParam`.
-        _.each(['createCtorWrapper', 'restParam'], function(funcName) {
+        // Remove switch statements from `createCtorWrapper` and `_.rest`.
+        _.each(['createCtorWrapper', 'rest'], function(funcName) {
           source = replace(source, matchFunction(source, funcName), function(match) {
             return match.replace(/^(?: *\/\/.*\n)*( *)switch\b[\s\S]+?\n\1\}\n/m, '');
           });
@@ -2650,10 +2652,10 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.bind = ['createPartialWrapper', 'restParam'];
+        funcDepMap.bind = ['createPartialWrapper', 'rest'];
 
         source = replaceFunction(source, 'bind', [
-          'var bind = restParam(function(func, thisArg, partials) {',
+          'var bind = rest(function(func, thisArg, partials) {',
           '  return createPartialWrapper(func, BIND_FLAG | PARTIAL_FLAG, thisArg, partials);',
           '});'
         ].join('\n'));
@@ -2753,10 +2755,10 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.invoke = ['baseMap', 'restParam'];
+        funcDepMap.invoke = ['baseMap', 'rest'];
 
         source = replaceFunction(source, 'invoke', [
-          'var invoke = restParam(function(collection, path, args) {',
+          'var invoke = rest(function(collection, path, args) {',
           "  var isFunc = typeof path == 'function';",
           '  return baseMap(collection, function(value) {',
           '    var func = isFunc ? path : value[path];',
@@ -2781,10 +2783,10 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.partial = ['createPartialWrapper', 'restParam'];
+        funcDepMap.partial = ['createPartialWrapper', 'rest'];
 
         source = replaceFunction(source, 'partial', [
-          'var partial = restParam(function(func, partials) {',
+          'var partial = rest(function(func, partials) {',
           '  return createPartialWrapper(func, PARTIAL_FLAG, undefined, partials);',
           '});'
         ].join('\n'));
