@@ -779,7 +779,7 @@ function buildTemplate(state) {
     '  var root = freeGlobal || ((freeWindow !== (thisGlobal && thisGlobal.window)) && freeWindow) || freeSelf || thisGlobal;',
     '',
     '  function checkGlobal(value) {',
-    '    return (objectTypes[typeof value] && value && value.Object) ? value : null;',
+    '    return (value && value.Object === Object) ? value : null;',
     '  }',
     ''
   ];
