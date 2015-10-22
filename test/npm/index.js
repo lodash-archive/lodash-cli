@@ -42,6 +42,7 @@ lodash.camelCase = require('lodash.camelcase');
 lodash.capitalize = require('lodash.capitalize');
 lodash.ceil = require('lodash.ceil');
 lodash.chunk = require('lodash.chunk');
+lodash.clamp = require('lodash.clamp');
 lodash.clone = require('lodash.clone');
 lodash.cloneDeep = require('lodash.clonedeep');
 lodash.cloneDeepWith = require('lodash.clonedeepwith');
