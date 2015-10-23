@@ -240,6 +240,7 @@ lodash.toInteger = require('lodash.tointeger');
 lodash.toLower = require('lodash.tolower');
 lodash.toPath = require('lodash.topath');
 lodash.toPlainObject = require('lodash.toplainobject');
+lodash.toSafeInteger = require('lodash.tosafeinteger');
 lodash.toString = require('lodash.tostring');
 lodash.toUpper = require('lodash.toupper');
 lodash.transform = require('lodash.transform');
