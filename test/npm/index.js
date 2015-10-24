@@ -173,6 +173,7 @@ lodash.modArgsSet = require('lodash.modargsset');
 lodash.negate = require('lodash.negate');
 lodash.noop = require('lodash.noop');
 lodash.now = require('lodash.now');
+lodash.nthArg = require('lodash.ntharg');
 lodash.omit = require('lodash.omit');
 lodash.omitBy = require('lodash.omitby');
 lodash.once = require('lodash.once');
