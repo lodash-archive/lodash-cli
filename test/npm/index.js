@@ -48,6 +48,7 @@ lodash.cloneDeep = require('lodash.clonedeep');
 lodash.cloneDeepWith = require('lodash.clonedeepwith');
 lodash.cloneWith = require('lodash.clonewith');
 lodash.compact = require('lodash.compact');
+lodash.conforms = require('lodash.conforms');
 lodash.conj = require('lodash.conj');
 lodash.constant = require('lodash.constant');
 lodash.countBy = require('lodash.countby');
