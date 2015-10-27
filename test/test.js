@@ -265,7 +265,7 @@ function testMethod(assert, lodash, methodName, message) {
       }
     }
   }
-  catch(e) {
+  catch (e) {
     console.log(e);
     pass = false;
   }
@@ -945,7 +945,7 @@ QUnit.module('strict modifier');
           var pass = !index;
           try {
             fn();
-          } catch(e) {
+          } catch (e) {
             pass = !!index;
           }
           return pass;
@@ -1166,7 +1166,7 @@ QUnit.module('iife command');
 
         try {
           vm.runInContext(data.source, context);
-        } catch(e) {
+        } catch (e) {
           console.log(e);
         }
         var lodash = context.lodash || {};
@@ -1404,7 +1404,7 @@ QUnit.module('lodash build');
 
         try {
           vm.runInContext(data.source, context);
-        } catch(e) {
+        } catch (e) {
           console.log(e);
         }
         // Add function names explicitly.
