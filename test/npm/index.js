@@ -31,6 +31,8 @@ lodash.add = require('lodash.add');
 lodash.after = require('lodash.after');
 lodash.ary = require('lodash.ary');
 lodash.assign = require('lodash.assign');
+lodash.assignIn = require('lodash.assignin');
+lodash.assignInWith = require('lodash.assigninwith');
 lodash.assignWith = require('lodash.assignwith');
 lodash.at = require('lodash.at');
 lodash.attempt = require('lodash.attempt');
@@ -73,8 +75,6 @@ lodash.eq = require('lodash.eq');
 lodash.escape = require('lodash.escape');
 lodash.escapeRegExp = require('lodash.escaperegexp');
 lodash.every = require('lodash.every');
-lodash.extend = require('lodash.extend');
-lodash.extendWith = require('lodash.extendwith');
 lodash.fill = require('lodash.fill');
 lodash.filter = require('lodash.filter');
 lodash.find = require('lodash.find');
@@ -277,6 +277,8 @@ lodash.zipObject = require('lodash.zipobject');
 // Add aliases.
 lodash.each = lodash.forEach;
 lodash.eachRight = lodash.forEachRight;
+lodash.extend = lodash.assignIn;
+lodash.extendWith = lodash.assignInWith;
 lodash.first = lodash.head;
 
 // Add other properties.
