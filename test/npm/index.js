@@ -246,6 +246,7 @@ lodash.toArray = require('lodash.toarray');
 lodash.toInteger = require('lodash.tointeger');
 lodash.toLength = require('lodash.tolength');
 lodash.toLower = require('lodash.tolower');
+lodash.toNumber = require('lodash.tonumber');
 lodash.toPath = require('lodash.topath');
 lodash.toPlainObject = require('lodash.toplainobject');
 lodash.toSafeInteger = require('lodash.tosafeinteger');
