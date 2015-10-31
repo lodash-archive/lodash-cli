@@ -1,7 +1,7 @@
 language: node_js
 sudo: false
 node_js:
-  - "4"
+  - "5"
 env:
   global:
     - BIN="node" EXPORTS="commonjs" NPM_VERSION="^2.0.0"
@@ -30,10 +30,14 @@ matrix:
     - node_js: "0.12"
       env: EXPORTS="npm"
     - node_js: "4"
+      env:
+    - node_js: "4"
+      env: EXPORTS="npm"
+    - node_js: "5"
       env: EXPORTS="amd"
-    - node_js: "4"
+    - node_js: "5"
       env: EXPORTS="amd" LOADER="curl"
-    - node_js: "4"
+    - node_js: "5"
       env: EXPORTS="amd" LOADER="dojo"
 git:
   depth: 10
