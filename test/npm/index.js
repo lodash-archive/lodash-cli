@@ -257,6 +257,7 @@ lodash.trim = require('lodash.trim');
 lodash.trimLeft = require('lodash.trimleft');
 lodash.trimRight = require('lodash.trimright');
 lodash.truncate = require('lodash.truncate');
+lodash.unary = require('lodash.unary');
 lodash.unescape = require('lodash.unescape');
 lodash.union = require('lodash.union');
 lodash.unionBy = require('lodash.unionby');
