@@ -179,11 +179,9 @@ function testMethod(assert, lodash, methodName, message) {
 
   try {
     if (_.includes(mapping.category.Array, methodName)) {
-      if (methodName == 'range') {
-        func(2, 4);
-      } else if (/^(?:difference|intersection|union|uniq|zip(?:Object)?)$/.test(methodName)) {
-        func(array, array);
-      } else if (/^(?:indexOf|lastIndexOf|sortedIndex|sortedLastIndex|without)$/.test(methodName)) {
+      if (/^(?:difference|intersection|union|uniq|xor|zip(?:Object)?)$/.test(methodName)) {
+        func(array);
+      } else if (/^(?:indexOf|lastIndexOf|sorted(?:Last)?Index|without)$/.test(methodName)) {
         func(array, string);
       } else {
         func(array);
@@ -198,11 +196,8 @@ function testMethod(assert, lodash, methodName, message) {
         func(object, 'a', 'c');
       } else if (methodName == 'invoke') {
         func(array, 'slice');
-        func(object, 'toFixed');
-      } else if (methodName == 'where') {
-        func(array, object);
-        func(object, object);
-      } else if (/^(?:count|group|sort)By$/.test(methodName)) {
+        func(object, 'constructor');
+      } else if (/^(?:count|group|key|sort)By$/.test(methodName)) {
         func(array, _.noop);
         func(array, string);
         func(object, _.noop);
@@ -219,15 +214,15 @@ function testMethod(assert, lodash, methodName, message) {
       if (methodName == 'bindAll') {
         func({ 'noop': _.noop });
       } else if (methodName == 'bindKey') {
-        func(lodash, 'identity', array, string);
+        func(lodash, 'identity');
       } else if (/^(?:after|before)$/.test(methodName)) {
         func(2, _.noop);
       } else if (/^(?:bind|partial(?:Right)?)$/.test(methodName)) {
-        func(_.noop, object, array, string);
-      } else if (/^(?:compose|memoize|wrap)$/.test(methodName)) {
-        func(_.noop, _.noop);
+        func(_.noop, object, 'a', 'c');
       } else if (/^(?:debounce|throttle)$/.test(methodName)) {
         func(_.noop, 100);
+      } else if (/^(?:memoize|wrap)$/.test(methodName)) {
+        func(_.noop, _.noop)();
       } else {
         func(_.noop);
       }
@@ -238,10 +233,12 @@ function testMethod(assert, lodash, methodName, message) {
         func(object, true);
       } else if (methodName == 'has') {
         func(object, string);
-      } else if (/^(?:assign|defaults|extend|merge)$/.test(methodName)) {
+      } else if (/^(?:assign(?:In)?|defaults|extend|merge)$/.test(methodName)) {
         func({}, object);
       } else if (/^for(?:In|Own)(?:Right)?$/.test(methodName)) {
         func(object, _.noop);
+      } else if (/^(?:get|result)$/.test(methodName)) {
+        func(object, 'b');
       } else if (/^(?:omit|pick)$/.test(methodName)) {
         func(object, 'b');
       } else {
@@ -249,10 +246,12 @@ function testMethod(assert, lodash, methodName, message) {
       }
     }
     else if (_.includes(mapping.category.Utility, methodName)) {
-      if (methodName == 'mixin') {
+      if (/^flow(?:Right)?$/.test(methodName)) {
+        func(_.noop, _.noop)();
+      } else if (methodName == 'mixin') {
         func({});
-      } else if (methodName == 'result') {
-        func(object, 'b');
+      } else if (methodName == 'range') {
+        func(2, 4);
       } else if (methodName == 'runInContext') {
         func();
       } else if (methodName == 'template') {
