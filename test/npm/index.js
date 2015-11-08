@@ -232,6 +232,7 @@ lodash.sortedUniqBy = require('lodash.sorteduniqby');
 lodash.spread = require('lodash.spread');
 lodash.startCase = require('lodash.startcase');
 lodash.startsWith = require('lodash.startswith');
+lodash.subtract = require('lodash.subtract');
 lodash.sum = require('lodash.sum');
 lodash.sumBy = require('lodash.sumby');
 lodash.tail = require('lodash.tail');
