@@ -55,7 +55,7 @@ before_install:
   - "[ $EXPORTS != 'es' ]  || TARGET_PATH=\"../../../$EXPORTS/lodash.js\""
   - "[ $EXPORTS != 'npm' ] || OUTPUT_PATH=\"./npm/node_modules\""
   - "[ $TEST_BUILDS == true ]   || (npm i && node ./bin/lodash modularize exports=$EXPORTS -o $OUTPUT_PATH)"
-  - "[ $TRANSPILER != 'babel' ] || babel ./$EXPORTS --out-dir ./$EXPORTS"
+  - "[ $TRANSPILER != 'babel' ] || babel ./$EXPORTS --presets es2015 --out-dir ./$EXPORTS"
   - "[ $EXPORTS != 'npm' ] || (cd ./npm && cp ../test/npm/index.js ./index.js && cd ../)"
 script:
   - "[ $EXPORTS != 'amd' ] || node $SAUCE_PATH name=\"lodash tests\"     runner=\"$RUNNER_PATH/index.html?$QUERY\"      tags=\"$TAGS\""
