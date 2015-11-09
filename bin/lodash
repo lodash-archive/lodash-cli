@@ -1693,7 +1693,7 @@ function removeMetadata(source, funcDepMap) {
   var deps = _.result(funcDepMap, 'createWrapper', []);
   _.pull(deps, 'baseSetData', 'getData', 'mergeData', 'setData');
 
-  deps = _.result(funcDepMap, 'createHybridWrapper', []);
+  deps = _.result(funcDepMap, 'createRecurryWrapper', []);
   _.pull(deps, 'isLaziable', 'setData');
 
   // Remove metadata related code.
@@ -1704,9 +1704,9 @@ function removeMetadata(source, funcDepMap) {
       .replace(/^( *return\s+)setter\(([^,]+),[^)]+\)/m, '$1$2');
   });
 
-  source = replace(source, matchFunction(source, 'createHybridWrapper'), function(match) {
+  source = replace(source, matchFunction(source, 'createRecurryWrapper'), function(match) {
     match = removeVar(match, 'newData');
-    match = replaceVar(match, 'result', 'createHybridWrapper(func, bitmask, thisArg, newPartials, newsHolders, newPartialsRight, newHoldersRight, newArgPos, ary, newArity)');
+    match = replaceVar(match, 'result', 'wrapperFunc(func, bitmask, thisArg, newPartials, newsHolders, newPartialsRight, newHoldersRight, newArgPos, ary, arity)');
     return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(isLaziable\b[\s\S]+?\n\1\}\n/m, '');
   });
 
