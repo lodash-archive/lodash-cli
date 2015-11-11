@@ -2882,6 +2882,9 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        funcDepMap.toNumber = [];
+        source = replaceFunction(source, 'toNumber', 'var toNumber = Number;');
+
         funcDepMap.wrapperClone = ['copyArray', 'LodashWrapper'];
 
         source = replaceFunction(source, 'wrapperClone', [
