@@ -2589,11 +2589,11 @@ function build(options, callback) {
         });
 
         // Replace method implementations.
-        funcDepMap.iteratee = ['baseIteratee'];
-        source = replaceFunction(source, 'iteratee', 'var iteratee = baseIteratee;');
-
-        funcDepMap.property = ['baseProperty'];
-        source = replaceFunction(source, 'property', 'var property = baseProperty;');
+        source = replaceFunction(source, 'apply', [
+          'function apply(func, thisArg, args) {',
+          '  return func.apply(thisArg, args);',
+          '}'
+        ].join('\n'));
 
         funcDepMap.arrayConcat = ['arrayPush', 'copyArray'];
 
@@ -2781,6 +2781,9 @@ function build(options, callback) {
           '});'
         ].join('\n'));
 
+        funcDepMap.iteratee = ['baseIteratee'];
+        source = replaceFunction(source, 'iteratee', 'var iteratee = baseIteratee;');
+
         funcDepMap.map = ['baseMap', 'baseIteratee'];
 
         source = replaceFunction(source, 'map', [
@@ -2804,6 +2807,9 @@ function build(options, callback) {
           '  return createPartialWrapper(func, PARTIAL_FLAG, undefined, partials);',
           '});'
         ].join('\n'));
+
+        funcDepMap.property = ['baseProperty'];
+        source = replaceFunction(source, 'property', 'var property = baseProperty;');
 
         funcDepMap.reduce = ['baseEach', 'baseIteratee', 'baseReduce'];
 
@@ -2882,8 +2888,17 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        funcDepMap.toInteger = [];
+        source = replaceFunction(source, 'toInteger', 'var toInteger = Number;');
+
         funcDepMap.toNumber = [];
         source = replaceFunction(source, 'toNumber', 'var toNumber = Number;');
+
+        source = replaceFunction(source, 'toString', [
+          'function toString(value) {',
+          "  return value == null ? '' : (value + '');",
+          '}'
+        ].join('\n'));
 
         funcDepMap.wrapperClone = ['copyArray', 'LodashWrapper'];
 
