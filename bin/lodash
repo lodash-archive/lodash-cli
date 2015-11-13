@@ -2467,7 +2467,7 @@ function build(options, callback) {
         _.pull(chainDepMap.funcDep, 'baseLodash', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'wrapperCommit', 'wrapperNext', 'wrapperPlant', 'wrapperReverse', 'wrapperToIterator');
 
         // Remove map, set, and typed array support from `baseIsEqualDeep`.
-        _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isTypedArray', 'Stack').push('find', 'result');
+        _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isTypedArray', 'Stack').push('find');
 
         source = replace(source, matchFunction(source, 'baseIsEqualDeep'), function(match) {
           return match
@@ -2478,9 +2478,10 @@ function build(options, callback) {
             .replace(/\bstack\['delete'\]\(object\)/, 'stack.pop()')
             .replace(/^( *)var\s+stacked\s*=\s*stack\.get\(object\)/m, function(match, indent) {
               return indent + [
-                'var stacked = result(find(stack, function(entry) {',
+                'var stacked = find(stack, function(entry) {',
                 '  return entry[0] === object;',
-                '}), 1)'
+                '});',
+                'stacked = stacked && stacked[1]'
               ].join('\n' + indent);
             });
         });
@@ -2541,8 +2542,11 @@ function build(options, callback) {
 
         // Replace array functions with their base counterparts.
         _.each(['arrayEach', 'arrayFilter', 'arrayMap', 'arraySome', 'arrayReduce'], function(arrayName) {
-          var baseName = arrayName.replace(/^array/, 'base'),
-              reArrayName = RegExp('\\b' + arrayName + '\\b', 'g');
+          var reArrayName = RegExp('\\b' + arrayName + '\\b', 'g');
+
+          var baseName = arrayName == 'arrayReduce'
+            ? arrayName.replace(/^array/, '').toLowerCase()
+            : arrayName.replace(/^array/, 'base');
 
           _.forOwn(funcDepMap, function(deps, funcName) {
             if (_.includes(deps, arrayName)) {
