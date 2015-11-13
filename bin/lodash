@@ -2467,7 +2467,7 @@ function build(options, callback) {
         _.pull(chainDepMap.funcDep, 'baseLodash', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'wrapperAt', 'wrapperCommit', 'wrapperNext', 'wrapperPlant', 'wrapperReverse', 'wrapperToIterator');
 
         // Remove map, set, and typed array support from `baseIsEqualDeep`.
-        _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isTypedArray', 'Stack').push('find', 'result');
+        _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isTypedArray', 'Stack').push('find');
 
         source = replace(source, matchFunction(source, 'baseIsEqualDeep'), function(match) {
           return match
@@ -2478,9 +2478,10 @@ function build(options, callback) {
             .replace(/\bstack\['delete'\]\(object\)/, 'stack.pop()')
             .replace(/^( *)var\s+stacked\s*=\s*stack\.get\(object\)/m, function(match, indent) {
               return indent + [
-                'var stacked = result(find(stack, function(entry) {',
+                'var stacked = find(stack, function(entry) {',
                 '  return entry[0] === object;',
-                '}), 1)'
+                '});',
+                'stacked = stacked && stacked[1]'
               ].join('\n' + indent);
             });
         });
@@ -2510,7 +2511,7 @@ function build(options, callback) {
         // Remove `customizer` use from `equalArrays` and `equalObjects`.
         _.each(['equalArrays', 'equalObjects'], function(funcName) {
           source = replace(source, matchFunction(source, funcName), function(match) {
-            return match.replace(/^( *)if\s*\(customizer\b[\s\S]+?\n\1}\n/m, '');
+            return match.replace(/^( *)if\s*\(customizer\b[\s\S]+?\n\1}/m, '$1var result;');
           });
         });
 
@@ -2541,8 +2542,11 @@ function build(options, callback) {
 
         // Replace array functions with their base counterparts.
         _.each(['arrayEach', 'arrayFilter', 'arrayMap', 'arraySome', 'arrayReduce'], function(arrayName) {
-          var baseName = arrayName.replace(/^array/, 'base'),
-              reArrayName = RegExp('\\b' + arrayName + '\\b', 'g');
+          var reArrayName = RegExp('\\b' + arrayName + '\\b', 'g');
+
+          var baseName = arrayName == 'arrayReduce'
+            ? arrayName.replace(/^array/, '').toLowerCase()
+            : arrayName.replace(/^array/, 'base');
 
           _.forOwn(funcDepMap, function(deps, funcName) {
             if (_.includes(deps, arrayName)) {
@@ -2561,8 +2565,10 @@ function build(options, callback) {
         });
 
         source = source.replace(/^(?: *\/\/.*\n)*( *)[$\w]+\(\['pop'[\s\S]+?\n\1\}\);\n/m, function(match) {
-          match = match.replace(/\barrayEach\b/g, 'baseEach');
-          return match.replace("'pop',", "$& 'join', 'reverse',");
+          return match
+            .replace(/\barrayEach\b/g, 'baseEach')
+            .replace("'pop',", "$& 'join', 'reverse',")
+            .replace(/\bpop\|/, '$&join|');
         });
 
         // Replace `baseAssign` with `assign` in `_.create`
