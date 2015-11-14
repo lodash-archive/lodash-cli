@@ -1626,7 +1626,7 @@ function removeGetTagFork(source) {
  */
 function removeLazyChaining(source, chainDepMap, funcDepMap, objDepMap) {
   if (chainDepMap) {
-    _.pull(chainDepMap.funcDep, 'createHybridWrapper', 'getIteratee', 'identity', 'isArray', 'last', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'toInteger');
+    _.pull(chainDepMap.funcDep, 'createHybridWrapper', 'getIteratee', 'identity', 'isArray', 'last', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'toInteger', 'wrapperAt', 'wrapperReverse');
     _.pull(chainDepMap.objDep, 'realNames');
   }
   if (funcDepMap) {
@@ -1669,7 +1669,7 @@ function removeLazyChaining(source, chainDepMap, funcDepMap, objDepMap) {
   source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|head|initial)\b[\s\S]+?\n\1\}\);\n/gm, '');
 
   // Remove individual `LazyWrapper` method assignments.
-  source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:compact|find|findLast|reject|slice|takeRightWhile|toArray)\s*=[\s\S]+?\n\1\};\n/gm, '');
+  source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:compact|find|findLast|reject|slice|takeRightWhile|toArray)\s*=[\s\S]+?\n\1\}.*?;\n/gm, '');
 
   // Remove other `LazyWrapper.prototype` assignments.
   source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.(?!constructor\b)[$\w]+\s*=[^;]+;\n/gm, '');
@@ -2464,7 +2464,7 @@ function build(options, callback) {
         });
 
         // Remove chain dependencies.
-        _.pull(chainDepMap.funcDep, 'baseLodash', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'wrapperCommit', 'wrapperNext', 'wrapperPlant', 'wrapperReverse', 'wrapperToIterator');
+        _.pull(chainDepMap.funcDep, 'baseLodash', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'wrapperAt', 'wrapperCommit', 'wrapperNext', 'wrapperPlant', 'wrapperReverse', 'wrapperToIterator');
 
         // Remove map, set, and typed array support from `baseIsEqualDeep`.
         _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isTypedArray', 'Stack').push('find');
