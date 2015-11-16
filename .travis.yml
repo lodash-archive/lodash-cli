@@ -14,6 +14,9 @@ env:
     - EXPORTS="es"  TRANSPILER="babel"
     - EXPORTS="node"
     - EXPORTS="npm"
+    - EXPORTS="amd"
+    - EXPORTS="amd" LOADER="curl"
+    - EXPORTS="amd" LOADER="dojo"
     - TEST_BUILDS=true
 matrix:
   include:
@@ -33,12 +36,6 @@ matrix:
       env:
     - node_js: "4"
       env: EXPORTS="npm"
-    - node_js: "5"
-      env: EXPORTS="amd"
-    - node_js: "5"
-      env: EXPORTS="amd" LOADER="curl"
-    - node_js: "5"
-      env: EXPORTS="amd" LOADER="dojo"
 git:
   depth: 10
 branches:
