@@ -1587,7 +1587,7 @@ function removeChaining(source, chainDepMap, funcDepMap, objDepMap) {
 
   // Remove all `lodash.prototype` additions.
   return source
-    .replace(/^(?: *\/\/.*\n)*( *)[$\w]+\(\['pop'\b[\s\S]+?\n\1\}\);\n/m, '')
+    .replace(/^(?: *\/\/.*\n)*( *)[$\w]+\(\['pop'[\s\S]+?\n\1\}\);\n/m, '')
     .replace(/^(?: *\/\/.*\n)*( *)if\s*\(iteratorSymbol\)[\s\S]+?\n\1\}\n/gm, '')
     .replace(/^(?: *\/\/.*\n)*( *)lodash\.prototype\.(?!constructor\b)[$\w]+\s*=[\s\S]+?;\n/gm, '');
 }
@@ -2560,9 +2560,9 @@ function build(options, callback) {
           _.pull(depMap, 'arrayEach').push('baseEach');
         });
 
-        source = source.replace(/^(?: *\/\/.*\n)*( *)[$\w]+\(\['join\b[\s\S]+?\n\1\}\);\n/m, function(match) {
+        source = source.replace(/^(?: *\/\/.*\n)*( *)[$\w]+\(\['pop'[\s\S]+?\n\1\}\);\n/m, function(match) {
           match = match.replace(/\barrayEach\b/g, 'baseEach');
-          return match.replace("'replace',", "$& 'reverse',");
+          return match.replace("'pop',", "$& 'join', 'reverse',");
         });
 
         // Replace `baseAssign` with `assign` in `_.create`
