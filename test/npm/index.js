@@ -147,6 +147,7 @@ lodash.isString = require('lodash.isstring');
 lodash.isUndefined = require('lodash.isundefined');
 lodash.isTypedArray = require('lodash.istypedarray');
 lodash.iteratee = require('lodash.iteratee');
+lodash.join = require('lodash.join');
 lodash.juxt = require('lodash.juxt');
 lodash.kebabCase = require('lodash.kebabcase');
 lodash.keyBy = require('lodash.keyby');
