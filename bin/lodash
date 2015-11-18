@@ -1742,7 +1742,7 @@ function removeGetIteratee(source, funcDepMap) {
   source = removeFunction(source, 'getIteratee');
 
   _.each([
-    'baseSortByOrder', 'createAggregator', 'createInvoker', 'createModArgs',
+    'baseSortByOrder', 'createAggregator', 'createModArgs', 'createOver',
     'differenceBy', 'dropRightWhile', 'dropWhile', 'every', 'filter', 'find',
     'findIndex', 'findKey', 'findLast', 'findLastIndex', 'findLastKey',
     'intersectionBy', 'map', 'mapKeys', 'mapValues', 'maxBy', 'minBy', 'omitBy',
