@@ -2942,7 +2942,7 @@ function build(options, callback) {
         });
       }
       _.each(['baseMatches', 'baseMatchesProperty', 'property'], function(funcName) {
-        var otherName = _.camelCase(_.trimLeft(funcName, 'base'));
+        var otherName = _.camelCase(_.trimStart(funcName, 'base'));
         if (_.includes(minusFuncs, otherName)) {
           _.pull(funcDepMap.baseIteratee, funcName);
           source = replace(source, matchFunction(source, 'baseIteratee'), function(match) {
