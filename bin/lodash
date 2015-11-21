@@ -1741,39 +1741,16 @@ function removeFunction(source, funcName) {
 function removeGetIteratee(source, funcDepMap) {
   source = removeFunction(source, 'getIteratee');
 
-  _.each([
-    'baseSortByOrder', 'createAggregator', 'createModArgs', 'createOver',
-    'differenceBy', 'dropRightWhile', 'dropWhile', 'every', 'filter', 'find',
-    'findIndex', 'findKey', 'findLast', 'findLastIndex', 'findLastKey',
-    'intersectionBy', 'map', 'mapKeys', 'mapValues', 'maxBy', 'minBy', 'omitBy',
-    'pickBy', 'pullAllBy', 'reduce', 'reduceRight', 'reject', 'remove', 'some',
-    'sortedIndexBy', 'sortedLastIndexBy', 'sortedUniqBy', 'sumBy', 'takeRightWhile',
-    'takeWhile', 'transform', 'unionBy', 'uniqBy', 'xorBy'
-  ], function(funcName) {
-    var deps = _.result(funcDepMap, funcName, []);
-    _.pull(deps, 'getIteratee');
-    if (!_.includes(deps, 'baseIteratee')) {
-      deps.push('baseIteratee');
-    }
-    source = replace(source, matchFunction(source, funcName), function(match) {
-      return match.replace(reGetIteratee, 'baseIteratee');
-    });
-  });
-
-  _.each(['sortedIndexBy', 'sortedLastIndexBy', 'uniqBy'], function(funcName) {
-    var isSortedIndexBy = _.startsWith(funcName, 'sorted');
-
-    source = replace(source, matchFunction(source, funcName), function(match) {
-      match = removeVar(match, 'toIteratee');
-      if (isSortedIndexBy) {
-        return match
-          .replace(/\((iteratee\s*==\s*null)\b[^)]+\)/, '$1')
-          .replace(/\btoIteratee(?=\()/, 'baseIteratee');
+  _.forOwn(funcDepMap, function(deps, identifier) {
+    if (_.includes(deps, 'getIteratee')) {
+      _.pull(deps, 'getIteratee');
+      if (!_.includes(deps, 'baseIteratee')) {
+        deps.push('baseIteratee');
       }
-      return match.replace(/^( *)if\s*\(!\(iteratee\s*==\s*null\b[\s\S]+?\n\1\}/m, function(match, indent) {
-        return indent + 'iteratee = iteratee == null ? iteratee : baseIteratee(iteratee);';
+      source = replace(source, matchFunction(source, identifier), function(match) {
+        return match.replace(reGetIteratee, 'baseIteratee');
       });
-    });
+    }
   });
 
   source = replace(source, matchFunction(source, 'baseSortByOrder'), function(match) {
@@ -1782,14 +1759,10 @@ function removeGetIteratee(source, funcDepMap) {
   });
 
   return source.replace(getMethodAssignments(source), function(match) {
-    _.each(['main', 'wrapperValue'], function(funcName) {
-      var deps = _.result(funcDepMap, funcName, []);
-      if (_.includes(deps, 'getIteratee')) {
-        _.pull(deps, 'getIteratee').push('baseIteratee');
-        match = match.replace(reGetIteratee, 'baseIteratee');
-        return false;
-      }
-    });
+    var deps = _.result(funcDepMap, 'main', []);
+    if (_.includes(deps, 'baseIteratee')) {
+      match = match.replace(reGetIteratee, 'baseIteratee');
+    }
     return match;
   });
 }
