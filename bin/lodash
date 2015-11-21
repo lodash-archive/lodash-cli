@@ -1626,8 +1626,13 @@ function removeGetTagFork(source) {
  */
 function removeLazyChaining(source, chainDepMap, funcDepMap, objDepMap) {
   if (chainDepMap) {
-    _.pull(chainDepMap.funcDep, 'createHybridWrapper', 'getIteratee', 'identity', 'isArray', 'last', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'toInteger', 'wrapperAt', 'wrapperReverse');
     _.pull(chainDepMap.objDep, 'realNames');
+
+    _.pull(chainDepMap.funcDep,
+      'createHybridWrapper', 'getIteratee', 'identity', 'isArray', 'last',
+      'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'toInteger',
+      'wrapperAt', 'wrapperFlatMap', 'wrapperReverse'
+    );
   }
   if (funcDepMap) {
     funcDepMap.createFlow = [];
@@ -2437,7 +2442,11 @@ function build(options, callback) {
         });
 
         // Remove chain dependencies.
-        _.pull(chainDepMap.funcDep, 'baseLodash', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'wrapperAt', 'wrapperCommit', 'wrapperNext', 'wrapperPlant', 'wrapperReverse', 'wrapperToIterator');
+        _.pull(chainDepMap.funcDep,
+          'baseLodash', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper',
+          'wrapperAt', 'wrapperCommit', 'wrapperFlatMap', 'wrapperNext',
+          'wrapperPlant', 'wrapperReverse', 'wrapperToIterator'
+        );
 
         // Remove map, set, and typed array support from `baseIsEqualDeep`.
         _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isTypedArray', 'Stack').push('find');
