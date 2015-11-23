@@ -116,6 +116,7 @@ lodash.intersectionBy = require('lodash.intersectionby');
 lodash.intersectionWith = require('lodash.intersectionwith');
 lodash.invert = require('lodash.invert');
 lodash.invoke = require('lodash.invoke');
+lodash.invokePath = require('lodash.invokepath');
 lodash.isArguments = require('lodash.isarguments');
 lodash.isArray = require('lodash.isarray');
 lodash.isArrayLike = require('lodash.isarraylike');
