@@ -1527,7 +1527,7 @@ function matchVar(source, varName, leadingComments) {
  * @returns {Array} Returns the new converted array.
  */
 function optionToArray(name, string) {
-  return _.compact(_.invoke((optionToValue(name, string) || '').split(/, */), 'trim'));
+  return _.compact(_.invokeMap((optionToValue(name, string) || '').split(/, */), 'trim'));
 }
 
 /**
@@ -2757,10 +2757,10 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.invoke = ['baseMap', 'rest'];
+        funcDepMap.invokeMap = ['baseMap', 'rest'];
 
-        source = replaceFunction(source, 'invoke', [
-          'var invoke = rest(function(collection, path, args) {',
+        source = replaceFunction(source, 'invokeMap', [
+          'var invokeMap = rest(function(collection, path, args) {',
           "  var isFunc = typeof path == 'function';",
           '  return baseMap(collection, function(value) {',
           '    var func = isFunc ? path : value[path];',
