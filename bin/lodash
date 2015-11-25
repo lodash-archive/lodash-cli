@@ -1629,7 +1629,7 @@ function removeLazyChaining(source, chainDepMap, funcDepMap, objDepMap) {
     _.pull(chainDepMap.objDep, 'realNames');
 
     _.pull(chainDepMap.funcDep,
-      'baseInvokePath', 'createHybridWrapper', 'getIteratee', 'identity',
+      'baseInvoke', 'createHybridWrapper', 'getIteratee', 'identity',
       'isArray', 'last', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper',
       'rest', 'toInteger', 'wrapperAt', 'wrapperFlatMap', 'wrapperReverse'
     );
