@@ -2447,6 +2447,17 @@ function build(options, callback) {
           'wrapperPlant', 'wrapperToIterator'
         );
 
+        // Remove `Stack` use from `baseFlatten`.
+        _.pull(funcDepMap.baseFlatten, 'Stack').push('indexOf');
+
+        source = replace(source, matchFunction(source, 'baseFlatten'), function(match) {
+          return match
+            .replace(/\bnew\s+Stack\b/, '[]')
+            .replace(/\bstack\.set\(array,\s*true\)/, 'stack.push(array)')
+            .replace(/\bstack\['delete'\]\(array\)/, 'stack.pop()')
+            .replace(/\bstack\.get\(array\)/m, 'indexOf(stack, array) > -1');
+        });
+
         // Remove map, set, and typed array support from `baseIsEqualDeep`.
         _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isTypedArray', 'Stack').push('find');
 
