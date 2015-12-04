@@ -246,12 +246,8 @@ function testMethod(assert, lodash, methodName, message) {
       }
     }
     else if (_.includes(mapping.category.Utility, methodName)) {
-      if (/^flow(?:Right)?$/.test(methodName)) {
-        func(_.noop, _.noop)();
-      } else if (methodName == 'mixin') {
+      if (methodName == 'mixin') {
         func({});
-      } else if (methodName == 'range') {
-        func(2, 4);
       } else if (methodName == 'runInContext') {
         func();
       } else if (methodName == 'template') {
@@ -259,6 +255,10 @@ function testMethod(assert, lodash, methodName, message) {
         func(template, null, { 'imports': object })(object);
       } else if (methodName == 'times') {
         func(2, _.noop, object);
+      } else if (/^flow(?:Right)?$/.test(methodName)) {
+        func(_.noop, _.noop)();
+      } else if (/^range(?:Right)?$/.test(methodName)) {
+        func(2, 4);
       } else {
         func(string, object);
       }
