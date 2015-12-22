@@ -2463,7 +2463,7 @@ function build(options, callback) {
 
         source = replace(source, matchFunction(source, 'baseIsEqualDeep'), function(match) {
           return match
-            .replace(/\bgetTag\b/g, 'objToString.call')
+            .replace(/\bgetTag\b/g, 'objectToString.call')
             .replace(/\s*else\s+if\s*\((?:obj|oth)Tag\b[\s\S]+?\}/g, '')
             .replace(/\bnew\s+Stack\b/, '[]')
             .replace(/\bstack\.set\(object,\s*other\)/, 'stack.push([object, other])')
