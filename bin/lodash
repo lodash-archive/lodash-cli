@@ -331,9 +331,9 @@ function buildModule(state, onComplete) {
 
       if (isNpm) {
         var templatePath = fs.realpathSync(path.join(__dirname, '..', 'template')),
-            licenseTemplate = fs.readFileSync(path.join(templatePath, 'license.jst'), 'utf-8'),
-            packageTemplate = fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf-8'),
-            readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf-8');
+            licenseTemplate = fs.readFileSync(path.join(templatePath, 'license.jst'), 'utf8'),
+            packageTemplate = fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf8'),
+            readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf8');
 
         var type = 'function',
             version = state.lodash.VERSION,
@@ -366,7 +366,7 @@ function buildModule(state, onComplete) {
               pkgDeps = _.omit(templateData.dependencies, laxDeps);
 
           if (_.isEqual(pkgDeps, oldDeps)) {
-            var oldSource = fs.readFileSync(data.outputPath, 'utf-8');
+            var oldSource = fs.readFileSync(data.outputPath, 'utf8');
 
             // Exit early if sources are identical.
             if (removeHeader(cleanupSource(oldSource)) === removeHeader(cleanupSource(source))) {
