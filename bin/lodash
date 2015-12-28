@@ -396,9 +396,9 @@ function buildModule(state, onComplete) {
           if (fs.existsSync(oldPath)) {
             fs.unlinkSync(oldPath);
           }
-          fs.writeFileSync(path.join(outputPath, modulePath, 'package.json'), _.template(packageTemplate)(templateData), 'utf-8');
-          fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE'), _.template(licenseTemplate)(templateData), 'utf-8');
-          fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate)(templateData), 'utf-8');
+          fs.writeFileSync(path.join(outputPath, modulePath, 'package.json'), _.template(packageTemplate)(templateData));
+          fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE'), _.template(licenseTemplate)(templateData));
+          fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate)(templateData));
         }
       }
       data.source = source;
@@ -1023,9 +1023,9 @@ function defaultBuildCallback(data) {
       sourceMap = data.sourceMap;
 
   if (outputPath) {
-    fs.writeFileSync(outputPath, data.source, 'utf8');
+    fs.writeFileSync(outputPath, data.source);
     if (sourceMap) {
-      fs.writeFileSync(path.join(path.dirname(outputPath), path.basename(outputPath, '.js') + '.map'), sourceMap, 'utf8');
+      fs.writeFileSync(path.join(path.dirname(outputPath), path.basename(outputPath, '.js') + '.map'), sourceMap);
     }
   }
 }
