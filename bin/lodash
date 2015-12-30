@@ -37,8 +37,7 @@ var HELP_TEXT = [
   '               “object”, “number”, “string”, & “utility”)',
   '',
   '  exports=..   Comma separated values of ways to export lodash.',
-  '               (i.e. “amd”, “commonjs”, “es”, “global”, “iojs”, “node”, “none”,',
-  '               “npm”, & “umd”)',
+  '               (i.e. “amd”, “es”, “global”, “node”, “none”, “npm”, & “umd”)',
   '',
   '  iife=..      Code to replace the IIFE that wraps lodash',
   '               (e.g. `lodash iife="!function(){%output%}()"`)',
@@ -175,7 +174,6 @@ function buildModule(state, onComplete) {
       includeObjs = state.includeObjs,
       includeVars = state.includeVars,
       isAMD = state.isAMD,
-      isCommonJS = state.isCommonJS,
       isES = state.isES,
       isNpm = state.isNpm,
       isSilent = state.isSilent,
@@ -315,12 +313,11 @@ function buildModule(state, onComplete) {
 
             return (index ? '' : 'var ') +
               depName + " = require('" + depPath + "')" +
-              (isCommonJS ? '.' + depName : '') +
               (index == lastIndex ? ';' : '');
           })
           .join(',\n    '),
           '%output%',
-          (isCommonJS ? 'exports.' + basename : 'module.exports') + ' = ' + identifier + ';'
+          'module.exports = ' + identifier + ';'
         );
       }
       if (!isAMD) {
@@ -431,8 +428,8 @@ function buildModule(state, onComplete) {
       }
       else {
         iife.push(
-          (isCommonJS ? ('exports.' + alias) : 'module.exports') +
-          " = require('" + depPath + "')" + (isCommonJS ? '.' + basename : '') + ';'
+          'module.exports' +
+          " = require('" + depPath + "');"
         );
       }
       buildCallback({
@@ -626,11 +623,10 @@ function buildModule(state, onComplete) {
 
             return (index ? '' : 'var ') +
               depName + " = require('" + depPath + "')" +
-              (isCommonJS && !_.includes(categoryDepPaths, depPath) ? '.' + depName : '') +
               (index == lastIndex ? ';' : '');
           }).join(',\n    '),
           '%output%',
-          (isCommonJS ? 'exports._' : 'module.exports') + ' = lodash;'
+          'module.exports = lodash;'
         );
       }
       if (!isAMD) {
@@ -708,14 +704,6 @@ function buildModule(state, onComplete) {
               "export { default as default } from './" + basename + ".default';"
             );
           }
-        }
-        else if (isCommonJS) {
-          push.apply(iife,
-            _.map(depNames, function(depName) {
-              var depPath = depPaths[_.indexOf(depNames, depName)];
-              return 'exports.' + depName + " = require('" + depPath + "')." + depName + ';';
-            })
-          );
         }
         else {
           iife.push(
@@ -904,9 +892,8 @@ function buildTemplate(state) {
   source.push(
     '    if (moduleExports) {',
     '      (freeModule.exports = templates).templates = templates;',
-    '    } else {',
-    '      freeExports.templates = templates;',
-    '    }'
+    '    }',
+    '    freeExports.templates = templates;'
   );
 
   if (isStandalone) {
@@ -2233,18 +2220,11 @@ function build(options, callback) {
 
     // Flags to specify export options.
     var isAMD = _.includes(exportsOptions, 'amd'),
-        isCommonJS = _.includes(exportsOptions, 'commonjs'),
-        isES = _.includes(exportsOptions, 'es') || _.includes(exportsOptions, 'es6'),
+        isES = _.includes(exportsOptions, 'es'),
         isGlobal = _.includes(exportsOptions, 'global'),
         isNpm = _.includes(exportsOptions, 'npm'),
-        isNode = isNpm || _.includes(exportsOptions, 'iojs') || _.includes(exportsOptions, 'node');
+        isNode = isNpm  || _.includes(exportsOptions, 'node');
 
-    if (isES) {
-      _.pull(exportsOptions, 'es', 'es6').push('es');
-    }
-    if (isNode) {
-      _.pull(exportsOptions, 'iojs', 'node').push('node');
-    }
     if (isTemplate) {
       isModularize = false;
     }
@@ -3109,31 +3089,26 @@ function build(options, callback) {
         modified = modified.replace(/^ *define\((?=function)/m, "$&'" + moduleId + "', ");
       }
       // Customize lodash's exports.
+      if (isModularize) {
+        modified = modified.replace(/^(?: *\/\/.*\n)* *\(freeWindow\s*\|\|\s*freeSelf\b[\s\S]+?=[\s\S]+?\n+/m, '');
+      }
       if (!isAMD || isModularize) {
         modified = modified.replace(/^(?: *\/\/.*\n)*( *)if\s*\(typeof\s+define\b[\s\S]+?else\s+/m, '$1');
       }
       if (!isNode || isModularize) {
-        modified = modified.replace(/^(?: *\/\/.*\n)*( *)if\s*\(moduleExports\b[\s\S]+?else\s*\{([\s\S]+?\n)\1\}\n+/m, '$1$2');
+        modified = modified.replace(/^(?: *\/\/.*\n)*( *)(?:else\s+)?if\s*\(freeExports\b[\s\S]+?\n\1\}\n+/m, '$1');
       }
-      if (!isCommonJS || isModularize) {
-        modified = modified.replace(/^(?: *\/\/.*\n)*(?:(( *)\}?)\s*else\s*\{)?\s*freeExports\.[$\w]+\s*=[\s\S]+?(?:\n\2\})?\n+/m, function(match, prelude) {
-          return _.trim(prelude) ? prelude + '\n' : '';
-        });
-      }
-      if (isModularize || !(isAMD || isCommonJS || isNode)) {
-        modified = modified.replace(/^(?: *\/\/.*\n)* *\(freeWindow\s*\|\|\s*freeSelf\b[\s\S]+?=[\s\S]+?\n+/m, '');
-      }
-      if (!isGlobal || isModularize) {
-        modified = modified.replace(/^(?: *\/\/.*\n)*(( *)\}?)\s*else(?:\s*if\s*\(_\))?\s*\{(?:\s*\/\/.*)*\s*(?:[$\w]+\._|_\.templates)\s*=[\s\S]+?\n\2\}\n+/m, function(match, prelude) {
-          return _.trim(prelude) ? prelude + '\n' : '';
-        });
-      }
-      // Remove `if (freeExports && freeModule) {...}` if it's empty.
-      if (isAMD && isGlobal) {
-        modified = modified.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*\}\n+/m, '');
-      } else {
-        modified = modified.replace(/^(?: *\/\/.*\n)* *(?:else\s+)?if\s*\(freeExports.*?\)\s*\{\s*\}(?:\s*else\s*\{([\s\S]+?\n)\s*\})?\n+/m, '$1');
-      }
+      modified = modified.replace(/^(?: *\/\/.*\n)*( *)else(?:\s*[^{]+?)?\s*\{\s*([^}]*?(?:\._|_\.templates)\s*=[\s\S]+?)\s*\}\n+/m, function(match, indent, assignment) {
+        if (!isGlobal || isModularize) {
+          return '';
+        }
+        if (isGlobal && !isAMD && !isNode) {
+          indent = indent.slice(0, -2);
+          return indent + assignment.replace(/\n\s*/g, '\n' + indent) + '\n';
+        }
+        return match;
+      });
+
       source = isTemplate ? modified : source.replace(snippet, modified);
     }());
 
@@ -3155,7 +3130,6 @@ function build(options, callback) {
         'includeObjs': includeObjs,
         'includeVars': includeVars,
         'isAMD': isAMD,
-        'isCommonJS': isCommonJS,
         'isES': isES,
         'isNode': isNode,
         'isNpm': isNpm,

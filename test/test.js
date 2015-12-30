@@ -58,7 +58,7 @@ var includes = _.reject(_.functions(_).sort(), _.partial(_.startsWith, _, '_', 0
  * Creates a context object to use with `vm.runInContext`.
  *
  * @private
- * @param {string} [exportType=global] The module export type (i.e. "amd", "commonjs", "global", & "node").
+ * @param {string} [exportType=global] The module export type (i.e. "amd", "global", & "node").
  * @returns {Object} Returns a new context object.
  */
 function createContext(exportType) {
@@ -74,12 +74,6 @@ function createContext(exportType) {
       context.define.amd = {};
       break;
 
-    case 'commonjs':
-      context.exports = {};
-      context.module = {};
-      break;
-
-    case 'iojs':
     case 'node':
       context.exports = {};
       context.module = { 'exports': context.exports };
@@ -490,7 +484,6 @@ QUnit.module('template builds');
 
   var exportsCommands = [
     'exports=amd',
-    'exports=commonjs',
     'exports=global',
     'exports=node',
     'exports=none'
@@ -774,56 +767,48 @@ QUnit.module('modularize modifier');
     });
   });
 
-  var commands = [
-    'exports=commonjs',
-    'exports=node'
-  ];
+  QUnit.test('module aliases for `exports=node`', function(assert) {
+    var done = assert.async();
 
-  _.each(commands, function(command, index) {
-    QUnit.test('module aliases for `' + command + '`', function(assert) {
-      var done = assert.async();
+    var start = _.once(function() {
+      process.chdir(cwd);
+      done();
+    });
 
-      var start = _.once(function() {
-        process.chdir(cwd);
-        done();
-      });
+    setup();
 
-      setup();
+    build(['modularize', 'exports=node', '-o', outputPath], function() {
+      emptyObject(require.cache);
+      var lodash = require(outputPath);
 
-      build(['modularize', command, '-o', outputPath], function() {
-        emptyObject(require.cache);
-        var lodash = require(outputPath);
+      if (lodash._) {
+        lodash = lodash._;
+      }
+      _.each(['array', 'chain', 'collection', 'date', 'function', 'lang', 'number', 'object', 'string', 'utility'], function(category) {
+        var categoryModule = require(path.join(outputPath, category)),
+            funcNames = mapping.category[_.capitalize(category)];
 
-        if (lodash._) {
-          lodash = lodash._;
-        }
-        _.each(['array', 'chain', 'collection', 'date', 'function', 'lang', 'number', 'object', 'string', 'utility'], function(category) {
-          var categoryModule = require(path.join(outputPath, category)),
-              funcNames = mapping.category[_.capitalize(category)];
+        _.each(funcNames, function(funcName) {
+          var aliases = getAliases(funcName);
+          _.each(aliases, function(alias) {
+            var objects = [(category == 'chain' ? lodash.prototype : lodash), categoryModule];
+            _.each(objects, function(object, index) {
+              var message = (
+                'should have `' + alias + '` as an alias of `' + funcName +
+                '` in lodash' + (index ? ('/' + category) : '')
+              );
 
-          _.each(funcNames, function(funcName) {
-            var aliases = getAliases(funcName);
-            _.each(aliases, function(alias) {
-              var objects = [(category == 'chain' ? lodash.prototype : lodash), categoryModule];
-              _.each(objects, function(object, index) {
-                var message = (
-                  '`' + command + '` should have `' + alias + '` ' +
-                  'as an alias of `' + funcName + '` in lodash' +
-                  (index ? ('/' + category) : '')
-                );
+              var value = (!index && alias == 'toIterator')
+                ? object[Symbol.iterator]
+                : object[alias];
 
-                var value = (!index && alias == 'toIterator')
-                  ? object[Symbol.iterator]
-                  : object[alias];
-
-                assert.ok(_.isFunction(value), message);
-              });
+              assert.ok(_.isFunction(value), message);
             });
           });
         });
-
-        start();
       });
+
+      start();
     });
   });
 
@@ -1075,9 +1060,7 @@ QUnit.module('exports command');
 (function() {
   var commands = [
     'exports=amd',
-    'exports=commonjs',
     'exports=global',
-    'exports=iojs',
     'exports=node',
     'exports=none',
     'exports=umd'
@@ -1085,7 +1068,7 @@ QUnit.module('exports command');
 
   _.each(commands, function(command, index) {
     var type = command.split('=')[1],
-        types = type == 'umd' ? ['amd', 'commonjs', 'global', 'node'] : [type];
+        types = type == 'umd' ? ['amd', 'global', 'node'] : [type];
 
     QUnit.test('`lodash ' + command +'`', function(assert) {
       var done = assert.async(),
@@ -1111,18 +1094,11 @@ QUnit.module('exports command');
               assert.ok(_.isFunction(context._), basename);
               break;
 
-            case 'commonjs':
-              vm.runInContext(source, context);
-              assert.ok(_.isFunction(context.exports._), basename);
-              assert.strictEqual(context._, undefined, basename);
-              break;
-
             case 'global':
               vm.runInContext(source, context);
               assert.ok(_.isFunction(context._), basename);
               break;
 
-            case 'iojs':
             case 'node':
               vm.runInContext(source, context);
               assert.ok(_.isFunction(context.module.exports), basename);
