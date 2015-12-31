@@ -482,14 +482,16 @@ QUnit.module('template builds');
     });
   });
 
-  var exportsCommands = [
+  commands = [
     'exports=amd',
     'exports=global',
     'exports=node',
     'exports=none'
   ];
 
-  _.each(exportsCommands, function(command, index) {
+  _.each(commands, function(command) {
+    var type = command.split('=')[1];
+
     QUnit.test('should work with `' + command +'`', function(assert) {
       var done = assert.async(),
           start = _.after(2, _.once(done));
@@ -501,8 +503,8 @@ QUnit.module('template builds');
             defaultTemplates = { 'c': function() { return ''; } },
             source = data.source;
 
-        switch(index) {
-          case 0:
+        switch(type) {
+          case 'amd':
             context.define = function(requires, factory) { factory(_); };
             context.define.amd = {};
             vm.runInContext(source, context);
@@ -510,23 +512,14 @@ QUnit.module('template builds');
             templates = _.templates || defaultTemplates;
             break;
 
-          case 1:
-            context.exports = {};
-            context.module = {};
-            context.require = function() { return _; };
-            vm.runInContext(source, context);
-
-            templates = context.exports.templates || defaultTemplates;
-            break;
-
-          case 2:
+          case 'global':
             context._ = _;
             vm.runInContext(source, context);
 
             templates = context._.templates || defaultTemplates;
             break;
 
-          case 3:
+          case 'node':
             context.exports = {};
             context.module = { 'exports': context.exports };
             context.require = function() { return _; };
@@ -535,7 +528,7 @@ QUnit.module('template builds');
             templates = context.module.exports || defaultTemplates;
             break;
 
-          case 4:
+          case 'none':
             vm.runInContext(source, context);
             assert.strictEqual(context._, undefined, basename);
         }
@@ -548,12 +541,12 @@ QUnit.module('template builds');
     });
   });
 
-  var idCommands = [
+  commands = [
     'moduleId=underscore',
     'moduleId=none'
   ];
 
-  _.each(idCommands, function(command) {
+  _.each(commands, function(command) {
     var expectedId = _.result(/underscore/.exec(command), 0, '');
 
     QUnit.test('should work with `' + command + '`', function(assert) {
