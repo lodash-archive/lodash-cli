@@ -3090,7 +3090,7 @@ function build(options, callback) {
       }
       // Customize lodash's exports.
       if (isModularize) {
-        modified = modified.replace(/^(?: *\/\/.*\n)* *\(freeWindow\s*\|\|\s*freeSelf\b[\s\S]+?=[\s\S]+?\n+/m, '');
+        modified = modified.replace(/^(?: *\/\/.*\n)* *\(freeWindow\b[^)]+\)\._\s*=[\s\S]+?\n+/m, '');
       }
       if (!isAMD || isModularize) {
         modified = modified.replace(/^(?: *\/\/.*\n)*( *)if\s*\(typeof\s+define\b[\s\S]+?else\s+/m, '$1');
@@ -3098,17 +3098,15 @@ function build(options, callback) {
       if (!isNode || isModularize) {
         modified = modified.replace(/^(?: *\/\/.*\n)*( *)(?:else\s+)?if\s*\(freeExports\b[\s\S]+?\n\1\}\n+/m, '$1');
       }
-      modified = modified.replace(/^(?: *\/\/.*\n)*( *)else(?:\s*[^{]+?)?\s*\{\s*([^}]*?(?:\._|_\.templates)\s*=[\s\S]+?)\s*\}\n+/m, function(match, indent, assignment) {
-        if (!isGlobal || isModularize) {
-          return '';
-        }
-        if (isGlobal && !isAMD && !isNode) {
-          indent = indent.slice(0, -2);
-          return indent + assignment.replace(/\n\s*/g, '\n' + indent) + '\n';
-        }
-        return match;
-      });
-
+      if (!isGlobal || isModularize) {
+        modified = modified.replace(/^(?: *\/\/.*\n)*( *)else\b[^}]+?(?:\._|_\.templates)\s*=[\s\S]+?\n\1\}\n+/m, '');
+      }
+      else if (!isAMD && !isNode) {
+        modified = modified.replace(/^( *)else\s+(?=if\s*\(_\))/m, '$1');
+        modified = modified.replace(/^( *)else\s\{\s*([^}]+?\._\s*=[\s\S]+?)\n\1\}/m, function(match, indent, block) {
+          return indent + block.replace(/\n\s*/g, '\n' + indent);
+        });
+      }
       source = isTemplate ? modified : source.replace(snippet, modified);
     }());
 
