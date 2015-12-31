@@ -3096,7 +3096,7 @@ function build(options, callback) {
         modified = modified.replace(/^(?: *\/\/.*\n)*( *)if\s*\(typeof\s+define\b[\s\S]+?else\s+/m, '$1');
       }
       if (!isNode || isModularize) {
-        modified = modified.replace(/^(?: *\/\/.*\n)*( *)(?:else\s+)?if\s*\(freeExports\b[\s\S]+?\n\1\}\n+/m, '$1');
+        modified = modified.replace(/^(?: *\/\/.*\n)*( *)(?:else\s+)?if\s*\(freeExports\b[\s\S]+?\n\1\}\n+/m, '');
       }
       if (!isGlobal || isModularize) {
         modified = modified.replace(/^(?: *\/\/.*\n)*( *)else\b[^}]+?(?:\._|_\.templates)\s*=[\s\S]+?\n\1\}\n+/m, '');
