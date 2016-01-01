@@ -1059,7 +1059,7 @@ QUnit.module('exports command');
     'exports=umd'
   ];
 
-  _.each(commands, function(command, index) {
+  _.each(commands, function(command) {
     var type = command.split('=')[1],
         types = type == 'umd' ? ['amd', 'global', 'node'] : [type];
 
@@ -1174,7 +1174,7 @@ QUnit.module('include command');
     'include=value'
   ];
 
-  _.each(commands, function(command, index) {
+  _.each(commands, function(command) {
     QUnit.test('`lodash ' + command +'`', function(assert) {
       var done = assert.async(),
           start = _.after(2, _.once(done));
@@ -1293,7 +1293,7 @@ QUnit.module('stdout option');
     '--stdout',
   ];
 
-  _.each(commands, function(command, index) {
+  _.each(commands, function(command) {
     QUnit.test('`lodash ' + command +'`', function(assert) {
       var written,
           done = assert.async(),
