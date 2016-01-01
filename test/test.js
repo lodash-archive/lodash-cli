@@ -489,7 +489,7 @@ QUnit.module('template builds');
   ];
 
   _.each(commands, function(command) {
-    var expectedId = _.result(/underscore/.exec(command), 0, 'lodash');
+    var expectedId = _.result(/moduleId=(\w+)/.exec(command), 1, 'lodash');
 
     QUnit.test('`lodash exports=amd' + (command ? ' ' + command + '`' : '` using the default `moduleId`'), function(assert) {
       var done = assert.async(),
@@ -547,7 +547,7 @@ QUnit.module('template builds');
   ];
 
   _.each(commands, function(command) {
-    var expectedId = _.result(/underscore/.exec(command), 0, '');
+    var expectedId = _.result(/moduleId=(?!none)(\w+)/.exec(command), 1, '');
 
     QUnit.test('should work with `' + command + '`', function(assert) {
       var done = assert.async(),
@@ -561,7 +561,7 @@ QUnit.module('template builds');
         context.exports = {};
         context.module = { 'exports': context.exports };
 
-        if (expectedId) {
+        if (expectedId != 'none') {
           context.require = function(id) {
             actualId = id;
             return _;
@@ -1209,7 +1209,7 @@ QUnit.module('moduleId command');
   ];
 
   _.each(commands, function(command) {
-    var expectedId = _.result(/underscore/.exec(command), 0, 'lodash');
+    var expectedId = /moduleId=(\w+)/.exec(command)[1];
 
     QUnit.test('`lodash ' + command +'`', function(assert) {
       var done = assert.async(),
