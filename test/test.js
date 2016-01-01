@@ -173,9 +173,7 @@ function testMethod(assert, lodash, methodName, message) {
 
   try {
     if (_.includes(mapping.category.Array, methodName)) {
-      if (/^(?:difference|intersection|union|uniq|xor|zip(?:Object)?)$/.test(methodName)) {
-        func(array);
-      } else if (/^(?:indexOf|lastIndexOf|sorted(?:Last)?Index|without)$/.test(methodName)) {
+      if (/^(?:indexOf|lastIndexOf|sorted(?:Last)?Index|without)$/.test(methodName)) {
         func(array, string);
       } else {
         func(array);
@@ -188,7 +186,7 @@ function testMethod(assert, lodash, methodName, message) {
       if (methodName == 'at') {
         func(array, 0, 2);
         func(object, 'a', 'c');
-      } else if (methodName == 'invoke') {
+      } else if (/^invoke(?:Map)?$/.test(methodName)) {
         func(array, 'slice');
         func(object, 'constructor');
       } else if (/^(?:count|group|key|sort)By$/.test(methodName)) {
@@ -205,9 +203,7 @@ function testMethod(assert, lodash, methodName, message) {
       }
     }
     else if (_.includes(mapping.category.Function, methodName)) {
-      if (methodName == 'bindAll') {
-        func({ 'noop': _.noop });
-      } else if (methodName == 'bindKey') {
+      if (methodName == 'bindKey') {
         func(lodash, 'identity');
       } else if (/^(?:after|before)$/.test(methodName)) {
         func(2, _.noop);
@@ -222,25 +218,22 @@ function testMethod(assert, lodash, methodName, message) {
       }
     }
     else if (_.includes(mapping.category.Object, methodName)) {
-      if (methodName == 'clone') {
-        func(object);
-        func(object, true);
-      } else if (methodName == 'has') {
+      if (methodName == 'has') {
         func(object, string);
       } else if (/^(?:assign(?:In)?|defaults|extend|merge)$/.test(methodName)) {
         func({}, object);
       } else if (/^for(?:In|Own)(?:Right)?$/.test(methodName)) {
         func(object, _.noop);
-      } else if (/^(?:get|result)$/.test(methodName)) {
-        func(object, 'b');
-      } else if (/^(?:omit|pick)$/.test(methodName)) {
+      } else if (/^(?:get|omit|pick|result)$/.test(methodName)) {
         func(object, 'b');
       } else {
         func(object);
       }
     }
     else if (_.includes(mapping.category.Utility, methodName)) {
-      if (methodName == 'mixin') {
+      if (methodName == 'bindAll') {
+        func({ 'noop': _.noop });
+      } else if (methodName == 'mixin') {
         func({});
       } else if (methodName == 'runInContext') {
         func();
