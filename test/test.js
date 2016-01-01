@@ -381,64 +381,6 @@ QUnit.module('template builds');
   });
 
   commands = [
-    '',
-    'moduleId=underscore'
-  ];
-
-  _.each(commands, function(command) {
-    var expectedId = _.result(/underscore/.exec(command), 0, 'lodash');
-
-    QUnit.test('`lodash exports=amd' + (command ? ' ' + command + '`' : '` using the default `moduleId`'), function(assert) {
-      var done = assert.async(),
-          start = _.after(2, _.once(done));
-
-      build(['template=' + path.join(templatePath, '*.jst'), 'exports=amd'].concat(command || []), function(data) {
-        var actualId,
-            basename = path.basename(data.outputPath, '.js'),
-            context = createContext();
-
-        context.define = function(requires, factory) {
-          factory(_);
-          actualId = requires[0];
-        };
-
-        context.define.amd = {};
-        vm.runInContext(data.source, context);
-
-        assert.strictEqual(actualId, expectedId, basename);
-
-        delete _.templates;
-        start();
-      });
-    });
-
-    QUnit.test('`lodash settings=...' + (command ? ' ' + command : '') + '`', function(assert) {
-      var done = assert.async(),
-          start = _.after(2, _.once(done));
-
-      build(['template=' + path.join(templatePath, '*.tpl'), 'settings={interpolate:/{{([\\s\\S]+?)}}/}'].concat(command || []), function(data) {
-        var actualId,
-            basename = path.basename(data.outputPath, '.js'),
-            context = createContext();
-
-        context.define = function(requires, factory) {
-          factory(_);
-          actualId = requires[0];
-        };
-
-        context.define.amd = {};
-        vm.runInContext(data.source, context);
-
-        assert.strictEqual(actualId, expectedId, basename);
-        assert.strictEqual(_.templates.f({ 'name': 'mustache' }), 'hall\xe5 mustache!', basename);
-
-        delete _.templates;
-        start();
-      });
-    });
-  });
-
-  commands = [
     'template=' + path.join(templatePath, '**', '*.jst'),
     'template=' + path.join('**', '*.jst')
   ];
@@ -535,6 +477,64 @@ QUnit.module('template builds');
         if (templates) {
           assert.strictEqual(templates.c({ 'name': 'fred' }), 'hello fred', basename);
         }
+        delete _.templates;
+        start();
+      });
+    });
+  });
+
+  commands = [
+    '',
+    'moduleId=underscore'
+  ];
+
+  _.each(commands, function(command) {
+    var expectedId = _.result(/underscore/.exec(command), 0, 'lodash');
+
+    QUnit.test('`lodash exports=amd' + (command ? ' ' + command + '`' : '` using the default `moduleId`'), function(assert) {
+      var done = assert.async(),
+          start = _.after(2, _.once(done));
+
+      build(['template=' + path.join(templatePath, '*.jst'), 'exports=amd'].concat(command || []), function(data) {
+        var actualId,
+            basename = path.basename(data.outputPath, '.js'),
+            context = createContext();
+
+        context.define = function(requires, factory) {
+          factory(_);
+          actualId = requires[0];
+        };
+
+        context.define.amd = {};
+        vm.runInContext(data.source, context);
+
+        assert.strictEqual(actualId, expectedId, basename);
+
+        delete _.templates;
+        start();
+      });
+    });
+
+    QUnit.test('`lodash settings=...' + (command ? ' ' + command : '') + '`', function(assert) {
+      var done = assert.async(),
+          start = _.after(2, _.once(done));
+
+      build(['template=' + path.join(templatePath, '*.tpl'), 'settings={interpolate:/{{([\\s\\S]+?)}}/}'].concat(command || []), function(data) {
+        var actualId,
+            basename = path.basename(data.outputPath, '.js'),
+            context = createContext();
+
+        context.define = function(requires, factory) {
+          factory(_);
+          actualId = requires[0];
+        };
+
+        context.define.amd = {};
+        vm.runInContext(data.source, context);
+
+        assert.strictEqual(actualId, expectedId, basename);
+        assert.strictEqual(_.templates.f({ 'name': 'mustache' }), 'hall\xe5 mustache!', basename);
+
         delete _.templates;
         start();
       });
