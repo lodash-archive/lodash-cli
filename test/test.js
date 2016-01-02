@@ -202,6 +202,11 @@ function testMethod(assert, lodash, methodName, message) {
         func(object, _.noop, object);
       }
     }
+    else if (_.includes(mapping.category.Lang, methodName)) {
+      if (/^clone(?:Deep)$/.test(methodName)) {
+        func(object);
+      }
+    }
     else if (_.includes(mapping.category.Function, methodName)) {
       if (methodName == 'bindKey') {
         func(lodash, 'identity');
@@ -230,6 +235,12 @@ function testMethod(assert, lodash, methodName, message) {
         func(object);
       }
     }
+    else if (_.includes(mapping.category.String, methodName)) {
+      if (methodName == 'template') {
+        func(template)(object);
+        func(template, { 'imports': object })(object);
+      }
+    }
     else if (_.includes(mapping.category.Utility, methodName)) {
       if (methodName == 'bindAll') {
         func({ 'noop': _.noop });
@@ -237,17 +248,12 @@ function testMethod(assert, lodash, methodName, message) {
         func({});
       } else if (methodName == 'runInContext') {
         func();
-      } else if (methodName == 'template') {
-        func(template, object);
-        func(template, null, { 'imports': object })(object);
       } else if (methodName == 'times') {
         func(2, _.noop, object);
       } else if (/^flow(?:Right)?$/.test(methodName)) {
         func(_.noop, _.noop)();
       } else if (/^range(?:Right)?$/.test(methodName)) {
         func(2, 4);
-      } else {
-        func(string, object);
       }
     }
   }
