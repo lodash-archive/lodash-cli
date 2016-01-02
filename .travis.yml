@@ -4,7 +4,7 @@ node_js:
   - "5"
 env:
   global:
-    - BIN="node" EXPORTS="commonjs" NPM_VERSION="^2.0.0"
+    - BIN="node" EXPORTS="node" NPM_VERSION="^2.0.0"
     - OPTION="" QUERY="" TEST_BUILDS=false TRANSPILER="none"
     - LOADER="requirejs" RUNNER_PATH="node_modules/lodash/test"
     - SAUCE_PATH="$RUNNER_PATH/saucelabs.js" SAUCE_USERNAME="lodash"
@@ -12,7 +12,6 @@ env:
   matrix:
     -
     - EXPORTS="es"  TRANSPILER="babel"
-    - EXPORTS="node"
     - EXPORTS="npm"
     - EXPORTS="amd"
     - EXPORTS="amd" LOADER="curl"
