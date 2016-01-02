@@ -146,6 +146,7 @@ lodash.isPlainObject = require('lodash.isplainobject');
 lodash.isRegExp = require('lodash.isregexp');
 lodash.isSafeInteger = require('lodash.issafeinteger');
 lodash.isString = require('lodash.isstring');
+lodash.isSymbol = require('lodash.issymbol');
 lodash.isUndefined = require('lodash.isundefined');
 lodash.isTypedArray = require('lodash.istypedarray');
 lodash.iteratee = require('lodash.iteratee');
