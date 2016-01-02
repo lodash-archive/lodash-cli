@@ -1745,9 +1745,11 @@ function removeGetIteratee(source, funcDepMap) {
     }
   });
 
-  source = replace(source, matchFunction(source, 'baseSortByOrder'), function(match) {
-    match = removeVar(match, 'toIteratee');
-    return match.replace(/\btoIteratee(?=\()/, 'baseIteratee');
+  _.each(['baseSortByOrder', 'cond'], function(funcName) {
+    source = replace(source, matchFunction(source, funcName), function(match) {
+      match = removeVar(match, 'toIteratee');
+      return match.replace(/\btoIteratee(?=\()/g, 'baseIteratee');
+    });
   });
 
   return source.replace(getMethodAssignments(source), function(match) {
