@@ -2429,33 +2429,41 @@ function build(options, callback) {
           'wrapperPlant', 'wrapperToIterator'
         );
 
-        // Remove `Stack` use from `baseFlatten`.
-        _.pull(funcDepMap.baseFlatten, 'Stack').push('indexOf');
+        // Remove `apply`.
+        _.forOwn(funcDepMap, function(depNames, identifier) {
+          if (_.includes(depNames, 'apply')) {
+            _.pull(depNames, 'apply');
 
-        source = replace(source, matchFunction(source, 'baseFlatten'), function(match) {
-          return match
-            .replace(/\bnew\s+Stack\b/, '[]')
-            .replace(/\bstack\.set\(array,\s*true\)/, 'stack.push(array)')
-            .replace(/\bstack\['delete'\]\(array\)/, 'stack.pop()')
-            .replace(/\bstack\.get\(array\)/m, 'indexOf(stack, array) > -1');
+            source = replace(source, matchFunction(source, identifier), function(match) {
+              return match.replace(/\bapply\(([^,)]+),\s*([^,)]+),\s*([^,)]+)\)/g, '$1.apply($2, $3)');
+            });
+          }
         });
 
-        // Remove map, set, and typed array support from `baseIsEqualDeep`.
+        // Remove map, set, stack, and typed array support from `baseIsEqualDeep`.
         _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isTypedArray', 'Stack').push('find');
 
         source = replace(source, matchFunction(source, 'baseIsEqualDeep'), function(match) {
           return match
             .replace(/\bgetTag\b/g, 'objectToString.call')
             .replace(/\s*else\s+if\s*\((?:obj|oth)Tag\b[\s\S]+?\}/g, '')
-            .replace(/\bnew\s+Stack\b/, '[]')
-            .replace(/\bstack\.set\(object,\s*other\)/, 'stack.push([object, other])')
-            .replace(/\bstack\['delete'\]\(object\)/, 'stack.pop()')
-            .replace(/^( *)var\s+stacked\s*=\s*stack\.get\(object\)/m, function(match, indent) {
+            .replace(/^( *)stack\s*\|\|.+/m, function(match, indent) {
               return indent + [
+                'stack || (stack = []);',
                 'var stacked = find(stack, function(entry) {',
                 '  return entry[0] === object;',
                 '});',
-                'stacked = stacked && stacked[1]'
+                'if (stacked && stacked[1]) {',
+                '  return stacked[1] == other;',
+                '}',
+                'stack.push([object, other]);'
+              ].join('\n' + indent);
+            })
+            .replace(/( *)return\b(.+?)(?=\n *\}\n$)/, function(match, indent, compared) {
+              return indent + [
+                'var result = ' + compared,
+                "stack.pop();",
+                'return result;'
               ].join('\n' + indent);
             });
         });
@@ -2472,20 +2480,25 @@ function build(options, callback) {
 
         source  = replace(source, matchFunction(source, 'createAssigner'), function(match) {
           match = removeVar(match, 'guard');
-          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[\s\S]+?\n\1\}\n/m, '');
+          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[^}]+?\n\1\}\n/m, '');
         });
 
         // Remove map and set support from `equalByTag`.
         _.pull(funcDepMap.equalByTag, 'mapToArray', 'setToArray');
 
         source = replace(source, matchFunction(source, 'equalByTag'), function(match) {
-          return match.replace(/\s*case\s*(?:map|set)Tag\b[\s\S]+?;(?=\s*case\b|\s*\})/g, '');
+          return match.replace(/^( *)  case\s*(?:arrayBuffer|map|set|symbol)Tag\b[\s\S]+?;(?=\s*case\b|\n\1\})/gm, '');
         });
 
-        // Remove `customizer` use from `equalArrays` and `equalObjects`.
+        // Remove `customizer` and stack use from `equalArrays` and `equalObjects`.
         _.each(['equalArrays', 'equalObjects'], function(funcName) {
           source = replace(source, matchFunction(source, funcName), function(match) {
-            return match.replace(/^( *)if\s*\(customizer\b[\s\S]+?\n\1}/m, '$1var result;');
+            match = removeVar(match, 'stacked');
+            return match
+              .replace(/^( *)if\s*\(customizer\b[\s\S]+?\n\1}/m, '$1var compared;')
+              .replace(/^( *)if\s*\(stacked\)[^}]+?\n\1\}\n/m, '')
+              .replace(/^ *stack\.set\([^)]+\);\n/m, '')
+              .replace(/^ *stack\['delete'\]\([^)]+\);\n/m, '');
           });
         });
 
@@ -2541,18 +2554,21 @@ function build(options, callback) {
         source = source.replace(/^(?: *\/\/.*\n)*( *)[$\w]+\(\['pop'[\s\S]+?\n\1\}\);\n/m, function(match) {
           return match
             .replace(/\barrayEach\b/g, 'baseEach')
-            .replace("'pop',", "$& 'join', 'reverse',")
-            .replace(/\bpop\|/, '$&join|');
+            .replace("'pop',", "$& 'join', 'replace', 'reverse', 'split',")
+            .replace(/\bpop\|/, '$&join|replace|')
+            .replace(/func\s*=[\s\S]+?(?=,\n)/, function() {
+              return 'func = (/^(?:replace|split)$/.test(methodName) ? stringProto : arrayProto)[methodName]';
+            });
         });
 
-        // Replace `baseAssign` with `assign` in `_.create`
+        // Replace `baseAssign` with `assign` in `_.create`.
         _.pull(funcDepMap.create, 'baseAssign').push('assign');
 
         source = source.replace(matchFunction(source, 'create'), function(match) {
           return match.replace(/\bbaseAssign\b/g, 'assign');
         });
 
-        // Replace `baseHas` with `hasOwnProperty`
+        // Replace `baseHas` with `hasOwnProperty`.
         _.each(['equalObjects', 'keys'], function(funcName) {
           _.pull(funcDepMap[funcName], 'baseHas');
 
@@ -2569,12 +2585,6 @@ function build(options, callback) {
         });
 
         // Replace method implementations.
-        source = replaceFunction(source, 'apply', [
-          'function apply(func, thisArg, args) {',
-          '  return func.apply(thisArg, args);',
-          '}'
-        ].join('\n'));
-
         funcDepMap.arrayConcat = ['arrayPush', 'copyArray'];
 
         source = replaceFunction(source, 'arrayConcat', [
@@ -2684,6 +2694,8 @@ function build(options, callback) {
             return match + '\n' + copyArray;
           });
         }());
+
+        source = replaceFunction(source, 'copyObject', 'var copyObject = copyObjectWith;');
 
         funcDepMap.forEach = ['baseEach', 'toFunction'];
 
@@ -2874,8 +2886,14 @@ function build(options, callback) {
         funcDepMap.toNumber = [];
         source = replaceFunction(source, 'toNumber', 'var toNumber = Number;');
 
+        funcDepMap.toString = [];
+        varDepMap.toString = [];
+
         source = replaceFunction(source, 'toString', [
           'function toString(value) {',
+          "  if (typeof value == 'string') {",
+          '    return value;',
+          '  }',
           "  return value == null ? '' : (value + '');",
           '}'
         ].join('\n'));
