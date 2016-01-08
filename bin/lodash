@@ -202,7 +202,8 @@ function buildModule(state, onComplete) {
   };
 
   var toDepName = !isNpm ? _.identity : function(value) {
-    return 'lodash.' + (isPrivate(value) ? '_' : '') + value.toLowerCase();
+    var prefix = (isPrivate(value) && !_.startsWith(value, '_')) ? '_' : '';
+    return 'lodash.' + prefix + value.toLowerCase();
   };
 
   if (isNpm) {
