@@ -19,6 +19,6 @@ $ lodash -h
 
 ## Support
 
-Tested in Node.js 0.8.28, 0.10.40, 0.12.7, & 4.1.2.
+Tested in Node.js 0.10.x, 0.12.x, 4.x, & 5.x.
 
 **Note:** Node.js 0.10.8-0.10.11 [have](https://github.com/joyent/node/issues/5622) [bugs](https://github.com/joyent/node/issues/5688) preventing minified builds.
