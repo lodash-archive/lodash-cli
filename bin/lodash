@@ -2558,7 +2558,7 @@ function build(options, callback) {
             .replace("'pop',", "$& 'join', 'replace', 'reverse', 'split',")
             .replace(/\bpop\|/, '$&join|replace|')
             .replace(/func\s*=[\s\S]+?(?=,\n)/, function() {
-              return 'func = (/^(?:replace|split)$/.test(methodName) ? stringProto : arrayProto)[methodName]';
+              return 'func = (/^(?:replace|split)$/.test(methodName) ? String.prototype : arrayProto)[methodName]';
             });
         });
 
