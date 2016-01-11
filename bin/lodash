@@ -2703,7 +2703,11 @@ function build(options, callback) {
 
         funcDepMap.copyArray = ['baseSlice'];
 
-        source = replaceFunction(source, 'copyArray', 'var copyArray = baseSlice;');
+        source = replaceFunction(source, 'copyArray', [
+          'function copyArray(source) {',
+          '  return baseSlice(source, 0, source.length);',
+          '}'
+        ].join('\n'));
 
         (function() {
           var copyArray = matchFunction(source, 'copyArray', true);
