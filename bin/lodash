@@ -952,8 +952,11 @@ function cleanupSource(source) {
         return (!prelude && postlude) ? postlude : match;
       })
       // Remove unattached multi-line and single line comments.
-      .replace(/^ *(\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.*)\n\n/gm, function(match, comment) {
-        return /^\/\*-+\*\/$/.test(comment) ? match : '\n';
+      .replace(/^ *(\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.*)\n\n/gm, function(match, comment, index) {
+        var isCopyright = !index && /\bcopyright\b/i.test(comment),
+            isHR = /^\/\*-+\*\/$/.test(comment);
+
+        return (isCopyright || isHR) ? match : '\n';
       })
       // Remove unused horizontal rule comment separators.
       .replace(/(\{\s*\n) *\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*\})/gm, '$1$2')
