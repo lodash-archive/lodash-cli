@@ -201,6 +201,11 @@ function buildModule(state, onComplete) {
     });
   };
 
+  var isMajorBump = function(identifier) {
+    var allDeps = getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap);
+    return !_.isEmpty(_.intersection(allDeps, listing.majorBump));
+  };
+
   var toDepName = !isNpm ? _.identity : function(value) {
     var prefix = (isPrivate(value) && !_.startsWith(value, '_')) ? '_' : '';
     return 'lodash.' + prefix + value.toLowerCase();
@@ -333,9 +338,11 @@ function buildModule(state, onComplete) {
             packageTemplate = fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf8'),
             readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf8');
 
-        var type = 'function',
-            version = state.lodash.VERSION,
-            pkgDepPaths = _.sortBy(depPaths, toDepName);
+        var semver = require('semver'),
+            type = 'function',
+            version = semver.parse(state.lodash.VERSION),
+            pkgDepNames = _.sortBy(depNames, toDepName),
+            pkgDepPaths = _.sortBy(depPaths);
 
         if (_.includes(listing.objDeps, identifier)) {
           type = 'object';
@@ -347,23 +354,30 @@ function buildModule(state, onComplete) {
           'isInternal': isPrivate(identifier),
           'name': moduleName,
           'type': type,
-          'version': version,
-          'dependencies': _.transform(pkgDepPaths, function(result, depPath) {
-            var parts = version.split('.');
-            result[depPath] = '^' + parts[0] + '.0.0';
+          'version': version.raw,
+          'dependencies': _.transform(pkgDepNames, function(result, depName, index) {
+            var depPath = pkgDepPaths[index],
+                depMajor = version.major;
+
+            if (!_.isEmpty(listing.majorBump) && !isMajorBump(depName)) {
+              depMajor--;
+            }
+            result[depPath] = '^' + depMajor + '.0.0';
           }, {})
         };
 
         // Independently update the package version.
         if (fs.existsSync(data.outputPath)) {
-          var semver = require('semver'),
-              laxDeps = _.map(listing.laxSemVerDeps, toDepName),
+          var laxDeps = _.map(listing.laxSemVerDeps, toDepName),
               oldPackage = require(path.join(path.dirname(data.outputPath), 'package.json')),
               oldVersion = oldPackage.version,
               oldDeps = _.omit(oldPackage.dependencies || {}, laxDeps),
               pkgDeps = _.omit(templateData.dependencies, laxDeps);
 
-          if (_.isEqual(pkgDeps, oldDeps)) {
+          if (isMajorBump(identifier)) {
+            templateData.version = semver.inc(oldVersion, 'major', true);
+          }
+          else if (_.isEqual(pkgDeps, oldDeps)) {
             var oldSource = fs.readFileSync(data.outputPath, 'utf8');
 
             // Exit early if sources are identical.
