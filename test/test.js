@@ -179,7 +179,7 @@ function testMethod(assert, lodash, methodName, message) {
         func(array);
       }
     }
-    else if (_.includes(mapping.category.Chain, methodName)) {
+    else if (_.includes(mapping.category.Seq, methodName)) {
       lodash(array)[methodName](_.noop);
     }
     else if (_.includes(mapping.category.Collection, methodName)) {
@@ -241,7 +241,7 @@ function testMethod(assert, lodash, methodName, message) {
         func(template, { 'imports': object })(object);
       }
     }
-    else if (_.includes(mapping.category.Utility, methodName)) {
+    else if (_.includes(mapping.category.Util, methodName)) {
       if (methodName == 'bindAll') {
         func({ 'noop': _.noop });
       } else if (methodName == 'mixin') {
@@ -746,7 +746,7 @@ QUnit.module('modularize modifier');
           assert.ok(reHeader.test(fs.readFileSync(require.resolve(outputPath), 'utf-8')), 'lodash module should preserve the copyright header');
         }
         else {
-          var modulePath = path.join(outputPath, funcName == 'mixin' ? 'utility' : 'string', funcName);
+          var modulePath = path.join(outputPath, funcName == 'mixin' ? 'util' : 'string', funcName);
           lodash = {};
           lodash[funcName] = require(modulePath);
 
@@ -776,14 +776,14 @@ QUnit.module('modularize modifier');
       if (lodash._) {
         lodash = lodash._;
       }
-      _.each(['array', 'chain', 'collection', 'date', 'function', 'lang', 'number', 'object', 'string', 'utility'], function(category) {
+      _.each(['array', 'collection', 'date', 'function', 'lang', 'number', 'object', 'seq', 'string', 'util'], function(category) {
         var categoryModule = require(path.join(outputPath, category)),
             funcNames = mapping.category[_.capitalize(category)];
 
         _.each(funcNames, function(funcName) {
           var aliases = getAliases(funcName);
           _.each(aliases, function(alias) {
-            var objects = [(category == 'chain' ? lodash.prototype : lodash), categoryModule];
+            var objects = [(category == 'seq' ? lodash.prototype : lodash), categoryModule];
             _.each(objects, function(object, index) {
               var message = (
                 'should have `' + alias + '` as an alias of `' + funcName +
@@ -817,14 +817,14 @@ QUnit.module('modularize modifier');
     build(['modularize', 'include=iteratee', 'minus=matches,property', 'exports=node', '-o', outputPath], function() {
       emptyObject(require.cache);
 
-      var modulePath = path.join(outputPath, 'utility'),
-          utility = require(modulePath),
-          iteratee = utility.iteratee('x'),
+      var modulePath = path.join(outputPath, 'util'),
+          util = require(modulePath),
+          iteratee = util.iteratee('x'),
           object = { 'x': 1 };
 
       assert.strictEqual(iteratee(object), object);
 
-      iteratee = utility.iteratee(object);
+      iteratee = util.iteratee(object);
       assert.strictEqual(iteratee(object), object);
 
       start();
@@ -1332,18 +1332,18 @@ QUnit.module('lodash build');
   var commands = [
     'strict',
     'category=array',
-    'category=chain',
     'category=collection',
     'category=date',
     'category=function',
     'category=lang',
     'category=number',
     'category=object',
+    'category=seq',
     'category=string',
-    'category=utility',
+    'category=util',
     'minus=union,uniq,zip',
     'include=each,filter,map',
-    'include=once plus=bind,Chain',
+    'include=once plus=bind,Seq',
     'category=collection,function',
     'include=defer',
     'strict category=function exports=amd,global plus=pick,uniq',
