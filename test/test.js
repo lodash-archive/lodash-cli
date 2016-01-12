@@ -743,15 +743,15 @@ QUnit.module('modularize modifier');
         if (funcName == 'main') {
           var lodash = require(outputPath);
           assert.ok(lodash(1) instanceof lodash, outputPath, '`lodash()` should return a `lodash` instance');
-          assert.ok(reHeader.test(fs.readFileSync(require.resolve(outputPath), 'utf-8')), 'lodash module should preserve the copyright header');
+          assert.ok(reHeader.test(fs.readFileSync(path.join(outputPath, 'lodash.js'), 'utf8')), 'lodash module should preserve the copyright header');
         }
         else {
-          var modulePath = path.join(outputPath, funcName == 'mixin' ? 'util' : 'string', funcName);
+          var modulePath = path.join(outputPath, funcName);
           lodash = {};
           lodash[funcName] = require(modulePath);
 
           assert.notOk(fs.existsSync(path.join(outputPath, 'index.js')), 'should not create an index.js file');
-          assert.notOk(reHeader.test(fs.readFileSync(require.resolve(modulePath), 'utf-8')), funcName + ' module should not preserve the copyright header');
+          assert.notOk(reHeader.test(fs.readFileSync(require.resolve(modulePath), 'utf8')), funcName + ' module should not preserve the copyright header');
           testMethod(assert, lodash, funcName);
         }
         start();

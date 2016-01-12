@@ -1,4 +1,4 @@
-var baseFunctions = require('lodash._basefunctions'),
+var functions = require('lodash.functions'),
     isObject = require('lodash.isobject'),
     keys = require('lodash.keys'),
     mixin = require('lodash.mixin'),
@@ -10,7 +10,7 @@ mixin = (function(func) {
     var isObj = isObject(source),
         noOpts = options == null,
         props = noOpts && isObj && keys(source),
-        methodNames = props && baseFunctions(source, props);
+        methodNames = props && functions(source);
 
     if ((props && props.length && !methodNames.length) || (noOpts && !isObj)) {
       if (noOpts) {
