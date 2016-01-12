@@ -175,6 +175,7 @@ function buildModule(state, onComplete) {
       includeVars = state.includeVars,
       isAMD = state.isAMD,
       isES = state.isES,
+      isNode = state.isNode,
       isNpm = state.isNpm,
       isSilent = state.isSilent,
       minusFuncs = state.minusFuncs,
@@ -294,8 +295,12 @@ function buildModule(state, onComplete) {
         : getDepPaths(depNames, modulePath);
 
       if (isAMD) {
+        var depArgs = _.map(depNames, function(depName) {
+          return _.result(mapping.wrapperToReal, depName, depName);
+        });
+
         iife.push(
-          'define([' + (_.isEmpty(depPaths) ? '' : "'" + depPaths.join("', '") + "'") + '], function(' + depNames.join(', ') + ') {',
+          'define([' + (_.isEmpty(depPaths) ? '' : "'" + depPaths.join("', '") + "'") + '], function(' + depArgs.join(', ') + ') {',
           '%output%',
           '  return ' + identifier + ';',
           '});'
@@ -304,7 +309,10 @@ function buildModule(state, onComplete) {
       else if (isES) {
         iife.push(
           _.map(depPaths, function(depPath, index) {
-            return 'import ' + depNames[index] + " from '" + depPath + "';";
+            var depName = depNames[index],
+                varName = _.result(mapping.wrapperToReal, depName, depName);
+
+            return 'import ' + varName + " from '" + depPath + "';";
           })
           .join('\n'),
           '%output%',
@@ -315,10 +323,11 @@ function buildModule(state, onComplete) {
         iife.push(
           _.map(depPaths, function(depPath, index) {
             var depName = depNames[index],
+                varName = _.result(mapping.wrapperToReal, depName, depName),
                 lastIndex = depPaths.length - 1;
 
             return (index ? '' : 'var ') +
-              depName + " = require('" + depPath + "')" +
+              varName + " = require('" + depPath + "')" +
               (index == lastIndex ? ';' : '');
           })
           .join(',\n    '),
@@ -480,11 +489,11 @@ function buildModule(state, onComplete) {
       getDependencies(identifier, varDepMap)
     );
 
-    var basename = 'index';
+    var basename = 'lodash';
     if (isAMD) {
       basename = 'main';
     } else if (isES) {
-      basename = 'lodash' + (index ? '.default' : '');
+      basename += (index ? '.default' : '');
     }
     state.buildFuncs = state.includeFuncs = [identifier];
     state.includeObjs = state.includeVars = [];
@@ -561,7 +570,7 @@ function buildModule(state, onComplete) {
           return match;
         }
         var category = mapping.categoryToDepName[getCategory(identifier)];
-        identifier = _.result(mapping.forceAlias, identifier, identifier);
+        identifier = _.result(mapping.wrapperToReal, identifier, identifier);
         return left + (category ? category + '.' : '') + identifier;
       });
 
@@ -581,13 +590,17 @@ function buildModule(state, onComplete) {
         // dependency `_mixin` instead.
         depNames[_.indexOf(depNames, 'mixin')] = '_mixin';
       }
-      var iife = [],
-          depArgs = depNames.join(', '),
-          depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath));
+      var iife = [];
+
+      var depArgs = _.map(depNames, function(depName) {
+        return _.result(mapping.wrapperToReal, depName, depName);
+      });
+
+      var depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath));
 
       if (isAMD) {
         iife.push(
-          'define([' + (_.isEmpty(depPaths) ? '' : "'" + depPaths.join("', '") + "'") + '], function(' + depArgs + ') {',
+          'define([' + (_.isEmpty(depPaths) ? '' : "'" + depPaths.join("', '") + "'") + '], function(' + depArgs.join(', ') + ') {',
           '%output%',
           '  return lodash;',
           '});'
@@ -597,7 +610,10 @@ function buildModule(state, onComplete) {
         if (index) {
           iife.push(
             _.map(depPaths, function(depPath, index) {
-              return 'import ' + depNames[index] + " from '" + depPath + "';";
+              var depName = depNames[index],
+                  varName = _.result(mapping.wrapperToReal, depName, depName);
+
+              return 'import ' + varName + " from '" + depPath + "';";
             }).join('\n'),
             '%output%',
             'export default lodash;'
@@ -634,10 +650,11 @@ function buildModule(state, onComplete) {
         iife.push(
           _.map(depPaths, function(depPath, index) {
             var depName = depNames[index],
+                varName = _.result(mapping.wrapperToReal, depName, depName),
                 lastIndex = depPaths.length - 1;
 
             return (index ? '' : 'var ') +
-              depName + " = require('" + depPath + "')" +
+              varName + " = require('" + depPath + "')" +
               (index == lastIndex ? ';' : '');
           }).join(',\n    '),
           '%output%',
@@ -652,6 +669,9 @@ function buildModule(state, onComplete) {
       }
       source = replaceIIFE(source, iife.join('\n'));
 
+      if (isNode) {
+        fs.writeFileSync(path.join(outputPath, modulePath, 'index.js'), "module.exports = require('./lodash.js');");
+      }
       data.source = source;
       buildCallback(data);
     });
@@ -670,8 +690,8 @@ function buildModule(state, onComplete) {
             dataName = forceAlias === undefined ? depName : forceAlias,
             dataPath = _.includes(aliases, forceAlias) ? getDepPath(forceAlias) : getDepPath(depName).replace(/[^\/]+$/, dataName);
 
-        result.push({ 'name': dataName, 'path': dataPath });
-        push.apply(result, _.map(_.without(aliases, forceAlias), function(alias) {
+        result.push({ 'name': _.result(mapping.wrapperToReal, depName, depName), 'path': dataPath });
+        push.apply(result, _.map(_.without(aliases, forceAlias, mapping.wrapperToReal[depName]), function(alias) {
           return { 'name': alias, 'path': getDepPath(alias) };
         }));
       }), 'name');
@@ -685,7 +705,8 @@ function buildModule(state, onComplete) {
           "define(['" + depPaths.join("', '") + "'], function(" + depNames.join(', ') + ') {',
           '  return {',
           _.map(depNames, function(depName) {
-            return "    '" + depName + "': " + depName;
+            var key = _.result(mapping.wrapperToReal, depName, depName);
+            return "    '" + key + "': " + depName;
           })
           .join(',\n'),
           '  };',
@@ -713,7 +734,8 @@ function buildModule(state, onComplete) {
             iife.push(
               '',
               _.map(depNames, function(depName, index) {
-                return 'export { default as ' + depName + " } from '" + depPaths[index] + "';";
+                var key = _.result(mapping.wrapperToReal, depName, depName);
+                return 'export { default as ' + key + " } from '" + depPaths[index] + "';";
               })
               .join('\n'),
               "export { default as default } from './" + basename + ".default';"
@@ -724,8 +746,10 @@ function buildModule(state, onComplete) {
           iife.push(
             'module.exports = {',
             _.map(depNames, function(depName) {
-              var depPath = depPaths[_.indexOf(depNames, depName)];
-              return "  '" + depName + "': require('" + depPath + "')";
+              var depPath = depPaths[_.indexOf(depNames, depName)],
+                  key = _.result(mapping.wrapperToReal, depName, depName);
+
+              return "  '" + key + "': require('" + depPath + "')";
             })
             .join(',\n'),
             '};'
@@ -1286,16 +1310,7 @@ function getMethodAssignments(source) {
  * @returns {string} Returns the module path.
  */
 function getModulePath(identifier, category) {
-  if (_.includes(listing.topLevelDeps, getRealName(identifier))) {
-    return '';
-  }
-  if (isPrivate(identifier)) {
-    return 'internal';
-  }
-  if (category == null) {
-    category = getCategory(identifier);
-  }
-  return category.toLowerCase();
+  return isPrivate(identifier) ? 'internal' : '';
 }
 
 /**
