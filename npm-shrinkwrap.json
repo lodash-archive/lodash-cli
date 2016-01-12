@@ -15,9 +15,9 @@
       }
     },
     "glob": {
-      "version": "6.0.3",
-      "from": "https://registry.npmjs.org/glob/-/glob-6.0.3.tgz",
-      "resolved": "https://registry.npmjs.org/glob/-/glob-6.0.3.tgz",
+      "version": "6.0.4",
+      "from": "https://registry.npmjs.org/glob/-/glob-6.0.4.tgz",
+      "resolved": "https://registry.npmjs.org/glob/-/glob-6.0.4.tgz",
       "dependencies": {
         "inflight": {
           "version": "1.0.4",
@@ -138,9 +138,9 @@
                           "resolved": "https://registry.npmjs.org/kind-of/-/kind-of-2.0.1.tgz",
                           "dependencies": {
                             "is-buffer": {
-                              "version": "1.1.0",
-                              "from": "https://registry.npmjs.org/is-buffer/-/is-buffer-1.1.0.tgz",
-                              "resolved": "https://registry.npmjs.org/is-buffer/-/is-buffer-1.1.0.tgz"
+                              "version": "1.1.1",
+                              "from": "https://registry.npmjs.org/is-buffer/-/is-buffer-1.1.1.tgz",
+                              "resolved": "https://registry.npmjs.org/is-buffer/-/is-buffer-1.1.1.tgz"
                             }
                           }
                         },
@@ -179,9 +179,9 @@
                           "resolved": "https://registry.npmjs.org/kind-of/-/kind-of-2.0.1.tgz",
                           "dependencies": {
                             "is-buffer": {
-                              "version": "1.1.0",
-                              "from": "https://registry.npmjs.org/is-buffer/-/is-buffer-1.1.0.tgz",
-                              "resolved": "https://registry.npmjs.org/is-buffer/-/is-buffer-1.1.0.tgz"
+                              "version": "1.1.1",
+                              "from": "https://registry.npmjs.org/is-buffer/-/is-buffer-1.1.1.tgz",
+                              "resolved": "https://registry.npmjs.org/is-buffer/-/is-buffer-1.1.1.tgz"
                             }
                           }
                         },
