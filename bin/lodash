@@ -212,8 +212,8 @@ function buildModule(state, onComplete) {
   };
 
   if (isNpm) {
-    // Exclude "Chain" methods and most internal functions when exporting for npm.
-    identifiers = _.reject(_.difference(identifiers, mapping.category.Chain), function(identifier) {
+    // Exclude "Seq" methods and most internal functions when exporting for npm.
+    identifiers = _.reject(_.difference(identifiers, mapping.category.Seq), function(identifier) {
       return isPrivate(identifier) && !_.includes(listing.uninlinables, identifier) && !_.includes(includeFuncs, identifier);
     });
 
@@ -1581,13 +1581,13 @@ function removeBaseKeysInFork(source) {
  *
  * @private
  * @param {string} source The source to process.
- * @param {Object} [chainDepMap] The chain dependency map to modify.
+ * @param {Object} [seqDepMap] The chain dependency map to modify.
  * @param {Object} [funcDepMap] The function dependency map to modify.
  * @param {Object} [objDepMap] The object dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeChaining(source, chainDepMap, funcDepMap, objDepMap) {
-  source = removeLazyChaining(source, chainDepMap, funcDepMap, objDepMap);
+function removeChaining(source, seqDepMap, funcDepMap, objDepMap) {
+  source = removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap);
   source = removeMixinCalls(source);
 
   // Remove all `lodash.prototype` additions.
@@ -1624,16 +1624,16 @@ function removeGetTagFork(source) {
  *
  * @private
  * @param {string} source The source to process.
- * @param {Object} [chainDepMap] The chain dependency map to modify.
+ * @param {Object} [seqDepMap] The chain dependency map to modify.
  * @param {Object} [funcDepMap] The function dependency map to modify.
  * @param {Object} [objDepMap] The object dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeLazyChaining(source, chainDepMap, funcDepMap, objDepMap) {
-  if (chainDepMap) {
-    _.pull(chainDepMap.objDep, 'realNames');
+function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
+  if (seqDepMap) {
+    _.pull(seqDepMap.objDep, 'realNames');
 
-    _.pull(chainDepMap.funcDep,
+    _.pull(seqDepMap.funcDep,
       'baseInvoke', 'createHybridWrapper', 'getIteratee', 'identity',
       'isArray', 'last', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper',
       'rest', 'toInteger', 'wrapperAt', 'wrapperFlatMap', 'wrapperReverse'
@@ -2159,7 +2159,7 @@ function build(options, callback) {
   }
   else {
     // Clone dependencies to modify.
-    var chainDepMap = createMap(_.cloneDeep(mapping.chainDep)),
+    var seqDepMap = createMap(_.cloneDeep(mapping.seqDep)),
         funcDepMap = createMap(_.cloneDeep(mapping.funcDep)),
         objDepMap = createMap(_.cloneDeep(mapping.objDep)),
         varDepMap = createMap(_.cloneDeep(mapping.varDep));
@@ -2402,7 +2402,7 @@ function build(options, callback) {
       }
       if (isModularize) {
         if (isNode) {
-          _.pull(chainDepMap.varDep, 'root');
+          _.pull(seqDepMap.varDep, 'root');
           _.forOwn(varDepMap, function(depNames, identifier) {
             _.pull(depNames, 'root');
           });
@@ -2422,11 +2422,11 @@ function build(options, callback) {
         });
       }
       if (isNpm) {
-        source = removeChaining(source, chainDepMap, funcDepMap, objDepMap);
+        source = removeChaining(source, seqDepMap, funcDepMap, objDepMap);
         source = removeMetadata(source, funcDepMap);
       }
       if (isCore) {
-        source = removeLazyChaining(source, chainDepMap, funcDepMap, objDepMap);
+        source = removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap);
         source = removeMetadata(source, funcDepMap);
 
         // Add `func` check to `createPartialWrapper`.
@@ -2442,7 +2442,7 @@ function build(options, callback) {
         });
 
         // Remove chain dependencies.
-        _.pull(chainDepMap.funcDep,
+        _.pull(seqDepMap.funcDep,
           'baseLodash', 'wrapperCommit', 'wrapperNext',
           'wrapperPlant', 'wrapperToIterator'
         );
@@ -2565,7 +2565,7 @@ function build(options, callback) {
         });
 
         // Replace `arrayEach` with `baseEach` in the chain scaffolding.
-        _.each([chainDepMap.funcDep, funcDepMap.mixin], function(depMap) {
+        _.each([seqDepMap.funcDep, funcDepMap.mixin], function(depMap) {
           _.pull(depMap, 'arrayEach').push('baseEach');
         });
 
@@ -2930,18 +2930,18 @@ function build(options, callback) {
           '}'
         ].join('\n'));
       }
-      // Redistribute `chainDepMap` deps.
+      // Redistribute `seqDepMap` deps.
       if (isModularize) {
-        funcDepMap.main = _.union(funcDepMap.main, _.difference(chainDepMap.funcDep, _.without(mapping.category.Chain, 'thru')));
-        objDepMap.main = _.union(objDepMap.main, chainDepMap.objDep);
-        varDepMap.main = _.union(varDepMap.main, chainDepMap.varDep);
+        funcDepMap.main = _.union(funcDepMap.main, _.difference(seqDepMap.funcDep, _.without(mapping.category.Seq, 'thru')));
+        objDepMap.main = _.union(objDepMap.main, seqDepMap.objDep);
+        varDepMap.main = _.union(varDepMap.main, seqDepMap.varDep);
       }
       else {
-        funcDepMap.wrapperValue = _.union(funcDepMap.wrapperValue, _.without(chainDepMap.funcDep, 'lodash', 'LodashWrapper'));
-        objDepMap.wrapperValue = _.union(objDepMap.wrapperValue, chainDepMap.objDep);
-        varDepMap.wrapperValue = _.union(varDepMap.wrapperValue, chainDepMap.varDep);
+        funcDepMap.wrapperValue = _.union(funcDepMap.wrapperValue, _.without(seqDepMap.funcDep, 'lodash', 'LodashWrapper'));
+        objDepMap.wrapperValue = _.union(objDepMap.wrapperValue, seqDepMap.objDep);
+        varDepMap.wrapperValue = _.union(varDepMap.wrapperValue, seqDepMap.varDep);
 
-        _.each(_.without(mapping.category.Chain, 'lodash', 'wrapperValue'), function(funcName) {
+        _.each(_.without(mapping.category.Seq, 'lodash', 'wrapperValue'), function(funcName) {
           funcDepMap[funcName].push('wrapperValue');
         });
       }
