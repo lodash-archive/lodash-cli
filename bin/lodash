@@ -2670,17 +2670,18 @@ function build(options, callback) {
 
         source = replaceFunction(source, 'baseMatches', [
           'function baseMatches(source) {',
-          '  var props = keys(source),',
-          '      length = props.length;',
-          '',
+          '  var props = keys(source);',
           '  return function(object) {',
+          '    var length = props.length;',
           '    if (object == null) {',
           '      return !length;',
           '    }',
           '    object = Object(object);',
           '    while (length--) {',
           '      var key = props[length];',
-          '      if (!(key in object && baseIsEqual(source[key], object[key], undefined, true))) {',
+          '      if (!(key in object &&',
+          '            baseIsEqual(source[key], object[key], undefined, UNORDERED_COMPARE_FLAG | PARTIAL_COMPARE_FLAG)',
+          '          )) {',
           '        return false;',
           '      }',
           '    }',
@@ -2821,11 +2822,11 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.matches = ['baseAssign', 'baseMatches'];
+        funcDepMap.matches = ['assign', 'baseMatches'];
 
         source = replaceFunction(source, 'matches', [
           'function matches(source) {',
-          '  return baseMatches(baseAssign({}, source));',
+          '  return baseMatches(assign({}, source));',
           '}'
         ].join('\n'));
 
