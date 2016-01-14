@@ -19,9 +19,6 @@ var fs = util.fs,
 global.QUnit = require('qunitjs');
 require('qunit-extras').runInContext(global);
 
-/** Used to avoid `noglobal` false positives caused by `errno` leaked in Node.js. */
-global.errno = true;
-
 /** The current working directory. */
 var cwd = process.cwd();
 
