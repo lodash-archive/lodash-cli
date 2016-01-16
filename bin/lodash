@@ -1308,11 +1308,10 @@ function getMethodAssignments(source) {
  *
  * @private
  * @param {string} identifier The module identifier.
- * @param {string} [category] The category of the identifier.
  * @returns {string} Returns the module path.
  */
-function getModulePath(identifier, category) {
-  return isPrivate(identifier) ? 'internal' : '';
+function getModulePath(identifier) {
+  return (isPrivate(identifier) && !_.startsWith(identifier, '_')) ? '_' : '';
 }
 
 /**
