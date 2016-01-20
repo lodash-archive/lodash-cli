@@ -207,9 +207,15 @@ function buildModule(state, onComplete) {
     return !_.isEmpty(_.intersection(allDeps, listing.majorBump));
   };
 
-  var toDepName = !isNpm ? _.identity : function(value) {
-    var prefix = (isPrivate(value) && !_.startsWith(value, '_')) ? '_' : '';
-    return 'lodash.' + prefix + value.toLowerCase();
+  var toDepName = function(value) {
+    var prefix = (isPrivate(value) && !_.startsWith(value, '_')) ? '_' : '',
+        result = prefix + value;
+
+    return isNpm ? ('lodash.' + result.toLowerCase()) : result;
+  };
+
+  var toDepPath = function(value) {
+    return './' + toDepName(value);
   };
 
   if (isNpm) {
@@ -241,8 +247,7 @@ function buildModule(state, onComplete) {
   _.each(identifiers, function(identifier) {
     var basename = _.result(mapping.forceAlias, identifier, identifier),
         category = getCategory(identifier),
-        moduleName = isNpm ? toDepName(basename) : basename,
-        modulePath = isNpm ? moduleName : getModulePath(basename, category);
+        depName = toDepName(basename);
 
     var depNames = _.union(
       getDependencies(identifier, funcDepMap),
@@ -272,7 +277,7 @@ function buildModule(state, onComplete) {
       inlineObjs = _.includes(listing.objDeps, identifier) ? inlinees : [];
       inlineVars = _.includes(listing.varDeps, identifier) ? inlinees : [];
     }
-    state.outputPath = path.join(outputPath, modulePath, (isNpm ? 'index' : basename) + '.js');
+    state.outputPath = path.join(outputPath, isNpm ? (depName + '/index.js') : (depName + '.js'));
     state.buildFuncs = state.includeFuncs = inlineFuncs;
     state.includeObjs = inlineObjs;
     state.includeVars = inlineVars;
@@ -292,7 +297,7 @@ function buildModule(state, onComplete) {
 
       var depPaths = isNpm
         ? _.map(depNames, toDepName)
-        : getDepPaths(depNames, modulePath);
+        : _.map(depNames, toDepPath);
 
       if (isAMD) {
         var depArgs = _.map(depNames, function(depName) {
@@ -361,7 +366,7 @@ function buildModule(state, onComplete) {
         var templateData = {
           'identifier': identifier,
           'isInternal': isPrivate(identifier),
-          'name': moduleName,
+          'name': depName,
           'type': type,
           'version': version.raw,
           'dependencies': _.transform(pkgDepNames, function(result, depName, index) {
@@ -380,7 +385,7 @@ function buildModule(state, onComplete) {
         // Independently update the package version.
         if (fs.existsSync(data.outputPath)) {
           var laxDeps = _.map(listing.laxSemVerDeps, toDepName),
-              oldPackage = require(path.join(path.dirname(data.outputPath), 'package.json')),
+              oldPackage = require(path.join(outputPath, depName, 'package.json')),
               oldVersion = oldPackage.version,
               oldDeps = _.omit(oldPackage.dependencies || {}, laxDeps),
               pkgDeps = _.omit(templateData.dependencies, laxDeps);
@@ -415,13 +420,13 @@ function buildModule(state, onComplete) {
           });
         }
         if (!isSameVersion) {
-          var oldPath = path.join(outputPath, modulePath, 'LICENSE.txt');
+          var oldPath = path.join(outputPath, depName, 'LICENSE.txt');
           if (fs.existsSync(oldPath)) {
             fs.unlinkSync(oldPath);
           }
-          fs.writeFileSync(path.join(outputPath, modulePath, 'package.json'), _.template(packageTemplate)(templateData));
-          fs.writeFileSync(path.join(outputPath, modulePath, 'LICENSE'), _.template(licenseTemplate)(templateData));
-          fs.writeFileSync(path.join(outputPath, modulePath, 'README.md'), _.template(readmeTemplate)(templateData));
+          fs.writeFileSync(path.join(outputPath, depName, 'package.json'), _.template(packageTemplate)(templateData));
+          fs.writeFileSync(path.join(outputPath, depName, 'LICENSE'), _.template(licenseTemplate)(templateData));
+          fs.writeFileSync(path.join(outputPath, depName, 'README.md'), _.template(readmeTemplate)(templateData));
         }
       }
       data.source = source;
@@ -433,17 +438,16 @@ function buildModule(state, onComplete) {
   _.each(!isNpm && identifiers, function(identifier) {
     var basename = _.result(mapping.forceAlias, identifier, identifier),
         aliases = _.without(getAliases(identifier), basename),
-        category = getCategory(identifier);
-
-    var modulePath = getModulePath(basename, category),
-        depPath = getDepPath(basename, modulePath);
+        category = getCategory(identifier),
+        depName = toDepName(basename),
+        depPath = toDepPath(basename);
 
     _.each(aliases, function(alias) {
       var iife = [];
       if (isAMD) {
         iife.push(
-          'define(["' + depPath + '"], function(' + basename + ') {',
-          '  return ' + basename + ';',
+          'define(["' + depPath + '"], function(' + depName + ') {',
+          '  return ' + depName + ';',
           '});'
         );
       }
@@ -459,7 +463,7 @@ function buildModule(state, onComplete) {
         );
       }
       buildCallback({
-        'outputPath': path.join(outputPath, modulePath, alias + '.js'),
+        'outputPath': path.join(outputPath, alias + '.js'),
         'source': iife.join('\n')
       });
     });
@@ -471,8 +475,6 @@ function buildModule(state, onComplete) {
     if (isNpm || !_.includes(buildFuncs, identifier)) {
       return;
     }
-    var modulePath = getModulePath(identifier);
-
     var categories = _.uniq(_.compact(_.map(identifiers, function(identifier) {
       return getCategory(identifier);
     }))).sort();
@@ -482,7 +484,7 @@ function buildModule(state, onComplete) {
     });
 
     var categoryDepPaths = _.map(categories, function(category) {
-      return './' + category.toLowerCase();
+      return toDepPath(category).toLowerCase();
     });
 
     var deps = _.union(
@@ -499,7 +501,7 @@ function buildModule(state, onComplete) {
     }
     state.buildFuncs = state.includeFuncs = [identifier];
     state.includeObjs = state.includeVars = [];
-    state.outputPath = path.join(outputPath, modulePath, basename + '.js');
+    state.outputPath = path.join(outputPath, basename + '.js');
 
     build(state, function(data) {
       var source = data.source;
@@ -598,7 +600,7 @@ function buildModule(state, onComplete) {
         return _.result(mapping.wrapperToReal, depName, depName);
       });
 
-      var depPaths = categoryDepPaths.concat(getDepPaths(deps, modulePath));
+      var depPaths = categoryDepPaths.concat(_.map(deps, toDepPath));
 
       if (isAMD) {
         iife.push(
@@ -628,11 +630,11 @@ function buildModule(state, onComplete) {
             var aliases = getAliases(depName),
                 forceAlias = mapping.forceAlias[depName],
                 dataName = forceAlias === undefined ? depName : forceAlias,
-                dataPath = _.includes(aliases, forceAlias) ? getDepPath(forceAlias) : getDepPath(depName).replace(/[^\/]+$/, dataName);
+                dataPath = toDepPath(_.includes(aliases, forceAlias) ? forceAlias : dataName);
 
             result.push({ 'name': depName, 'path': dataPath });
             push.apply(result, _.map(aliases, function(alias) {
-              return { 'name': alias, 'path': getDepPath(alias) };
+              return { 'name': alias, 'path': toDepPath(alias) };
             }));
           }), 'name');
 
@@ -672,7 +674,7 @@ function buildModule(state, onComplete) {
       source = replaceIIFE(source, iife.join('\n'));
 
       if (isNode) {
-        fs.writeFileSync(path.join(outputPath, modulePath, 'index.js'), "module.exports = require('./lodash.js');");
+        fs.writeFileSync(path.join(outputPath, 'index.js'), "module.exports = require('./lodash.js');");
       }
       data.source = source;
       buildCallback(data);
@@ -683,18 +685,19 @@ function buildModule(state, onComplete) {
   _.each(!isNpm && _.uniq(_.compact(_.flatten(_.map(identifiers, getCategory)))), function(category) {
     _.times(isES ? 2 : 1, function(index) {
       var basename = category.toLowerCase(),
-          filename = basename + (index ? '.default' : '') + '.js',
           deps = _.intersection(getNamesByCategory(category), identifiers);
 
       var depData = _.sortBy(_.transform(deps, function(result, depName) {
-        var aliases = getAliases(depName),
-            forceAlias = mapping.forceAlias[depName],
+        var forceAlias = mapping.forceAlias[depName],
+            aliases = _.without(getAliases(depName), forceAlias, mapping.wrapperToReal[depName]),
             dataName = forceAlias === undefined ? depName : forceAlias,
-            dataPath = _.includes(aliases, forceAlias) ? getDepPath(forceAlias) : getDepPath(depName).replace(/[^\/]+$/, dataName);
+            dataPath = toDepPath(_.includes(aliases, forceAlias) ? forceAlias : dataName);
 
-        result.push({ 'name': _.result(mapping.wrapperToReal, depName, depName), 'path': dataPath });
-        push.apply(result, _.map(_.without(aliases, forceAlias, mapping.wrapperToReal[depName]), function(alias) {
-          return { 'name': alias, 'path': getDepPath(alias) };
+        dataName = _.result(mapping.wrapperToReal, dataName, dataName);
+
+        result.push({ 'name': dataName, 'path': dataPath });
+        push.apply(result, _.map(aliases, function(alias) {
+          return { 'name': alias, 'path': toDepPath(alias) };
         }));
       }), 'name');
 
@@ -759,7 +762,7 @@ function buildModule(state, onComplete) {
         }
       }
       buildCallback({
-        'outputPath': path.join(outputPath, filename),
+        'outputPath': path.join(outputPath, basename + (index ? '.default' : '') + '.js'),
         'source': iife.join('\n')
       });
     });
@@ -1128,41 +1131,6 @@ function getCategory(identifier) {
 }
 
 /**
- * Resolves the path of the given module dependency. If `fromPath` is
- * provided the resolved path will be relative to `fromPath`.
- *
- * @private
- * @param {string} depName The name of the dependency.
- * @param {string} [fromPath=''] The path to resolve the dependency relative to.
- * @returns {string} Returns the dependency path.
- */
-function getDepPath(depName, fromPath) {
-  var sep = '/',
-      toPath = getModulePath(depName),
-      relative = path.relative(fromPath || '', toPath).replace(RegExp(path.sepEscaped, 'g'), sep);
-
-  if (relative.charAt(0) != '.') {
-    relative = '.' + (relative ? sep + relative : '');
-  }
-  return relative + sep + depName;
-}
-
-/**
- * Resolves the paths of the given module dependencies. If `fromPath` is
- * provided the resolved path will be relative to `fromPath`.
- *
- * @private
- * @param {Array} depNames The array dependency names.
- * @param {string} [fromPath=''] The path to resolve dependencies relative to.
- * @returns {string[]} Returns the dependency paths.
- */
-function getDepPaths(depNames, fromPath) {
-  return _.map(depNames, function(depName) {
-    return getDepPath(depName, fromPath);
-  });
-}
-
-/**
  * Creates an array of depenants for the given identifier(s).
  *
  * @private
@@ -1304,17 +1272,6 @@ function getMethodAssignments(source) {
 }
 
 /**
- * Resolves the module path of the given identifier.
- *
- * @private
- * @param {string} identifier The module identifier.
- * @returns {string} Returns the module path.
- */
-function getModulePath(identifier) {
-  return (isPrivate(identifier) && !_.startsWith(identifier, '_')) ? '_' : '';
-}
-
-/**
  * Gets the names of identifiers in `source` that belong to the given category.
  *
  * @private
@@ -1430,7 +1387,7 @@ function isFunctionSnippet(source) {
  */
 function isPrivate(identifier) {
   identifier = getRealName(identifier);
-  if (_.includes(listing.topLevelDeps, identifier)) {
+  if (_.includes(listing.categories, identifier)) {
     return false;
   }
   return _.isUndefined(_.findKey(mapping.category, function(identifiers) {
