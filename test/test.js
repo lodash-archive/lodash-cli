@@ -778,20 +778,15 @@ QUnit.module('modularize modifier');
             funcNames = mapping.category[_.capitalize(category)];
 
         _.each(funcNames, function(funcName) {
-          var aliases = getAliases(funcName);
+          var aliases = _.without(getAliases(funcName), 'wrapperLodash');
           _.each(aliases, function(alias) {
             var objects = [(category == 'seq' ? lodash.prototype : lodash), categoryModule];
             _.each(objects, function(object, index) {
-              var message = (
-                'should have `' + alias + '` as an alias of `' + funcName +
-                '` in lodash' + (index ? ('/' + category) : '')
-              );
-
               var value = (!index && alias == 'toIterator')
                 ? object[Symbol.iterator]
                 : object[alias];
 
-              assert.ok(_.isFunction(value), message);
+              assert.ok(_.isFunction(value), '`' + alias + '` is an alias of `' + funcName + '`');
             });
           });
         });
