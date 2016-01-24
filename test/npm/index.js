@@ -292,6 +292,7 @@ lodash.xorBy = require('lodash.xorby');
 lodash.xorWith = require('lodash.xorwith');
 lodash.zip = require('lodash.zip');
 lodash.zipObject = require('lodash.zipobject');
+lodash.zipObjectDeep = require('lodash.zipobjectdeep');
 lodash.zipWith = require('lodash.zipwith');
 
 // Add aliases.
