@@ -1,4 +1,4 @@
-# lodash-cli v4.0.1
+# lodash-cli v4.1.0
 
 The [lodash](https://lodash.com/) command-line interface for creating custom builds & precompiling templates.
 
@@ -19,4 +19,4 @@ $ lodash -h
 
 ## Support
 
-Tested in Node.js 0.10.x, 0.12.x, 4.x, & 5.x.
+Tested in Node.js 0.10, 0.12, 4, & 5.
