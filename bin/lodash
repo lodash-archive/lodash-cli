@@ -366,12 +366,14 @@ function buildModule(state, onComplete) {
           'version': version.raw,
           'dependencies': _.transform(pkgDepNames, function(result, depName, index) {
             var depPath = pkgDepPaths[index],
-                depMajor = version.major;
+                depVersion = '^' + version.major + '.0.0',
+                oldDepPath = path.join(path.resolve(outputPath), depPath, 'package.json');
 
-            if (!_.isEmpty(listing.majorBump) && !isMajorBump(depName)) {
-              depMajor--;
+            if (!isMajorBump(depName) && fs.existsSync(oldDepPath)) {
+              var oldDepVersion = semver.parse(require(oldDepPath).version);
+              depVersion = '^' + oldDepVersion.major + '.0.0';
             }
-            result[depPath] = '^' + depMajor + '.0.0';
+            result[depPath] = depVersion;
           }, {})
         };
 
