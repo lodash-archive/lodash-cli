@@ -6,10 +6,10 @@ var vm = require('vm');
 /** Load other modules. */
 var _ = require('lodash'),
     build = require('../bin/lodash'),
-    listing = require('../lib/listing.js'),
-    mapping = require('../lib/mapping.js'),
-    minify = require('../lib/minify.js'),
-    util = require('../lib/util.js');
+    listing = require('../lib/listing'),
+    mapping = require('../lib/mapping'),
+    minify = require('../lib/minify'),
+    util = require('../lib/util');
 
 /** Module references. */
 var fs = util.fs,

@@ -6,10 +6,10 @@ var vm = require('vm');
 
 /** Load other modules. */
 var _ = require('lodash'),
-    listing = require('../lib/listing.js'),
-    mapping = require('../lib/mapping.js'),
-    minify = require('../lib/minify.js'),
-    util = require('../lib/util.js');
+    listing = require('../lib/listing'),
+    mapping = require('../lib/mapping'),
+    minify = require('../lib/minify'),
+    util = require('../lib/util');
 
 /** Module references. */
 var createMap = util.createMap,
@@ -674,7 +674,7 @@ function buildModule(state, onComplete) {
       source = replaceIIFE(source, iife.join('\n'));
 
       if (isNode) {
-        fs.writeFileSync(path.join(outputPath, 'index.js'), "module.exports = require('./lodash.js');");
+        fs.writeFileSync(path.join(outputPath, 'index.js'), "module.exports = require('./lodash');");
       }
       data.source = source;
       buildCallback(data);
