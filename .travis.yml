@@ -39,6 +39,7 @@ branches:
 before_install:
   - "nvm use $TRAVIS_NODE_VERSION"
   - "npm config set loglevel error"
+  - "npm config set progress false"
   - "npm i -g npm@\"^2.0.0\""
   - "git clone --depth=10 --branch=master git://github.com/lodash/lodash ./node_modules/lodash && cd $_ && npm i && cd ../../"
   - "OUTPUT_PATH=\"./$EXPORTS\" && TARGET_PATH=\"../../../$EXPORTS/index.js\""
