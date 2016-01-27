@@ -372,10 +372,10 @@ function buildModule(state, onComplete) {
           'dependencies': _.transform(pkgDepNames, function(result, depName, index) {
             var depPath = pkgDepPaths[index],
                 depVersion = '^' + version.major + '.0.0',
-                oldDepPath = path.join(path.resolve(outputPath), depPath, 'package.json');
+                oldDepPackage = path.join(path.resolve(outputPath), depPath, 'package.json');
 
-            if (!isMajorBump(depName) && fs.existsSync(oldDepPath)) {
-              var oldDepVersion = semver.parse(require(oldDepPath).version);
+            if (!isMajorBump(depName) && fs.existsSync(oldDepPackage)) {
+              var oldDepVersion = semver.parse(require(oldDepPackage).version);
               depVersion = '^' + oldDepVersion.major + '.0.0';
             }
             result[depPath] = depVersion;
