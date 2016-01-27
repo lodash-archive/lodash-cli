@@ -40,7 +40,7 @@ var HELP_TEXT = [
   '               (i.e. “amd”, “es”, “global”, “node”, “none”, “npm”, & “umd”)',
   '',
   '  iife=..      Code to replace the IIFE that wraps lodash',
-  '               (e.g. `lodash iife="!function(){%output%}()"`)',
+  '               (e.g. `lodash iife="\\!function(){%output%}()"`)',
   '',
   '  template=..  File path pattern used to match template files to precompile',
   '               (e.g. `lodash template=./*.jst`)',
