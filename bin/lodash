@@ -385,7 +385,7 @@ function buildModule(state, onComplete) {
         // Independently update the package version.
         if (fs.existsSync(data.outputPath)) {
           var laxDeps = _.map(listing.laxSemVerDeps, toDepName),
-              oldPackage = require(path.join(outputPath, depName, 'package.json')),
+              oldPackage = require(path.join(path.resolve(outputPath), depName, 'package.json')),
               oldVersion = oldPackage.version,
               oldDeps = _.omit(oldPackage.dependencies || {}, laxDeps),
               pkgDeps = _.omit(templateData.dependencies, laxDeps);
