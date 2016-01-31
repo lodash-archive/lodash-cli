@@ -2924,13 +2924,14 @@ function build(options, callback) {
       if (isCore || isModularize) {
         source = removeGetIteratee(source, funcDepMap);
       }
-      // Remove "_.matches" or "_.property" style callback support from `baseIteratee`.
-      if (_.includes(minusFuncs, 'matches')) {
-        _.pull(funcDepMap.iteratee, 'isArray', 'isObjectLike', 'matches');
+      // Remove iteratee shorthand support from `iteratee`.
+      if (_.isEmpty(_.difference(['matches', 'matchesProperty', 'property'], minusFuncs))) {
+        _.pull(funcDepMap.iteratee, 'baseClone');
         source = replace(source, matchFunction(source, 'iteratee'), function(match) {
-          return match.replace(/^( *return\s+)[^:]+:\s*/m, '$1');
+          return match.replace(/^( *return\s+)[\s\S]+?(?=;\n)/m, '$1baseIteratee(func)');
         });
       }
+      // Remove individual iteratee shorthands from `baseIteratee`.
       _.each(['baseMatches', 'baseMatchesProperty', 'property'], function(funcName) {
         var otherName = _.camelCase(_.trimStart(funcName, 'base'));
         if (_.includes(minusFuncs, otherName)) {
