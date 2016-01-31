@@ -34,7 +34,6 @@
     "qunitjs": "~1.20.0"
   },
   "files": [
-    "npm-shrinkwrap.json",
     "bin/lodash",
     "lib/listing.js",
     "lib/mapping.js",
@@ -44,6 +43,7 @@
     "lib/util.js",
     "template/license.jst",
     "template/package.jst",
-    "template/readme.jst"
+    "template/readme.jst",
+    "npm-shrinkwrap.json"
   ]
 }
