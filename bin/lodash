@@ -1,118 +1,25 @@
 #!/usr/bin/env node
 'use strict';
 
-/** Load Node.js modules. */
-var vm = require('vm');
-
-/** Load other modules. */
 var _ = require('lodash'),
+    consts = require('../lib/const'),
     listing = require('../lib/listing'),
     mapping = require('../lib/mapping'),
     minify = require('../lib/minify'),
-    util = require('../lib/util');
+    util = require('../lib/util'),
+    vm = require('vm');
 
-/** Module references. */
-var createMap = util.createMap,
-    fs = util.fs,
+var fs = util.fs,
+    Hash = util.Hash,
     path = util.path;
 
-/** Used as the text displayed for the `--help` option */
-var HELP_TEXT = [
-  'Usage:',
-  '  lodash [commands] [options]',
-  '',
-  'Commands:',
-  '',
-  '  strict       Build with ES strict mode enabled',
-  '  modularize   Splits lodash into modules',
-  '',
-  '  include=..   Comma separated function/category names to include in the build',
-  '',
-  '  minus=..     Comma separated function/category names to remove from the build',
-  '',
-  '  plus=..      Comma separated function/category names to add to the build',
-  '',
-  '  category=..  Comma separated categories of functions to include in the build',
-  '               (i.e. “array”, “collection”, “date”, “function”, “lang”,',
-  '               “object”, “number”, “seq”, “string”, & “util”)',
-  '',
-  '  exports=..   Comma separated values of ways to export lodash.',
-  '               (i.e. “amd”, “es”, “global”, “node”, “none”, “npm”, & “umd”)',
-  '',
-  '  iife=..      Code to replace the IIFE that wraps lodash',
-  '               (e.g. `lodash iife="\\!function(){%output%}()"`)',
-  '',
-  '  template=..  File path pattern used to match template files to precompile',
-  '               (e.g. `lodash template=./*.jst`)',
-  '',
-  '  settings=..  Template settings used when precompiling templates',
-  '               (e.g. `lodash settings="{interpolate:/{{([\\s\\S]+?)}}/g}"`)',
-  '',
-  '  moduleId=..  The AMD module ID used to export lodash in lodash builds or',
-  '               the module ID used to include lodash in compiled templates.',
-  '',
-  '               Use “none” as the module ID to create compiled templates without',
-  '               a dependency on lodash.',
-  '',
-  '  The `exports` values “es” & “npm” may only be used in conjunction with',
-  '  the `modularize` command.',
-  '',
-  '  The `modularize` command uses the first `exports` values as its module format,',
-  '  ignoring subsequent values.',
-  '',
-  '  Unless specified by `-o` or `--output` all files created are saved to the',
-  '  current working directory.',
-  '',
-  'Options:',
-  '',
-  '  -c, --stdout       Write output to standard output',
-  '  -d, --development  Write only the non-minified development output',
-  '  -h, --help         Display help information',
-  '  -m, --source-map   Generate a source map using an optional source map URL',
-  '  -o, --output       Write output to a given path/filename',
-  '  -p, --production   Write only the minified production output',
-  '  -s, --silent       Skip status updates normally logged to the console',
-  '  -V, --version      Output current version of lodash',
-  ''
-].join('\n');
+var cwd = process.cwd(),
+    floor = Math.floor,
+    push = Array.prototype.push,
+    stdout = process.stdout;
 
-/** The current working directory. */
-var cwd = process.cwd();
-
-/** Used to indicate whether this file is executed directly from Node.js */
+/** Used to indicate whether this file is executed directly from Node.js. */
 var isBin = module == require.main;
-
-/** Native method references. */
-var floor = Math.floor,
-    push = Array.prototype.push;
-
-/** Used to create regexes that detect single and multi-line comment blocks. */
-var rsComment = '(?: *(?:/\\*[^*]*\\*+(?:[^/][^*]*\\*+)*/|\/\/.*)\\n)*';
-
-/** Used to match comments and string literals. */
-var reComment = /^ *(?:\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/|\/\/.*)\n/gm,
-    reString = /(["'])(?:(?!\1)[^\n\\]|\\.)*?\1/g;
-
-/** Used to detect if a string is a function snippet or a variable declaration snippet. */
-var reIsFuncSnippet = /\b(?:function(?:\s+[$\w]+)?|[a-z]+(?:[A-Z][a-z]+)+)\(/,
-    reIsVarSnippet = /^\s*var\s+/;
-
-/** Used to match function and string tokens. */
-var reCommentToken = /<#com_token\d+#>\n/g,
-    reNamedToken = /<<[$\w]+>>\n/g,
-    reStringToken = /<#str_token\d+#>/g;
-
-/** Used to determine if a variable search should be deep. */
-var reHasDeepVars = /^ *function +runInContext\b/m;
-
-/** Used to detect a function by its JSDoc tags. */
-var reHasFuncTags = /^ *\* *(?:@param|@returns|@type +Function)\b/im;
-
-/** Used to match various calls and references. */
-var reGetIteratee = /\bgetIteratee\b(?:\(\))?/g;
-
-/** Shortcut to the `stdout` object. */
-var stdout = process.stdout;
 
 /*----------------------------------------------------------------------------*/
 
@@ -800,8 +707,6 @@ function buildTemplate(state) {
 
   pattern = path.normalize(pattern || path.join(cwd, '*.jst'));
 
-  var hr = '  /*----------------------------------------------------------------------------*/';
-
   var source = [
     ';(function() {',
     '  var undefined;',
@@ -857,7 +762,7 @@ function buildTemplate(state) {
     );
   }
   source.push(
-    hr,
+    consts.hr,
     ''
   );
 
@@ -870,7 +775,7 @@ function buildTemplate(state) {
   }
   var basePath = (dirname + path.sep).replace(RegExp('(^|' + path.sepEscaped + ')\\*\\*.*$'), '$1'),
       insertAt = source.length,
-      templates = createMap();
+      templates = new Hash;
 
   _.each(filePaths, function(filePath) {
     var string = fs.readFileSync(filePath, 'utf8'),
@@ -883,7 +788,7 @@ function buildTemplate(state) {
 
     // Create namespace objects.
     _.reduce(props, function(object, key) {
-      return object[key] || (object[key] = createMap());
+      return object[key] || (object[key] = new Hash);
     }, templates);
 
     // Escape namespace property names.
@@ -906,7 +811,7 @@ function buildTemplate(state) {
   );
 
   source.push(
-    hr,
+    consts.hr,
     '',
     "  if (typeof define == 'function' && typeof define.amd == 'object' && define.amd) {"
   );
@@ -1031,13 +936,13 @@ function commentFree(source, callback) {
   source = toString(source);
 
   var comments = [];
-  source = callback(source.replace(reComment, function(match) {
+  source = callback(source.replace(consts.reComment, function(match) {
     var index = comments.length;
     comments.push(match);
     return '<#com_token' + index + '#>\n';
   })) || '';
 
-  return replace(source, reCommentToken, function(match) {
+  return replace(source, consts.reCommentToken, function(match) {
     return comments[match.slice(11, -3)];
   });
 }
@@ -1335,7 +1240,7 @@ function getRealCategory(alias) {
  * @returns {Array} Returns a new array of variable names.
  */
 function getVars(source) {
-  var isDeep = reHasDeepVars.test(source),
+  var isDeep = consts.reHasDeepVars.test(source),
       indentA = isDeep ? ' {2,4}' : ' {2}',
       indentB = isDeep ? ' {6,8}' : ' {6}',
       result = [];
@@ -1344,7 +1249,7 @@ function getVars(source) {
     // Match a varaible at the start of a declaration list.
     ['^(' + indentA + 'var\\s+)([$\\w]+)\\s*=.+?,\\n *', 2, 1],
     // Match a variable declaration in a declaration list.
-    [',\\n' + rsComment + indentB + '([$\\w]+)\\s*=[\\s\\S]+?(?=[,;]\\n)', 1, -1],
+    [',\\n' + consts.rsComment + indentB + '([$\\w]+)\\s*=[\\s\\S]+?(?=[,;]\\n)', 1, -1],
     // Match a variable that is not part of a declaration list.
     ['^(' + indentA + ')var\\s+([$\\w]+)\\s*(?:|=\\s*(?:.+?(?:[&+]\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n', 2, -1]
   ];
@@ -1375,7 +1280,7 @@ function getVars(source) {
  */
 function isFunctionSnippet(source) {
   var header = getHeader(source);
-  return reHasFuncTags.test(header) || reIsFuncSnippet.test(replace(source, header, ''));
+  return consts.reHasFuncTags.test(header) || consts.reIsFuncSnippet.test(replace(source, header, ''));
 }
 
 /**
@@ -1437,7 +1342,7 @@ function matchFunction(source, funcName, leadingComments) {
 
   return _.reduce(patterns, function(result, pattern) {
     if (!result) {
-      result = RegExp('^(' + rsComment + ')(' + pattern + ')', 'm').exec(source),
+      result = RegExp('^(' + consts.rsComment + ')(' + pattern + ')', 'm').exec(source),
       result = isFunctionSnippet(result) ? _.result(result, leadingComments ? 0 : 2, '') : '';
     }
     return result;
@@ -1458,7 +1363,7 @@ function matchProp(source, propName, leadingComments) {
   var escapedName = _.escapeRegExp(propName);
 
   return _.result(RegExp(
-    '^' + (leadingComments ? rsComment : '') +
+    '^' + (leadingComments ? consts.rsComment : '') +
     '(?: {2,4}var\\s+' + escapedName + '\\b.+|(?:\\s*|.*?=\\s*)lodash\\._?' + escapedName + '\\s*)=[\\s\\S]+?' +
     '(?:\\(function\\([\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
     '[;}]\\n(?=\\n(?!\\s*\\(function\\b)))'
@@ -1482,14 +1387,14 @@ function matchVar(source, varName, leadingComments) {
     // Match a varaible at the start of a declaration list.
     ['^( *var\\s+)(' + escapedName + '\\s*=.+?,\\n *)', 2, 2],
     // Match a variable declaration in a declaration list.
-    ['(,\\n' + rsComment + ')( *' + escapedName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
+    ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
     // Match a variable that is not part of a declaration list.
-    ['^(' + rsComment + ')(( *)var\\s+' + escapedName + '\\s*(?:|=\\s*(?:.+?(?:[&+]\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\3\\S+?));\\n)', 2, 0]
+    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*(?:|=\\s*(?:.+?(?:[&+]\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\3\\S+?));\\n)', 2, 0]
   ];
 
   // Match complex variable assignments.
   if (_.includes(listing.complexVars, varName)) {
-    patterns.splice(2, 0, ['^(' + rsComment + ')(( *)var\\s+' + escapedName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]);
+    patterns.splice(2, 0, ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]);
   }
   return _.reduce(patterns, function(result, data) {
     return result || _.result(RegExp(data[0], 'm').exec(source), data[leadingComments ? 2 : 1], '');
@@ -1578,7 +1483,7 @@ function removeChaining(source, seqDepMap, funcDepMap, objDepMap) {
  * @returns {string} Returns the modified source.
  */
 function removeComments(source) {
-  return replace(source, reComment, '');
+  return replace(source, consts.reComment, '');
 }
 
 /**
@@ -1731,7 +1636,7 @@ function removeGetIteratee(source, funcDepMap) {
         deps.push('baseIteratee');
       }
       source = replace(source, matchFunction(source, identifier), function(match) {
-        return match.replace(reGetIteratee, 'baseIteratee');
+        return match.replace(consts.reGetIteratee, 'baseIteratee');
       });
     }
   });
@@ -1746,7 +1651,7 @@ function removeGetIteratee(source, funcDepMap) {
   return source.replace(getMethodAssignments(source), function(match) {
     var deps = _.result(funcDepMap, 'main', []);
     if (_.includes(deps, 'baseIteratee')) {
-      match = match.replace(reGetIteratee, 'baseIteratee');
+      match = match.replace(consts.reGetIteratee, 'baseIteratee');
     }
     return match;
   });
@@ -1876,7 +1781,7 @@ function removeRunInContext(source) {
  * @returns {string} Returns the modified source.
  */
 function removeStrings(source) {
-  return replace(source, reString, '');
+  return replace(source, consts.reString, '');
 }
 
 /**
@@ -1931,7 +1836,7 @@ function replace(string, pattern, replacement) {
  * @returns {string} Returns the modified source.
  */
 function replaceFunction(source, funcName, funcValue) {
-  var checkFuncTag = reIsVarSnippet.test(funcValue);
+  var checkFuncTag = consts.reIsVarSnippet.test(funcValue);
 
   return replace(source, matchFunction(source, funcName, checkFuncTag), function(match) {
     var header = checkFuncTag ? getHeader(match) : '';
@@ -2051,13 +1956,13 @@ function stringFree(source, callback) {
   source = toString(source);
 
   var strings = [];
-  source = callback(source.replace(reString, function(match) {
+  source = callback(source.replace(consts.reString, function(match) {
     var index = strings.length;
     strings.push(match);
     return '<#str_token' + index + '#>';
   })) || '';
 
-  return replace(source, reStringToken, function(match) {
+  return replace(source, consts.reStringToken, function(match) {
     return strings[match.slice(11, -2)];
   });
 }
@@ -2083,7 +1988,7 @@ function toString(value) {
  * Creates a development and/or production build invoking `callback` for each.
  * The `callback` is invoked with one argument: (data).
  *
- * **Note:** For a list of commands see `HELP_TEXT` or run `lodash --help`.
+ * **Note:** For a list of commands see `consts.helpText` or run `lodash --help`.
  *
  * @param {Array|Object} [options=[]] An array of build commands or the state object.
  * @param {Function} [callback=defaultBuildCallback] The function called per build.
@@ -2132,10 +2037,10 @@ function build(options, callback) {
   }
   else {
     // Clone dependencies to modify.
-    var seqDepMap = createMap(_.cloneDeep(mapping.seqDep)),
-        funcDepMap = createMap(_.cloneDeep(mapping.funcDep)),
-        objDepMap = createMap(_.cloneDeep(mapping.objDep)),
-        varDepMap = createMap(_.cloneDeep(mapping.varDep));
+    var seqDepMap = new Hash(_.cloneDeep(mapping.seqDep)),
+        funcDepMap = new Hash(_.cloneDeep(mapping.funcDep)),
+        objDepMap = new Hash(_.cloneDeep(mapping.objDep)),
+        varDepMap = new Hash(_.cloneDeep(mapping.varDep));
 
     // The path to the source file.
     var filePath = require.resolve('lodash');
@@ -2216,7 +2121,7 @@ function build(options, callback) {
         isES = _.includes(exportsOptions, 'es'),
         isGlobal = _.includes(exportsOptions, 'global'),
         isNpm = _.includes(exportsOptions, 'npm'),
-        isNode = isNpm  || _.includes(exportsOptions, 'node');
+        isNode = isNpm || _.includes(exportsOptions, 'node');
 
     if (isTemplate) {
       isModularize = false;
@@ -2347,10 +2252,11 @@ function build(options, callback) {
     }
     // Display the help message.
     if (getOption(options, '-h') || getOption(options, '--help')) {
+      var helpText = consts.helpText;
       if (isBin) {
-        console.log(HELP_TEXT);
+        console.log(helpText);
       } else {
-        callback({ 'source': HELP_TEXT });
+        callback({ 'source': helpText });
       }
       return;
     }
@@ -3091,7 +2997,7 @@ function build(options, callback) {
           var match = matchFunction(source, funcName, true);
           source = source.replace(match, '<<' + funcName + '>>\n');
           result[funcName] = match;
-        }, createMap());
+        }, new Hash);
       }
       // Detect variables after tokenizing functions.
       varNames = _.difference(getVars(source), buildFuncs.concat(includeObjs, includeVars, 'freeGlobal'));
@@ -3253,12 +3159,12 @@ function build(options, callback) {
           return funcTokenMap[funcName];
         });
       });
-      source = source.replace(reNamedToken, '');
+      source = source.replace(consts.reNamedToken, '');
     }
     // Remove unused variables.
     source = stringFree(source, function(source) {
       return commentFree(source, function(source) {
-        var useMap = createMap();
+        var useMap = new Hash;
         while (varNames.length) {
           varNames = _.sortBy(varNames, function(varName) {
             var result = isVarUsed(source, varName);
