@@ -1754,16 +1754,18 @@ function removeRunInContext(source) {
 
   // Remove function scaffolding, leaving most of its content.
   source = replace(source, matchFunction(source, 'runInContext', true), function(match) {
+    // Remove function frame.
+    match = match.replace(/^[\s\S]+?function\s+runInContext\b[\s\S]+?context\s*=\s*context.+?\n+| *return\s+lodash;[\s\S]+$/g, '');
     match = replaceIndent(match, 1, 2);
-    return match
-      // Remove function frame.
-      .replace(/^[\s\S]+?function\s+runInContext\b[\s\S]+?context\s*=\s*context.+?\n+| *return\s+lodash;[\s\S]+$/g, '')
-      // Remove native constructor references.
-      .replace(/^(?: *\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n)? *var\s+Date\s*=[\s\S]+?;\n/m, '')
-      // Remove `context` from built-in constructor references.
-      .replace(/\bcontext\.(?=(?:Array|Function|Object|String)\b)/g, '')
-      // Replace `context` references with `root`.
-      .replace(/\bcontext\b/g, 'root');
+
+    // Remove built-in vars and related `context` references.
+    _.each(listing.builtins, function(builtin) {
+      match = removeVar(match, builtin);
+      match = match.replace(RegExp('\\bcontext\\.(?=' + builtin + '\\b)', 'g'), '');
+    });
+
+    // Replace remaining `context` references with `root`.
+    return match.replace(/\bcontext\b/g, 'root');
   });
 
   return source
@@ -2970,6 +2972,9 @@ function build(options, callback) {
       });
 
       if (isNode) {
+        if (isModularize) {
+          source = removeRunInContext(source);
+        }
         source = source.replace(/\bcontext(?=[.,])|\broot\b(?!\s*=)/g, 'global');
       }
       if (!isAMD) {
