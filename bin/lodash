@@ -2282,12 +2282,6 @@ function build(options, callback) {
         _.pull(varDepMap.main, 'root');
       }
       if (isModularize) {
-        if (isNode) {
-          _.pull(seqDepMap.varDep, 'root');
-          _.forOwn(varDepMap, function(depNames, identifier) {
-            _.pull(depNames, 'root');
-          });
-        }
         _.each(listing.placeholderFuncs.concat('createCurry', 'createPartial', 'mixin'), function(funcName) {
           _.pull(funcDepMap[funcName], 'lodash');
         });
@@ -2971,12 +2965,6 @@ function build(options, callback) {
         });
       });
 
-      if (isNode) {
-        if (isModularize) {
-          source = removeRunInContext(source);
-        }
-        source = source.replace(/\bcontext(?=[.,])|\broot\b(?!\s*=)/g, 'global');
-      }
       if (!isAMD) {
         source = removeVar(source, 'undefined');
       }
@@ -3152,7 +3140,7 @@ function build(options, callback) {
       source = removeVar(source, varName);
     });
 
-    if (!(isAMD || isGlobal) && !_.includes(includeVars, 'root')) {
+    if (!_.includes(includeVars, 'root')) {
       varNames = _.without(varNames, 'root');
       source = removeVar(source, 'freeGlobal');
       source = removeVar(source, 'root');
