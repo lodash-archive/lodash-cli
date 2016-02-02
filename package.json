@@ -35,6 +35,7 @@
   },
   "files": [
     "bin/lodash",
+    "lib/const.js",
     "lib/listing.js",
     "lib/mapping.js",
     "lib/minify.js",
