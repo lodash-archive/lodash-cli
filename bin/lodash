@@ -2983,7 +2983,7 @@ function build(options, callback) {
 
       // Remove method assignments for non-core methods.
       if (isCore) {
-        _.each(_.difference(buildFuncs, listing.coreFuncs), function(funcName) {
+        _.each(_.difference(buildFuncs, listing.coreFuncs, plusFuncs), function(funcName) {
           source = removeMethodAssignment(source, funcName);
         });
       }
