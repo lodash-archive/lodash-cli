@@ -2282,8 +2282,11 @@ function build(options, callback) {
         _.pull(varDepMap.main, 'root');
       }
       if (isModularize) {
-        _.each(listing.placeholderFuncs.concat('createCurry', 'createPartial', 'mixin'), function(funcName) {
+        _.each(listing.placeholderFuncs.concat('createCurryWrapper', 'createHybridWrapper', 'mixin'), function(funcName) {
           _.pull(funcDepMap[funcName], 'lodash');
+          source = source.replace(matchFunction(source, funcName), function(match) {
+            return match.replace(/\blodash\.placeholder\s*\|\|\s*/, '');
+          });
         });
 
         // Add deps to wrap `_.mixin` in `main`.
