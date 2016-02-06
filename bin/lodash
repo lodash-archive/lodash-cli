@@ -1202,13 +1202,13 @@ function getOption(options, names, defaultValue) {
   var isArr = _.isArray(defaultValue);
   names = _.isArray(names) ? names : [names];
 
-  return _.reduce(options, function(result, value) {
+  return _.reduce(options, function(result, option) {
     _.each(names, function(name) {
       if (isArr) {
-        value = optionToArray(name, value);
-        result = _.isEmpty(value) ? result : value;
+        var array = optionToArray(name, option);
+        result = _.isEmpty(array) ? result : array;
       } else {
-        value = optionToValue(name, value);
+        var value = optionToValue(name, option);
         result = value == null ? result : value;
       }
     });
