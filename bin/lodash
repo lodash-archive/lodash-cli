@@ -13,7 +13,8 @@ var fs = util.fs,
     Hash = util.Hash,
     path = util.path;
 
-var cwd = process.cwd(),
+var buildExports = listing.buildExports,
+    cwd = process.cwd(),
     floor = Math.floor,
     push = Array.prototype.push,
     stdout = process.stdout;
@@ -1193,19 +1194,25 @@ function getNamesByCategory(category) {
  *
  * @private
  * @param {Array} options The options array to inspect.
- * @param {string} name The name of the option.
+ * @param {string|string[]} names The name(s) of the option.
  * @param {*} defaultValue The default option value.
  * @returns {*} Returns the option value.
  */
-function getOption(options, name, defaultValue) {
+function getOption(options, names, defaultValue) {
   var isArr = _.isArray(defaultValue);
+  names = _.isArray(names) ? names : [names];
+
   return _.reduce(options, function(result, value) {
-    if (isArr) {
-      value = optionToArray(name, value);
-      return _.isEmpty(value) ? result : value;
-    }
-    value = optionToValue(name, value);
-    return value == null ? result : value;
+    _.each(names, function(name) {
+      if (isArr) {
+        value = optionToArray(name, value);
+        result = _.isEmpty(value) ? result : value;
+      } else {
+        value = optionToValue(name, value);
+        result = value == null ? result : value;
+      }
+    });
+    return result;
   }, defaultValue);
 }
 
@@ -2065,25 +2072,25 @@ function build(options, callback) {
     var isCore = getOption(options, 'core');
 
     // A flag to specify only creating the development build.
-    var isDevelopment = getOption(options, '-d') || getOption(options, '--development');
+    var isDevelopment = getOption(options, ['-d', '--development']);
 
     // A flag to indicate that a custom IIFE was specified.
     var isIIFE = typeof iife == 'string';
 
     // A flag to specify creating a source map for the minified source.
-    var isMapped = getOption(options, '-m') || getOption(options, '--source-map');
+    var isMapped = getOption(options, ['-m', '--source-map']);
 
     // A flag to specify a modularize build.
     var isModularize = getOption(options, 'modularize');
 
     // A flag to specify only creating the minified build.
-    var isProduction = getOption(options, '-p') || getOption(options, '--production');
+    var isProduction = getOption(options, ['-p', '--production']);
 
     // A flag to specify writing output to standard output.
-    var isStdOut = getOption(options, '-c') || getOption(options, '--stdout');
+    var isStdOut = getOption(options, ['-c', '--stdout']);
 
     // A flag to specify skipping status updates normally logged to the console.
-    var isSilent = !isBin || isStdOut || getOption(options, '-s') || getOption(options, '--silent');
+    var isSilent = !isBin || isStdOut || getOption(options, ['-s', '--silent']);
 
     // A flag to specify `_.assign`, `_.bindAll`, and `_.defaults`
     // are constructed using the "use strict" directive.
@@ -2093,7 +2100,7 @@ function build(options, callback) {
     var isTemplate = !!templatePattern;
 
     // Used to specify the AMD module ID of lodash used by precompiled templates.
-    var moduleId = getOption(options, 'moduleId', null);
+    var moduleId = getOption(options, 'moduleId');
 
     // Used as the output path for the build.
     var outputPath = _.reduce(options, function(result, value, index) {
@@ -2104,9 +2111,9 @@ function build(options, callback) {
 
     // Used to specify the ways to export the `lodash` function.
     var exportsOptions = (function() {
-      var result = getOption(options, 'exports', isModularize ? ['amd'] : listing.exports);
+      var result = getOption(options, 'exports', buildExports.defaults[isModularize ? 'modularize' : 'monolithic']);
       if (!isModularize && _.includes(result, 'umd')) {
-        result = _.union(result, listing.exports);
+        result = _.union(result, buildExports.umd);
       }
       return isModularize ? _.take(result, 1) : result;
     }());
@@ -2115,7 +2122,7 @@ function build(options, callback) {
     var isCustom = !isModularize && (
       isMapped || isStrict || isTemplate || outputPath ||
       /\b(?:category|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
-      !_.isEqual(exportsOptions, listing.exports)
+      !_.isEqual(exportsOptions, buildExports.defaults.monolithic)
     );
 
     // Flags to specify export options.
@@ -2181,20 +2188,7 @@ function build(options, callback) {
           /^(?:category|exports|iife|include|minus|moduleId|plus|settings|template)=[\s\S]*$/.test(value)) {
         return true;
       }
-      var result = _.includes([
-        'core',
-        'modularize',
-        'strict',
-        '-c', '--stdout',
-        '-d', '--development',
-        '-h', '--help',
-        '-m', '--source-map',
-        '-o', '--output',
-        '-p', '--production',
-        '-s', '--silent',
-        '-V', '--version'
-      ], value);
-
+      var result = _.includes(listing.buildFlags, value);
       if (!result && /^(?:-m|--source-map)$/.test(options[index - 1])) {
         sourceMapURL = value;
         return true;
@@ -2214,9 +2208,7 @@ function build(options, callback) {
       },
       'exports': {
         'entries': exportsOptions,
-        'validEntries': isModularize
-          ? _.without(listing.exports.concat(['es', 'npm']), 'global')
-          : listing.exports
+        'validEntries': buildExports[isModularize ? 'modularize' : 'monolithic']
       },
       'include': {
         'entries': includeFuncs,
@@ -2253,7 +2245,7 @@ function build(options, callback) {
       return;
     }
     // Display the help message.
-    if (getOption(options, '-h') || getOption(options, '--help')) {
+    if (getOption(options, ['-h', '--help'])) {
       var helpText = consts.helpText;
       if (isBin) {
         console.log(helpText);
@@ -2263,7 +2255,7 @@ function build(options, callback) {
       return;
     }
     // Display the `lodash.VERSION`.
-    if (getOption(options, '-V') || getOption(options, '--version')) {
+    if (getOption(options, ['-V', '--version'])) {
       if (isBin) {
         console.log(_.VERSION);
       } else {
