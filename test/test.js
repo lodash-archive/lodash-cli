@@ -697,7 +697,6 @@ QUnit.module('independent builds');
         var comment = _.result(data.source.match(reHeader), 0, '');
         assert.ok(_.includes(comment, 'Custom Build'));
         assert.strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
-
         start();
       });
     });
@@ -711,16 +710,66 @@ QUnit.module('modularize modifier');
 (function() {
   var outputPath = path.join(__dirname, 'a');
 
-  var funcNames = [
-    'main',
-    'mixin',
-    'template'
-  ];
-
   function setup() {
     process.chdir(__dirname);
     fs.rmrfSync(outputPath);
   }
+
+  var categories = [
+    'array',
+    'collection',
+    'date',
+    'function',
+    'lang',
+    'number',
+    'object',
+    'seq',
+    'string',
+    'util'
+  ];
+
+  QUnit.test('module aliases for `exports=node`', function(assert) {
+    var done = assert.async();
+
+    var start = _.once(function() {
+      process.chdir(cwd);
+      done();
+    });
+
+    setup();
+
+    build(['modularize', 'exports=node', '-o', outputPath], function() {
+      emptyObject(require.cache);
+
+      var lodash = require(outputPath);
+
+      _.each(categories, function(category) {
+        var funcNames = mapping.category[_.capitalize(category)],
+            object = require(path.join(outputPath, category));
+
+        _.each(funcNames, function(funcName) {
+          var aliases = _.without(getAliases(funcName), 'wrapperLodash');
+          _.each(aliases, function(alias) {
+            var objects = [(category == 'seq' ? lodash.prototype : lodash), object];
+            _.each(objects, function(object, index) {
+              var value = (!index && alias == 'toIterator')
+                ? object[Symbol.iterator]
+                : object[alias];
+
+              assert.ok(_.isFunction(value), '`' + alias + '` is an alias of `' + funcName + '`');
+            });
+          });
+        });
+      });
+
+      start();
+    });
+  });
+
+  var funcNames = [
+    'mixin',
+    'template'
+  ];
 
   _.each(funcNames, function(funcName) {
     QUnit.test('`lodash modularize include=' + funcName + ' exports=node`', function(assert) {
@@ -736,26 +785,21 @@ QUnit.module('modularize modifier');
       build(['modularize', 'include=' + funcName, 'exports=node', '-o', outputPath], function() {
         emptyObject(require.cache);
 
-        if (funcName == 'main') {
-          var lodash = require(outputPath);
-          assert.ok(lodash(1) instanceof lodash, outputPath, '`lodash()` should return a `lodash` instance');
-          assert.ok(reHeader.test(fs.readFileSync(path.join(outputPath, 'lodash.js'), 'utf8')), 'lodash module should preserve the copyright header');
-        }
-        else {
-          var modulePath = path.join(outputPath, funcName);
-          lodash = {};
-          lodash[funcName] = require(modulePath);
+        var modulePath = path.join(outputPath, funcName);
 
-          assert.notOk(fs.existsSync(path.join(outputPath, 'index.js')), 'should not create an index.js file');
-          assert.notOk(reHeader.test(fs.readFileSync(require.resolve(modulePath), 'utf8')), funcName + ' module should not preserve the copyright header');
-          testMethod(assert, lodash, funcName);
-        }
+        var lodash = {};
+        lodash[funcName] = require(modulePath);
+
+        testMethod(assert, lodash, funcName);
+
+        assert.notOk(fs.existsSync(path.join(outputPath, 'index.js')), '`include=' + funcName + '` should not create an `index.js` file');
+        assert.notOk(reHeader.test(fs.readFileSync(require.resolve(modulePath), 'utf8')), funcName + ' module should not preserve the copyright header');
         start();
       });
     });
   });
 
-  QUnit.test('module aliases for `exports=node`', function(assert) {
+  QUnit.test('`lodash modularize include=main exports=node`', function(assert) {
     var done = assert.async();
 
     var start = _.once(function() {
@@ -765,32 +809,37 @@ QUnit.module('modularize modifier');
 
     setup();
 
-    build(['modularize', 'exports=node', '-o', outputPath], function() {
+    build(['modularize', 'include=main', 'exports=node', '-o', outputPath], function() {
       emptyObject(require.cache);
+
       var lodash = require(outputPath);
 
-      if (lodash._) {
-        lodash = lodash._;
-      }
-      _.each(['array', 'collection', 'date', 'function', 'lang', 'number', 'object', 'seq', 'string', 'util'], function(category) {
-        var categoryModule = require(path.join(outputPath, category)),
-            funcNames = mapping.category[_.capitalize(category)];
+      assert.ok(lodash(1) instanceof lodash, outputPath, '`lodash()` should return a `lodash` instance');
+      assert.ok(reHeader.test(fs.readFileSync(path.join(outputPath, 'lodash.js'), 'utf8')), 'lodash module should preserve the copyright header');
+      start();
+    });
+  });
 
-        _.each(funcNames, function(funcName) {
-          var aliases = _.without(getAliases(funcName), 'wrapperLodash');
-          _.each(aliases, function(alias) {
-            var objects = [(category == 'seq' ? lodash.prototype : lodash), categoryModule];
-            _.each(objects, function(object, index) {
-              var value = (!index && alias == 'toIterator')
-                ? object[Symbol.iterator]
-                : object[alias];
+  QUnit.test('`lodash modularize include=partial exports=node`', function(assert) {
+    var done = assert.async();
 
-              assert.ok(_.isFunction(value), '`' + alias + '` is an alias of `' + funcName + '`');
-            });
-          });
-        });
-      });
+    var start = _.once(function() {
+      process.chdir(cwd);
+      done();
+    });
 
+    setup();
+
+    build(['modularize', 'include=partial', 'exports=node', '-o', outputPath], function() {
+      emptyObject(require.cache);
+
+      var modulePath = path.join(outputPath, 'partial');
+
+      var lodash = {};
+      lodash.partial = require(modulePath);
+
+      assert.deepEqual(lodash.partial.placeholder, {}, 'should have a `placeholder` property');
+      testMethod(assert, lodash, 'partial');
       start();
     });
   });
