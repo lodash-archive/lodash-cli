@@ -668,7 +668,6 @@ QUnit.module('independent builds');
         var comment = _.result(data.source.match(reHeader), 0, '');
         assert.ok(_.includes(comment, 'Custom Build'));
         assert.strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
-
         start();
       });
     });
@@ -818,7 +817,6 @@ QUnit.module('modularize modifier');
 
       iteratee = util.iteratee(object);
       assert.strictEqual(iteratee(object), object);
-
       start();
     });
   });
@@ -920,7 +918,6 @@ QUnit.module('strict modifier');
         });
 
         assert.ok(actual, basename);
-
         start();
       });
     });
@@ -942,9 +939,7 @@ QUnit.module('minus command');
 
       vm.runInContext(data.source, context);
 
-      var lodash = context._;
-      assert.notOk('runInContext' in lodash, basename);
-
+      assert.notOk('runInContext' in context._, basename);
       start();
     });
   });
@@ -960,9 +955,9 @@ QUnit.module('minus command');
       vm.runInContext(data.source, context);
 
       var lodash = context._;
+
       assert.ok(lodash() instanceof lodash, basename);
       assert.deepEqual(_.keys(lodash.prototype), [], basename);
-
       start();
     });
   });
@@ -985,7 +980,6 @@ QUnit.module('minus command');
 
       iteratee = lodash.iteratee(object);
       assert.strictEqual(iteratee(object), object, basename);
-
       start();
     });
   });
@@ -1008,7 +1002,6 @@ QUnit.module('minus command');
 
       iteratee = lodash.iteratee(object);
       assert.strictEqual(iteratee(object), true, basename);
-
       start();
     });
   });
@@ -1031,7 +1024,6 @@ QUnit.module('minus command');
 
       iteratee = lodash.iteratee(object);
       assert.strictEqual(iteratee(object), object, basename);
-
       start();
     });
   });
@@ -1130,7 +1122,6 @@ QUnit.module('iife command');
         }
         var lodash = context.lodash || {};
         assert.ok(_.isString(lodash.VERSION), basename);
-
         start();
       });
     });
@@ -1147,7 +1138,6 @@ QUnit.module('iife command');
           comment = _.result(data.source.match(reHeader), 0, '');
 
       assert.ok(_.includes(comment, expected), basename);
-
       start();
     });
   });
@@ -1182,7 +1172,6 @@ QUnit.module('include command');
         assert.strictEqual(lodash.x, _.noop, basename);
         assert.strictEqual(typeof lodash.prototype.x, 'function', basename);
         assert.ok(lodash() instanceof lodash, basename);
-
         start();
       });
     });
@@ -1221,7 +1210,6 @@ QUnit.module('moduleId command');
 
         assert.strictEqual(actualId, expectedId, basename);
         assert.ok(_.isFunction(context._), basename);
-
         start();
       });
     });
