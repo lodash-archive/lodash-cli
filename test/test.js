@@ -1080,6 +1080,27 @@ QUnit.module('minus command');
 
 /*----------------------------------------------------------------------------*/
 
+QUnit.module('plus command');
+
+(function() {
+  QUnit.test('`lodash core plus=isBuffer`', function(assert) {
+    var done = assert.async(),
+        start = _.after(2, _.once(done));
+
+    build(['core', 'plus=isBuffer'], function(data) {
+      var basename = path.basename(data.outputPath, '.js'),
+          context = createContext();
+
+      vm.runInContext(data.source, context);
+
+      assert.ok('isBuffer' in context._, basename);
+      start();
+    });
+  });
+}());
+
+/*----------------------------------------------------------------------------*/
+
 QUnit.module('exports command');
 
 (function() {
