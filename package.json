@@ -28,8 +28,8 @@
     "uglify-js": "2.6.1"
   },
   "devDependencies": {
-    "babel-cli": "^6.4.5",
-    "babel-preset-es2015": "^6.3.13",
+    "babel-cli": "^6.5.1",
+    "babel-preset-es2015": "^6.5.0",
     "qunit-extras": "^1.4.5",
     "qunitjs": "~1.21.0"
   },
