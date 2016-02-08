@@ -1,4 +1,4 @@
-# lodash-cli v4.2.1
+# lodash-cli v4.3.0
 
 The [lodash](https://lodash.com/) command-line interface for creating custom builds & precompiling templates.
 
