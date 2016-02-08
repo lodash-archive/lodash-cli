@@ -3,7 +3,7 @@
 If you’d like to contribute a feature or bug fix, you can [fork](https://help.github.com/articles/fork-a-repo/) lodash-cli, commit your changes, & [send a pull request](https://help.github.com/articles/using-pull-requests/).
 Please make sure to [search the issue tracker](https://github.com/lodash/lodash-cli/issues) first; your issue may have already been discussed or fixed in `master`.
 
-## Tests
+## Pull Requests
 
 Include updated unit tests in the `test` directory as part of your pull request.
 
