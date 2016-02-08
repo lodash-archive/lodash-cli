@@ -3116,7 +3116,7 @@ function build(options, callback) {
     // Remove placeholder assignments of removed functions.
     source = source.replace(/^((?: *\/\/.*\n)*)( *)(arrayEach\(\[')bind\b[\s\S]+?('\][\s\S]+?\n\2\}\))/m, function(match, comment, indent, prelude, postlude) {
       var funcNames = _.reject(listing.placeholderFuncs, isExcluded),
-          length = funcNames.length;
+          length = isCore ? 0 : funcNames.length;
 
       if (length) {
         return length > 1
