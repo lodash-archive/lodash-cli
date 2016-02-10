@@ -87,6 +87,7 @@ lodash.findLastKey = require('lodash.findlastkey');
 lodash.flatMap = require('lodash.flatmap');
 lodash.flatten = require('lodash.flatten');
 lodash.flattenDeep = require('lodash.flattendeep');
+lodash.flattenDepth = require('lodash.flattendepth');
 lodash.flip = require('lodash.flip');
 lodash.floor = require('lodash.floor');
 lodash.flow = require('lodash.flow');
