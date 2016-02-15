@@ -2115,7 +2115,7 @@ function build(options, callback) {
       return /^(?:-o|--output)$/.test(value)
         ? path.normalize(options[index + 1])
         : result;
-    }, isModularize ? '.' + path.sep + 'modularize' : '');
+    }, isModularize ? ('.' + path.sep + 'modularize') : '');
 
     // Used to specify the ways to export the `lodash` function.
     var exportsOptions = (function() {
