@@ -2571,11 +2571,11 @@ function build(options, callback) {
 
         source = replaceFunction(source, 'copyObject', 'var copyObject = copyObjectWith;');
 
-        funcDepMap.forEach = ['baseEach', 'toFunction'];
+        funcDepMap.forEach = ['baseCastFunction', 'baseEach'];
 
         source = replaceFunction(source, 'forEach', [
           'function forEach(collection, iteratee) {',
-          '  return baseEach(collection, toFunction(iteratee));',
+          '  return baseEach(collection, baseCastFunction(iteratee));',
           '}'
         ].join('\n'));
 
