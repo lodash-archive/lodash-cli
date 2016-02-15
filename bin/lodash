@@ -1266,7 +1266,7 @@ function getVars(source) {
     // Match a variable declaration in a declaration list.
     [',\\n' + consts.rsComment + indentB + '([$\\w]+)\\s*=[\\s\\S]+?(?=[,;]\\n)', 1, -1],
     // Match a variable that is not part of a declaration list.
-    ['^(' + indentA + ')var\\s+([$\\w]+)\\s*(?:|=\\s*(?:.+?(?:[&+]\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\1\\S+?));\\n', 2, -1]
+    ['^(' + indentA + ')var\\s+([$\\w]+)\\s*(?:|=[^;]+);\\n', 2, -1]
   ];
 
   source = removeStrings(removeComments(source));
@@ -1404,7 +1404,7 @@ function matchVar(source, varName, leadingComments) {
     // Match a variable declaration in a declaration list.
     ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
     // Match a variable that is not part of a declaration list.
-    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*(?:|=\\s*(?:.+?(?:[&+]\\n[\\s\\S]+?)?|(?:[($\\w]+\\(|[{[(]\\n)[\\s\\S]+?\\n\\3\\S+?));\\n)', 2, 0]
+    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*(?:|=[^;]+);\\n)', 2, 0]
   ];
 
   // Match complex variable assignments.
