@@ -3149,12 +3149,11 @@ function build(options, callback) {
             return result;
           });
 
-          while (varNames.length && useMap[varNames[0]]) {
-            varNames.shift();
+         if (useMap[varNames[0]]) {
+            break;
           }
           while (varNames.length && !useMap[varNames[0]]) {
-            source = removeVar(source, varNames[0]);
-            varNames.shift();
+            source = removeVar(source, varNames.shift());
           }
         }
         return source;
