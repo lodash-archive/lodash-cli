@@ -262,7 +262,7 @@ function buildModule(state, onComplete) {
 
         var semver = require('semver'),
             type = 'function',
-            version = semver.parse(state.lodash.VERSION),
+            pkgVer = semver.parse(state.lodash.VERSION),
             pkgDepNames = _.sortBy(depNames, toDepName),
             pkgDepPaths = _.sortBy(depPaths);
 
@@ -276,30 +276,37 @@ function buildModule(state, onComplete) {
           'isInternal': isPrivate(identifier),
           'name': depName,
           'type': type,
-          'version': version.raw,
-          'dependencies': _.transform(pkgDepNames, function(result, depName, index) {
-            var depPath = pkgDepPaths[index],
-                depVersion = '^' + version.major + '.0.0',
-                oldDepPackage = path.join(path.resolve(outputPath), depPath, 'package.json');
-
-            if (!isMajorBump(depName) && fs.existsSync(oldDepPackage)) {
-              var oldDepVersion = semver.parse(require(oldDepPackage).version);
-              depVersion = '^' + oldDepVersion.major + '.0.0';
-            }
-            result[depPath] = depVersion;
-          }, {})
+          'version': pkgVer.raw
         };
+
+        templateData.dependencies = _.transform(pkgDepNames, function(result, depName, index) {
+          var depPath = pkgDepPaths[index],
+              depRange = '^' + pkgVer.major + '.0.0',
+              oldDepPkg = path.join(path.resolve(outputPath), depPath, 'package.json');
+
+          if (fs.existsSync(oldDepPkg)) {
+            var oldDepVer = semver.parse(require(oldDepPkg).version);
+            if (!isMajorBump(depName)) {
+              depRange = '^' + oldDepVer.major + '.0.0';
+            }
+            if (oldDepVer.major > pkgVer.major) {
+              pkgVer = oldDepVer;
+              templateData.version = pkgVer.major + '.0.0';
+            }
+          }
+          result[depPath] = depRange;
+        }, {});
 
         // Independently update the package version.
         if (fs.existsSync(data.outputPath)) {
           var laxDeps = _.map(listing.laxSemVerDeps, toDepName),
-              oldPackage = require(path.join(path.resolve(outputPath), depName, 'package.json')),
-              oldVersion = oldPackage.version,
-              oldDeps = _.omit(oldPackage.dependencies || {}, laxDeps),
+              oldPkg = require(path.join(path.resolve(outputPath), depName, 'package.json')),
+              oldVer = oldPkg.version,
+              oldDeps = _.omit(oldPkg.dependencies, laxDeps),
               pkgDeps = _.omit(templateData.dependencies, laxDeps);
 
           if (isMajorBump(identifier)) {
-            templateData.version = semver.inc(oldVersion, 'major', true);
+            templateData.version = semver.inc(oldVer, 'major', true);
           }
           else if (_.isEqual(pkgDeps, oldDeps)) {
             var oldSource = fs.readFileSync(data.outputPath, 'utf8');
@@ -310,14 +317,14 @@ function buildModule(state, onComplete) {
             }
             // Bump the `patch` version if the source has changed.
             templateData.version = cleanupSource(removeComments(oldSource)) === cleanupSource(removeComments(source))
-              ? oldVersion
-              : semver.inc(oldVersion, 'patch', true);
+              ? oldVer
+              : semver.inc(oldVer, 'patch', true);
           }
           else {
             // Bump the `minor` version if the dependencies have changed.
-            templateData.version = semver.inc(oldVersion, 'minor', true);
+            templateData.version = semver.inc(oldVer, 'minor', true);
           }
-          var isSameVersion = templateData.version == oldVersion;
+          var isSameVersion = templateData.version == oldVer;
 
           source = source.replace(getHeader(source), function(header) {
             // Use the old header if the package version remains the same.
