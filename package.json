@@ -23,7 +23,7 @@
   "dependencies": {
     "closure-compiler": "0.2.10",
     "glob": "7.0.0",
-    "lodash": "4.5.0",
+    "lodash": "4.5.1-pre",
     "semver": "5.1.0",
     "uglify-js": "2.6.1"
   },
