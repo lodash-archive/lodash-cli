@@ -273,21 +273,22 @@ function buildModule(state, onComplete) {
         }
         var templateData = {
           'identifier': identifier,
-          'isInternal': isPrivate(identifier),
+          'isPrivate': isPrivate(identifier),
           'name': depName,
           'type': type,
           'version': pkgVer.raw
         };
 
         templateData.dependencies = _.transform(pkgDepNames, function(result, depName, index) {
-          var depPath = pkgDepPaths[index],
-              depRange = '^' + pkgVer.major + '.0.0',
+          var prefix = isPrivate(depName) ? '~' : '^',
+              depPath = pkgDepPaths[index],
+              depRange = prefix + pkgVer.major + '.0.0',
               oldDepPkg = path.join(path.resolve(outputPath), depPath, 'package.json');
 
           if (fs.existsSync(oldDepPkg)) {
             var oldDepVer = semver.parse(require(oldDepPkg).version);
             if (!isMajorBump(depName)) {
-              depRange = '^' + oldDepVer.major + '.0.0';
+              depRange =  prefix + oldDepVer.major + '.0.0';
             }
             if (oldDepVer.major > pkgVer.major) {
               pkgVer = oldDepVer;

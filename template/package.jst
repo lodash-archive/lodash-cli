@@ -1,11 +1,11 @@
 {
   "name": "<%= name %>",
   "version": "<%= version %>",
-  "description": "The <%= (isInternal ? 'internal lodash function `' : 'lodash method `_.') + identifier %>` exported as a module.",
+  "description": "The <%= (isPrivate ? 'internal lodash function `' : 'lodash method `_.') + identifier %>` exported as a module.",
   "homepage": "https://lodash.com/",
   "icon": "https://lodash.com/icon.svg",
   "license": "MIT",<%
-  if (!isInternal) {
+  if (!isPrivate) {
     var basename = name.split('.')[1];
     print('\n  "keywords": "lodash-modularized, ' + basename + '",');
   }%>

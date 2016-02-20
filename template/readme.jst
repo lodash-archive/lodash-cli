@@ -1,6 +1,6 @@
 # <%= name %> v<%= version %>
 
-The <%= (isInternal ? 'internal ' : '') %>[lodash](https://lodash.com/) <%= (isInternal ? 'function `' : 'method `_.') + identifier %>` exported as a [Node.js](https://nodejs.org/) module.
+The <%= (isPrivate ? 'internal ' : '') %>[lodash](https://lodash.com/) <%= (isPrivate ? 'function `' : 'method `_.') + identifier %>` exported as a [Node.js](https://nodejs.org/) module.
 
 ## Installation
 
@@ -15,4 +15,4 @@ In Node.js:
 var <%= identifier %> = require('<%= name %>');
 ```
 
-See the <%= (isInternal ? '' : ('[documentation](https://lodash.com/docs#' + identifier + ') or ')) %>[package source](https://github.com/lodash/lodash/blob/<%= version %>-npm-packages/<%= name %>) for more details.
+See the <%= (isPrivate ? '' : ('[documentation](https://lodash.com/docs#' + identifier + ') or ')) %>[package source](https://github.com/lodash/lodash/blob/<%= version %>-npm-packages/<%= name %>) for more details.
