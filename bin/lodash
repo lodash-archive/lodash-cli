@@ -2541,6 +2541,22 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        funcDepMap.assign = ['createAssigner', 'copyObject', 'keys'];
+
+        source = replaceFunction(source, 'assign', [
+          'var assign = createAssigner(function(object, source) {',
+          '  copyObject(source, keys(source), object);',
+          '});'
+        ].join('\n'));
+
+        funcDepMap.assignIn = ['createAssigner', 'copyObject', 'keysIn'];
+
+        source = replaceFunction(source, 'assignIn', [
+          'var assignIn = createAssigner(function(object, source) {',
+          '  copyObject(source, keysIn(source), object);',
+          '});'
+        ].join('\n'));
+
         funcDepMap.bind = ['createPartialWrapper', 'rest'];
 
         source = replaceFunction(source, 'bind', [
