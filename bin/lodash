@@ -2350,8 +2350,15 @@ function build(options, callback) {
         source = replace(source, matchFunction(source, 'baseIsEqualDeep'), function(match) {
           return match
             .replace(/\bgetTag\b/g, 'objectToString.call')
-            .replace(/\s*else\s+if\s*\((?:obj|oth)Tag\b[\s\S]+?\}/g, '')
-            .replace(/^( *)stack\s*\|\|.+/m, function(match, indent) {
+            .replace(/\s*\|\|\s*isTypedArray\([^)]\)/, '')
+            .replace(/^( *)stack\s*\|\|[\s\S]+?\breturn\b([^;]+)(?=;\n)/gm, function(match, indent, compared) {
+              return indent + [
+                'var result =' + compared + ';',
+                "stack.pop();",
+                'return result'
+              ].join('\n' + indent);
+            })
+            .replace(/^ *(?=if\s*\(isSameTag\b)/m, function(indent) {
               return indent + [
                 'stack || (stack = []);',
                 'var stacked = find(stack, function(entry) {',
@@ -2360,14 +2367,8 @@ function build(options, callback) {
                 'if (stacked && stacked[1]) {',
                 '  return stacked[1] == other;',
                 '}',
-                'stack.push([object, other]);'
-              ].join('\n' + indent);
-            })
-            .replace(/( *)return\b(.+?)(?=\n *\}\n$)/, function(match, indent, compared) {
-              return indent + [
-                'var result = ' + compared,
-                "stack.pop();",
-                'return result;'
+                'stack.push([object, other]);',
+                ''
               ].join('\n' + indent);
             });
         });
@@ -2394,15 +2395,21 @@ function build(options, callback) {
           return match.replace(/^( *)  case\s*(?:arrayBuffer|map|set|symbol)Tag\b[\s\S]+?;(?=\s*case\b|\n\1\})/gm, '');
         });
 
-        // Remove `customizer` and stack use from `equalArrays` and `equalObjects`.
-        _.each(['equalArrays', 'equalObjects'], function(funcName) {
+        // Remove stack use from `equalArrays`, `equalByTag`, and `equalObjects`.
+        _.each(['equalArrays', 'equalByTag', 'equalObjects'], function(funcName) {
           source = replace(source, matchFunction(source, funcName), function(match) {
             match = removeVar(match, 'stacked');
             return match
-              .replace(/^( *)if\s*\(customizer\b[\s\S]+?\n\1}/m, '$1var compared;')
               .replace(/^( *)if\s*\(stacked\)[^}]+?\n\1\}\n/m, '')
               .replace(/^ *stack\.set\([^)]+\);\n/m, '')
               .replace(/^ *stack\['delete'\]\([^)]+\);\n/m, '');
+          });
+        });
+
+        // Remove `customizer` use from `equalArrays` and `equalObjects`.
+        _.each(['equalArrays', 'equalObjects'], function(funcName) {
+          source = replace(source, matchFunction(source, funcName), function(match) {
+            return match.replace(/^( *)if\s*\(customizer\b[\s\S]+?\n\1}/m, '$1var compared;');
           });
         });
 
