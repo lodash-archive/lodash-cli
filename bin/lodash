@@ -288,7 +288,7 @@ function buildModule(state, onComplete) {
           if (fs.existsSync(oldDepPkg)) {
             var oldDepVer = semver.parse(require(oldDepPkg).version);
             if (!isMajorBump(depName)) {
-              depRange =  prefix + oldDepVer.major + '.0.0';
+              depRange =  prefix + oldDepVer.major + '.' + oldDepVer.minor + '.0';
             }
             if (oldDepVer.major > pkgVer.major) {
               pkgVer = oldDepVer;
