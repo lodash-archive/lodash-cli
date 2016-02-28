@@ -290,6 +290,7 @@ lodash.uniqueId = require('lodash.uniqueid');
 lodash.unset = require('lodash.unset');
 lodash.unzip = require('lodash.unzip');
 lodash.unzipWith = require('lodash.unzipwith');
+lodash.update = require('lodash.update');
 lodash.upperCase = require('lodash.uppercase');
 lodash.upperFirst = require('lodash.upperfirst');
 lodash.values = require('lodash.values');
