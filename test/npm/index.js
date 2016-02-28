@@ -291,6 +291,7 @@ lodash.unset = require('lodash.unset');
 lodash.unzip = require('lodash.unzip');
 lodash.unzipWith = require('lodash.unzipwith');
 lodash.update = require('lodash.update');
+lodash.updateWith = require('lodash.updatewith');
 lodash.upperCase = require('lodash.uppercase');
 lodash.upperFirst = require('lodash.upperfirst');
 lodash.values = require('lodash.values');
