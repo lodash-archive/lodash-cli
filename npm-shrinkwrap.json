@@ -1,6 +1,6 @@
 {
   "name": "lodash-cli",
-  "version": "4.5.1",
+  "version": "4.6.0",
   "dependencies": {
     "closure-compiler": {
       "version": "0.2.10",
@@ -80,7 +80,7 @@
       }
     },
     "lodash": {
-      "version": "4.5.1"
+      "version": "4.6.0"
     },
     "semver": {
       "version": "5.1.0",
@@ -88,9 +88,9 @@
       "resolved": "https://registry.npmjs.org/semver/-/semver-5.1.0.tgz"
     },
     "uglify-js": {
-      "version": "2.6.1",
-      "from": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.6.1.tgz",
-      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.6.1.tgz",
+      "version": "2.6.2",
+      "from": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.6.2.tgz",
+      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.6.2.tgz",
       "dependencies": {
         "async": {
           "version": "0.2.10",
@@ -150,9 +150,9 @@
                           "resolved": "https://registry.npmjs.org/longest/-/longest-1.0.1.tgz"
                         },
                         "repeat-string": {
-                          "version": "1.5.2",
-                          "from": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.5.2.tgz",
-                          "resolved": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.5.2.tgz"
+                          "version": "1.5.4",
+                          "from": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.5.4.tgz",
+                          "resolved": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.5.4.tgz"
                         }
                       }
                     },
@@ -191,9 +191,9 @@
                           "resolved": "https://registry.npmjs.org/longest/-/longest-1.0.1.tgz"
                         },
                         "repeat-string": {
-                          "version": "1.5.2",
-                          "from": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.5.2.tgz",
-                          "resolved": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.5.2.tgz"
+                          "version": "1.5.4",
+                          "from": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.5.4.tgz",
+                          "resolved": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.5.4.tgz"
                         }
                       }
                     }
