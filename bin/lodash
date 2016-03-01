@@ -2389,7 +2389,7 @@ function build(options, callback) {
         _.pull(funcDepMap.equalByTag, 'mapToArray', 'setToArray');
 
         source = replace(source, matchFunction(source, 'equalByTag'), function(match) {
-          return match.replace(/^( *)  case\s*(?:arrayBuffer|map|set|symbol)Tag\b[\s\S]+?;(?=\s*case\b|\n\1\})/gm, '');
+          return match.replace(/^( *)  case\s*(?:arrayBuffer|map|set|symbol)Tag\b[\s\S]+?(?=\s*case\b|\n\1\})/gm, '');
         });
 
         // Remove stack use from `equalArrays`, `equalByTag`, and `equalObjects`.
