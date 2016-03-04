@@ -1148,6 +1148,17 @@ function getFunctionSource(func, indent) {
 }
 
 /**
+ * Gets the `getSymbols` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to inspect.
+ * @returns {string} Returns the fork.
+ */
+function getGetSymbolsFork(source) {
+  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(!getOwnPropertySymbols\b[\s\S]+?\n\1  getSymbols\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
+}
+
+/**
  * Gets the `getTag` fork from `source`.
  *
  * @private
@@ -1507,6 +1518,17 @@ function removeChaining(source, seqDepMap, funcDepMap, objDepMap) {
  */
 function removeComments(source) {
   return replace(source, consts.reComment, '');
+}
+
+/**
+ * Removes the `getSymbols` fork from `source`.
+ *
+ * @private
+ * @param {string} source The source to process.
+ * @returns {string} Returns the modified source.
+ */
+function removeGetSymbolsFork(source) {
+  return replace(source, getGetSymbolsFork(source), '');
 }
 
 /**
@@ -3091,6 +3113,9 @@ function build(options, callback) {
 
     if (isExcluded('baseKeysIn')) {
       source = removeBaseKeysInFork(source);
+    }
+    if (isExcluded('getSymbols')) {
+      source = removeGetSymbolsFork(source);
     }
     if (isExcluded('getTag')) {
       source = removeGetTagFork(source);
