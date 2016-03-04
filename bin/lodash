@@ -1355,8 +1355,8 @@ function matchFunction(source, funcName, leadingComments) {
     '( *)function\\s+' + escapedName + '\\((?:\\)\\s*\\{\\s*|[\\s\\S]+?\\n\\3)\\}\\n',
     // Match a simple variable declaration.
     ' *var\\s+' + escapedName + '\\s*=.+?;\\n',
-    // Match variable declarations using `_.rest`.
-    '( *)var\\s+' + escapedName + '\\s*=\\s*rest\\((?:.+|[\\s\\S]+?\\n\\3\\})\\);\\n',
+    // Match variable declarations using `_.memoize` or `_.rest`.
+    '( *)var\\s+' + escapedName + '\\s*=\\s*(?:memoize|rest)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\);\\n',
     // Match variable declarations using creator functions.
     '( *)var\\s+' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
     // Match a variable declaration with function expression.
