@@ -14,9 +14,9 @@ Run unit tests from the command-line via `node test/test`.
 
 ## Contributor License Agreement
 
-lodash-cli is a member of the [Dojo Foundation](http://dojofoundation.org/).
-As such, we request that all contributors sign the Dojo Foundation
-[contributor license agreement (CLA)](http://dojofoundation.org/about/claForm).
+lodash-cli is a member of the [jQuery Foundation](https://jquery.org/).
+As such, we request that all contributors sign the jQuery Foundation
+[contributor license agreement (CLA)](https://contribute.jquery.org/CLA/).
 
 For more information about CLAs, please check out Alex Russell’s excellent post,
 [“Why Do I Need to Sign This?”](http://infrequently.org/2008/06/why-do-i-need-to-sign-this/).
