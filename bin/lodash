@@ -1559,7 +1559,7 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
     _.pull(seqDepMap.funcDep,
       'baseInvoke', 'createHybridWrapper', 'getIteratee', 'identity',
       'isArray', 'last', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper',
-      'rest', 'toInteger', 'wrapperAt', 'wrapperFlatMap', 'wrapperReverse'
+      'rest', 'toInteger', 'wrapperAt', 'wrapperReverse'
     );
   }
   if (funcDepMap) {
