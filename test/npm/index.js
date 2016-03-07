@@ -312,6 +312,8 @@ lodash.zipWith = require('lodash.zipwith');
 // Add aliases.
 lodash.each = lodash.forEach;
 lodash.eachRight = lodash.forEachRight;
+lodash.entries = lodash.toPairs;
+lodash.entriesIn = lodash.toPairsIn;
 lodash.extend = lodash.assignIn;
 lodash.extendWith = lodash.assignInWith;
 lodash.first = lodash.head;
