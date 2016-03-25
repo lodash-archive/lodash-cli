@@ -181,6 +181,7 @@ lodash.matchesProperty = require('lodash.matchesproperty');
 lodash.max = require('lodash.max');
 lodash.maxBy = require('lodash.maxby');
 lodash.mean = require('lodash.mean');
+lodash.meanBy = require('lodash.meanby');
 lodash.method = require('lodash.method');
 lodash.methodOf = require('lodash.methodof');
 lodash.memoize = require('lodash.memoize');
