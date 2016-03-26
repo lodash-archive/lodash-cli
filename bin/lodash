@@ -1166,7 +1166,7 @@ function getGetSymbolsFork(source) {
  * @returns {string} Returns the fork.
  */
 function getGetTagFork(source) {
-  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(\(Map\s*&&[\s\S]+?\n\1  getTag\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
+  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(\s*\(Map\s*&&[\s\S]+?\n\1  getTag\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
 }
 
 /**
