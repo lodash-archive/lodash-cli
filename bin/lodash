@@ -93,9 +93,10 @@ function buildModule(state, onComplete) {
       stamp = state.stamp,
       varDepMap = state.varDepMap;
 
-  var identifiers = _.without(_.union(buildFuncs, includeObjs, includeVars), 'main'),
+  var depMap = new Hash,
+      identifiers = _.without(_.union(buildFuncs, includeObjs, includeVars), 'main'),
       moduleCount = 0,
-      removedDeps = {};
+      removedDeps = new Hash;
 
   var buildCallback = function(data) {
     moduleCount++;
@@ -151,36 +152,66 @@ function buildModule(state, onComplete) {
   if (_.isEmpty(includeHeaders)) {
     includeHeaders = ['main'];
   }
+  // Sort identifiers so private packages with the least number of interdependent
+  // dependencies are first.
+  identifiers = _.orderBy(identifiers, [
+    isPrivate,
+    function(identifier) {
+      var depNames = _.union(
+        getDependencies(identifier, funcDepMap),
+        getDependencies(identifier, objDepMap),
+        getDependencies(identifier, varDepMap)
+      );
+
+      var inlinees = [identifier];
+
+      if (isNpm) {
+        var forceInlinees = mapping.forceInline[identifier],
+            uninlinees = _.difference(listing.uninlinables, forceInlinees);
+
+        var moreInlinees = _.uniq(_.transform(_.difference(depNames, uninlinees), function(result, identifier) {
+          push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinees)));
+          return result;
+        }));
+
+        depNames = _.union(_.intersection(uninlinees, depNames), _.intersection(uninlinees, moreInlinees));
+        inlinees = inlinees.concat(_.difference(moreInlinees, depNames));
+      }
+      // Populate `depMap`.
+      depMap[identifier] = new Hash({
+        'depNames': depNames,
+        'inlinees': inlinees,
+        'isPrivate': isPrivate(identifier)
+      });
+      return depNames.length;
+    },
+    function(identifier) {
+      if (!depMap[identifier].isPrivate) {
+        return true;
+      }
+      return _.isString(_.findKey(depMap, function(value, key) {
+        var data = depMap[key];
+        return data.isPrivate && _.includes(data.depNames, identifier);
+      }));
+    }],
+    ['desc']
+  );
+
   // Create modules for each identifier.
   _.each(identifiers, function(identifier) {
     var basename = _.result(mapping.forceAlias, identifier, identifier),
         category = getCategory(identifier),
-        depName = toDepName(basename);
-
-    var depNames = _.union(
-      getDependencies(identifier, funcDepMap),
-      getDependencies(identifier, objDepMap),
-      getDependencies(identifier, varDepMap)
-    );
+        depData = depMap[identifier],
+        depName = toDepName(basename),
+        depNames = depData.depNames,
+        inlinees = depData.inlinees;
 
     if (isNpm) {
-      var forceInlineDeps = mapping.forceInline[identifier],
-          uninlinees = _.difference(listing.uninlinables, forceInlineDeps);
-
-      var inlinees = _.uniq(_.transform(_.difference(depNames, uninlinees), function(result, identifier) {
-        push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinees)));
-        return result;
-      }));
-
-      depNames = _.union(_.intersection(uninlinees, depNames), _.intersection(uninlinees, inlinees));
-      inlinees = _.difference(inlinees, depNames).concat(identifier);
-
       var inlineFuncs = _.intersection(listing.funcs, inlinees),
           inlineObjs = _.intersection(listing.objDeps, inlinees),
           inlineVars = _.intersection(listing.varDeps, inlinees);
     }
     else {
-      inlinees = [identifier];
       inlineFuncs = _.includes(listing.funcs, identifier) ? inlinees : [];
       inlineObjs = _.includes(listing.objDeps, identifier) ? inlinees : [];
       inlineVars = _.includes(listing.varDeps, identifier) ? inlinees : [];
@@ -273,14 +304,15 @@ function buildModule(state, onComplete) {
         }
         var templateData = {
           'identifier': identifier,
-          'isPrivate': isPrivate(identifier),
+          'isPrivate': depData.isPrivate,
           'name': depName,
           'type': type,
           'version': pkgVer.raw
         };
 
         templateData.dependencies = _.transform(pkgDepNames, function(result, depName, index) {
-          var prefix = isPrivate(depName) ? '~' : '^',
+          var minor = '0',
+              prefix = '^',
               depPath = pkgDepPaths[index],
               depRange = prefix + pkgVer.major + '.0.0',
               oldDepPkg = path.join(path.resolve(outputPath), depPath, 'package.json');
@@ -288,7 +320,11 @@ function buildModule(state, onComplete) {
           if (fs.existsSync(oldDepPkg)) {
             var oldDepVer = semver.parse(require(oldDepPkg).version);
             if (!isMajorBump(depName)) {
-              depRange =  prefix + oldDepVer.major + '.' + oldDepVer.minor + '.0';
+              if (isPrivate(depName)) {
+                minor = oldDepVer.minor;
+                prefix = '~';
+              }
+              depRange = prefix + oldDepVer.major + '.' + minor + '.0';
             }
             if (oldDepVer.major > pkgVer.major) {
               pkgVer = oldDepVer;
