@@ -2476,16 +2476,10 @@ function build(options, callback) {
         });
 
         // Remove `LazyWrapper` references.
-        _.each(['baseWrapperValue', 'lodash'], function(funcName) {
-          _.pull(funcDepMap[funcName], 'LazyWrapper');
-        });
+        _.pull(funcDepMap.baseWrapperValue, 'LazyWrapper');
 
         source = replace(source, matchFunction(source, 'baseWrapperValue'), function(match) {
           return match.replace(/^( *)if\b.+?LazyWrapper\b[\s\S]+?\n\1}\n/m, '');
-        });
-
-        source = replace(source, matchFunction(source, 'lodash'), function(match) {
-          return match.replace(/\s*&&\s*!\(.+?LazyWrapper\)/, '');
         });
 
         // Remove unneeded properties from `LodashWrapper.
@@ -2603,6 +2597,52 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        funcDepMap.copyArray = ['baseSlice'];
+
+        source = replaceFunction(source, 'copyArray', [
+          'function copyArray(source) {',
+          '  return baseSlice(source, 0, source.length);',
+          '}'
+        ].join('\n'));
+
+        (function() {
+          var copyArray = matchFunction(source, 'copyArray', true);
+          source = removeFunction(source, 'copyArray');
+          source = replace(source, matchFunction(source, 'baseSlice'), function(match) {
+            return match + '\n' + copyArray;
+          });
+        }());
+
+        source = replaceFunction(source, 'copyObject', 'var copyObject = copyObjectWith;');
+
+        funcDepMap.forEach = ['baseIteratee', 'baseEach'];
+
+        source = replaceFunction(source, 'forEach', [
+          'function forEach(collection, iteratee) {',
+          '  return baseEach(collection, baseIteratee(iteratee));',
+          '}'
+        ].join('\n'));
+
+        funcDepMap.wrapperClone = ['copyArray', 'LodashWrapper'];
+
+        source = replaceFunction(source, 'wrapperClone', [
+          'function wrapperClone(wrapper) {',
+          '  var result = new LodashWrapper(wrapper.__wrapped__, wrapper.__chain__);',
+          '  result.__actions__ = copyArray(wrapper.__actions__);',
+          '  return result;',
+          '}'
+        ].join('\n'));
+
+        funcDepMap.lodash = ['LodashWrapper'];
+
+        source = replaceFunction(source, 'lodash', [
+          'function lodash(value) {',
+          '  return value instanceof LodashWrapper',
+          '    ? value',
+          '    : new LodashWrapper(value);',
+          '}'
+        ].join('\n'));
+
         funcDepMap.assign = ['createAssigner', 'copyObject', 'keys'];
 
         source = replaceFunction(source, 'assign', [
@@ -2643,32 +2683,6 @@ function build(options, callback) {
         source = replaceFunction(source, 'compact', [
           'function compact(array) {',
           '  return baseFilter(array, Boolean);',
-          '}'
-        ].join('\n'));
-
-        funcDepMap.copyArray = ['baseSlice'];
-
-        source = replaceFunction(source, 'copyArray', [
-          'function copyArray(source) {',
-          '  return baseSlice(source, 0, source.length);',
-          '}'
-        ].join('\n'));
-
-        (function() {
-          var copyArray = matchFunction(source, 'copyArray', true);
-          source = removeFunction(source, 'copyArray');
-          source = replace(source, matchFunction(source, 'baseSlice'), function(match) {
-            return match + '\n' + copyArray;
-          });
-        }());
-
-        source = replaceFunction(source, 'copyObject', 'var copyObject = copyObjectWith;');
-
-        funcDepMap.forEach = ['baseCastFunction', 'baseEach'];
-
-        source = replaceFunction(source, 'forEach', [
-          'function forEach(collection, iteratee) {',
-          '  return baseEach(collection, baseCastFunction(iteratee));',
           '}'
         ].join('\n'));
 
@@ -2882,16 +2896,6 @@ function build(options, callback) {
           '    return value;',
           '  }',
           "  return value == null ? '' : (value + '');",
-          '}'
-        ].join('\n'));
-
-        funcDepMap.wrapperClone = ['copyArray', 'LodashWrapper'];
-
-        source = replaceFunction(source, 'wrapperClone', [
-          'function wrapperClone(wrapper) {',
-          '  var result = new LodashWrapper(wrapper.__wrapped__, wrapper.__chain__);',
-          '  result.__actions__ = copyArray(wrapper.__actions__);',
-          '  return result;',
           '}'
         ].join('\n'));
       }
