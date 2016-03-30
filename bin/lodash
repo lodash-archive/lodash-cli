@@ -2553,6 +2553,13 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        source = replaceFunction(source, 'arrayPush', [
+          'function arrayPush(array, values) {',
+          '  array.push.apply(array, values);',
+          '  return array;',
+          '}'
+        ].join('\n'));
+
         source = replaceFunction(source, 'baseHas', [
           'function baseHas(object, key) {',
           '  return object != null && hasOwnProperty.call(object, key);',
