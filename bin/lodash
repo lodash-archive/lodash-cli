@@ -2443,11 +2443,11 @@ function build(options, callback) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[^}]+?\n\1\}\n/m, '');
         });
 
-        // Remove map and set support from `equalByTag`.
+        // Remove array buffer, data view, map, set, and symbol support from `equalByTag`.
         _.pull(funcDepMap.equalByTag, 'mapToArray', 'setToArray');
 
         source = replace(source, matchFunction(source, 'equalByTag'), function(match) {
-          return match.replace(/^( *)  case\s*(?:arrayBuffer|map|set|symbol)Tag\b[\s\S]+?(?=\s*case\b|\n\1\})/gm, '');
+          return match.replace(/^( *)  case\s*(?:arrayBuffer|dataView|map|set|symbol)Tag\b[\s\S]+?(?=\s*case\b|\n\1\})/gm, '');
         });
 
         // Remove stack use from `equalArrays`, `equalByTag`, and `equalObjects`.
