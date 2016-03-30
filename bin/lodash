@@ -2740,6 +2740,24 @@ function build(options, callback) {
           '});'
         ].join('\n'));
 
+        _.pull(funcDepMap.isEmpty, 'getTag', 'isBuffer');
+
+        source = replaceFunction(source, 'isEmpty', [
+          'function isEmpty(value) {',
+          '  if (isArrayLike(value) &&',
+          '      (isArray(value) || isString(value) ||',
+          '        isFunction(value.splice) || isArguments(value))) {',
+          '    return !value.length;',
+          '  }',
+          '  for (var key in value) {',
+          '    if (hasOwnProperty.call(value, key)) {',
+          '      return false;',
+          '    }',
+          '  }',
+          '  return !(nonEnumShadows && keys(value).length);',
+          '}'
+        ].join('\n'));
+
         funcDepMap.iteratee = ['baseIteratee'];
         source = replaceFunction(source, 'iteratee', 'var iteratee = baseIteratee;');
 
