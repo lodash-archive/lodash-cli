@@ -2563,13 +2563,13 @@ function build(options, callback) {
 
         source = replaceFunction(source, 'baseIteratee', [
           'function baseIteratee(func) {',
-          '  var type = typeof func;',
-          "  if (type == 'function') {",
+          "  if (typeof func == 'function') {",
           '    return func;',
           '  }',
-          '  return func == null',
-          '    ? identity',
-          "    : (type == 'object' ? baseMatches : baseProperty)(func);",
+          '  if (func == null) {',
+          '    return identity;',
+          '  }',
+          "  return (typeof func == 'object' ? baseMatches : baseProperty)(func);",
           '}'
         ].join('\n'));
 
