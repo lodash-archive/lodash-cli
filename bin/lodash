@@ -2,12 +2,14 @@
 'use strict';
 
 var _ = require('lodash'),
+    glob = require('glob'),
+    semver = require('semver'),
+    vm = require('vm'),
     consts = require('../lib/const'),
     listing = require('../lib/listing'),
     mapping = require('../lib/mapping'),
     minify = require('../lib/minify'),
-    util = require('../lib/util'),
-    vm = require('vm');
+    util = require('../lib/util');
 
 var fs = util.fs,
     Hash = util.Hash,
@@ -134,8 +136,7 @@ function buildModule(state, onComplete) {
     });
 
     // Remove unused packages.
-    var glob = require('glob'),
-        newPackages = _.map(identifiers, toDepName),
+    var newPackages = _.map(identifiers, toDepName),
         oldPackages = _.map(glob.sync(path.join(outputPath, 'lodash.*')), _.ary(path.basename, 1)),
         unusedPackages = _.difference(oldPackages, newPackages);
 
@@ -291,8 +292,7 @@ function buildModule(state, onComplete) {
             packageTemplate = fs.readFileSync(path.join(templatePath, 'package.jst'), 'utf8'),
             readmeTemplate = fs.readFileSync(path.join(templatePath, 'readme.jst'), 'utf8');
 
-        var semver = require('semver'),
-            type = 'function',
+        var type = 'function',
             pkgVer = semver.parse(state.lodash.VERSION),
             pkgDepNames = _.sortBy(depNames, toDepName),
             pkgDepPaths = _.sortBy(depPaths);
@@ -315,10 +315,12 @@ function buildModule(state, onComplete) {
               prefix = '^',
               depPath = pkgDepPaths[index],
               depRange = prefix + pkgVer.major + '.0.0',
-              oldDepPkg = path.join(path.resolve(outputPath), depPath, 'package.json');
+              oldDepPkgPath = path.join(path.resolve(outputPath), depPath, 'package.json');
 
-          if (fs.existsSync(oldDepPkg)) {
-            var oldDepVer = semver.parse(require(oldDepPkg).version);
+          if (fs.existsSync(oldDepPkgPath)) {
+            var oldDepPkg = JSON.parse(fs.readFileSync(oldDepPkgPath, 'utf8')),
+                oldDepVer = semver.parse(oldDepPkg.version);
+
             if (!isMajorBump(depName)) {
               if (isPrivate(depName)) {
                 minor = oldDepVer.minor;
@@ -337,7 +339,8 @@ function buildModule(state, onComplete) {
         // Independently update the package version.
         if (fs.existsSync(data.outputPath)) {
           var laxDeps = _.map(listing.laxSemVerDeps, toDepName),
-              oldPkg = require(path.join(path.resolve(outputPath), depName, 'package.json')),
+              oldPkgPath = path.join(path.resolve(outputPath), depName, 'package.json'),
+              oldPkg = JSON.parse(fs.readFileSync(oldPkgPath, 'utf8')),
               oldVer = oldPkg.version,
               oldDeps = _.omit(oldPkg.dependencies, laxDeps),
               pkgDeps = _.omit(templateData.dependencies, laxDeps);
@@ -819,8 +822,7 @@ function buildTemplate(state) {
     ''
   );
 
-  var glob = require('glob'),
-      dirname = path.dirname(pattern),
+  var dirname = path.dirname(pattern),
       filePaths = glob.sync(pattern);
 
   if (dirname == '.') {
