@@ -5,6 +5,7 @@
   "homepage": "https://lodash.com/custom-builds",
   "license": "MIT",
   "preferGlobal": true,
+  "private": true,
   "main": "bin/lodash",
   "bin": {
     "lodash": "bin/lodash"
