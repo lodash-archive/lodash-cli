@@ -1,6 +1,6 @@
 {
   "name": "lodash-cli",
-  "version": "4.8.1",
+  "version": "4.8.2",
   "dependencies": {
     "closure-compiler": {
       "version": "0.2.10",
@@ -80,7 +80,7 @@
       }
     },
     "lodash": {
-      "version": "4.8.1"
+      "version": "4.8.2"
     },
     "semver": {
       "version": "5.1.0",
