@@ -1601,7 +1601,7 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
     );
   }
   if (funcDepMap) {
-    funcDepMap.createFlow = [];
+    funcDepMap.createFlow = ['baseFlatten', 'rest'];
   }
   if (objDepMap) {
     source = removeVar(source, 'realNames');
@@ -1611,15 +1611,17 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
   }
   source = replaceFunction(source, 'createFlow', [
     'function createFlow(fromRight) {',
-    '  return function() {',
-    '    var length = arguments.length,',
-    '        index = fromRight ? length : -1,',
-    '        leftIndex = 0,',
-    '        funcs = Array(length);',
+    '  return rest(function(funcs) {',
+    '    funcs = baseFlatten(funcs, 1);',
     '',
-    '    while ((fromRight ? index-- : ++index < length)) {',
-    '      var func = funcs[leftIndex++] = arguments[index];',
-    "      if (typeof func != 'function') {",
+    '    var length = funcs.length,',
+    '        index = length;',
+    '',
+    '    if (fromRight) {',
+    '      funcs.reverse();',
+    '    }',
+    '    while (index--) {',
+    "      if (typeof funcs[index] != 'function') {",
     '        throw new TypeError(FUNC_ERROR_TEXT);',
     '      }',
     '    }',
@@ -1632,7 +1634,7 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
     '      }',
     '      return result;',
     '    };',
-    '  };',
+    '  });',
     '}'
   ].join('\n'));
 
