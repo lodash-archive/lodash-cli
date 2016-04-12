@@ -194,6 +194,7 @@ lodash.multiply = require('lodash.multiply');
 lodash.negate = require('lodash.negate');
 lodash.noop = require('lodash.noop');
 lodash.now = require('lodash.now');
+lodash.nth = require('lodash.nth');
 lodash.nthArg = require('lodash.ntharg');
 lodash.omit = require('lodash.omit');
 lodash.omitBy = require('lodash.omitby');
