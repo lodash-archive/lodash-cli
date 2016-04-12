@@ -2617,8 +2617,6 @@ function build(options, callback) {
           });
         }());
 
-        source = replaceFunction(source, 'copyObject', 'var copyObject = copyObjectWith;');
-
         funcDepMap.forEach = ['baseIteratee', 'baseEach'];
 
         source = replaceFunction(source, 'forEach', [
