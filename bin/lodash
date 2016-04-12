@@ -1679,7 +1679,7 @@ function removeMetadata(source, funcDepMap) {
 
   source = replace(source, matchFunction(source, 'createRecurryWrapper'), function(match) {
     match = removeVar(match, 'newData');
-    match = replaceVar(match, 'result', 'wrapFunc(func, bitmask, thisArg, newPartials, newHolders, newPartialsRight, newHoldersRight, newArgPos, ary, arity)');
+    match = replaceVar(match, 'result', 'wrapFunc(func, bitmask, thisArg, newPartials, newHolders, newPartialsRight, newHoldersRight, argPos, ary, arity)');
     return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(isLaziable\b[\s\S]+?\n\1\}\n/m, '');
   });
 
