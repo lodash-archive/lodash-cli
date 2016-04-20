@@ -2,22 +2,20 @@
   "name": "lodash-cli",
   "version": "4.11.1",
   "description": "The Lodash command-line interface.",
+  "keywords": "builder, compile, customize, lodash",
   "homepage": "https://lodash.com/custom-builds",
+  "repository": "lodash/lodash-cli",
   "license": "MIT",
   "preferGlobal": true,
   "private": true,
   "main": "bin/lodash",
-  "bin": {
-    "lodash": "bin/lodash"
-  },
-  "keywords": "builder, compile, customize, lodash",
+  "bin": { "lodash": "bin/lodash" },
   "author": "John-David Dalton <john.david.dalton@gmail.com> (http://allyoucanleet.com/)",
   "contributors": [
     "John-David Dalton <john.david.dalton@gmail.com> (http://allyoucanleet.com/)",
     "Blaine Bublitz <blaine.bublitz@gmail.com> (https://github.com/phated)",
     "Mathias Bynens <mathias@qiwi.be> (https://mathiasbynens.be/)"
   ],
-  "repository": "lodash/lodash-cli",
   "scripts": {
     "test": "echo \"See the repository CONTRIBUTING.md for testing instructions.\""
   },
