@@ -2770,12 +2770,7 @@ function build(options, callback) {
           '        isFunction(value.splice) || isArguments(value))) {',
           '    return !value.length;',
           '  }',
-          '  for (var key in value) {',
-          '    if (hasOwnProperty.call(value, key)) {',
-          '      return false;',
-          '    }',
-          '  }',
-          '  return !(nonEnumShadows && keys(value).length);',
+          '  return !keys(value).length;',
           '}'
         ].join('\n'));
 
