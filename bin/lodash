@@ -2385,13 +2385,18 @@ function build(options, callback) {
           'wrapperPlant', 'wrapperToIterator'
         );
 
-        // Remove `apply`.
+        // Remove `apply` and `isSymbol`.
         _.forOwn(funcDepMap, function(depNames, identifier) {
           if (_.includes(depNames, 'apply')) {
             _.pull(depNames, 'apply');
-
             source = replace(source, matchFunction(source, identifier), function(match) {
               return match.replace(/\bapply\(([^,)]+),\s*([^,)]+),\s*([^,)]+)\)/g, '$1.apply($2, $3)');
+            });
+          }
+          if (_.includes(depNames, 'isSymbol')) {
+            _.pull(depNames, 'isSymbol');
+            source = replace(source, matchFunction(source, identifier), function(match) {
+              return match.replace(/\bisSymbol\([^)]+\)/g, 'false');
             });
           }
         });
