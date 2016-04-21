@@ -2622,13 +2622,18 @@ function build(options, callback) {
           });
         }());
 
-        funcDepMap.forEach = ['baseIteratee', 'baseEach'];
+        funcDepMap.lodash = ['LodashWrapper'];
 
-        source = replaceFunction(source, 'forEach', [
-          'function forEach(collection, iteratee) {',
-          '  return baseEach(collection, baseIteratee(iteratee));',
+        source = replaceFunction(source, 'lodash', [
+          'function lodash(value) {',
+          '  return value instanceof LodashWrapper',
+          '    ? value',
+          '    : new LodashWrapper(value);',
           '}'
         ].join('\n'));
+
+        funcDepMap.toKey = [];
+        source = replaceFunction(source, 'toKey', 'var toKey = String;');
 
         funcDepMap.wrapperClone = ['copyArray', 'LodashWrapper'];
 
@@ -2637,16 +2642,6 @@ function build(options, callback) {
           '  var result = new LodashWrapper(wrapper.__wrapped__, wrapper.__chain__);',
           '  result.__actions__ = copyArray(wrapper.__actions__);',
           '  return result;',
-          '}'
-        ].join('\n'));
-
-        funcDepMap.lodash = ['LodashWrapper'];
-
-        source = replaceFunction(source, 'lodash', [
-          'function lodash(value) {',
-          '  return value instanceof LodashWrapper',
-          '    ? value',
-          '    : new LodashWrapper(value);',
           '}'
         ].join('\n'));
 
@@ -2706,6 +2701,14 @@ function build(options, callback) {
         source = replaceFunction(source, 'find', [
           'function find(collection, predicate) {',
           '  return baseFind(collection, baseIteratee(predicate), baseEach);',
+          '}'
+        ].join('\n'));
+
+        funcDepMap.forEach = ['baseIteratee', 'baseEach'];
+
+        source = replaceFunction(source, 'forEach', [
+          'function forEach(collection, iteratee) {',
+          '  return baseEach(collection, baseIteratee(iteratee));',
           '}'
         ].join('\n'));
 
