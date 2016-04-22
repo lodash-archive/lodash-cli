@@ -2614,16 +2614,6 @@ function build(options, callback) {
           });
         }());
 
-        funcDepMap.lodash = ['LodashWrapper'];
-
-        source = replaceFunction(source, 'lodash', [
-          'function lodash(value) {',
-          '  return value instanceof LodashWrapper',
-          '    ? value',
-          '    : new LodashWrapper(value);',
-          '}'
-        ].join('\n'));
-
         funcDepMap.toKey = [];
         source = replaceFunction(source, 'toKey', 'var toKey = String;');
 
@@ -2634,6 +2624,16 @@ function build(options, callback) {
           '  var result = new LodashWrapper(wrapper.__wrapped__, wrapper.__chain__);',
           '  result.__actions__ = copyArray(wrapper.__actions__);',
           '  return result;',
+          '}'
+        ].join('\n'));
+
+        funcDepMap.lodash = ['LodashWrapper'];
+
+        source = replaceFunction(source, 'lodash', [
+          'function lodash(value) {',
+          '  return value instanceof LodashWrapper',
+          '    ? value',
+          '    : new LodashWrapper(value);',
           '}'
         ].join('\n'));
 
