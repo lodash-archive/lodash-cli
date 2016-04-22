@@ -2680,21 +2680,6 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.concat = ['arrayPush', 'baseFlatten', 'copyArray', 'isArray'];
-
-        source = replaceFunction(source, 'concat', [
-          'function concat() {',
-          '  var length = arguments.length,',
-          '      args = Array(length - 1),',
-          '      array = arguments[0];',
-          '',
-          '  while (length--) {',
-          '    args[length - 1] = arguments[length];',
-          '  }',
-          '  return arrayPush(isArray(array) ? copyArray(array) : [array], baseFlatten(args, 1));',
-          '}'
-        ].join('\n'));
-
         funcDepMap.filter = ['baseFilter', 'baseIteratee'];
 
         source = replaceFunction(source, 'filter', [
