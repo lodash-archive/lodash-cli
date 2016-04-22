@@ -2547,14 +2547,6 @@ function build(options, callback) {
         });
 
         // Replace method implementations.
-        funcDepMap.arrayConcat = ['arrayPush', 'copyArray'];
-
-        source = replaceFunction(source, 'arrayConcat', [
-          'function arrayConcat(array, other) {',
-          '  return arrayPush(copyArray(array), values);',
-          '}'
-        ].join('\n'));
-
         source = replaceFunction(source, 'arrayPush', [
           'function arrayPush(array, values) {',
           '  array.push.apply(array, values);',
@@ -2685,6 +2677,21 @@ function build(options, callback) {
         source = replaceFunction(source, 'compact', [
           'function compact(array) {',
           '  return baseFilter(array, Boolean);',
+          '}'
+        ].join('\n'));
+
+        funcDepMap.concat = ['arrayPush', 'baseFlatten', 'copyArray', 'isArray'];
+
+        source = replaceFunction(source, 'concat', [
+          'function concat() {',
+          '  var length = arguments.length,',
+          '      args = Array(length - 1),',
+          '      array = arguments[0];',
+          '',
+          '  while (length--) {',
+          '    args[length - 1] = arguments[length];',
+          '  }',
+          '  return arrayPush(isArray(array) ? copyArray(array) : [array], baseFlatten(args, 1));',
           '}'
         ].join('\n'));
 
