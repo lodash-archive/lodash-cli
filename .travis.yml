@@ -1,7 +1,7 @@
 language: node_js
 sudo: false
 node_js:
-  - "5"
+  - "6"
 env:
   global:
     - EXPORTS="node"
@@ -30,6 +30,10 @@ matrix:
     - node_js: "4"
       env:
     - node_js: "4"
+      env: EXPORTS="npm"
+    - node_js: "5"
+      env:
+    - node_js: "5"
       env: EXPORTS="npm"
 git:
   depth: 10
