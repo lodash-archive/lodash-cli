@@ -2343,9 +2343,9 @@ function build(options, callback) {
 
       if (isModularize) {
         // Remove `lodash.placeholder` references.
-        _.pull(funcDepMap.getPlaceholder, 'lodash');
+        _.pull(funcDepMap.getHolder, 'lodash');
 
-        source = replace(source, matchFunction(source, 'getPlaceholder'), function(match) {
+        source = replace(source, matchFunction(source, 'getHolder'), function(match) {
           return replaceVar(match, 'object', 'func');
         });
 
