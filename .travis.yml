@@ -59,4 +59,4 @@ script:
   - "[ $EXPORTS != 'amd' ] || node $SAUCE_PATH name=\"backbone tests\"   runner=\"$RUNNER_PATH/backbone.html?$QUERY\"   tags=\"$TAGS,backbone\""
   - "[ $EXPORTS != 'amd' ] || node $SAUCE_PATH name=\"underscore tests\" runner=\"$RUNNER_PATH/underscore.html?$QUERY\" tags=\"$TAGS,underscore\""
   - "[ $EXPORTS == 'amd' ] || [ $TEST_BUILDS == true ]  || node $RUNNER_PATH/test.js $TARGET_PATH"
-  - "[ $EXPORTS == 'amd' ] || [ $TEST_BUILDS == false ] || node ./test/test.js --time-limit 45m"
+  - "[ $EXPORTS == 'amd' ] || [ $TEST_BUILDS == false ] || node test --time-limit 45m"

@@ -19,7 +19,7 @@
     "Mathias Bynens <mathias@qiwi.be> (https://mathiasbynens.be/)"
   ],
   "scripts": {
-    "test": "echo \"See the repository CONTRIBUTING.md for testing instructions.\""
+    "test": "node test"
   },
   "dependencies": {
     "closure-compiler": "0.2.10",
