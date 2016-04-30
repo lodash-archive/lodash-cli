@@ -9,15 +9,12 @@ var _ = require('lodash'),
     listing = require('../lib/listing'),
     mapping = require('../lib/mapping'),
     minify = require('../lib/minify'),
+    QUnit = require('qunit-extras'),
     util = require('../lib/util');
 
 /** Module references. */
 var fs = util.fs,
     path = util.path;
-
-/** The unit testing framework. */
-global.QUnit = require('qunitjs');
-require('qunit-extras').runInContext(global);
 
 /** The current working directory. */
 var cwd = process.cwd();
