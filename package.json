@@ -7,7 +7,6 @@
   "repository": "lodash/lodash-cli",
   "license": "MIT",
   "preferGlobal": true,
-  "private": true,
   "main": "bin/lodash",
   "bin": {
     "lodash": "bin/lodash"
