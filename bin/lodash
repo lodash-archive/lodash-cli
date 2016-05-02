@@ -57,7 +57,7 @@ function addCommandsToHeader(source, commands) {
       .replace(/^ *\* *Build:.+\n/m, '');
 
     // Add build commands to copyright header.
-    return header.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *lodash [.$\w\-]+)(.*)/, function() {
+    return header.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *lodash)(.*)/, function() {
       return (
         arguments[1] +
         arguments[2] +
@@ -367,11 +367,11 @@ function buildModule(state, onComplete) {
           var isSameVersion = templateData.version == oldVer;
 
           source = source.replace(getHeader(source), function(header) {
-            // Use the old header if the package version remains the same.
-            header = isSameVersion ? getHeader(oldSource) : header;
-            return header.replace(/^( \* *lodash )[.$\w\-]+/m, function(match, prelude) {
-              return prelude + templateData.version;
-            });
+            // Use the old header if the package version is unchanged,
+            // otherwise remove the version from the header.
+            header = isSameVersion
+              ? getHeader(oldSource)
+              : header.replace(/^( \* *lodash )[.$\w\-]*/m, '$1');
           });
         }
         if (!isSameVersion) {
