@@ -371,7 +371,7 @@ function buildModule(state, onComplete) {
             // otherwise remove the version from the header.
             header = isSameVersion
               ? getHeader(oldSource)
-              : header.replace(/^( \* *lodash )[.$\w\-]*/m, '$1');
+              : header.replace(/^( \* *lodash )[.\w\-]*/m, '$1');
           });
         }
         if (!isSameVersion) {
