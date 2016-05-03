@@ -1,35 +1,23 @@
 'use strict';
 
-/** Load Node.js modules. */
-var vm = require('vm');
-
-/** Load other modules. */
 var _ = require('lodash'),
+    vm = require('vm'),
     build = require('../bin/lodash'),
-    listing = require('../lib/listing'),
     mapping = require('../lib/mapping'),
-    minify = require('../lib/minify'),
     QUnit = require('qunit-extras'),
     util = require('../lib/util');
 
-/** Module references. */
 var fs = util.fs,
     path = util.path;
 
-/** The current working directory. */
-var cwd = process.cwd();
-
-/** Used to indicate if running in Windows. */
-var isWindows = process.platform == 'win32';
+var cwd = process.cwd(),
+    push = Array.prototype.push;
 
 /** Used to prefix relative paths from the current directory. */
 var relativePrefix = '.' + path.sep;
 
 /** Used to match the copyright header in builds. */
 var reHeader = /^\/\**\s+\* @license[\s\S]+?\*\/\n/;
-
-/** Shortcut used to push arrays of values to an array. */
-var push = Array.prototype.push;
 
 /** The time limit for the tests to run (milliseconds). */
 var timeLimit = _.reduce(process.argv, function(result, value, index) {
@@ -42,9 +30,6 @@ var timeLimit = _.reduce(process.argv, function(result, value, index) {
   }
   return result;
 }, 0);
-
-/** List of lodash functions included by default. */
-var includes = _.reject(_.functions(_).sort(), _.partial(_.startsWith, _, '_', 0));
 
 /*----------------------------------------------------------------------------*/
 
@@ -73,18 +58,6 @@ function createContext(exportType) {
       context.module = { 'exports': context.exports };
   }
   return context;
-}
-
-/**
- * Creates a map object. If a `properties` object is provided its own
- * enumerable properties are assigned to the created object.
- *
- * @private
- * @param {Object} [properties] The properties to assign to the object.
- * @returns {Object} Returns the new object.
- */
-function createMap(properties) {
-  return _.assign(Object.create(null), properties);
 }
 
 /**
@@ -127,17 +100,6 @@ function getAliases(identifier) {
 }
 
 /**
- * Gets the real name of `alias`.
- *
- * @private
- * @param {string} alias The alias to resolve.
- * @returns {string} Returns the real name.
- */
-function getRealName(alias) {
-  return _.result(mapping.aliasToReal, alias, alias);
-}
-
-/**
  * Gets the real category of `alias`.
  *
  * @private
@@ -146,6 +108,17 @@ function getRealName(alias) {
  */
 function getRealCategory(alias) {
   return _.result(mapping.oldCategory, alias, alias);
+}
+
+/**
+ * Gets the real name of `alias`.
+ *
+ * @private
+ * @param {string} alias The alias to resolve.
+ * @returns {string} Returns the real name.
+ */
+function getRealName(alias) {
+  return _.result(mapping.aliasToReal, alias, alias);
 }
 
 /**
@@ -323,7 +296,8 @@ QUnit.module('minified AMD snippet');
 QUnit.module('template builds');
 
 (function() {
-  var templatePath = path.join(__dirname, 'fixture'),
+  var isWindows = process.platform == 'win32',
+      templatePath = path.join(__dirname, 'fixture'),
       quotesTemplatePath = path.join(templatePath, 'c', '\'".jst'),
       reWildcard = /=\*/;
 
@@ -1336,7 +1310,7 @@ QUnit.module('stdout option');
   var commands = [
     '-c',
     '-c -d',
-    '--stdout',
+    '--stdout'
   ];
 
   _.each(commands, function(command) {
@@ -1376,6 +1350,10 @@ QUnit.module('lodash build');
       rePlus =/\bplus=/,
       rePlusValue = /\bplus=(\S*)/;
 
+  var allFuncNames = _.reject(_.functions(_).sort(), function(funcName) {
+    return _.startsWith(funcName, '_');
+  });
+
   var commands = [
     'strict',
     'category=array',
@@ -1397,7 +1375,7 @@ QUnit.module('lodash build');
     'strict include=isArguments,isArray,isFunction,isPlainObject,keys'
   ];
 
-  push.apply(commands, _.map(includes, function(funcName) {
+  push.apply(commands, _.map(allFuncNames, function(funcName) {
     return 'include=' + funcName;
   }));
 
@@ -1427,7 +1405,7 @@ QUnit.module('lodash build');
           }));
         }
         if (!funcNames) {
-          funcNames = includes.slice();
+          funcNames = allFuncNames.slice();
         }
         if (rePlus.test(command)) {
           var otherNames = command.match(rePlusValue)[1].split(reComma);
@@ -1445,7 +1423,7 @@ QUnit.module('lodash build');
           });
 
           // Limit function names to those available for specific builds.
-          otherNames = _.intersection(otherNames, includes);
+          otherNames = _.intersection(otherNames, allFuncNames);
 
           if (!_.isEmpty(otherNames)) {
             _.pull(funcNames, category);
@@ -1454,7 +1432,7 @@ QUnit.module('lodash build');
         });
 
         // Expand aliases and remove nonexistent and duplicate function names.
-        funcNames = _.uniq(_.intersection(expandFuncNames(funcNames), includes));
+        funcNames = _.uniq(_.intersection(expandFuncNames(funcNames), allFuncNames));
 
         var lodash = context._ || {};
 
