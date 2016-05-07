@@ -1,6 +1,6 @@
 {
   "name": "lodash-cli",
-  "version": "4.11.2",
+  "version": "4.12.0",
   "dependencies": {
     "closure-compiler": {
       "version": "0.2.10",
@@ -42,14 +42,14 @@
           "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-3.0.0.tgz",
           "dependencies": {
             "brace-expansion": {
-              "version": "1.1.3",
-              "from": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.3.tgz",
-              "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.3.tgz",
+              "version": "1.1.4",
+              "from": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.4.tgz",
+              "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-1.1.4.tgz",
               "dependencies": {
                 "balanced-match": {
-                  "version": "0.3.0",
-                  "from": "https://registry.npmjs.org/balanced-match/-/balanced-match-0.3.0.tgz",
-                  "resolved": "https://registry.npmjs.org/balanced-match/-/balanced-match-0.3.0.tgz"
+                  "version": "0.4.1",
+                  "from": "https://registry.npmjs.org/balanced-match/-/balanced-match-0.4.1.tgz",
+                  "resolved": "https://registry.npmjs.org/balanced-match/-/balanced-match-0.4.1.tgz"
                 },
                 "concat-map": {
                   "version": "0.0.1",
@@ -80,7 +80,7 @@
       }
     },
     "lodash": {
-      "version": "4.11.2"
+      "version": "4.12.0"
     },
     "semver": {
       "version": "5.1.0",
@@ -98,9 +98,9 @@
           "resolved": "https://registry.npmjs.org/async/-/async-0.2.10.tgz"
         },
         "source-map": {
-          "version": "0.5.3",
-          "from": "https://registry.npmjs.org/source-map/-/source-map-0.5.3.tgz",
-          "resolved": "https://registry.npmjs.org/source-map/-/source-map-0.5.3.tgz"
+          "version": "0.5.6",
+          "from": "https://registry.npmjs.org/source-map/-/source-map-0.5.6.tgz",
+          "resolved": "https://registry.npmjs.org/source-map/-/source-map-0.5.6.tgz"
         },
         "uglify-to-browserify": {
           "version": "1.0.2",
@@ -133,9 +133,9 @@
                       "resolved": "https://registry.npmjs.org/align-text/-/align-text-0.1.4.tgz",
                       "dependencies": {
                         "kind-of": {
-                          "version": "3.0.2",
-                          "from": "https://registry.npmjs.org/kind-of/-/kind-of-3.0.2.tgz",
-                          "resolved": "https://registry.npmjs.org/kind-of/-/kind-of-3.0.2.tgz",
+                          "version": "3.0.3",
+                          "from": "https://registry.npmjs.org/kind-of/-/kind-of-3.0.3.tgz",
+                          "resolved": "https://registry.npmjs.org/kind-of/-/kind-of-3.0.3.tgz",
                           "dependencies": {
                             "is-buffer": {
                               "version": "1.1.3",
@@ -157,9 +157,9 @@
                       }
                     },
                     "lazy-cache": {
-                      "version": "1.0.3",
-                      "from": "https://registry.npmjs.org/lazy-cache/-/lazy-cache-1.0.3.tgz",
-                      "resolved": "https://registry.npmjs.org/lazy-cache/-/lazy-cache-1.0.3.tgz"
+                      "version": "1.0.4",
+                      "from": "https://registry.npmjs.org/lazy-cache/-/lazy-cache-1.0.4.tgz",
+                      "resolved": "https://registry.npmjs.org/lazy-cache/-/lazy-cache-1.0.4.tgz"
                     }
                   }
                 },
@@ -174,9 +174,9 @@
                       "resolved": "https://registry.npmjs.org/align-text/-/align-text-0.1.4.tgz",
                       "dependencies": {
                         "kind-of": {
-                          "version": "3.0.2",
-                          "from": "https://registry.npmjs.org/kind-of/-/kind-of-3.0.2.tgz",
-                          "resolved": "https://registry.npmjs.org/kind-of/-/kind-of-3.0.2.tgz",
+                          "version": "3.0.3",
+                          "from": "https://registry.npmjs.org/kind-of/-/kind-of-3.0.3.tgz",
+                          "resolved": "https://registry.npmjs.org/kind-of/-/kind-of-3.0.3.tgz",
                           "dependencies": {
                             "is-buffer": {
                               "version": "1.1.3",
