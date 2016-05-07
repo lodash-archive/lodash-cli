@@ -2445,6 +2445,16 @@ function build(options, callback) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[^}]+?\n\1\}\n/m, '');
         });
 
+        // Remove set cache use from `equalArrays`.
+        _.pull(funcDepMap.equalArrays, 'SetCache').push('indexOf');
+
+        source = replace(source, matchFunction(source, 'equalArrays'), function(match) {
+          return match
+            .replace(/\bnew SetCache\b/, '[]')
+            .replace(/\bseen\.has\(othIndex\)/, 'indexOf(seen, othIndex)')
+            .replace(/\badd\b/, 'push');
+        });
+
         // Remove array buffer, data view, map, set, and symbol support from `equalByTag`.
         _.pull(funcDepMap.equalByTag, 'mapToArray', 'setToArray');
 
