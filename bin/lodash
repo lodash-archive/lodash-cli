@@ -2191,7 +2191,7 @@ function build(options, callback) {
 
     // A flag to specify creating a custom build.
     var isCustom = !isModularize && (
-      isMapped || isStrict || isTemplate ||
+      isCore || isMapped || isStrict || isTemplate ||
       /\b(?:category|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
       !_.isEqual(exportsOptions, buildExports.defaults.monolithic)
     );
