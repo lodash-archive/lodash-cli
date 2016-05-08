@@ -2191,7 +2191,7 @@ function build(options, callback) {
 
     // A flag to specify creating a custom build.
     var isCustom = !isModularize && (
-      isMapped || isStrict || isTemplate || outputPath ||
+      isMapped || isStrict || isTemplate ||
       /\b(?:category|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
       !_.isEqual(exportsOptions, buildExports.defaults.monolithic)
     );
@@ -3305,7 +3305,7 @@ function build(options, callback) {
     filePath =  path.join(cwd, basename + '.js');
   }
   // Output development build.
-  if (!isProduction && (isCustom || isDevelopment || isTemplate)) {
+  if (!isProduction) {
     var devSource = source;
     if (isCustom) {
       devSource = addCommandsToHeader(devSource, options);
