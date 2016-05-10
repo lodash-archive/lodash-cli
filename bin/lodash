@@ -369,7 +369,7 @@ function buildModule(state, onComplete) {
           source = source.replace(getHeader(source), function(header) {
             // Use the old header if the package version is unchanged,
             // otherwise remove the version from the header.
-            header = isSameVersion
+            return isSameVersion
               ? getHeader(oldSource)
               : header.replace(/^( \* *lodash )[.\w\-]*/m, '$1');
           });
