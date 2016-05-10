@@ -53,6 +53,7 @@ function addCommandsToHeader(source, commands) {
 
     // Remove any existing custom build information.
     header = header
+      .replace(/^( \* *lodash )[.\w\-]*/m, '$1')
       .replace(' (Custom Build)', '')
       .replace(/^ *\* *Build:.+\n/m, '');
 
