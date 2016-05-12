@@ -3106,7 +3106,7 @@ function build(options, callback) {
         modified = modified.replace(/^ *define\((?=function)/m, "$&'" + moduleId + "', ");
       }
       // Customize lodash's exports.
-      if (isModularize || isTemplate) {
+      if (!isGlobal || isModularize || isTemplate) {
         modified = modified.replace(/^(?: *\/\/.*\n)* *\(freeWindow\b[^)]+\)\._\s*=[\s\S]+?\n+/m, '');
       }
       if (!isAMD || isModularize) {
