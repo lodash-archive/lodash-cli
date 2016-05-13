@@ -2500,6 +2500,10 @@ function build(options, callback) {
           return match.replace(/^ *this\.__(?:index|values)__\s*=[^;]+;\n/gm, '');
         });
 
+        // Remove `Reflect.enumerate` shim path from `_.keysIn`.
+        _.pull(funcDepMap.baseKeysIn, 'iteratorToArray');
+        source = removeBaseKeysInFork(source);
+
         // Replace array functions with their base counterparts.
         _.each(['arrayEach', 'arrayFilter', 'arrayMap', 'arraySome', 'arrayReduce'], function(arrayName) {
           var reArrayName = RegExp('\\b' + arrayName + '\\b', 'g');
@@ -2774,6 +2778,12 @@ function build(options, callback) {
 
         funcDepMap.iteratee = ['baseIteratee'];
         source = replaceFunction(source, 'iteratee', 'var iteratee = baseIteratee;');
+
+        funcDepMap.keys = ['baseKeys'];
+        source = replaceFunction(source, 'keys', 'var keys = baseKeys;');
+
+        funcDepMap.keysIn = ['baseKeysIn'];
+        source = replaceFunction(source, 'keysIn', 'var keysIn = baseKeysIn;');
 
         funcDepMap.map = ['baseMap', 'baseIteratee'];
 
