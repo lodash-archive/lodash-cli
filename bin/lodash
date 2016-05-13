@@ -2408,7 +2408,7 @@ function build(options, callback) {
         source = replace(source, matchFunction(source, 'baseIsEqualDeep'), function(match) {
           return match
             .replace(/\bgetTag\b/g, 'objectToString.call')
-            .replace(/\s*\|\|\s*isTypedArray\([^)]\)/, '')
+            .replace(/\s*\|\|\s*isTypedArray\([^)]+\)/, '')
             .replace(/^( *)stack\s*\|\|[\s\S]+?\breturn\b([^;]+)(?=;\n)/gm, function(match, indent, compared) {
               return indent + [
                 'var result =' + compared + ';',
