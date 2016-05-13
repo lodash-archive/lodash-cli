@@ -2776,6 +2776,14 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        funcDepMap.isHostObject = [];
+
+        source = replaceFunction(source, 'isHostObject', [
+          'function isHostObject() {',
+          '  return false;',
+          '}'
+        ].join('\n'));
+
         funcDepMap.iteratee = ['baseIteratee'];
         source = replaceFunction(source, 'iteratee', 'var iteratee = baseIteratee;');
 
