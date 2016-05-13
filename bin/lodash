@@ -2699,14 +2699,6 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.find = ['baseFind', 'baseIteratee'];
-
-        source = replaceFunction(source, 'find', [
-          'function find(collection, predicate) {',
-          '  return baseFind(collection, baseIteratee(predicate), baseEach);',
-          '}'
-        ].join('\n'));
-
         funcDepMap.forEach = ['baseIteratee', 'baseEach'];
 
         source = replaceFunction(source, 'forEach', [
