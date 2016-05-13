@@ -2380,12 +2380,6 @@ function build(options, callback) {
           });
         });
 
-        // Remove chain dependencies.
-        _.pull(seqDepMap.funcDep,
-          'baseLodash', 'wrapperCommit', 'wrapperNext',
-          'wrapperPlant', 'wrapperToIterator'
-        );
-
         // Remove `apply` and `isSymbol`.
         _.forOwn(funcDepMap, function(depNames, identifier) {
           if (_.includes(depNames, 'apply')) {
@@ -2400,6 +2394,17 @@ function build(options, callback) {
               return match.replace(/\bisSymbol\([^)]+\)/g, 'false');
             });
           }
+        });
+
+        // Remove chain dependencies.
+        _.pull(seqDepMap.funcDep,
+          'baseLodash', 'wrapperCommit', 'wrapperNext',
+          'wrapperPlant', 'wrapperToIterator'
+        );
+
+        // Remove ES5 and ES2015 built-in constructor deps.
+        _.forOwn(varDepMap, function(deps) {
+          _.pull(deps, 'DataView', 'Map', 'Promise', 'Reflect', 'Set', 'Symbol', 'Uint8Array', 'WeakMap');
         });
 
         // Remove map, set, stack, and typed array support from `baseIsEqualDeep`.
@@ -2501,7 +2506,7 @@ function build(options, callback) {
         });
 
         // Remove `Reflect.enumerate` shim path from `_.keysIn`.
-        _.pull(funcDepMap.baseKeysIn, 'iteratorToArray');
+        funcDepMap.baseKeysIn = [];
         source = removeBaseKeysInFork(source);
 
         // Replace array functions with their base counterparts.
