@@ -760,34 +760,17 @@ function buildTemplate(state) {
     ';(function() {',
     '  var undefined;',
     '',
-    '  var objectTypes = {',
-    "    'function': true,",
-    "    'object': true",
-    '  };',
+    "  var freeExports = typeof exports == 'object' && exports;",
     '',
-    '  var freeExports = (objectTypes[typeof exports] && exports && !exports.nodeType)',
-    '    ? exports',
-    '    : undefined;',
+    "  var freeModule = freeExports && typeof module == 'object' && module;",
     '',
-    '  var freeModule = (objectTypes[typeof module] && module && !module.nodeType)',
-    '    ? module',
-    '    : undefined;',
+    "  var freeGlobal = checkGlobal(typeof global == 'object' && global);",
     '',
-    '  var moduleExports = (freeModule && freeModule.exports === freeExports)',
-    '    ? freeExports',
-    '    : undefined;',
+    "  var freeSelf = checkGlobal(typeof self == 'object' && self);",
     '',
-    "  var freeGlobal = checkGlobal(freeExports && freeModule && typeof global == 'object' && global);",
+    "  var thisGlobal = checkGlobal(typeof this == 'object' && this);",
     '',
-    '  var freeSelf = checkGlobal(objectTypes[typeof self] && self);',
-    '',
-    '  var freeWindow = checkGlobal(objectTypes[typeof window] && window);',
-    '',
-    '  var thisGlobal = checkGlobal(objectTypes[typeof this] && this);',
-    '',
-    '  var root = freeGlobal ||',
-    '    ((freeWindow !== (thisGlobal && thisGlobal.window)) && freeWindow) ||',
-    "      freeSelf || thisGlobal || Function('return this')();",
+    "  var root = freeGlobal || freeSelf || thisGlobal || Function('return this')();",
     '',
     '  function checkGlobal(value) {',
     '    return (value && value.Object === Object) ? value : null;',
@@ -888,16 +871,14 @@ function buildTemplate(state) {
   source.push(
     '    });',
     '  }',
-    '  else if (freeExports && freeModule) {'
+    '  else if (freeModule) {'
   );
 
   if (!isStandalone) {
     source.push("    _ = require('" + moduleId + "');");
   }
   source.push(
-    '    if (moduleExports) {',
-    '      (freeModule.exports = templates).templates = templates;',
-    '    }',
+    '    (freeModule.exports = templates).templates = templates;',
     '    freeExports.templates = templates;'
   );
 
@@ -3122,13 +3103,13 @@ function build(options, callback) {
       }
       // Customize lodash's exports.
       if (!isGlobal || isModularize || isTemplate) {
-        modified = modified.replace(/^(?: *\/\/.*\n)* *\(freeWindow\b[^)]+\)\._\s*=[\s\S]+?\n+/m, '');
+        modified = modified.replace(/^(?: *\/\/.*\n)* *\(freeSelf\b[^)]+\)\._\s*=[\s\S]+?\n+/m, '');
       }
       if (!isAMD || isModularize) {
         modified = modified.replace(/^(?: *\/\/.*\n)*( *)if\s*\(typeof\s+define\b[\s\S]+?else\s+/m, '$1');
       }
       if (!isNode || isModularize) {
-        modified = modified.replace(/^(?: *\/\/.*\n)*( *)(?:else\s+)?if\s*\(freeExports\b[\s\S]+?\n\1\}\n+/m, '');
+        modified = modified.replace(/^(?: *\/\/.*\n)*( *)(?:else\s+)?if\s*\(freeModule\b[\s\S]+?\n\1\}\n+/m, '');
       }
       if (!isGlobal || isModularize) {
         modified = modified.replace(/^(?: *\/\/.*\n)*( *)else\b[^}]+?(?:\._|_\.templates)\s*=[\s\S]+?\n\1\}\n+/m, '');
