@@ -127,7 +127,7 @@ function buildModule(state, onComplete) {
   };
 
   var toDepPath = function(value) {
-    return './' + toDepName(value);
+    return './' + toDepName(value) + (isES ? '.js' : '');
   };
 
   if (isNpm) {
