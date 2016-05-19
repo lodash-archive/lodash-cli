@@ -1382,15 +1382,17 @@ function matchFunction(source, funcName, leadingComments) {
   var escapedName = _.escapeRegExp(funcName);
 
   var patterns = [
-    // Match a function declaration.
+    // Match function declarations.
     '( *)function\\s+' + escapedName + '\\((?:\\)\\s*\\{\\s*|[\\s\\S]+?\\n\\3)\\}\\n',
-    // Match a simple variable declaration.
-    ' *var\\s+' + escapedName + '\\s*=.+?;\\n',
+    // Match simple variable declaration.
+    ' *var\\s+' + escapedName + '\\s*=.+?[,;]\\n',
     // Match variable declarations using `_.memoize` or `_.rest`.
     '( *)var\\s+' + escapedName + '\\s*=\\s*(?:memoize|rest)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\);\\n',
     // Match variable declarations using creator functions.
     '( *)var\\s+' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
-    // Match a variable declaration with function expression.
+    // Match variable declarations with a single line function expression.
+    '( *)var\\s+' + escapedName + '\\s*=.*?function\\(.+?\\}[,;]\\n',
+    // Match variable declarations with a multiple line function expression.
     '( *)var\\s+' + escapedName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n'
   ];
 
