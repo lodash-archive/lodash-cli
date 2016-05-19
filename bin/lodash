@@ -171,10 +171,10 @@ function buildModule(state, onComplete) {
         var forceInlinees = mapping.forceInline[identifier],
             uninlinees = _.difference(listing.uninlinables, forceInlinees);
 
-        var moreInlinees = _.uniq(_.transform(_.difference(depNames, uninlinees), function(result, identifier) {
+        var moreInlinees = _.transform(_.difference(depNames, uninlinees), function(result, identifier) {
           push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinees)));
           return result;
-        }));
+        });
 
         depNames = _.union(_.intersection(uninlinees, depNames), _.intersection(uninlinees, moreInlinees));
         inlinees = inlinees.concat(_.difference(moreInlinees, depNames));
