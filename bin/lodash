@@ -1440,11 +1440,11 @@ function matchVar(source, varName, leadingComments) {
   var escapedName = _.escapeRegExp(varName);
 
   var patterns = [
-    // Match a varaible at the start of a declaration list.
+    // Match varaibles at the start of a declaration list.
     ['^( *var\\s+)(' + escapedName + '\\s*=.+?,\\n *)', 2, 2],
-    // Match a variable declaration in a declaration list.
+    // Match variable declarations in a declaration list.
     ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
-    // Match a variable that is not part of a declaration list.
+    // Match variables that aren't part of a declaration list.
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*(?:|=[^;]+);\\n)', 2, 0]
   ];
 
@@ -1452,8 +1452,8 @@ function matchVar(source, varName, leadingComments) {
   if (_.includes(listing.complexVars, varName)) {
     patterns.splice(2, 0, ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]);
   }
-  return _.reduce(patterns, function(result, data) {
-    return result || _.result(RegExp(data[0], 'm').exec(source), data[leadingComments ? 2 : 1], '');
+  return _.reduce(patterns, function(result, pattern) {
+    return result || _.result(RegExp(pattern[0], 'm').exec(source), pattern[leadingComments ? 2 : 1], '');
   }, '');
 }
 
