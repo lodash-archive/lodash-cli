@@ -1396,11 +1396,13 @@ function matchFunction(source, funcName, leadingComments) {
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*(?:memoize|rest)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\);\\n)', 2, 0],
     // Match variable declarations using creator functions.
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.*|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n)', 2, 0],
+    // Match simple variable declaration.
+    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=.+?;\\n)', 2, 0],
     // Match multiple line function expressions.
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n)', 2, 0]
   ];
 
-  return _.reduce(patterns, function(result, pattern, index) {
+  return _.reduce(patterns, function(result, pattern) {
     if (!result) {
       result = RegExp(pattern[0], 'm').exec(source);
       result = isFunctionSnippet(result) ? _.result(result, pattern[leadingComments ? 2 : 1], '') : '';
