@@ -1383,23 +1383,25 @@ function matchFunction(source, funcName, leadingComments) {
 
   var patterns = [
     // Match function declarations.
-    '( *)function\\s+' + escapedName + '\\((?:\\)\\s*\\{\\s*|[\\s\\S]+?\\n\\3)\\}\\n',
-    // Match simple variable declaration.
-    ' *var\\s+' + escapedName + '\\s*=.+?[,;]\\n',
+    ['^(' + consts.rsComment + ')(( *)function\\s+' + escapedName + '\\((?:\\)\\s*\\{\\s*|[\\s\\S]+?\\n\\3)\\}\\n)', 2, 0],
+    // Match single line function expressions at the start of a declaration list.
+    ['^( *var\\s+)(' + escapedName + '\\s*=\\s*function\\b.+?\\},\\n *)', 2, 2],
+    // Match single line function expressions in a declaration list.
+    ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*function\\b.+?\\}(?=[,;]\\n))', 2, 0],
+    // Match single line function expressions that aren't in a declaration list.
+    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*function\\b.+?\\};\\n)', 2, 0],
     // Match variable declarations using `_.memoize` or `_.rest`.
-    '( *)var\\s+' + escapedName + '\\s*=\\s*(?:memoize|rest)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\);\\n',
+    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*(?:memoize|rest)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\);\\n)', 2, 0],
     // Match variable declarations using creator functions.
-    '( *)var\\s+' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.+|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n',
-    // Match variable declarations with a single line function expression.
-    '( *)var\\s+' + escapedName + '\\s*=.*?function\\(.+?\\}[,;]\\n',
-    // Match variable declarations with a multiple line function expression.
-    '( *)var\\s+' + escapedName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n'
+    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*(?:base|create)(?:[A-Z][a-z]+)+\\((?:.*|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n)', 2, 0],
+    // Match multiple line function expressions.
+    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n)', 2, 0]
   ];
 
-  return _.reduce(patterns, function(result, pattern) {
+  return _.reduce(patterns, function(result, pattern, index) {
     if (!result) {
-      result = RegExp('^(' + consts.rsComment + ')(' + pattern + ')', 'm').exec(source),
-      result = isFunctionSnippet(result) ? _.result(result, leadingComments ? 0 : 2, '') : '';
+      result = RegExp(pattern[0], 'm').exec(source);
+      result = isFunctionSnippet(result) ? _.result(result, pattern[leadingComments ? 2 : 1], '') : '';
     }
     return result;
   }, '');
@@ -1442,9 +1444,9 @@ function matchVar(source, varName, leadingComments) {
   var patterns = [
     // Match varaibles at the start of a declaration list.
     ['^( *var\\s+)(' + escapedName + '\\s*=.+?,\\n *)', 2, 2],
-    // Match variable declarations in a declaration list.
+    // Match variables in a declaration list.
     ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
-    // Match variables that aren't part of a declaration list.
+    // Match variable declarations that aren't in a declaration list.
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*(?:|=[^;]+);\\n)', 2, 0]
   ];
 
