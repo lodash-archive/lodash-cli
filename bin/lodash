@@ -3011,9 +3011,7 @@ function build(options, callback) {
     // Load customized lodash module.
     var lodash = !isTemplate && (function() {
       var context = vm.createContext({
-        'clearTimeout': clearTimeout,
-        'console': console,
-        'setTimeout': setTimeout
+        'console': console
       });
 
       vm.runInContext(source, context);
