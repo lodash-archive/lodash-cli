@@ -1390,10 +1390,12 @@ function matchFunction(source, funcName, leadingComments) {
     ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*function\\b.+?\\}(?=[,;]\\n))', 2, 0],
     // Match single line function expressions that aren't in a declaration list.
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*function\\b.+?\\};\\n)', 2, 0],
+    // Match variable declarations using `baseProperty` or `_.constant`.
+    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*(?:baseProperty|constant)\\([\\s\\S]+?\\);\\n)', 2, 0],
     // Match variable declarations using `_.memoize` or `_.rest`.
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*(?:memoize|rest)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\);\\n)', 2, 0],
     // Match variable declarations using creator functions.
-    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*(?:base|create)(?:[A-Z][a-z]+)+\\((?:.*|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n)', 2, 0],
+    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.*|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n)', 2, 0],
     // Match multiple line function expressions.
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n)', 2, 0]
   ];
