@@ -1405,7 +1405,7 @@ function matchFunction(source, funcName, leadingComments) {
   return _.reduce(patterns, function(result, pattern) {
     if (!result) {
       result = RegExp(pattern[0], 'm').exec(source);
-      result = isFunctionSnippet(result) ? _.result(result, pattern[leadingComments ? 2 : 1], '') : '';
+      result = isFunctionSnippet(result) ? _.result(result, pattern[leadingComments ? 2 : 1]) : '';
     }
     return result;
   }, '');
