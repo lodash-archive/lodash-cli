@@ -1300,11 +1300,11 @@ function getVars(source) {
       result = [];
 
   var patterns = [
-    // Match a varaible at the start of a declaration list.
+    // Match varaibles at the start of a declaration list.
     ['^(' + indentA + 'var\\s+)([$\\w]+)\\s*=.+?,\\n *', 2, 1],
-    // Match a variable declaration in a declaration list.
+    // Match variable declarations in a declaration list.
     [',\\n' + consts.rsComment + indentB + '([$\\w]+)\\s*=[\\s\\S]+?(?=[,;]\\n)', 1, -1],
-    // Match a variable that is not part of a declaration list.
+    // Match variables that aren't part of a declaration list.
     ['^(' + indentA + ')var\\s+([$\\w]+)\\s*(?:|=[^;]+);\\n', 2, -1]
   ];
 
@@ -1317,10 +1317,10 @@ function getVars(source) {
     });
   });
 
-  return _.uniq(_.transform(patterns, function(result, data) {
-    source = source.replace(RegExp(data[0], 'gm'), function() {
-      result.push(arguments[data[1]]);
-      return data[2] > -1 ? arguments[data[2]] : '';
+  return _.uniq(_.transform(patterns, function(result, pattern) {
+    source = source.replace(RegExp(pattern[0], 'gm'), function() {
+      result.push(arguments[pattern[1]]);
+      return pattern[2] > -1 ? arguments[pattern[2]] : '';
     });
   }, result));
 }
