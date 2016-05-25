@@ -63,6 +63,7 @@ lodash.debounce = require('lodash.debounce');
 lodash.deburr = require('lodash.deburr');
 lodash.defaults = require('lodash.defaults');
 lodash.defaultsDeep = require('lodash.defaultsdeep');
+lodash.defaultTo = require('lodash.defaultto');
 lodash.defer = require('lodash.defer');
 lodash.delay = require('lodash.delay');
 lodash.difference = require('lodash.difference');
