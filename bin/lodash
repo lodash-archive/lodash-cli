@@ -2330,7 +2330,7 @@ function build(options, callback) {
         source = removeChaining(source, seqDepMap, funcDepMap, objDepMap);
         source = removeMetadata(source, funcDepMap);
       }
-      if (isCore) {
+      if (isCore && _.isEmpty(plusFuncs)) {
         source = removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap);
         source = removeMetadata(source, funcDepMap);
 
