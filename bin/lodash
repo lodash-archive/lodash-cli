@@ -3085,9 +3085,6 @@ function build(options, callback) {
         modified = modified.replace(/^ *define\((?=function)/m, "$&'" + moduleId + "', ");
       }
       // Customize lodash's exports.
-      if (!isGlobal || isModularize || isTemplate) {
-        modified = modified.replace(/^(?: *\/\/.*\n)* *\(freeSelf\b[^)]+\)\._\s*=[\s\S]+?\n+/m, '');
-      }
       if (!isAMD || isModularize) {
         modified = modified.replace(/^(?: *\/\/.*\n)*( *)if\s*\(typeof\s+define\b[\s\S]+?else\s+/m, '$1');
       }
@@ -3095,6 +3092,9 @@ function build(options, callback) {
         modified = modified.replace(/^(?: *\/\/.*\n)*( *)(?:else\s+)?if\s*\(freeModule\b[\s\S]+?\n\1\}\n+/m, '');
       }
       if (!isGlobal || isModularize) {
+        if (isAMD && !isTemplate) {
+          modified = modified.replace(/^(?: *\/\/.*\n)* *root\._\s*=[\s\S]+?\n+/m, '');
+        }
         modified = modified.replace(/^(?: *\/\/.*\n)*( *)else\b[^}]+?(?:\._|_\.templates)\s*=[\s\S]+?\n\1\}\n+/m, '');
       }
       else if (!isAMD && !isNode) {
