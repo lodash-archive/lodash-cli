@@ -3216,7 +3216,6 @@ function build(options, callback) {
 
     if (!_.includes(includeVars, 'root')) {
       varNames = _.without(varNames, 'root');
-      source = removeVar(source, 'freeGlobal');
       source = removeVar(source, 'root');
     }
     if (isModularize) {
