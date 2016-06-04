@@ -54,6 +54,7 @@ lodash.compact = require('lodash.compact');
 lodash.concat = require('lodash.concat');
 lodash.cond = require('lodash.cond');
 lodash.conforms = require('lodash.conforms');
+lodash.conformsTo = require('lodash.conformsto');
 lodash.constant = require('lodash.constant');
 lodash.countBy = require('lodash.countby');
 lodash.create = require('lodash.create');
