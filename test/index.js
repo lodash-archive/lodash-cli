@@ -54,8 +54,10 @@ function createContext(exportType) {
       break;
 
     case 'node':
-      context.exports = {};
-      context.module = { 'exports': context.exports };
+      context.Object = Object;
+      context.global = { 'exports': {}, 'module': {}, 'Object': Object };
+      context.module = context.global.module;
+      context.exports = context.module.exports = context.global.exports;
   }
   return context;
 }
@@ -408,12 +410,12 @@ QUnit.module('template builds');
       build([ 'template=' + path.join(templatePath, 'c.jst'), command], function(data) {
         var templates,
             basename = path.basename(data.outputPath, '.js'),
-            context = createContext(),
             defaultTemplates = { 'c': function() { return ''; } },
             source = data.source;
 
         switch(type) {
           case 'amd':
+            var context = createContext();
             context.define = function(requires, factory) { factory(_); };
             context.define.amd = {};
             vm.runInContext(source, context);
@@ -422,6 +424,7 @@ QUnit.module('template builds');
             break;
 
           case 'global':
+            var context = createContext();
             context._ = _;
             vm.runInContext(source, context);
 
@@ -429,8 +432,7 @@ QUnit.module('template builds');
             break;
 
           case 'node':
-            context.exports = {};
-            context.module = { 'exports': context.exports };
+            var context = createContext('node');
             context.require = function() { return _; };
             vm.runInContext(source, context);
 
@@ -438,6 +440,7 @@ QUnit.module('template builds');
             break;
 
           case 'none':
+            var context = createContext();
             vm.runInContext(source, context);
             assert.strictEqual(context._, undefined, basename);
         }
@@ -523,10 +526,7 @@ QUnit.module('template builds');
       build(['template=' + path.join(templatePath, 'd.jst'), command], function(data) {
         var actualId = '',
             basename = path.basename(data.outputPath, '.js'),
-            context = createContext();
-
-        context.exports = {};
-        context.module = { 'exports': context.exports };
+            context = createContext('node');
 
         if (expectedId != 'none') {
           context.require = function(id) {
