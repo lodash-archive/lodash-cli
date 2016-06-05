@@ -602,7 +602,7 @@ function buildModule(state, onComplete) {
               var depName = depNames[index];
               return 'export { default as ' + depName + " } from '" + depPath + "';";
             }).join('\n'),
-            "export { default as default } from './lodash.default.js';"
+            "export default from './lodash.default.js';"
           );
         }
       }
@@ -699,7 +699,7 @@ function buildModule(state, onComplete) {
                 return 'export { default as ' + key + " } from '" + depPaths[index] + "';";
               })
               .join('\n'),
-              "export { default as default } from './" + basename + ".default.js';"
+              "export default from './" + basename + ".default.js';"
             );
           }
         }
