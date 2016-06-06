@@ -1792,6 +1792,7 @@ function removeProp(source, propName) {
  * @returns {string} Returns the modified source.
  */
 function removeRunInContext(source) {
+  source = removeVar(source, 'clearTimeout');
   source = removeVar(source, 'contextProps');
   source = removeVar(source, 'parseFloat');
   source = removeVar(source, 'setTimeout');
