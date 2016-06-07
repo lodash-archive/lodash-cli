@@ -410,12 +410,12 @@ QUnit.module('template builds');
       build([ 'template=' + path.join(templatePath, 'c.jst'), command], function(data) {
         var templates,
             basename = path.basename(data.outputPath, '.js'),
+            context = createContext(type),
             defaultTemplates = { 'c': function() { return ''; } },
             source = data.source;
 
         switch(type) {
           case 'amd':
-            var context = createContext();
             context.define = function(requires, factory) { factory(_); };
             context.define.amd = {};
             vm.runInContext(source, context);
@@ -424,7 +424,6 @@ QUnit.module('template builds');
             break;
 
           case 'global':
-            var context = createContext();
             context._ = _;
             vm.runInContext(source, context);
 
@@ -432,7 +431,6 @@ QUnit.module('template builds');
             break;
 
           case 'node':
-            var context = createContext('node');
             context.require = function() { return _; };
             vm.runInContext(source, context);
 
@@ -440,7 +438,6 @@ QUnit.module('template builds');
             break;
 
           case 'none':
-            var context = createContext();
             vm.runInContext(source, context);
             assert.strictEqual(context._, undefined, basename);
         }
@@ -468,7 +465,7 @@ QUnit.module('template builds');
       build(['template=' + path.join(templatePath, '*.jst'), 'exports=amd'].concat(command || []), function(data) {
         var actualId,
             basename = path.basename(data.outputPath, '.js'),
-            context = createContext();
+            context = createContext('amd');
 
         context.define = function(requires, factory) {
           factory(_);
@@ -492,7 +489,7 @@ QUnit.module('template builds');
       build(['template=' + path.join(templatePath, '*.tpl'), 'settings={interpolate:/{{([\\s\\S]+?)}}/}'].concat(command || []), function(data) {
         var actualId,
             basename = path.basename(data.outputPath, '.js'),
-            context = createContext();
+            context = createContext('amd');
 
         context.define = function(requires, factory) {
           factory(_);
@@ -1150,11 +1147,10 @@ QUnit.module('iife command');
 
       build(['exports=none', command], function(data) {
         var basename = path.basename(data.outputPath, '.js'),
-            context = createContext();
+            context = createContext('amd');
 
-        context.define = function(func) {
-          context.lodash = func();
-        };
+        context.define = function(func) { context.lodash = func(); };
+        context.define.amd = {};
 
         try {
           vm.runInContext(data.source, context);
@@ -1239,7 +1235,7 @@ QUnit.module('moduleId command');
       build(command.split(' '), function(data) {
         var actualId,
             basename = path.basename(data.outputPath, '.js'),
-            context = createContext();
+            context = createContext('amd');
 
         context.define = function(id, factory) {
           actualId = id;
