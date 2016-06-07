@@ -37,27 +37,34 @@ var timeLimit = _.reduce(process.argv, function(result, value, index) {
  * Creates a context object to use with `vm.runInContext`.
  *
  * @private
- * @param {string} [exportType=global] The module export type (i.e. "amd", "global", & "node").
+ * @param {string} [type=global] The export type (i.e. "amd", "global", or "node").
  * @returns {Object} Returns a new context object.
  */
-function createContext(exportType) {
+function createContext(type) {
   var context = vm.createContext({
     'clearTimeout': clearTimeout,
     'console': console,
     'setTimeout': setTimeout
   });
 
-  switch (exportType) {
+  switch (type) {
     case 'amd':
       context.define = function(factory) { context._ = factory(); };
       context.define.amd = {};
       break;
-
     case 'node':
+      context.Array = Array;
+      context.Date = Date;
+      context.Error = Error;
+      context.Function = Function;
       context.Object = Object;
-      context.global = { 'exports': {}, 'module': {}, 'Object': Object };
-      context.module = context.global.module;
-      context.exports = context.module.exports = context.global.exports;
+      context.Math = Math;
+      context.RegExp = RegExp;
+      context.String = String;
+      context.TypeError = TypeError;
+      context.exports = {};
+      context.module = {};
+      context.global = _.clone(context);
   }
   return context;
 }
