@@ -2532,6 +2532,14 @@ function build(options, callback) {
           return match.replace(/\bcreateWrapper\([\s\S]+?(?=;\n)/, 'partial(wrapper, value)');
         });
 
+        // Replace `isXyz` methods with their base counterparts.
+        _.each(['isArrayBuffer', 'isDate', 'isMap', 'isRegExp', 'isSet', 'isTypedArray'], function(funcName) {
+          var baseName = 'base' + _.upperFirst(funcName);
+          funcDepMap[funcName] = [baseName];
+          varDepMap[funcName] = [];
+          source = replaceFunction(source, funcName, 'var ' + funcName + ' = ' + baseName + ';');
+        });
+
         // Replace method implementations.
         source = replaceFunction(source, 'arrayPush', [
           'function arrayPush(array, values) {',
