@@ -201,7 +201,7 @@ function buildModule(state, onComplete) {
 
   // Create modules for each identifier.
   _.each(identifiers, function(identifier) {
-    var basename = _.result(mapping.forceAlias, identifier, identifier),
+    var basename = _.get(mapping.forceAlias, identifier, identifier),
         category = getCategory(identifier),
         depData = depMap[identifier],
         depName = toDepName(basename),
@@ -233,7 +233,7 @@ function buildModule(state, onComplete) {
       depNames = _.sortBy(_.difference(depNames, unusedDeps), toDepName);
 
       depNames = _.map(depNames, function(depName) {
-        return _.result(mapping.forceAlias, depName, depName);
+        return _.get(mapping.forceAlias, depName, depName);
       }).sort();
 
       var depPaths = isNpm
@@ -242,7 +242,7 @@ function buildModule(state, onComplete) {
 
       if (isAMD) {
         var depArgs = _.map(depNames, function(depName) {
-          return _.result(mapping.wrapperToReal, depName, depName);
+          return _.get(mapping.wrapperToReal, depName, depName);
         });
 
         iife.push(
@@ -256,7 +256,7 @@ function buildModule(state, onComplete) {
         iife.push(
           _.map(depPaths, function(depPath, index) {
             var depName = depNames[index],
-                varName = _.result(mapping.wrapperToReal, depName, depName);
+                varName = _.get(mapping.wrapperToReal, depName, depName);
 
             return 'import ' + varName + " from '" + depPath + "';";
           })
@@ -269,7 +269,7 @@ function buildModule(state, onComplete) {
         iife.push(
           _.map(depPaths, function(depPath, index) {
             var depName = depNames[index],
-                varName = _.result(mapping.wrapperToReal, depName, depName),
+                varName = _.get(mapping.wrapperToReal, depName, depName),
                 lastIndex = depPaths.length - 1;
 
             return (index ? '' : 'var ') +
@@ -392,7 +392,7 @@ function buildModule(state, onComplete) {
 
   // Add alias modules.
   _.each(!isNpm && identifiers, function(identifier) {
-    var basename = _.result(mapping.forceAlias, identifier, identifier),
+    var basename = _.get(mapping.forceAlias, identifier, identifier),
         aliases = _.without(getAliases(identifier), basename),
         category = getCategory(identifier),
         depName = toDepName(basename),
@@ -530,7 +530,7 @@ function buildModule(state, onComplete) {
           return match;
         }
         var category = mapping.categoryToDepName[getCategory(identifier)];
-        identifier = _.result(mapping.wrapperToReal, identifier, identifier);
+        identifier = _.get(mapping.wrapperToReal, identifier, identifier);
         return left + (category ? category + '.' : '') + identifier;
       });
 
@@ -540,7 +540,7 @@ function buildModule(state, onComplete) {
       deps = _.difference(deps, unusedDeps);
 
       deps = _.map(deps, function(depName) {
-        return _.result(mapping.forceAlias, depName, depName);
+        return _.get(mapping.forceAlias, depName, depName);
       }).sort();
 
       var depNames = categoryDeps.concat(deps);
@@ -553,7 +553,7 @@ function buildModule(state, onComplete) {
       var iife = [];
 
       var depArgs = _.map(depNames, function(depName) {
-        return _.result(mapping.wrapperToReal, depName, depName);
+        return _.get(mapping.wrapperToReal, depName, depName);
       });
 
       var depPaths = categoryDepPaths.concat(_.map(deps, toDepPath));
@@ -571,7 +571,7 @@ function buildModule(state, onComplete) {
           iife.push(
             _.map(depPaths, function(depPath, index) {
               var depName = depNames[index],
-                  varName = _.result(mapping.wrapperToReal, depName, depName);
+                  varName = _.get(mapping.wrapperToReal, depName, depName);
 
               return 'import ' + varName + " from '" + depPath + "';";
             }).join('\n'),
@@ -610,7 +610,7 @@ function buildModule(state, onComplete) {
         iife.push(
           _.map(depPaths, function(depPath, index) {
             var depName = depNames[index],
-                varName = _.result(mapping.wrapperToReal, depName, depName),
+                varName = _.get(mapping.wrapperToReal, depName, depName),
                 lastIndex = depPaths.length - 1;
 
             return (index ? '' : 'var ') +
@@ -649,7 +649,7 @@ function buildModule(state, onComplete) {
             dataName = forceAlias === undefined ? depName : forceAlias,
             dataPath = toDepPath(_.includes(aliases, forceAlias) ? forceAlias : dataName);
 
-        dataName = _.result(mapping.wrapperToReal, dataName, dataName);
+        dataName = _.get(mapping.wrapperToReal, dataName, dataName);
 
         result.push({ 'name': dataName, 'path': dataPath });
         push.apply(result, _.map(aliases, function(alias) {
@@ -666,7 +666,7 @@ function buildModule(state, onComplete) {
           "define(['" + depPaths.join("', '") + "'], function(" + depNames.join(', ') + ') {',
           '  return {',
           _.map(depNames, function(depName) {
-            var key = _.result(mapping.wrapperToReal, depName, depName);
+            var key = _.get(mapping.wrapperToReal, depName, depName);
             return "    '" + key + "': " + depName;
           })
           .join(',\n'),
@@ -695,7 +695,7 @@ function buildModule(state, onComplete) {
             iife.push(
               '',
               _.map(depNames, function(depName, index) {
-                var key = _.result(mapping.wrapperToReal, depName, depName);
+                var key = _.get(mapping.wrapperToReal, depName, depName);
                 return 'export { default as ' + key + " } from '" + depPaths[index] + "';";
               })
               .join('\n'),
@@ -708,7 +708,7 @@ function buildModule(state, onComplete) {
             'module.exports = {',
             _.map(depNames, function(depName) {
               var depPath = depPaths[_.indexOf(depNames, depName)],
-                  key = _.result(mapping.wrapperToReal, depName, depName);
+                  key = _.get(mapping.wrapperToReal, depName, depName);
 
               return "  '" + key + "': require('" + depPath + "')";
             })
@@ -1014,7 +1014,7 @@ function defaultBuildCallback(data) {
  * @returns {Array} Returns an array of aliases.
  */
 function getAliases(identifier) {
-  return _.result(mapping.realToAlias, identifier, []);
+  return _.get(mapping.realToAlias, identifier, []);
 }
 
 /**
@@ -1055,7 +1055,7 @@ function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack)
  * @returns {string} Returns the fork.
  */
 function getBaseKeysInFork(source) {
-  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(enumerate\b[\s\S]+?\n\1  baseKeysIn\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
+  return _.get(/^(?: *\/\/.*\n)*( *)if\s*\(enumerate\b[\s\S]+?\n\1  baseKeysIn\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
 }
 
 /**
@@ -1175,7 +1175,7 @@ function getFunctionSource(func, indent) {
  * @returns {string} Returns the fork.
  */
 function getGetTagFork(source) {
-  return _.result(/^(?: *\/\/.*\n)*( *)if\s*\(\s*\(DataView\s*&&[\s\S]+?\n\1  getTag\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
+  return _.get(/^(?: *\/\/.*\n)*( *)if\s*\(\s*\(DataView\s*&&[\s\S]+?\n\1  getTag\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
 }
 
 /**
@@ -1187,7 +1187,7 @@ function getGetTagFork(source) {
  */
 function getHeader(source) {
   source = toString(source);
-  return _.result(/^\s*\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n|^(?:\s*\/\/.*\n)+/.exec(source), 0, '');
+  return _.get(/^\s*\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/\n|^(?:\s*\/\/.*\n)+/.exec(source), 0, '');
 }
 
 /**
@@ -1198,7 +1198,7 @@ function getHeader(source) {
  * @returns {string} Returns the indent string.
  */
 function getIndent(func) {
-  return _.result(/^ *(?=\S)/m.exec(func.source || func), 0, '');
+  return _.get(/^ *(?=\S)/m.exec(func.source || func), 0, '');
 }
 
 /**
@@ -1210,7 +1210,7 @@ function getIndent(func) {
  */
 function getMethodAssignments(source) {
   source = toString(source);
-  return _.result(/\n\n(?: *\/\/.*\n)* *lodash(?:\.(?!prototype\b)[$\w]+)+\s*=[\s\S]+\n *lodash(?:\.[$\w]+)+\s=[^;]+;(?=\n)/.exec(source), 0, '');
+  return _.get(/\n\n(?: *\/\/.*\n)* *lodash(?:\.(?!prototype\b)[$\w]+)+\s*=[\s\S]+\n *lodash(?:\.[$\w]+)+\s=[^;]+;(?=\n)/.exec(source), 0, '');
 }
 
 /**
@@ -1221,7 +1221,7 @@ function getMethodAssignments(source) {
  * @returns {Array} Returns a new array of names.
  */
 function getNamesByCategory(category) {
-  return _.result(mapping.category, category, []);
+  return _.get(mapping.category, category, []);
 }
 
 /**
@@ -1260,7 +1260,7 @@ function getOption(options, names, defaultValue) {
  * @returns {string} Returns the real name.
  */
 function getRealName(alias) {
-  return _.result(mapping.aliasToReal, alias, alias);
+  return _.get(mapping.aliasToReal, alias, alias);
 }
 
 /**
@@ -1271,7 +1271,7 @@ function getRealName(alias) {
  * @returns {string} Returns the real category.
  */
 function getRealCategory(alias) {
-  return _.result(mapping.oldCategory, alias, alias);
+  return _.get(mapping.oldCategory, alias, alias);
 }
 
 /**
@@ -1394,7 +1394,7 @@ function matchFunction(source, funcName, leadingComments) {
   return _.reduce(patterns, function(result, pattern) {
     if (!result) {
       result = RegExp(pattern[0], 'm').exec(source);
-      result = isFunctionSnippet(result) ? _.result(result, pattern[leadingComments ? 2 : 1]) : '';
+      result = isFunctionSnippet(result) ? _.get(result, pattern[leadingComments ? 2 : 1]) : '';
     }
     return result;
   }, '');
@@ -1413,7 +1413,7 @@ function matchFunction(source, funcName, leadingComments) {
 function matchProp(source, propName, leadingComments) {
   var escapedName = _.escapeRegExp(propName);
 
-  return _.result(RegExp(
+  return _.get(RegExp(
     '^' + (leadingComments ? consts.rsComment : '') +
     '(?: {2,4}var\\s+' + escapedName + '\\b.+|(?:\\s*|.*?=\\s*)lodash\\._?' + escapedName + '\\s*)=[\\s\\S]+?' +
     '(?:\\(function\\([\\s\\S]+?\\}\\([^)]*\\)\\);\\n(?=\\n)|' +
@@ -1448,7 +1448,7 @@ function matchVar(source, varName, leadingComments) {
     patterns.splice(2, 0, ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=[\\s\\S]+?[};]\\n(?=\\s*\\n(?:\\S|\\3(?:function\\b|if\\b|lodash\\b|var\\s|/[/*]))))', 2, 0]);
   }
   return _.reduce(patterns, function(result, pattern) {
-    return result || _.result(RegExp(pattern[0], 'm').exec(source), pattern[leadingComments ? 2 : 1], '');
+    return result || _.get(RegExp(pattern[0], 'm').exec(source), pattern[leadingComments ? 2 : 1], '');
   }, '');
 }
 
@@ -1475,7 +1475,7 @@ function optionToArray(name, string) {
 function optionToValue(name, string) {
   var result = RegExp('^' + _.escapeRegExp(name) + '(?:=([\\s\\S]+))?$').exec(string);
   if (result) {
-    result = _.result(result, 1);
+    result = _.get(result, 1);
     result = result ? _.trim(result) : true;
   }
   return (result !== 'false') && (result || undefined);
@@ -1631,10 +1631,10 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
  * @returns {string} Returns the modified source.
  */
 function removeMetadata(source, funcDepMap) {
-  var deps = _.result(funcDepMap, 'createWrap', []);
+  var deps = _.get(funcDepMap, 'createWrap', []);
   _.pull(deps, 'baseSetData', 'getData', 'mergeData', 'setData');
 
-  deps = _.result(funcDepMap, 'createRecurry', []);
+  deps = _.get(funcDepMap, 'createRecurry', []);
   _.pull(deps, 'isLaziable', 'setData');
 
   // Remove metadata related code.
@@ -1695,7 +1695,7 @@ function removeGetIteratee(source, funcDepMap) {
   });
 
   return source.replace(getMethodAssignments(source), function(match) {
-    var deps = _.result(funcDepMap, 'main', []);
+    var deps = _.get(funcDepMap, 'main', []);
     if (_.includes(deps, 'baseIteratee')) {
       match = match.replace(consts.reGetIteratee, 'baseIteratee');
     }

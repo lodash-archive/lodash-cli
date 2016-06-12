@@ -105,7 +105,7 @@ function expandFuncNames(funcNames) {
  * @returns {Array} Returns an array of aliases.
  */
 function getAliases(identifier) {
-  return _.result(mapping.realToAlias, identifier, []);
+  return _.get(mapping.realToAlias, identifier, []);
 }
 
 /**
@@ -116,7 +116,7 @@ function getAliases(identifier) {
  * @returns {string} Returns the real category.
  */
 function getRealCategory(alias) {
-  return _.result(mapping.oldCategory, alias, alias);
+  return _.get(mapping.oldCategory, alias, alias);
 }
 
 /**
@@ -127,7 +127,7 @@ function getRealCategory(alias) {
  * @returns {string} Returns the real name.
  */
 function getRealName(alias) {
-  return _.result(mapping.aliasToReal, alias, alias);
+  return _.get(mapping.aliasToReal, alias, alias);
 }
 
 /**
@@ -463,7 +463,7 @@ QUnit.module('template builds');
   ];
 
   _.each(commands, function(command) {
-    var expectedId = _.result(/moduleId=(\w+)/.exec(command), 1, 'lodash');
+    var expectedId = _.get(/moduleId=(\w+)/.exec(command), 1, 'lodash');
 
     QUnit.test('`lodash exports=amd' + (command ? ' ' + command + '`' : '` using the default `moduleId`'), function(assert) {
       var done = assert.async(),
@@ -521,7 +521,7 @@ QUnit.module('template builds');
   ];
 
   _.each(commands, function(command) {
-    var expectedId = _.result(/moduleId=(?!none)(\w+)/.exec(command), 1, '');
+    var expectedId = _.get(/moduleId=(?!none)(\w+)/.exec(command), 1, '');
 
     QUnit.test('should work with `' + command + '`', function(assert) {
       var done = assert.async(),
@@ -640,7 +640,7 @@ QUnit.module('independent builds');
           start = _.once(done);
 
       build([option, 'strict'], function(data) {
-        var comment = _.result(data.source.match(reHeader), 0, '');
+        var comment = _.get(data.source.match(reHeader), 0, '');
         assert.ok(_.includes(comment, 'Custom Build'));
         assert.strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom');
         start();
@@ -669,7 +669,7 @@ QUnit.module('independent builds');
           start = _.once(done);
 
       build([option, 'strict'], function(data) {
-        var comment = _.result(data.source.match(reHeader), 0, '');
+        var comment = _.get(data.source.match(reHeader), 0, '');
         assert.ok(_.includes(comment, 'Custom Build'));
         assert.strictEqual(path.basename(data.outputPath, '.js'), 'lodash.custom.min');
         start();
@@ -871,9 +871,9 @@ QUnit.module('source-map modifier');
 
         var callback = _.once(function(data) {
           var basename = path.basename(data.outputPath, '.js'),
-              sources = [_.result(/\w+\.js$/.exec(outputCommand), 0, 'lodash.custom.js')],
+              sources = [_.get(/\w+\.js$/.exec(outputCommand), 0, 'lodash.custom.js')],
               sourceMap = JSON.parse(data.sourceMap),
-              sourceMapURL = _.result(/\w+\.map$/.exec(mapCommand), 0, basename + '.map');
+              sourceMapURL = _.get(/\w+\.map$/.exec(mapCommand), 0, basename + '.map');
 
           assert.ok(RegExp('\\n//# sourceMappingURL=' + sourceMapURL + '$').test(data.source), basename);
           assert.strictEqual(sourceMap.file, basename + '.js', basename);
@@ -1179,7 +1179,7 @@ QUnit.module('iife command');
 
     build([command], function(data) {
       var basename = path.basename(data.outputPath, '.js'),
-          comment = _.result(data.source.match(reHeader), 0, '');
+          comment = _.get(data.source.match(reHeader), 0, '');
 
       assert.ok(_.includes(comment, expected), basename);
       start();
