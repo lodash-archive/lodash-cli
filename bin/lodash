@@ -1642,7 +1642,7 @@ function removeMetadata(source, funcDepMap) {
     match = _.reduce(['data', 'funcBitmask', 'funcIsPartialed', 'setter'], removeVar, match);
     return match
       .replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:typeof\s+)?data\b[\s\S]+?\n\1\}\n/gm, '')
-      .replace(/^( *return\s+)setter\(([^,]+),[^)]+\)/m, '$1$2');
+      .replace(/\bsetter\(([^,]+),[^)]+\)/, '$1');
   });
 
   source = replace(source, matchFunction(source, 'createRecurry'), function(match) {
