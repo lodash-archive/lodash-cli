@@ -1563,9 +1563,9 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
     _.pull(seqDepMap.objDep, 'realNames');
 
     _.pull(seqDepMap.funcDep,
-      'baseInvoke', 'createHybridWrapper', 'getIteratee', 'identity',
-      'isArray', 'last', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper',
-      'rest', 'toInteger', 'wrapperAt', 'wrapperReverse'
+      'baseInvoke', 'createHybrid', 'getIteratee', 'identity', 'isArray', 'last',
+      'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'rest', 'toInteger',
+      'wrapperAt', 'wrapperReverse'
     );
   }
   if (funcDepMap) {
@@ -1619,7 +1619,7 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
   source = source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(LazyWrapper\.prototype\b[\s\S]+?\n\1\}\);\n/gm, '');
 
   // Remove `realNames` assignment for `wrapper`.
-  return source.replace(/^(?: *\/\/.*\n)* *realNames\[createHybridWrapper\b[\s\S]+?;\n/m, '');
+  return source.replace(/^(?: *\/\/.*\n)* *realNames\[createHybrid\b[\s\S]+?;\n/m, '');
 }
 
 /**
@@ -1631,21 +1631,21 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
  * @returns {string} Returns the modified source.
  */
 function removeMetadata(source, funcDepMap) {
-  var deps = _.result(funcDepMap, 'createWrapper', []);
+  var deps = _.result(funcDepMap, 'createWrap', []);
   _.pull(deps, 'baseSetData', 'getData', 'mergeData', 'setData');
 
-  deps = _.result(funcDepMap, 'createRecurryWrapper', []);
+  deps = _.result(funcDepMap, 'createRecurry', []);
   _.pull(deps, 'isLaziable', 'setData');
 
   // Remove metadata related code.
-  source = replace(source, matchFunction(source, 'createWrapper'), function(match) {
+  source = replace(source, matchFunction(source, 'createWrap'), function(match) {
     match = _.reduce(['data', 'funcBitmask', 'funcIsPartialed', 'setter'], removeVar, match);
     return match
       .replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:typeof\s+)?data\b[\s\S]+?\n\1\}\n/gm, '')
       .replace(/^( *return\s+)setter\(([^,]+),[^)]+\)/m, '$1$2');
   });
 
-  source = replace(source, matchFunction(source, 'createRecurryWrapper'), function(match) {
+  source = replace(source, matchFunction(source, 'createRecurry'), function(match) {
     match = removeVar(match, 'newData');
     match = replaceVar(match, 'result', 'wrapFunc(func, bitmask, thisArg, newPartials, newHolders, newPartialsRight, newHoldersRight, argPos, ary, arity)');
     return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(isLaziable\b[\s\S]+?\n\1\}\n/m, '');
@@ -2334,8 +2334,8 @@ function build(options, callback) {
         source = removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap);
         source = removeMetadata(source, funcDepMap);
 
-        // Add `func` check to `createPartialWrapper`.
-        source = replace(source, matchFunction(source, 'createPartialWrapper'), function(match) {
+        // Add `func` check to `createPartial`.
+        source = replace(source, matchFunction(source, 'createPartial'), function(match) {
           return match.replace(/^( *)(?=var\b)/m, function(match, indent) {
             var prelude = '\n' + indent;
             return indent + [
@@ -2452,8 +2452,8 @@ function build(options, callback) {
           });
         });
 
-        // Remove switch statements from `createCtorWrapper` and `_.rest`.
-        _.each(['createCtorWrapper', 'rest'], function(funcName) {
+        // Remove switch statements from `createCtor` and `_.rest`.
+        _.each(['createCtor', 'rest'], function(funcName) {
           source = replace(source, matchFunction(source, funcName), function(match) {
             return match.replace(/^(?: *\/\/.*\n)*( *)switch\b[\s\S]+?\n\1\}\n/m, '');
           });
@@ -2525,11 +2525,11 @@ function build(options, callback) {
           });
         });
 
-        // Replace `createWrapper` with `_.partial` in `_.wrap`.
-        _.pull(funcDepMap.wrap, 'createWrapper').push('partial');
+        // Replace `createWrap` with `_.partial` in `_.wrap`.
+        _.pull(funcDepMap.wrap, 'createWrap').push('partial');
 
         source = replace(source, matchFunction(source, 'wrap'), function(match) {
-          return match.replace(/\bcreateWrapper\([\s\S]+?(?=;\n)/, 'partial(wrapper, value)');
+          return match.replace(/\bcreateWrap\([\s\S]+?(?=;\n)/, 'partial(wrapper, value)');
         });
 
         // Replace `isXyz` methods with their base counterparts.
@@ -2647,11 +2647,11 @@ function build(options, callback) {
           '});'
         ].join('\n'));
 
-        funcDepMap.bind = ['createPartialWrapper', 'rest'];
+        funcDepMap.bind = ['createPartial', 'rest'];
 
         source = replaceFunction(source, 'bind', [
           'var bind = rest(function(func, thisArg, partials) {',
-          '  return createPartialWrapper(func, BIND_FLAG | PARTIAL_FLAG, thisArg, partials);',
+          '  return createPartial(func, BIND_FLAG | PARTIAL_FLAG, thisArg, partials);',
           '});'
         ].join('\n'));
 
@@ -2788,11 +2788,11 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.partial = ['createPartialWrapper', 'rest'];
+        funcDepMap.partial = ['createPartial', 'rest'];
 
         source = replaceFunction(source, 'partial', [
           'var partial = rest(function(func, partials) {',
-          '  return createPartialWrapper(func, PARTIAL_FLAG, undefined, partials);',
+          '  return createPartial(func, PARTIAL_FLAG, undefined, partials);',
           '});'
         ].join('\n'));
 
