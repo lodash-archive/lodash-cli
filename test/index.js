@@ -1458,4 +1458,6 @@ if (timeLimit > 0) {
 }
 QUnit.config.hidepassed = true;
 QUnit.config.noglobals = true;
+
 QUnit.load();
+QUnit.start();
