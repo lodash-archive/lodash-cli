@@ -3100,7 +3100,7 @@ function build(options, callback) {
         modified = modified.replace(/^(?: *\/\/.*\n)*( *)(?:else\s+)?if\s*\(freeModule\b[\s\S]+?\n\1\}\n+/m, '');
       }
       if (!isGlobal || isModularize) {
-        if (isAMD && !isTemplate) {
+        if (isAMD && !isModularize && !isTemplate) {
           modified = modified.replace(/^(?: *\/\/.*\n)* *root\._\s*=[\s\S]+?\n+/m, '');
         }
         modified = modified.replace(/^(?: *\/\/.*\n)*( *)else\b[^}]+?(?:\._|_\.templates)\s*=[\s\S]+?\n\1\}\n+/m, '');
