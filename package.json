@@ -24,7 +24,7 @@
     "closure-compiler": "0.2.10",
     "glob": "7.0.5",
     "lodash": "4.14.0",
-    "semver": "5.1.0",
+    "semver": "5.1.1",
     "uglify-js": "2.6.4"
   },
   "devDependencies": {
