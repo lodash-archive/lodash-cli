@@ -1619,7 +1619,10 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
   source = source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(LazyWrapper\.prototype\b[\s\S]+?\n\1\}\);\n/gm, '');
 
   // Remove `realNames` assignment for `wrapper`.
-  return source.replace(/^(?: *\/\/.*\n)* *realNames\[createHybrid\b[\s\S]+?;\n/m, '');
+  source = source.replace(/^(?: *\/\/.*\n)* *realNames\[createHybrid\b[\s\S]+?;\n/m, '');
+
+  // Remove lazy alias `lodash.prototype` assignments.
+  return source.replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.first\s*=[^;]+;\n/gm, '');
 }
 
 /**
