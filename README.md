@@ -2,7 +2,7 @@
 
 The [Lodash](https://lodash.com/) command-line interface for creating custom builds & precompiling templates.
 
-## Dive in
+## Dive In
 
 Check out the [custom builds documentation](https://lodash.com/custom-builds) for build commands & usage examples.<br>
 The changelog for this release is available on our [wiki](https://github.com/lodash/lodash-cli/wiki/Changelog).
