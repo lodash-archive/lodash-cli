@@ -760,19 +760,15 @@ function buildTemplate(state) {
     ';(function() {',
     '  var undefined;',
     '',
-    "  var freeGlobal = checkGlobal(typeof global == 'object' && global);",
+    "  var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;",
     '',
-    "  var freeSelf = checkGlobal(typeof self == 'object' && self);",
+    "  var freeSelf = typeof self == 'object' && self && self.Object === Object && self;",
     '',
     "  var root = freeGlobal || freeSelf || Function('return this')();",
     '',
     "  var freeExports = freeGlobal && typeof exports == 'object' && exports;",
     '',
     "  var freeModule = freeExports && typeof module == 'object' && module;",
-    '',
-    '  function checkGlobal(value) {',
-    '    return (value && value.Object === Object) ? value : null;',
-    '  }',
     ''
   ];
 
