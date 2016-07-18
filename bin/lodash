@@ -1380,7 +1380,7 @@ function matchFunction(source, funcName, leadingComments) {
     // Match variable declarations using `baseProperty` or `basePropertyOf`.
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*baseProperty(?:Of)?\\([\\s\\S]+?\\);\\n)', 2, 0],
     // Match variable declarations using `_.memoize` or `_.rest`.
-    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*(?:memoize|rest)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\);\\n)', 2, 0],
+    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*(?:baseRest|memoize)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\);\\n)', 2, 0],
     // Match variable declarations using creator functions.
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.*|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n)', 2, 0],
     // Match simple variable declaration.
@@ -1561,13 +1561,13 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
     _.pull(seqDepMap.objDep, 'realNames');
 
     _.pull(seqDepMap.funcDep,
-      'baseInvoke', 'createHybrid', 'getIteratee', 'identity', 'isArray', 'last',
-      'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper', 'rest', 'toInteger',
-      'wrapperAt', 'wrapperReverse'
+      'baseInvoke', 'baseRest', 'createHybrid', 'getIteratee', 'identity',
+      'isArray', 'last', 'lazyClone', 'lazyReverse', 'lazyValue', 'LazyWrapper',
+      'toInteger', 'wrapperAt', 'wrapperReverse'
     );
   }
   if (funcDepMap) {
-    funcDepMap.createFlow = ['baseFlatten', 'rest'];
+    funcDepMap.createFlow = ['baseFlatten', 'baseRest'];
   }
   if (objDepMap) {
     source = removeVar(source, 'realNames');
@@ -1577,7 +1577,7 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
   }
   source = replaceFunction(source, 'createFlow', [
     'function createFlow(fromRight) {',
-    '  return rest(function(funcs) {',
+    '  return baseRest(function(funcs) {',
     '    funcs = baseFlatten(funcs, 1);',
     '',
     '    var length = funcs.length,',
@@ -2458,7 +2458,7 @@ function build(options, callback) {
         });
 
         // Remove switch statements from `createCtor` and `_.rest`.
-        _.each(['createCtor', 'rest'], function(funcName) {
+        _.each(['baseRest', 'createCtor'], function(funcName) {
           source = replace(source, matchFunction(source, funcName), function(match) {
             return match.replace(/^(?: *\/\/.*\n)*( *)switch\b[\s\S]+?\n\1\}\n/m, '');
           });
@@ -2652,10 +2652,10 @@ function build(options, callback) {
           '});'
         ].join('\n'));
 
-        funcDepMap.bind = ['createPartial', 'rest'];
+        funcDepMap.bind = ['baseRest', 'createPartial'];
 
         source = replaceFunction(source, 'bind', [
-          'var bind = rest(function(func, thisArg, partials) {',
+          'var bind = baseRest(function(func, thisArg, partials) {',
           '  return createPartial(func, BIND_FLAG | PARTIAL_FLAG, thisArg, partials);',
           '});'
         ].join('\n'));
@@ -2735,10 +2735,10 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.invokeMap = ['baseMap', 'rest'];
+        funcDepMap.invokeMap = ['baseMap', 'baseRest'];
 
         source = replaceFunction(source, 'invokeMap', [
-          'var invokeMap = rest(function(collection, path, args) {',
+          'var invokeMap = baseRest(function(collection, path, args) {',
           "  var isFunc = typeof path == 'function';",
           '  return baseMap(collection, function(value) {',
           '    var func = isFunc ? path : value[path];',
@@ -2793,10 +2793,10 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.partial = ['createPartial', 'rest'];
+        funcDepMap.partial = ['baseRest', 'createPartial'];
 
         source = replaceFunction(source, 'partial', [
-          'var partial = rest(function(func, partials) {',
+          'var partial = baseRest(function(func, partials) {',
           '  return createPartial(func, PARTIAL_FLAG, undefined, partials);',
           '});'
         ].join('\n'));
