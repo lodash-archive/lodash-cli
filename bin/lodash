@@ -2609,6 +2609,12 @@ function build(options, callback) {
           });
         }());
 
+        source = replaceFunction(source, 'isFlattenable', [
+          'function isFlattenable(value) {',
+          '  return isArray(value) || isArguments(value);',
+          '}'
+        ].join('\n'));
+
         funcDepMap.toKey = [];
         source = replaceFunction(source, 'toKey', 'var toKey = String;');
 
