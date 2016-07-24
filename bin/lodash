@@ -2418,11 +2418,6 @@ function build(options, callback) {
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[^}]+?\n\1\}\n/m, '');
         });
 
-        // Remove switch statements from `createCtor`.
-        source = replace(source, matchFunction(source, 'createCtor'), function(match) {
-          return match.replace(/^(?: *\/\/.*\n)*( *)switch\b[\s\S]+?\n\1\}\n/m, '');
-        });
-
         // Remove set cache use from `equalArrays`.
         _.pull(funcDepMap.equalArrays, 'SetCache').push('indexOf');
 
@@ -2455,6 +2450,13 @@ function build(options, callback) {
         _.each(['equalArrays', 'equalObjects'], function(funcName) {
           source = replace(source, matchFunction(source, funcName), function(match) {
             return match.replace(/^( *)if\s*\(customizer\b[\s\S]+?\n\1}/m, '$1var compared;');
+          });
+        });
+
+        // Remove switch statements from functions.
+        _.each(['createCtor', 'negate'], function(funcName) {
+          source = replace(source, matchFunction(source, funcName), function(match) {
+            return match.replace(/^(?: *\/\/.*\n)*( *)switch\b[\s\S]+?\n\1\}\n/m, '');
           });
         });
 
