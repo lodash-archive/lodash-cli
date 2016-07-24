@@ -2593,6 +2593,20 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        funcDepMap.basePick = ['reduce'];
+
+        source = replaceFunction(source, 'basePick', [
+          'function basePick(object, props) {',
+          '  object = Object(object);',
+          '  return reduce(props, function(result, key) {',
+          '    if (key in object) {',
+          '      result[key] = object[key];',
+          '    }',
+          '    return result;',
+          '  }, {});',
+          '}'
+        ].join('\n'));
+
         funcDepMap.copyArray = ['baseSlice'];
 
         source = replaceFunction(source, 'copyArray', [
