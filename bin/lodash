@@ -168,8 +168,7 @@ function buildModule(state, onComplete) {
       var inlinees = [identifier];
 
       if (isNpm) {
-        var forceInlinees = mapping.forceInline[identifier],
-            uninlinees = _.difference(listing.uninlinables, forceInlinees);
+        var uninlinees = listing.uninlinables;
 
         var moreInlinees = _.transform(_.difference(depNames, uninlinees), function(result, identifier) {
           push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinees)));
