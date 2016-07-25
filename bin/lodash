@@ -19,7 +19,8 @@ var buildExports = listing.buildExports,
     cwd = process.cwd(),
     floor = Math.floor,
     push = Array.prototype.push,
-    stdout = process.stdout;
+    stdout = process.stdout,
+    uninlinables = listing.uninlinables;
 
 /** Used to indicate whether this file is executed directly from Node.js. */
 var isBin = module == require.main;
@@ -133,7 +134,7 @@ function buildModule(state, onComplete) {
   if (isNpm) {
     // Exclude "Seq" methods and most internal functions when exporting for npm.
     identifiers = _.reject(_.difference(identifiers, mapping.category.Seq), function(identifier) {
-      return isPrivate(identifier) && !_.includes(listing.uninlinables, identifier) && !_.includes(includeFuncs, identifier);
+      return isPrivate(identifier) && !_.includes(uninlinables, identifier) && !_.includes(includeFuncs, identifier);
     });
 
     // Remove unused packages.
@@ -168,14 +169,12 @@ function buildModule(state, onComplete) {
       var inlinees = [identifier];
 
       if (isNpm) {
-        var uninlinees = listing.uninlinables;
-
-        var moreInlinees = _.transform(_.difference(depNames, uninlinees), function(result, identifier) {
-          push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinees)));
+        var moreInlinees = _.transform(_.difference(depNames, uninlinables), function(result, identifier) {
+          push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinables)));
           return result;
         });
 
-        depNames = _.union(_.intersection(uninlinees, depNames), _.intersection(uninlinees, moreInlinees));
+        depNames = _.union(_.intersection(uninlinables, depNames), _.intersection(uninlinables, moreInlinees));
         inlinees = inlinees.concat(_.difference(moreInlinees, depNames));
       }
       // Populate `depMap`.
