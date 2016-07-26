@@ -2324,6 +2324,14 @@ function build(options, callback) {
       if (isNpm) {
         source = removeChaining(source, seqDepMap, funcDepMap, objDepMap);
         source = removeMetadata(source, funcDepMap);
+
+        // Remove `getIteratee` use from iteration methods.
+        _.each(['forEach', 'forEachRight', 'forIn', 'forInRight', 'forOwn', 'forOwnRight', 'times'], function(funcName) {
+          _.pull(funcDepMap[funcName], 'getIteratee').push('identity');
+          source = replace(source, matchFunction(source, funcName), function(match) {
+            return match.replace(/\bgetIteratee\(([^,\)]+)[\s\S]*?\)/, "typeof $1 == 'function' ? $1 : identity");
+          });
+        });
       }
       if (isCore && _.isEmpty(plusFuncs)) {
         source = removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap);
