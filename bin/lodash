@@ -2448,7 +2448,7 @@ function build(options, callback) {
             return match
               .replace(/^( *)if\s*\(stacked\b[^}]+?\n\1\}\n/m, '')
               .replace(/^ *stack\.set\([^)]+\);\n/gm, '')
-              .replace(/^ *stack\['delete'\]\([^)]+\);\n/m, '');
+              .replace(/^ *stack\['delete'\]\([^)]+\);\n/gm, '');
           });
         });
 
