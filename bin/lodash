@@ -2310,6 +2310,11 @@ function build(options, callback) {
       source = setUseStrictOption(source, isStrict);
 
       if (isModularize) {
+        // Remove `clearTimeout` and `setTimeout` deps.
+        _.forOwn(funcDepMap, function(depNames) {
+          _.pull(depNames, 'clearTimeout', 'setTimeout');
+        });
+
         // Remove `lodash.placeholder` references.
         _.pull(funcDepMap.getHolder, 'lodash');
 
