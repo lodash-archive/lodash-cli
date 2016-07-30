@@ -1804,6 +1804,12 @@ function removeRunInContext(source) {
       match = match.replace(RegExp('\\bcontext\\.(?=' + builtin + '\\b)', 'g'), '');
     });
 
+    // Remove `ctx` vars.
+    _.each(['ctxClearTimeout', 'ctxNow', 'ctxSetTimeout'], function(varName) {
+      match = removeVar(match, varName);
+      match = match.replace(RegExp('\\b' + varName + '\\s*\\|\\|\\s*'), '');
+    });
+
     // Replace remaining `context` references with `root`.
     return match.replace(/\bcontext\b/g, 'root');
   });
