@@ -1040,17 +1040,6 @@ function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack)
 }
 
 /**
- * Gets the `baseKeysIn` fork from `source`.
- *
- * @private
- * @param {string} source The source to inspect.
- * @returns {string} Returns the fork.
- */
-function getBaseKeysInFork(source) {
-  return _.get(/^(?: *\/\/.*\n)*( *)if\s*\(enumerate\b[\s\S]+?\n\1  baseKeysIn\s*=[\s\S]+?\n\1\}\n/m.exec(source), 0, '');
-}
-
-/**
  * Gets the category of the given identifier.
  *
  * @private
@@ -1484,17 +1473,6 @@ function removeAssignments(source) {
   // Remove method and intermediate assignments.
   source = removeMethodAssignments(source);
   return source.replace(/(=\s*)lodash\.[$\w]+\s*=\s*/g, '$1');
-}
-
-/**
- * Removes the `baseKeysIn` fork from `source`.
- *
- * @private
- * @param {string} source The source to process.
- * @returns {string} Returns the modified source.
- */
-function removeBaseKeysInFork(source) {
-  return replace(source, getBaseKeysInFork(source), '');
 }
 
 /**
@@ -2489,10 +2467,6 @@ function build(options, callback) {
           return match.replace(/^ *this\.__(?:index|values)__\s*=[^;]+;\n/gm, '');
         });
 
-        // Remove `Reflect.enumerate` shim path from `_.keysIn`.
-        funcDepMap.baseKeysIn = [];
-        source = removeBaseKeysInFork(source);
-
         // Replace array functions with their base counterparts.
         _.each(['arrayEach', 'arrayFilter', 'arrayMap', 'arraySome', 'arrayReduce'], function(arrayName) {
           var reArrayName = RegExp('\\b' + arrayName + '\\b', 'g');
@@ -2780,7 +2754,7 @@ function build(options, callback) {
           '});'
         ].join('\n'));
 
-        _.pull(funcDepMap.isEmpty, 'getTag', 'isBuffer');
+        funcDepMap.isEmpty = ['isArguments', 'isArray', 'isArrayLike', 'isFunction', 'isString', 'nativeKeys'];
 
         source = replaceFunction(source, 'isEmpty', [
           'function isEmpty(value) {',
@@ -2789,7 +2763,7 @@ function build(options, callback) {
           '        isFunction(value.splice) || isArguments(value))) {',
           '    return !value.length;',
           '  }',
-          '  return !keys(value).length;',
+          '  return !nativeKeys(value).length;',
           '}'
         ].join('\n'));
 
@@ -2857,7 +2831,7 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.size = ['isArrayLike', 'keys'];
+        funcDepMap.size = ['baseKeys', 'isArrayLike'];
 
         source = replaceFunction(source, 'size', [
           'function size(collection) {',
@@ -3202,9 +3176,6 @@ function build(options, callback) {
       }
     });
 
-    if (isExcluded('baseKeysIn')) {
-      source = removeBaseKeysInFork(source);
-    }
     if (isExcluded('getTag')) {
       source = removeGetTagFork(source);
     }
