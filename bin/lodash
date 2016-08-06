@@ -1348,7 +1348,7 @@ function isVarUsed(source, varName) {
  * @param {boolean} [leadingComments] A flag to specify including leading comments.
  * @returns {string} Returns the matched function snippet.
  */
-function matchFunction(source, funcName, leadingComments) {
+var matchFunction = _.memoize(function(source, funcName, leadingComments) {
   var escapedName = _.escapeRegExp(funcName);
 
   var patterns = [
@@ -1359,12 +1359,18 @@ function matchFunction(source, funcName, leadingComments) {
     // Match single line function expressions in a declaration list.
     ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*function\\b.+?\\}(?=[,;]\\n))', 2, 0],
     // Match single line function expressions that aren't in a declaration list.
-    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*function\\b.+?\\};\\n)', 2, 0],
+    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*function\\b.+?\\};\\n)', 2, 0],
     // Match variable declarations using `baseProperty` or `basePropertyOf`.
-    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*baseProperty(?:Of)?\\([\\s\\S]+?\\);\\n)', 2, 0],
+    ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*baseProperty(?:Of)?\\([\\s\\S]+?\\)(?=[,;]\\n))', 2, 0],
+    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*baseProperty(?:Of)?\\([\\s\\S]+?\\);\\n)', 2, 0],
+    // Match variable declarations using `overArg`.
+    ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*overArg\\([\\s\\S]+?\\)(?=[,;]\\n))', 2, 0],
+    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*overArg\\([\\s\\S]+?\\);\\n)', 2, 0],
     // Match variable declarations using `_.memoize` or `_.rest`.
+    ['(,\\n' + consts.rsComment + ')(( *)' + escapedName + '\\s*=\\s*(?:baseRest|memoize)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\)(?=[,;]\\n))', 2, 0],
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*(?:baseRest|memoize)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\);\\n)', 2, 0],
     // Match variable declarations using creator functions.
+    ['(,\\n' + consts.rsComment + ')(( *)' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.*|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\)(?=[,;]\\n))', 2, 0],
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.*|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n)', 2, 0],
     // Match simple variable declaration.
     ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=.+?;\\n)', 2, 0],
@@ -1379,7 +1385,9 @@ function matchFunction(source, funcName, leadingComments) {
     }
     return result;
   }, '');
-}
+}, function(source, funcName, leadingComments) {
+  return funcName + ':' + !!leadingComments;
+});
 
 /**
  * Searches `source` for a lodash property, of the given property name, and
@@ -1638,9 +1646,13 @@ function removeMetadata(source, funcDepMap) {
  */
 function removeFunction(source, funcName) {
   source = toString(source);
-  return (funcName == 'runInContext')
+  source = funcName == 'runInContext'
     ? removeRunInContext(source, funcName)
     : replace(source, matchFunction(source, funcName, true), '');
+
+  matchFunction.cache.set(funcName + ':true', '');
+  matchFunction.cache.set(funcName + ':false', '');
+  return source;
 }
 
 /**
@@ -1820,22 +1832,9 @@ function removeStrings(source) {
  */
 function removeVar(source, varName) {
   source = toString(source);
-
-  _.some([
-    function(source, varName) {
-      return removeFunction(source, varName);
-    },
-    function(source, varName) {
-      return replace(source, matchVar(source, varName, true), '');
-    }
-  ], function(func) {
-    var result = func(source, varName);
-    if (result !== source) {
-      source = result;
-      return true;
-    }
-  });
-  return source;
+  return matchFunction(source, varName)
+    ? removeFunction(source, varName)
+    : replace(source, matchVar(source, varName, true), '');
 }
 
 /**
@@ -1871,9 +1870,18 @@ function replaceFunction(source, funcName, funcValue) {
         return indent + '* @type Function\n' + match;
       });
     }
-    return header + funcValue
+    funcValue = funcValue
       .replace(RegExp('^' + getIndent(funcValue), 'gm'), getIndent(match))
       .trimRight() + '\n';
+
+    var result = header + funcValue;
+    matchFunction.cache.set(funcName + ':' + checkFuncTag, result);
+    if (checkFuncTag) {
+      matchFunction.cache.set(funcName + ':false', funcValue);
+    } else {
+      matchFunction.cache.delete(funcName + ':true');
+    }
+    return result;
   });
 }
 
@@ -1932,29 +1940,32 @@ function replaceIndent(source, to, from) {
 function replaceVar(source, varName, varValue) {
   source = toString(source);
 
-  var escapedName = _.escapeRegExp(varName);
+  var escapedName = _.escapeRegExp(varName),
+      modified = false;
 
   // Replace a variable that's not part of a declaration list.
-  var result = source.replace(RegExp(
+  source = source.replace(RegExp(
     '(( *)var\\s+' + escapedName + '\\s*=)' +
     '(?:.+?;|(?:Function\\(.+?|.*?[^,])\\n[\\s\\S]+?\\n\\2.+?;)\\n'
   ), function(match, left) {
+    modified = true;
     return left + ' ' + varValue + ';\n';
   });
 
-  if (source == result) {
+  if (!modified) {
     // Replace a varaible at the start or middle of a declaration list.
-    result = source.replace(RegExp('((?:var|\\n)\\s+' + escapedName + '\\s*=).+?(?=,\\n)'), function(match, left) {
+    source = source.replace(RegExp('((?:var|\\n)\\s+' + escapedName + '\\s*=).+?(?=,\\n)'), function(match, left) {
+      modified = true;
       return left + ' ' + varValue;
     });
   }
-  if (source == result) {
+  if (!modified) {
     // Replace a variable at the end of a variable declaration list.
-    result = source.replace(RegExp('(,\\s*' + escapedName + '\\s*=).+?(?=;\\n)'), function(match, left) {
+    source = source.replace(RegExp('(,\\s*' + escapedName + '\\s*=).+?(?=;\\n)'), function(match, left) {
       return left + ' ' + varValue;
     });
   }
-  return result;
+  return source;
 }
 
 /**
@@ -3086,7 +3097,7 @@ function build(options, callback) {
       if (isModularize) {
         funcTokenMap = _.transform(buildFuncs, function(result, funcName) {
           var match = matchFunction(source, funcName, true);
-          source = source.replace(match, '<<' + funcName + '>>\n');
+          source = source.replace(match, (_.startsWith(match, ',\n') ? ',\n' : '') + '<<' + funcName + '>>' + (_.endsWith(match, '\n') ? '\n' : ''));
           result[funcName] = match;
         }, new Hash);
       }
@@ -3238,7 +3249,7 @@ function build(options, callback) {
     if (isModularize) {
       // Untokenize functions to include in the build.
       _.each(buildFuncs, function(funcName) {
-        source = source.replace('<<' + funcName + '>>\n', function() {
+        source = source.replace(RegExp('(?:,\\n)?<<' + funcName + '>>\\n?'), function() {
           return funcTokenMap[funcName];
         });
       });
