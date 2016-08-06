@@ -1460,6 +1460,19 @@ function modifyFunction(source, funcName, replacer) {
 }
 
 /**
+ * Modifies the `propName` lodash property of `source`.
+ *
+ * @private
+ * @param {string} source The source to modify.
+ * @param {string} propName The name of the property to match.
+ * @param {Function} replacer The function to modify the matched source.
+ * @returns {string} Returns the modified source.
+ */
+function modifyProp(source, propName, replacer) {
+  return replace(source, matchProp(source, propName), _.unary(replacer));
+}
+
+/**
  * Modifies the `varName` variable of `source`.
  *
  * @private
@@ -3094,7 +3107,7 @@ function build(options, callback) {
       });
 
       // Replace `lodash` use in `_.templateSettings.imports`.
-      source = replace(source, matchProp(source, 'templateSettings'), function(match) {
+      source = modifyProp(source, 'templateSettings', function(match) {
         return match.replace(/(:\s*)lodash\b/, "$1{ 'escape': escape }");
       });
 
