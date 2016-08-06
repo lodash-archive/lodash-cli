@@ -1281,7 +1281,7 @@ function getVars(source) {
   source = removeStrings(removeComments(source));
 
   _.each(listing.complexVars, function(varName) {
-    source = replace(source, matchVar(source, varName), function() {
+    source = modifyVar(source, varName, function() {
       result.push(varName);
       return '';
     });
@@ -1439,6 +1439,37 @@ function matchVar(source, varName, leadingComments) {
   return _.reduce(patterns, function(result, pattern) {
     return result || _.get(RegExp(pattern[0], 'm').exec(source), pattern[leadingComments ? 2 : 1], '');
   }, '');
+}
+
+/**
+ * Modifies the `funcName` function of `source`.
+ *
+ * @private
+ * @param {string} source The source to modify.
+ * @param {string} funcName The name of the function to match.
+ * @param {Function} replacer The function to modify the matched source.
+ * @returns {string} Returns the modified source.
+ */
+function modifyFunction(source, funcName, replacer) {
+  return replace(source, matchFunction(source, funcName), function(match) {
+    var result = replacer(match);
+    matchFunction.cache.set(funcName + ':false', result);
+    matchFunction.cache.delete(funcName + ':true');
+    return result;
+  });
+}
+
+/**
+ * Modifies the `varName` variable of `source`.
+ *
+ * @private
+ * @param {string} source The source to modify.
+ * @param {string} varName The name of the variable to match.
+ * @param {Function} replacer The function to modify the matched source.
+ * @returns {string} Returns the modified source.
+ */
+function modifyVar(source, varName, replacer) {
+  return replace(source, matchVar(source, varName), _.unary(replacer));
 }
 
 /**
@@ -1619,14 +1650,14 @@ function removeMetadata(source, funcDepMap) {
   _.pull(deps, 'isLaziable', 'setData');
 
   // Remove metadata related code.
-  source = replace(source, matchFunction(source, 'createWrap'), function(match) {
+  source = modifyFunction(source, 'createWrap', function(match) {
     match = _.reduce(['data', 'funcBitmask', 'funcIsPartialed', 'setter'], removeVar, match);
     return match
       .replace(/^(?: *\/\/.*\n)*( *)if\s*\((?:typeof\s+)?data\b[\s\S]+?\n\1\}\n/gm, '')
       .replace(/\bsetter\(([^,]+),[^)]+\)/, '$1');
   });
 
-  source = replace(source, matchFunction(source, 'createRecurry'), function(match) {
+  source = modifyFunction(source, 'createRecurry', function(match) {
     match = removeVar(match, 'newData');
     match = replaceVar(match, 'result', 'wrapFunc(func, bitmask, thisArg, newPartials, newHolders, newPartialsRight, newHoldersRight, argPos, ary, arity)');
     return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(isLaziable\b[\s\S]+?\n\1\}\n/m, '');
@@ -1673,7 +1704,7 @@ function removeGetIteratee(source, funcDepMap) {
       if (!_.includes(deps, 'baseIteratee')) {
         deps.push('baseIteratee');
       }
-      source = replace(source, matchFunction(source, identifier), function(match) {
+      source = modifyFunction(source, identifier, function(match) {
         return match.replace(consts.reGetIteratee, 'baseIteratee');
       });
     }
@@ -1843,7 +1874,7 @@ function removeVar(source, varName) {
  * @private
  * @param {string} string The string to modify.
  * @param {RegExp|string} pattern The pattern to match.
- * @returns {Function|string} replacement The replacement value.
+ * @param {Function|string} replacement The replacement value.
  * @returns {string} Returns the modified string.
  */
 function replace(string, pattern, replacement) {
@@ -2310,7 +2341,7 @@ function build(options, callback) {
         // Remove `lodash.placeholder` references.
         _.pull(funcDepMap.getHolder, 'lodash');
 
-        source = replace(source, matchFunction(source, 'getHolder'), function(match) {
+        source = modifyFunction(source, 'getHolder', function(match) {
           return replaceVar(match, 'object', 'func');
         });
 
@@ -2331,7 +2362,7 @@ function build(options, callback) {
         // Remove `getIteratee` use from iteration methods.
         _.each(['forEach', 'forEachRight', 'forIn', 'forInRight', 'forOwn', 'forOwnRight', 'times'], function(funcName) {
           _.pull(funcDepMap[funcName], 'getIteratee').push('identity');
-          source = replace(source, matchFunction(source, funcName), function(match) {
+          source = modifyFunction(source, funcName, function(match) {
             return match.replace(/\bgetIteratee\(([^,\)]+)[\s\S]*?\)/, "typeof $1 == 'function' ? $1 : identity");
           });
         });
@@ -2341,7 +2372,7 @@ function build(options, callback) {
         source = removeMetadata(source, funcDepMap);
 
         // Add `func` check to `createPartial`.
-        source = replace(source, matchFunction(source, 'createPartial'), function(match) {
+        source = modifyFunction(source, 'createPartial', function(match) {
           return match.replace(/^( *)(?=var\b)/m, function(match, indent) {
             var prelude = '\n' + indent;
             return indent + [
@@ -2356,13 +2387,13 @@ function build(options, callback) {
         _.forOwn(funcDepMap, function(depNames, identifier) {
           if (_.includes(depNames, 'apply')) {
             _.pull(depNames, 'apply');
-            source = replace(source, matchFunction(source, identifier), function(match) {
+            source = modifyFunction(source, identifier, function(match) {
               return match.replace(/\bapply\(([^,)]+),\s*([^,)]+),\s*([^,)]+)\)/g, '$1.apply($2, $3)');
             });
           }
           if (_.includes(depNames, 'isSymbol')) {
             _.pull(depNames, 'isSymbol');
-            source = replace(source, matchFunction(source, identifier), function(match) {
+            source = modifyFunction(source, identifier, function(match) {
               return match.replace(/\bisSymbol\([^)]+\)/g, 'false');
             });
           }
@@ -2382,7 +2413,7 @@ function build(options, callback) {
         // Remove map, set, stack, and typed array support from `baseIsEqualDeep`.
         _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isTypedArray', 'Stack').push('find');
 
-        source = replace(source, matchFunction(source, 'baseIsEqualDeep'), function(match) {
+        source = modifyFunction(source, 'baseIsEqualDeep', function(match) {
           return match
             .replace(/\bgetTag\b/g, 'objectToString.call')
             .replace(/\s*\|\|\s*isTypedArray\([^)]+\)/, '')
@@ -2422,7 +2453,7 @@ function build(options, callback) {
         // Remove `guard` check from `createAssigner`.
         _.pull(funcDepMap.createAssigner, 'isIterateeCall');
 
-        source  = replace(source, matchFunction(source, 'createAssigner'), function(match) {
+        source  = modifyFunction(source, 'createAssigner', function(match) {
           match = removeVar(match, 'guard');
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[^}]+?\n\1\}\n/m, '');
         });
@@ -2430,7 +2461,7 @@ function build(options, callback) {
         // Remove set cache use from `equalArrays`.
         _.pull(funcDepMap.equalArrays, 'SetCache').push('indexOf');
 
-        source = replace(source, matchFunction(source, 'equalArrays'), function(match) {
+        source = modifyFunction(source, 'equalArrays', function(match) {
           return match
             .replace(/\bnew SetCache\b/, '[]')
             .replace(/\bseen\.has\(othIndex\)/, 'indexOf(seen, othIndex)')
@@ -2440,13 +2471,13 @@ function build(options, callback) {
         // Remove array buffer, data view, map, set, and symbol support from `equalByTag`.
         _.pull(funcDepMap.equalByTag, 'mapToArray', 'setToArray');
 
-        source = replace(source, matchFunction(source, 'equalByTag'), function(match) {
+        source = modifyFunction(source, 'equalByTag', function(match) {
           return match.replace(/^( *)  case\s*(?:arrayBuffer|dataView|map|set|symbol)Tag\b[\s\S]+?(?=\s*case\b|\n\1\})/gm, '');
         });
 
         // Remove stack use from `equalArrays`, `equalByTag`, and `equalObjects`.
         _.each(['equalArrays', 'equalByTag', 'equalObjects'], function(funcName) {
-          source = replace(source, matchFunction(source, funcName), function(match) {
+          source = modifyFunction(source, funcName, function(match) {
             match = removeVar(match, 'stacked');
             return match
               .replace(/^( *)if\s*\(stacked\b[^}]+?\n\1\}\n/m, '')
@@ -2457,14 +2488,14 @@ function build(options, callback) {
 
         // Remove `customizer` use from `equalArrays` and `equalObjects`.
         _.each(['equalArrays', 'equalObjects'], function(funcName) {
-          source = replace(source, matchFunction(source, funcName), function(match) {
+          source = modifyFunction(source, funcName, function(match) {
             return match.replace(/^( *)if\s*\(customizer\b[\s\S]+?\n\1}/m, '$1var compared;');
           });
         });
 
         // Remove switch statements from functions.
         _.each(['createCtor', 'negate'], function(funcName) {
-          source = replace(source, matchFunction(source, funcName), function(match) {
+          source = modifyFunction(source, funcName, function(match) {
             return match.replace(/^(?: *\/\/.*\n)*( *)switch\b[\s\S]+?\n\1\}\n/m, '');
           });
         });
@@ -2472,12 +2503,12 @@ function build(options, callback) {
         // Remove `LazyWrapper` references.
         _.pull(funcDepMap.baseWrapperValue, 'LazyWrapper');
 
-        source = replace(source, matchFunction(source, 'baseWrapperValue'), function(match) {
+        source = modifyFunction(source, 'baseWrapperValue', function(match) {
           return match.replace(/^( *)if\b.+?LazyWrapper\b[\s\S]+?\n\1}\n/m, '');
         });
 
         // Remove unneeded properties from `LodashWrapper.
-        source = replace(source, matchFunction(source, 'LodashWrapper'), function(match) {
+        source = modifyFunction(source, 'LodashWrapper', function(match) {
           return match.replace(/^ *this\.__(?:index|values)__\s*=[^;]+;\n/gm, '');
         });
 
@@ -2493,7 +2524,7 @@ function build(options, callback) {
             if (_.includes(deps, arrayName)) {
               _.pull(deps, arrayName).push(baseName);
 
-              source  = replace(source, matchFunction(source, funcName), function(match) {
+              source  = modifyFunction(source, funcName, function(match) {
                 return match.replace(reArrayName, baseName);
               });
             }
@@ -2518,7 +2549,7 @@ function build(options, callback) {
         // Replace `baseAssign` with `assign` in `_.create`.
         _.pull(funcDepMap.create, 'baseAssign').push('assign');
 
-        source = source.replace(matchFunction(source, 'create'), function(match) {
+        source = modifyFunction(source, 'create', function(match) {
           return match.replace(/\bbaseAssign\b/g, 'assign');
         });
 
@@ -2526,7 +2557,7 @@ function build(options, callback) {
         _.each(['equalObjects', 'keys'], function(funcName) {
           _.pull(funcDepMap[funcName], 'baseHas');
 
-          source = source.replace(matchFunction(source, funcName), function(match) {
+          source = modifyFunction(source, funcName, function(match) {
             return match.replace(/\bbaseHas\b/g, 'hasOwnProperty.call');
           });
         });
@@ -2534,7 +2565,7 @@ function build(options, callback) {
         // Replace `createWrap` with `_.partial` in `_.wrap`.
         _.pull(funcDepMap.wrap, 'createWrap').push('partial');
 
-        source = replace(source, matchFunction(source, 'wrap'), function(match) {
+        source = modifyFunction(source, 'wrap', function(match) {
           return match.replace(/\bcreateWrap\([\s\S]+?(?=;\n)/, 'partial(wrapper, value)');
         });
 
@@ -2623,7 +2654,7 @@ function build(options, callback) {
         (function() {
           var copyArray = matchFunction(source, 'copyArray', true);
           source = removeFunction(source, 'copyArray');
-          source = replace(source, matchFunction(source, 'baseSlice'), function(match) {
+          source = modifyFunction(source, 'baseSlice', function(match) {
             return match + '\n' + copyArray;
           });
         }());
@@ -2943,7 +2974,7 @@ function build(options, callback) {
       // Remove iteratee shorthand support from `iteratee`.
       if (_.isEmpty(_.difference(['matches', 'matchesProperty', 'property'], minusFuncs))) {
         _.pull(funcDepMap.iteratee, 'baseClone');
-        source = replace(source, matchFunction(source, 'iteratee'), function(match) {
+        source = modifyFunction(source, 'iteratee', function(match) {
           return match.replace(/^( *return\s+)[\s\S]+?(?=;\n)/m, '$1baseIteratee(func)');
         });
       }
@@ -2952,7 +2983,7 @@ function build(options, callback) {
         var otherName = _.camelCase(_.trimStart(funcName, 'base'));
         if (_.includes(minusFuncs, otherName)) {
           _.pull(funcDepMap.baseIteratee, funcName);
-          source = replace(source, matchFunction(source, 'baseIteratee'), function(match) {
+          source = modifyFunction(source, 'baseIteratee', function(match) {
             return match.replace(RegExp('\\b' + funcName + '\\([\\s\\S]+?\\)(?=[;\\n])', 'm'), 'identity');
           });
         }
@@ -3055,7 +3086,7 @@ function build(options, callback) {
       source = source.replace(/^ *\/\*-+\*\/\n/gm, '');
 
       // Remove `lodash` branch in `_.mixin`.
-      source = replace(source, matchFunction(source, 'mixin'), function(match) {
+      source = modifyFunction(source, 'mixin', function(match) {
         match = match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(options\s*==\s*null\b[\s\S]+?\n\1\}\n/m, '');
         return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!methodNames\b[\s\S]+?\n\1\}/m, function(match, indent) {
           return indent + 'var methodNames = baseFunctions(source, keys(source));\n';
@@ -3067,12 +3098,12 @@ function build(options, callback) {
         return match.replace(/(:\s*)lodash\b/, "$1{ 'escape': escape }");
       });
 
-      source = replace(source, matchFunction(source, 'template'), function(match) {
+      source = modifyFunction(source, 'template', function(match) {
         // Assign `settings` using `template.imports`.
         match = match.replace(/=\s*templateSettings(?=[,;])/, '$&.imports._.templateSettings || templateSettings');
 
         // Remove default `sourceURL` value.
-        return match.replace(matchVar(match, 'sourceURL'), function(match) {
+        return modifyVar(match, 'sourceURL', function(match) {
           return match.replace(/=[\s\S]+?(?=;\n$)/, "= 'sourceURL' in options ? '//# sourceURL=' + options.sourceURL + '\\n' : ''");
         });
       });
@@ -3100,7 +3131,11 @@ function build(options, callback) {
       if (isModularize) {
         funcTokenMap = _.transform(buildFuncs, function(result, funcName) {
           var match = matchFunction(source, funcName, true);
-          source = source.replace(match, (_.startsWith(match, ',\n') ? ',\n' : '') + '<<' + funcName + '>>' + (_.endsWith(match, '\n') ? '\n' : ''));
+          source = source.replace(match,
+            (_.startsWith(match, ',\n') ? ',\n' : '') +
+            '<<' + funcName + '>>' +
+            (_.endsWith(match, '\n') ? '\n' : '')
+          );
           result[funcName] = match;
         }, new Hash);
       }
