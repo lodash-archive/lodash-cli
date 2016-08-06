@@ -2073,6 +2073,9 @@ function build(options, callback) {
         varNames = state.varNames;
   }
   else {
+    // Clear `matchFunction` memoize cache.
+    matchFunction.cache.clear();
+
     // Clone dependencies to modify.
     var seqDepMap = new Hash(_.cloneDeep(mapping.seqDep)),
         funcDepMap = new Hash(_.cloneDeep(mapping.funcDep)),
