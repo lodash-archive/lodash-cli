@@ -59,13 +59,13 @@ function addCommandsToHeader(source, commands) {
       .replace(/^ *\* *Build:.+\n/m, '');
 
     // Add build commands to copyright header.
-    return header.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *lodash)(.*)/, function() {
+    return header.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *lodash)(.*)/, function(match, prelude, indent, tag, title, postlude) {
       return (
-        arguments[1] +
-        arguments[2] +
-        (arguments[3] || '') +
-        arguments[4] + ' (Custom Build)' + arguments[5] + '\n' +
-        arguments[2] + ' Build: `lodash ' + commands.join(' ') + '`'
+        prelude +
+        indent +
+        (tag || '') +
+        title + ' (Custom Build)' + postlude + '\n' +
+        indent + ' Build: `lodash ' + commands.join(' ') + '`'
       );
     });
   });
@@ -467,12 +467,9 @@ function buildModule(state, onComplete) {
 
       // Wrap `_.mixin`.
       source = source.replace(/^(?: *\/\/.*\n)* *lodash\.[$\w]+\s*=[^;]+;\n/m, function(match) {
-        var code = [
+        return [
           '  // wrap `_.mixin` so it works when provided only one argument',
-          '  ' + (isES ? 'var ' : '') + 'mixin = (function(func) {'
-        ];
-
-        code.push(
+          '  ' + (isES ? 'var ' : '') + 'mixin = (function(func) {',
           '    return function(object, source, options) {',
           '      if (options == null) {',
           '        var isObj = isObject(source),',
@@ -490,15 +487,12 @@ function buildModule(state, onComplete) {
           '  }(' + (isES ? '_' : '') + 'mixin));',
           '',
           match
-        );
-
-        return code.join('\n');
+        ].join('\n');
       });
 
       // Add `lodash.templateSettings` and placeholder assignments.
       source = source.replace(/^ *lodash\.VERSION\b.+\n/m, function(match) {
         var code = [];
-
         if (_.includes(identifiers, 'templateSettings')) {
           code.push('  (lodash.templateSettings = ' + mapping.categoryToDepName.String + '.templateSettings).imports._ = lodash;');
         }
@@ -832,7 +826,8 @@ function buildTemplate(state) {
   });
 
   // Add the initial `_.templates` object to `source`.
-  source.splice(insertAt, 0, '  var templates = ' +
+  source.splice(insertAt, 0,
+    '  var templates = ' +
     JSON.stringify(templates, null, 4)
       .replace(/^ *\}$/m, '  $&')
       .replace(/'/g, "\\'")
@@ -962,10 +957,8 @@ function cleanupSource(source) {
  * @returns {string} Returns the modified source.
  */
 function commentFree(source, callback) {
-  source = toString(source);
-
   var comments = [];
-  source = callback(source.replace(consts.reComment, function(match) {
+  source = callback(replace(source, consts.reComment, function(match) {
     var index = comments.length;
     comments.push(match);
     return '<#com_token' + index + '#>\n';
@@ -1638,23 +1631,19 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
     '}'
   ].join('\n'));
 
-  // Remove bulk `LazyWrapper.prototype` assignments.
-  source = source.replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|head|initial)\b[\s\S]+?\n\1\}\);\n/gm, '');
-
-  // Remove individual `LazyWrapper` method assignments.
-  source = source.replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:compact|find|findLast|invokeMap|reject|slice|takeRightWhile|toArray)\s*=[\s\S]+?\n\1\}.*?;\n/gm, '');
-
-  // Remove other `LazyWrapper.prototype` assignments.
-  source = source.replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.(?!constructor\b)[$\w]+\s*=[^;]+;\n/gm, '');
-
-  // Remove `LazyWrapper` additions to `LodashWrapper` and `realNames` assignments.
-  source = source.replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(LazyWrapper\.prototype\b[\s\S]+?\n\1\}\);\n/gm, '');
-
-  // Remove `realNames` assignment for `wrapper`.
-  source = source.replace(/^(?: *\/\/.*\n)* *realNames\[createHybrid\b[\s\S]+?;\n/m, '');
-
-  // Remove lazy alias `lodash.prototype` assignments.
-  return source.replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.first\s*=[^;]+;\n/gm, '');
+  return source
+    // Remove bulk `LazyWrapper.prototype` assignments.
+    .replace(/^(?: *\/\/.*\n)*( *)arrayEach\(\['(?:drop|filter|head|initial)\b[\s\S]+?\n\1\}\);\n/gm, '')
+    // Remove individual `LazyWrapper` method assignments.
+    .replace(/^(?: *\/\/.*\n)*( *)LazyWrapper\.prototype\.(?:compact|find|findLast|invokeMap|reject|slice|takeRightWhile|toArray)\s*=[\s\S]+?\n\1\}.*?;\n/gm, '')
+    // Remove other `LazyWrapper.prototype` assignments.
+    .replace(/^(?: *\/\/.*\n)* *LazyWrapper\.prototype\.(?!constructor\b)[$\w]+\s*=[^;]+;\n/gm, '')
+    // Remove `LazyWrapper` additions to `LodashWrapper` and `realNames` assignments.
+    .replace(/^(?: *\/\/.*\n)*( *)baseForOwn\(LazyWrapper\.prototype\b[\s\S]+?\n\1\}\);\n/gm, '')
+    // Remove `realNames` assignment for `wrapper`.
+    .replace(/^(?: *\/\/.*\n)* *realNames\[createHybrid\b[\s\S]+?;\n/m, '')
+    // Remove lazy alias `lodash.prototype` assignments.
+    .replace(/^(?: *\/\/.*\n)* *lodash\.prototype\.first\s*=[^;]+;\n/gm, '');
 }
 
 /**
@@ -1833,8 +1822,8 @@ function removeProp(source, propName) {
 function removeRunInContext(source) {
   source = removeFunction(source, 'clearTimeout');
   source = removeFunction(source, 'setTimeout');
-  source = removeVar(source, 'contextProps');
   source = removeMethodAssignment(source, 'runInContext');
+  source = removeVar(source, 'contextProps');
 
   // Remove function scaffolding, leaving most of its content.
   source = replace(source, matchFunction(source, 'runInContext', true), function(match) {
@@ -1912,10 +1901,10 @@ function replace(string, pattern, replacement) {
  * @returns {string} Returns the modified source.
  */
 function replaceFunction(source, funcName, funcValue) {
-  var checkFuncTag = consts.reIsVarSnippet.test(funcValue);
+  var leadingComments = consts.reIsVarSnippet.test(funcValue);
 
-  return replace(source, matchFunction(source, funcName, checkFuncTag), function(match) {
-    var header = checkFuncTag ? getHeader(match) : '';
+  return replace(source, matchFunction(source, funcName, leadingComments), function(match) {
+    var header = leadingComments ? getHeader(match) : '';
     if (!isFunctionSnippet(match)) {
       header = header.replace(/^( *)\* *(?:@(?:category|param|returns)\b|\/)/m, function(match, indent) {
         return indent + '* @type Function\n' + match;
@@ -1925,13 +1914,13 @@ function replaceFunction(source, funcName, funcValue) {
       .replace(RegExp('^' + getIndent(funcValue), 'gm'), getIndent(match))
       .trimRight() + '\n';
 
-    var result = header + funcValue;
-    matchFunction.cache.set(funcName + ':' + checkFuncTag, result);
-    if (checkFuncTag) {
+    if (leadingComments) {
       matchFunction.cache.set(funcName + ':false', funcValue);
     } else {
       matchFunction.cache.delete(funcName + ':true');
     }
+    var result = header + funcValue;
+    matchFunction.cache.set(funcName + ':' + leadingComments, result);
     return result;
   });
 }
@@ -1967,8 +1956,8 @@ function replaceIIFE(source, iife) {
  *
  * @private
  * @param {string} source The source to process.
- * @param {number} to The indent level to replace with.
- * @param {number} from The indent level to be replaced.
+ * @param {number} [to=0] The indent level to replace with.
+ * @param {number} [from=1] The indent level to be replaced.
  * @returns {string} Returns the modified source.
  */
 function replaceIndent(source, to, from) {
@@ -2041,10 +2030,8 @@ function setUseStrictOption(source, value) {
  * @returns {string} Returns the modified source.
  */
 function stringFree(source, callback) {
-  source = toString(source);
-
   var strings = [];
-  source = callback(source.replace(consts.reString, function(match) {
+  source = callback(replace(source, consts.reString, function(match) {
     var index = strings.length;
     strings.push(match);
     return '<#str_token' + index + '#>';
@@ -2473,7 +2460,7 @@ function build(options, callback) {
         // Remove `guard` check from `createAssigner`.
         _.pull(funcDepMap.createAssigner, 'isIterateeCall');
 
-        source  = modifyFunction(source, 'createAssigner', function(match) {
+        source = modifyFunction(source, 'createAssigner', function(match) {
           match = removeVar(match, 'guard');
           return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[^}]+?\n\1\}\n/m, '');
         });
@@ -3107,10 +3094,11 @@ function build(options, callback) {
 
       // Remove `lodash` branch in `_.mixin`.
       source = modifyFunction(source, 'mixin', function(match) {
-        match = match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(options\s*==\s*null\b[\s\S]+?\n\1\}\n/m, '');
-        return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(!methodNames\b[\s\S]+?\n\1\}/m, function(match, indent) {
-          return indent + 'var methodNames = baseFunctions(source, keys(source));\n';
-        });
+        return match
+          .replace(/^(?: *\/\/.*\n)*( *)if\s*\(options\s*==\s*null\b[\s\S]+?\n\1\}\n/m, '')
+          .replace(/^(?: *\/\/.*\n)*( *)if\s*\(!methodNames\b[\s\S]+?\n\1\}/m, function(match, indent) {
+            return indent + 'var methodNames = baseFunctions(source, keys(source));\n';
+          });
       });
 
       // Replace `lodash` use in `_.templateSettings.imports`.
@@ -3187,10 +3175,11 @@ function build(options, callback) {
         modified = modified.replace(/^(?: *\/\/.*\n)*( *)else\b[^}]+?(?:\._|_\.templates)\s*=[\s\S]+?\n\1\}\n+/m, '');
       }
       else if (!isAMD && !isNode) {
-        modified = modified.replace(/^( *)else\s+(?=if\s*\(_\))/m, '$1');
-        modified = modified.replace(/^( *)else\s\{\s*([^}]+?\._\s*=[\s\S]+?)\n\1\}/m, function(match, indent, block) {
-          return indent + block.replace(/\n\s*/g, '\n' + indent);
-        });
+        modified = modified
+          .replace(/^( *)else\s+(?=if\s*\(_\))/m, '$1')
+          .replace(/^( *)else\s\{\s*([^}]+?\._\s*=[\s\S]+?)\n\1\}/m, function(match, indent, block) {
+            return indent + block.replace(/\n\s*/g, '\n' + indent);
+          });
       }
       source = isTemplate ? modified : source.replace(snippet, modified);
     }());
@@ -3307,9 +3296,7 @@ function build(options, callback) {
     if (isModularize) {
       // Untokenize functions to include in the build.
       _.each(buildFuncs, function(funcName) {
-        source = source.replace(RegExp('(?:,\\n)?<<' + funcName + '>>\\n?'), function() {
-          return funcTokenMap[funcName];
-        });
+        source = source.replace(RegExp('(?:,\\n)?<<' + funcName + '>>\\n?'), _.constant(funcTokenMap[funcName]));
       });
       source = source.replace(consts.reNamedToken, '');
     }
