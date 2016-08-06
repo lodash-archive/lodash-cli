@@ -1333,9 +1333,10 @@ function isPrivate(identifier) {
  * @returns {boolean} Returns `true` if the variable is used, else `false`.
  */
 function isVarUsed(source, varName) {
-  // Remove the variable assignment from the source.
-  source = replace(source, matchVar(source, varName), '');
-  return RegExp('[^.$"\'\\w]' + _.escapeRegExp(varName) + '\\b(?!\\s*=)').test(source);
+  var escapedName = _.escapeRegExp(varName);
+
+  source = removeVar(source, varName);
+  return RegExp('[^.$"\'\\w]' + escapedName + '\\b(?!\\s*=)').test(source);
 }
 
 /**
