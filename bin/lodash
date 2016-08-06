@@ -1382,7 +1382,7 @@ var matchFunction = _.memoize(function(source, funcName, leadingComments) {
 
   var result = _.reduce(patterns, function(result, pattern) {
     if (!result) {
-      result = RegExp(pattern[0], 'm').exec(source);
+      result = RegExp(pattern[0], 'm').exec(source) || '';
       if (isFunctionSnippet(_.get(result, 0))) {
         matchFunction.cache.set(otherKey, result[pattern[leadingComments ? 1 : 2]]);
         result = result[pattern[leadingComments ? 2 : 1]];
@@ -3151,7 +3151,7 @@ function build(options, callback) {
       if (isModularize) {
         funcTokenMap = _.transform(buildFuncs, function(result, funcName) {
           var match = matchFunction(source, funcName, true);
-          source = source.replace(match,
+          source = replace(source, match,
             (_.startsWith(match, ',\n') ? ',\n' : '') +
             '<<' + funcName + '>>' +
             (_.endsWith(match, '\n') ? '\n' : '')
