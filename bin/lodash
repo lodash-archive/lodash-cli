@@ -1350,7 +1350,8 @@ function isVarUsed(source, varName) {
  * @returns {string} Returns the matched function snippet.
  */
 var matchFunction = _.memoize(function(source, funcName, leadingComments) {
-  var escapedName = _.escapeRegExp(funcName);
+  var escapedName = _.escapeRegExp(funcName),
+      otherKey = funcName + ':' + !leadingComments;
 
   var patterns = [
     // Match function declarations.
@@ -1379,13 +1380,21 @@ var matchFunction = _.memoize(function(source, funcName, leadingComments) {
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n)', 2, 0]
   ];
 
-  return _.reduce(patterns, function(result, pattern) {
+  var result = _.reduce(patterns, function(result, pattern) {
     if (!result) {
       result = RegExp(pattern[0], 'm').exec(source);
-      result = isFunctionSnippet(result) ? _.get(result, pattern[leadingComments ? 2 : 1]) : '';
+      if (isFunctionSnippet(_.get(result, 0))) {
+        matchFunction.cache.set(otherKey, result[pattern[leadingComments ? 1 : 2]]);
+        result = result[pattern[leadingComments ? 2 : 1]];
+      }
     }
     return result;
   }, '');
+
+  if (!result) {
+    matchFunction.cache.set(otherKey, result);
+  }
+  return result;
 }, function(source, funcName, leadingComments) {
   return funcName + ':' + !!leadingComments;
 });
@@ -1822,9 +1831,9 @@ function removeProp(source, propName) {
  * @returns {string} Returns the modified source.
  */
 function removeRunInContext(source) {
-  source = removeVar(source, 'clearTimeout');
+  source = removeFunction(source, 'clearTimeout');
+  source = removeFunction(source, 'setTimeout');
   source = removeVar(source, 'contextProps');
-  source = removeVar(source, 'setTimeout');
   source = removeMethodAssignment(source, 'runInContext');
 
   // Remove function scaffolding, leaving most of its content.
@@ -1876,10 +1885,7 @@ function removeStrings(source) {
  * @returns {string} Returns the modified source.
  */
 function removeVar(source, varName) {
-  source = toString(source);
-  return matchFunction(source, varName)
-    ? removeFunction(source, varName)
-    : replace(source, matchVar(source, varName, true), '');
+  return replace(source, matchVar(source, varName, true), '');
 }
 
 /**
