@@ -2560,15 +2560,6 @@ function build(options, callback) {
           return match.replace(/\bbaseAssign\b/g, 'assign');
         });
 
-        // Replace `baseHas` with `hasOwnProperty`.
-        _.each(['equalObjects', 'keys'], function(funcName) {
-          _.pull(funcDepMap[funcName], 'baseHas');
-
-          source = modifyFunction(source, funcName, function(match) {
-            return match.replace(/\bbaseHas\b/g, 'hasOwnProperty.call');
-          });
-        });
-
         // Replace `createWrap` with `_.partial` in `_.wrap`.
         _.pull(funcDepMap.wrap, 'createWrap').push('partial');
 
@@ -2612,11 +2603,11 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.baseMatches = ['baseIsEqual', 'keys'];
+        funcDepMap.baseMatches = ['baseIsEqual', 'nativeKeys'];
 
         source = replaceFunction(source, 'baseMatches', [
           'function baseMatches(source) {',
-          '  var props = keys(source);',
+          '  var props = nativeKeys(source);',
           '  return function(object) {',
           '    var length = props.length;',
           '    if (object == null) {',
@@ -2695,19 +2686,19 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.assign = ['createAssigner', 'copyObject', 'keys'];
+        funcDepMap.assign = ['createAssigner', 'copyObject', 'nativeKeys'];
 
         source = replaceFunction(source, 'assign', [
           'var assign = createAssigner(function(object, source) {',
-          '  copyObject(source, keys(source), object);',
+          '  copyObject(source, nativeKeys(source), object);',
           '});'
         ].join('\n'));
 
-        funcDepMap.assignIn = ['createAssigner', 'copyObject', 'keysIn'];
+        funcDepMap.assignIn = ['createAssigner', 'copyObject', 'nativeKeysIn'];
 
         source = replaceFunction(source, 'assignIn', [
           'var assignIn = createAssigner(function(object, source) {',
-          '  copyObject(source, keysIn(source), object);',
+          '  copyObject(source, nativeKeysIn(source), object);',
           '});'
         ].join('\n'));
 
@@ -2719,14 +2710,14 @@ function build(options, callback) {
           '});'
         ].join('\n'));
 
-        funcDepMap.clone = ['copyArray', 'copyObject', 'isArray', 'isObject', 'keys'];
+        funcDepMap.clone = ['copyArray', 'copyObject', 'isArray', 'isObject', 'nativeKeys'];
 
         source = replaceFunction(source, 'clone', [
           'function clone(value) {',
           '  if (!isObject(value)) {',
           '    return value;',
           '  }',
-          '  return isArray(value) ? copyArray(value) : copyObject(value, keys(value));',
+          '  return isArray(value) ? copyArray(value) : copyObject(value, nativeKeys(value));',
           '}'
         ].join('\n'));
 
@@ -2830,11 +2821,11 @@ function build(options, callback) {
         funcDepMap.iteratee = ['baseIteratee'];
         source = replaceFunction(source, 'iteratee', 'var iteratee = baseIteratee;');
 
-        funcDepMap.keys = ['baseKeys'];
-        source = replaceFunction(source, 'keys', 'var keys = baseKeys;');
+        funcDepMap.keys = ['nativeKeys'];
+        source = replaceFunction(source, 'keys', 'var keys = nativeKeys;');
 
-        funcDepMap.keysIn = ['baseKeysIn'];
-        source = replaceFunction(source, 'keysIn', 'var keysIn = baseKeysIn;');
+        funcDepMap.keysIn = ['nativeKeysIn'];
+        source = replaceFunction(source, 'keysIn', 'var keysIn = nativeKeysIn;');
 
         funcDepMap.map = ['baseMap', 'baseIteratee'];
 
@@ -2883,14 +2874,14 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        funcDepMap.size = ['baseKeys', 'isArrayLike'];
+        funcDepMap.size = ['isArrayLike', 'nativeKeys'];
 
         source = replaceFunction(source, 'size', [
           'function size(collection) {',
           '  if (collection == null) {',
           '    return 0;',
           '  }',
-          '  collection = isArrayLike(collection) ? collection : keys(collection);',
+          '  collection = isArrayLike(collection) ? collection : nativeKeys(collection);',
           '  return collection.length;',
           '}'
         ].join('\n'));
