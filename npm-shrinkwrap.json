@@ -3,9 +3,9 @@
   "version": "4.14.2",
   "dependencies": {
     "closure-compiler": {
-      "version": "0.2.10",
-      "from": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.10.tgz",
-      "resolved": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.10.tgz",
+      "version": "0.2.12",
+      "from": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.12.tgz",
+      "resolved": "https://registry.npmjs.org/closure-compiler/-/closure-compiler-0.2.12.tgz",
       "dependencies": {
         "google-closure-compiler": {
           "version": "20150901.0.0",
@@ -42,9 +42,9 @@
           "resolved": "https://registry.npmjs.org/inherits/-/inherits-2.0.1.tgz"
         },
         "minimatch": {
-          "version": "3.0.2",
-          "from": "https://registry.npmjs.org/minimatch/-/minimatch-3.0.2.tgz",
-          "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-3.0.2.tgz",
+          "version": "3.0.3",
+          "from": "https://registry.npmjs.org/minimatch/-/minimatch-3.0.3.tgz",
+          "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-3.0.3.tgz",
           "dependencies": {
             "brace-expansion": {
               "version": "1.1.6",
