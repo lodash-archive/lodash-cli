@@ -4,7 +4,7 @@ node_js:
   - "6"
 cache:
   directories:
-    - node_modules
+    - $HOME/.npm
 env:
   global:
     - EXPORTS="node"
@@ -44,25 +44,36 @@ branches:
   only:
     - master
 before_install:
+  # Use exact Node version.
   - "nvm use $TRAVIS_NODE_VERSION"
+
+  # Setup npm.
   - "npm set loglevel error"
   - "npm set progress false"
   - "npm i -g npm@\"^2.0.0\""
-  - "npm prune && npm update --dev"
-  - "rm -rf ./node_modules/lodash"
-  - "git clone --depth=10 --branch=master git://github.com/lodash/lodash ./node_modules/lodash && cd $_ && rm -rf .git && npm i && cd ../../"
+
+  # Set path variables.
   - "OUTPUT_PATH=\"./$EXPORTS\" && TARGET_PATH=\"../../../$EXPORTS/index.js\""
   - "[ $EXPORTS != 'amd' ] || TARGET_PATH=\"../../../amd/main.js\""
   - "[ $EXPORTS != 'amd' ] || (QUERY=\"build=$TARGET_PATH&loader=$LOADER&noglobals=true\" && TAGS=\"$LOADER,amd,development\")"
   - "[ $EXPORTS != 'es' ]  || TARGET_PATH=\"../../../$EXPORTS/lodash.js\""
   - "[ $EXPORTS != 'npm' ] || OUTPUT_PATH=\"./npm/node_modules\""
+
+  # Use lodash from GitHub.
+  - "git clone --depth=10 --branch=master git://github.com/lodash/lodash ./node_modules/lodash && cd $_ && npm i && cd ../../"
+
+  # Create builds.
   - "[ $TEST_BUILDS == true ] || (npm i && node ./bin/lodash modularize exports=$EXPORTS -o $OUTPUT_PATH)"
   - "[ $EXPORTS != 'es' ]  || node ./bin/lodash modularize exports=node minus=main -o ./node_modules/lodash"
   - "[ $EXPORTS != 'es' ]  || babel ./$EXPORTS --presets es2015 --out-dir ./$EXPORTS"
   - "[ $EXPORTS != 'npm' ] || (cd ./npm && cp ../test/npm/index.js ./index.js && cd ../)"
+
 script:
+  # Test in Node.js.
+  - "[ $EXPORTS == 'amd' ] || [ $TEST_BUILDS == true ]  || node $RUNNER_PATH/test.js $TARGET_PATH"
+  - "[ $EXPORTS == 'amd' ] || [ $TEST_BUILDS == false ] || node test --time-limit 45m"
+
+  # Test in Sauce Labs.
   - "[ $EXPORTS != 'amd' ] || node $SAUCE_PATH name=\"lodash tests\"     runner=\"$RUNNER_PATH/index.html?$QUERY\"      tags=\"$TAGS\""
   - "[ $EXPORTS != 'amd' ] || node $SAUCE_PATH name=\"backbone tests\"   runner=\"$RUNNER_PATH/backbone.html?$QUERY\"   tags=\"$TAGS,backbone\""
   - "[ $EXPORTS != 'amd' ] || node $SAUCE_PATH name=\"underscore tests\" runner=\"$RUNNER_PATH/underscore.html?$QUERY\" tags=\"$TAGS,underscore\""
-  - "[ $EXPORTS == 'amd' ] || [ $TEST_BUILDS == true ]  || node $RUNNER_PATH/test.js $TARGET_PATH"
-  - "[ $EXPORTS == 'amd' ] || [ $TEST_BUILDS == false ] || node test --time-limit 45m"
