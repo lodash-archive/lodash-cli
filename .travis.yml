@@ -22,10 +22,6 @@ env:
     - TEST_BUILDS=true
 matrix:
   include:
-    - node_js: "0.10"
-      env:
-    - node_js: "0.10"
-      env: EXPORTS="npm"
     - node_js: "0.12"
       env:
     - node_js: "0.12"
