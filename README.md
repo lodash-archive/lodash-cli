@@ -11,9 +11,9 @@ The changelog for this release is available on our [wiki](https://github.com/lod
 
 Using npm:
 
-```bash
-$ {sudo -H} npm i -g npm
-$ {sudo -H} npm i -g lodash-cli
+```shell
+$ npm i -g npm
+$ npm i -g lodash-cli
 $ lodash -h
 ```
 
