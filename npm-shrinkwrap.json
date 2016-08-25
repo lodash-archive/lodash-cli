@@ -15,9 +15,9 @@
       }
     },
     "glob": {
-      "version": "7.0.5",
-      "from": "https://registry.npmjs.org/glob/-/glob-7.0.5.tgz",
-      "resolved": "https://registry.npmjs.org/glob/-/glob-7.0.5.tgz",
+      "version": "7.0.6",
+      "from": "https://registry.npmjs.org/glob/-/glob-7.0.6.tgz",
+      "resolved": "https://registry.npmjs.org/glob/-/glob-7.0.6.tgz",
       "dependencies": {
         "fs.realpath": {
           "version": "1.0.0",
@@ -93,7 +93,7 @@
       "resolved": "https://registry.npmjs.org/semver/-/semver-5.3.0.tgz"
     },
     "uglify-js": {
-      "version": "2.7.2",
+      "version": "2.7.3",
       "from": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.7.3.tgz",
       "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.7.3.tgz",
       "dependencies": {
