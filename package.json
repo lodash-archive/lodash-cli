@@ -34,17 +34,9 @@
     "qunitjs": "^2.0.1"
   },
   "files": [
-    "bin/lodash",
-    "lib/const.js",
-    "lib/listing.js",
-    "lib/mapping.js",
-    "lib/minify.js",
-    "lib/preprocess.js",
-    "lib/postprocess.js",
-    "lib/util.js",
-    "template/license.jst",
-    "template/package.jst",
-    "template/readme.jst",
+    "bin",
+    "lib",
+    "template",
     "npm-shrinkwrap.json"
   ]
 }
