@@ -17,8 +17,6 @@ env:
     - EXPORTS="es"
     - EXPORTS="npm"
     - EXPORTS="amd"
-    - EXPORTS="amd" LOADER="curl"
-    - EXPORTS="amd" LOADER="dojo"
     - TEST_BUILDS=true
 matrix:
   include:
