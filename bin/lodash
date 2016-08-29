@@ -1358,15 +1358,18 @@ var matchFunction = _.memoize(function(source, funcName, leadingComments) {
     // Match variable declarations using `baseProperty` or `basePropertyOf`.
     ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*baseProperty(?:Of)?\\([\\s\\S]+?\\)(?=[,;]\\n))', 2, 0],
     ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*baseProperty(?:Of)?\\([\\s\\S]+?\\);\\n)', 2, 0],
-    // Match variable declarations using `overArg`.
-    ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*overArg\\([\\s\\S]+?\\)(?=[,;]\\n))', 2, 0],
-    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*overArg\\([\\s\\S]+?\\);\\n)', 2, 0],
-    // Match variable declarations using `_.memoize` or `_.rest`.
-    ['(,\\n' + consts.rsComment + ')(( *)' + escapedName + '\\s*=\\s*(?:[a-z]+Rest|memoize)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\)(?=[,;]\\n))', 2, 0],
-    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*(?:[a-z]+Rest|memoize)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\);\\n)', 2, 0],
     // Match variable declarations using creator functions.
     ['(,\\n' + consts.rsComment + ')(( *)' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.*|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\)(?=[,;]\\n))', 2, 0],
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.*|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n)', 2, 0],
+    // Match variable declarations using `overArg`.
+    ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*overArg\\([\\s\\S]+?\\)(?=[,;]\\n))', 2, 0],
+    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*overArg\\([\\s\\S]+?\\);\\n)', 2, 0],
+    // Match variable declarations using `shortOut`.
+    ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*shortOut\\([\\s\\S]+?\\)(?=[,;]\\n))', 2, 0],
+    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*shortOut\\([\\s\\S]+?\\);\\n)', 2, 0],
+    // Match variable declarations using `_.memoize` or `_.rest`.
+    ['(,\\n' + consts.rsComment + ')(( *)' + escapedName + '\\s*=\\s*(?:[a-z]+Rest|memoize)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\)(?=[,;]\\n))', 2, 0],
+    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*(?:[a-z]+Rest|memoize)\\((?:.+|[\\s\\S]+?\\n\\3\\})\\);\\n)', 2, 0],
     // Match simple variable declaration.
     ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=.+?;\\n)', 2, 0],
     // Match multiple line function expressions.
