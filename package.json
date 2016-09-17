@@ -38,5 +38,10 @@
     "lib",
     "template",
     "npm-shrinkwrap.json"
-  ]
+  ],
+  "greenkeeper": {
+    "ignore": [
+      "lodash"
+    ]
+  }
 }
