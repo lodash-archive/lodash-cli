@@ -2469,12 +2469,12 @@ function build(options, callback) {
         });
 
         // Remove set cache use from `equalArrays`.
-        _.pull(funcDepMap.equalArrays, 'SetCache').push('indexOf');
+        _.pull(funcDepMap.equalArrays, 'cacheHas', 'SetCache').push('indexOf');
 
         source = modifyFunction(source, 'equalArrays', function(match) {
           return match
             .replace(/\bnew SetCache\b/, '[]')
-            .replace(/\bseen\.has\(othIndex\)/, 'indexOf(seen, othIndex)')
+            .replace(/\bcacheHas\b/, 'indexOf')
             .replace(/\badd\b/, 'push');
         });
 
@@ -2586,9 +2586,11 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
-        source = replaceFunction(source, 'baseHas', [
-          'function baseHas(object, key) {',
-          '  return object != null && hasOwnProperty.call(object, key);',
+        funcDepMap.baseAssignValue = [];
+
+        source = replaceFunction(source, 'baseAssignValue', [
+          'function baseAssignValue(object, key, value) {',
+          '  object[key] = value;',
           '}'
         ].join('\n'));
 
@@ -2665,6 +2667,9 @@ function build(options, callback) {
           '  return isArray(value) || isArguments(value);',
           '}'
         ].join('\n'));
+
+        funcDepMap.setToString = ['identity'];
+        source = replaceFunction(source, 'setToString', 'var setToString = identity;');
 
         funcDepMap.toKey = [];
         source = replaceFunction(source, 'toKey', 'var toKey = String;');
