@@ -1350,11 +1350,11 @@ var matchFunction = _.memoize(function(source, funcName, leadingComments) {
     // Match function declarations.
     ['^(' + consts.rsComment + ')(( *)function\\s+' + escapedName + '\\((?:\\)\\s*\\{\\s*|[\\s\\S]+?\\n\\3)\\}\\n)', 2, 0],
     // Match single line function expressions at the start of a declaration list.
-    ['^( *var\\s+)(' + escapedName + '\\s*=\\s*function\\b.+?\\},\\n *)', 2, 2],
+    ['^( *var\\s+)(' + escapedName + '\\s*=\\s*\\(?function\\b.+?\\}\\)?,\\n *)', 2, 2],
     // Match single line function expressions in a declaration list.
-    ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*function\\b.+?\\}(?=[,;]\\n))', 2, 0],
+    ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*\\(?function\\b.+?\\}\\)?(?=[,;]\\n))', 2, 0],
     // Match single line function expressions that aren't in a declaration list.
-    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*function\\b.+?\\};\\n)', 2, 0],
+    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*\\(?function\\b.+?\\}\\)?;\\n)', 2, 0],
     // Match variable declarations using `baseProperty` or `basePropertyOf`.
     ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*baseProperty(?:Of)?\\([\\s\\S]+?\\)(?=[,;]\\n))', 2, 0],
     ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*baseProperty(?:Of)?\\([\\s\\S]+?\\);\\n)', 2, 0],
@@ -1373,7 +1373,7 @@ var matchFunction = _.memoize(function(source, funcName, leadingComments) {
     // Match simple variable declaration.
     ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=.+?;\\n)', 2, 0],
     // Match multiple line function expressions.
-    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=.*?function\\([\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:\\(\\)\\))?;\\n)', 2, 0]
+    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=.*?function\\b[\\s\\S]+?\\{\\n[\\s\\S]+?\\n\\3\\}(?:(?:\\(\\))?\\))?;\\n)', 2, 0]
   ];
 
   var result = _.reduce(patterns, function(result, pattern) {
