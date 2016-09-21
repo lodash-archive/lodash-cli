@@ -19,4 +19,4 @@ $ lodash -h
 
 ## Support
 
-Tested in Node.js 0.10-6.
+Tested in Node.js 4-6.
