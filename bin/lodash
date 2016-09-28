@@ -83,7 +83,6 @@ function buildModule(state, onComplete) {
   var buildFuncs = state.buildFuncs,
       funcDepMap = state.funcDepMap,
       includeFuncs = state.includeFuncs,
-      includeObjs = state.includeObjs,
       includeVars = state.includeVars,
       isAMD = state.isAMD,
       isES = state.isES,
@@ -91,14 +90,13 @@ function buildModule(state, onComplete) {
       isNpm = state.isNpm,
       isSilent = state.isSilent,
       minusFuncs = state.minusFuncs,
-      objDepMap = state.objDepMap,
       outputPath = state.outputPath,
       plusFuncs = state.plusFuncs,
       stamp = state.stamp,
       varDepMap = state.varDepMap;
 
   var depMap = new Hash,
-      identifiers = _.without(_.union(buildFuncs, includeObjs, includeVars), 'main'),
+      identifiers = _.without(_.union(buildFuncs, includeVars), 'main'),
       moduleCount = 0,
       removedDeps = new Hash;
 
@@ -116,7 +114,7 @@ function buildModule(state, onComplete) {
   };
 
   var isMajorBump = function(identifier) {
-    var allDeps = getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap);
+    var allDeps = getAllDependencies(identifier, funcDepMap, varDepMap);
     return !_.isEmpty(_.intersection(allDeps, listing.majorBump));
   };
 
@@ -162,7 +160,6 @@ function buildModule(state, onComplete) {
     function(identifier) {
       var depNames = _.union(
         getDependencies(identifier, funcDepMap),
-        getDependencies(identifier, objDepMap),
         getDependencies(identifier, varDepMap)
       );
 
@@ -170,7 +167,7 @@ function buildModule(state, onComplete) {
 
       if (isNpm) {
         var moreInlinees = _.transform(_.difference(depNames, uninlinables), function(result, identifier) {
-          push.apply(result, getAllDependencies([identifier], funcDepMap, objDepMap, varDepMap, _.clone(uninlinables)));
+          push.apply(result, getAllDependencies([identifier], funcDepMap, varDepMap, _.clone(uninlinables)));
           return result;
         });
 
@@ -208,17 +205,14 @@ function buildModule(state, onComplete) {
 
     if (isNpm) {
       var inlineFuncs = _.intersection(listing.funcs, inlinees),
-          inlineObjs = _.intersection(listing.objDeps, inlinees),
           inlineVars = _.intersection(listing.varDeps, inlinees);
     }
     else {
       inlineFuncs = _.includes(listing.funcs, identifier) ? inlinees : [];
-      inlineObjs = _.includes(listing.objDeps, identifier) ? inlinees : [];
       inlineVars = _.includes(listing.varDeps, identifier) ? inlinees : [];
     }
     state.outputPath = path.join(outputPath, isNpm ? (depName + '/index.js') : (depName + '.js'));
     state.buildFuncs = state.includeFuncs = inlineFuncs;
-    state.includeObjs = inlineObjs;
     state.includeVars = inlineVars;
 
     build(state, function(data) {
@@ -296,9 +290,7 @@ function buildModule(state, onComplete) {
             pkgDepNames = _.sortBy(depNames, toDepName),
             pkgDepPaths = _.sortBy(depPaths);
 
-        if (_.includes(listing.objDeps, identifier)) {
-          type = 'object';
-        } else if (_.includes(listing.varDeps, identifier)) {
+        if (_.includes(listing.varDeps, identifier)) {
           type = 'variable';
         }
         var templateData = {
@@ -443,7 +435,6 @@ function buildModule(state, onComplete) {
 
     var deps = _.union(
       getDependencies(identifier, funcDepMap),
-      getDependencies(identifier, objDepMap),
       getDependencies(identifier, varDepMap)
     );
 
@@ -454,7 +445,6 @@ function buildModule(state, onComplete) {
       basename += (index ? '.default' : '');
     }
     state.buildFuncs = state.includeFuncs = [identifier];
-    state.includeObjs = state.includeVars = [];
     state.outputPath = path.join(outputPath, basename + '.js');
 
     build(state, function(data) {
@@ -934,6 +924,8 @@ function cleanupSource(source) {
       .replace(/(\{\s*\n) *\/\*-+\*\/\n|^ *\/\*-+\*\/\n(\s*\})/gm, '$1$2')
       // Remove trailing horizontal rule comment separators.
       .replace(/\s*\/\*-+\*\/\s*$/, '')
+      // Remove incomplete variable declarations.
+      .replace(/^ *var\s*;\n/gm, '')
       // Remove lines with just spaces and semicolons.
       .replace(/^ *;\n/gm, '')
       // Remove trailing spaces from lines.
@@ -1009,12 +1001,11 @@ function getAliases(identifier) {
  * @private
  * @param {string|string[]} identifier The identifier or array of identifiers to query.
  * @param {Object} funcDepMap The dependency map to look up function dependencies.
- * @param {Object} objDepMap The dependency map to look up object dependencies.
  * @param {Object} varDepMap The dependency map to look up variable dependencies.
  * @param- {Array} [stackA=[]] Internally used track queried identifiers.
  * @returns {Array} Returns an array of identifier dependencies.
  */
-function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack) {
+function getAllDependencies(identifier, funcDepMap, varDepMap, stack) {
   var isInit = !stack,
       result = _.isArray(identifier) ? (isInit ? _.clone(identifier) : identifier) : [identifier];
 
@@ -1023,10 +1014,9 @@ function getAllDependencies(identifier, funcDepMap, objDepMap, varDepMap, stack)
   _.each(result, function(identifier) {
     if (!_.includes(stack, identifier)) {
       push.apply(result, getDependencies(identifier, funcDepMap));
-      push.apply(result, getDependencies(identifier, objDepMap));
       push.apply(result, getDependencies(identifier, varDepMap));
       stack.push(identifier);
-      getAllDependencies(result, funcDepMap, objDepMap, varDepMap, stack);
+      getAllDependencies(result, funcDepMap, varDepMap, stack);
     }
   });
   return isInit ? _.uniq(result) : result;
@@ -1355,12 +1345,20 @@ var matchFunction = _.memoize(function(source, funcName, leadingComments) {
     ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*\\(?function\\b.+?\\}\\)?(?=[,;]\\n))', 2, 0],
     // Match single line function expressions that aren't in a declaration list.
     ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*\\(?function\\b.+?\\}\\)?;\\n)', 2, 0],
+    // Match variable declarations containing built-in constructors.
+    ['^( *var\\s+)(' + escapedName + '\\s*=\\s*root\\.(?:[A-Z][a-z0-9]+)+,\\n *)', 2, 2],
+    ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*root\\.(?:[A-Z][a-z0-9]+)+(?=[,;]\\n))', 2, 0],
+    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*root\\.(?:[A-Z][a-z0-9]+)+;\\n)', 2, 0],
     // Match variable declarations using `baseProperty` or `basePropertyOf`.
     ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*baseProperty(?:Of)?\\([\\s\\S]+?\\)(?=[,;]\\n))', 2, 0],
     ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*baseProperty(?:Of)?\\([\\s\\S]+?\\);\\n)', 2, 0],
     // Match variable declarations using creator functions.
     ['(,\\n' + consts.rsComment + ')(( *)' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.*|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\)(?=[,;]\\n))', 2, 0],
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.*|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n)', 2, 0],
+    // Match variable declarations using `getNative`.
+    ['^( *var\\s+)(' + escapedName + '\\s*=\\s*getNative\\([\\s\\S]+?\\),\\n *)', 2, 2],
+    ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*getNative\\([\\s\\S]+?\\)(?=[,;]\\n))', 2, 0],
+    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*getNative\\([\\s\\S]+?\\);\\n)', 2, 0],
     // Match variable declarations using `overArg`.
     ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*overArg\\([\\s\\S]+?\\)(?=[,;]\\n))', 2, 0],
     ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*overArg\\([\\s\\S]+?\\);\\n)', 2, 0],
@@ -1435,7 +1433,7 @@ function matchVar(source, varName, leadingComments) {
     // Match variables in a declaration list.
     ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=[\\s\\S]+?(?=[,;]\\n))', 2, 0],
     // Match variable declarations that aren't in a declaration list.
-    ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*(?:|=[^;]+);\\n)', 2, 0]
+    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*(?:|=[^;]+);\\n)', 2, 0]
   ];
 
   // Match complex variable assignments.
@@ -1540,11 +1538,11 @@ function removeAssignments(source) {
  * @param {string} source The source to process.
  * @param {Object} [seqDepMap] The chain dependency map to modify.
  * @param {Object} [funcDepMap] The function dependency map to modify.
- * @param {Object} [objDepMap] The object dependency map to modify.
+ * @param {Object} [varDepMap] The variable dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeChaining(source, seqDepMap, funcDepMap, objDepMap) {
-  source = removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap);
+function removeChaining(source, seqDepMap, funcDepMap, varDepMap) {
+  source = removeLazyChaining(source, seqDepMap, funcDepMap, varDepMap);
   source = removeMixinCalls(source);
 
   // Remove all `lodash.prototype` additions.
@@ -1583,12 +1581,12 @@ function removeGetTagFork(source) {
  * @param {string} source The source to process.
  * @param {Object} [seqDepMap] The chain dependency map to modify.
  * @param {Object} [funcDepMap] The function dependency map to modify.
- * @param {Object} [objDepMap] The object dependency map to modify.
+ * @param {Object} [varDepMap] The variable dependency map to modify.
  * @returns {string} Returns the modified source.
  */
-function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
+function removeLazyChaining(source, seqDepMap, funcDepMap, varDepMap) {
   if (seqDepMap) {
-    _.pull(seqDepMap.objDep, 'realNames');
+    _.pull(seqDepMap.varDep, 'realNames');
 
     _.pull(seqDepMap.funcDep,
       'baseInvoke', 'baseRest', 'createHybrid', 'getIteratee', 'identity',
@@ -1599,9 +1597,9 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap) {
   if (funcDepMap) {
     funcDepMap.createFlow = ['baseFlatten', 'baseRest'];
   }
-  if (objDepMap) {
+  if (varDepMap) {
     source = removeVar(source, 'realNames');
-    _.forOwn(objDepMap, function(depNames, identifier) {
+    _.forOwn(varDepMap, function(depNames, identifier) {
       _.pull(depNames, 'realNames');
     });
   }
@@ -2099,14 +2097,12 @@ function build(options, callback) {
         funcDepMap = state.funcDepMap,
         funcTokenMap = state.funcTokenMap,
         includeFuncs = state.includeFuncs,
-        includeObjs = state.includeObjs,
         includeVars = state.includeVars,
         isDevelopment = true,
         isModularize = true,
         isStdOut = state.isStdOut,
         isStrict = state.isStrict,
         minusFuncs = [],
-        objDepMap = state.objDepMap,
         outputPath = state.outputPath,
         plusFuncs = [],
         source = state.source,
@@ -2120,7 +2116,6 @@ function build(options, callback) {
     // Clone dependencies to modify.
     var seqDepMap = new Hash(_.cloneDeep(mapping.seqDep)),
         funcDepMap = new Hash(_.cloneDeep(mapping.funcDep)),
-        objDepMap = new Hash(_.cloneDeep(mapping.objDep)),
         varDepMap = new Hash(_.cloneDeep(mapping.varDep));
 
     // The path to the source file.
@@ -2220,9 +2215,6 @@ function build(options, callback) {
     // Functions to include in the build.
     var includeFuncs = _.union(categoryOptions, _.map(getOption(options, 'include', []), getRealName));
 
-    // Properties to include in the build.
-    var includeObjs = _.intersection(includeFuncs, listing.objDeps);
-
     // Variables to include in the build.
     var includeVars = _.intersection(includeFuncs, listing.varDeps);
 
@@ -2245,7 +2237,7 @@ function build(options, callback) {
     });
 
     // Remove categories from function names.
-    includeFuncs = _.difference(includeFuncs, listing.categories, includeObjs, includeVars);
+    includeFuncs = _.difference(includeFuncs, listing.categories, includeVars);
     minusFuncs = _.difference(minusFuncs, listing.categories);
     plusFuncs = _.difference(plusFuncs, listing.categories);
 
@@ -2366,7 +2358,7 @@ function build(options, callback) {
         });
       }
       if (isNpm) {
-        source = removeChaining(source, seqDepMap, funcDepMap, objDepMap);
+        source = removeChaining(source, seqDepMap, funcDepMap, varDepMap);
         source = removeMetadata(source, funcDepMap);
 
         // Remove `getIteratee` use from iteration methods.
@@ -2378,7 +2370,7 @@ function build(options, callback) {
         });
       }
       if (isCore && _.isEmpty(plusFuncs)) {
-        source = removeLazyChaining(source, seqDepMap, funcDepMap, objDepMap);
+        source = removeLazyChaining(source, seqDepMap, funcDepMap, varDepMap);
         source = removeMetadata(source, funcDepMap);
 
         // Add `func` check to `createPartial`.
@@ -2416,7 +2408,7 @@ function build(options, callback) {
         );
 
         // Remove ES5 and ES2015 built-in constructor deps.
-        _.forOwn(varDepMap, function(deps) {
+        _.forOwn(funcDepMap, function(deps) {
           _.pull(deps, 'DataView', 'Map', 'Promise', 'Reflect', 'Set', 'Symbol', 'Uint8Array', 'WeakMap');
         });
 
@@ -2954,12 +2946,10 @@ function build(options, callback) {
       // Redistribute `seqDepMap` deps.
       if (isModularize) {
         funcDepMap.main = _.union(funcDepMap.main, _.difference(seqDepMap.funcDep, _.without(mapping.category.Seq, 'thru')));
-        objDepMap.main = _.union(objDepMap.main, seqDepMap.objDep);
         varDepMap.main = _.union(varDepMap.main, seqDepMap.varDep);
       }
       else {
         funcDepMap.wrapperValue = _.union(funcDepMap.wrapperValue, _.without(seqDepMap.funcDep, 'lodash', 'LodashWrapper'));
-        objDepMap.wrapperValue = _.union(objDepMap.wrapperValue, seqDepMap.objDep);
         varDepMap.wrapperValue = _.union(varDepMap.wrapperValue, seqDepMap.varDep);
 
         _.each(_.without(mapping.category.Seq, 'lodash', 'wrapperValue'), function(funcName) {
@@ -2996,7 +2986,7 @@ function build(options, callback) {
         result = includeFuncs;
       }
       // Add default function names.
-      else if (_.isEmpty(includeObjs) && _.isEmpty(includeVars)) {
+      else if (_.isEmpty(includeVars)) {
         result = _.clone(listing.includes);
       }
       // Remove special "none" entry.
@@ -3041,10 +3031,9 @@ function build(options, callback) {
     }());
 
     // Expand properties, variables, and their function dependencies to include in the build.
-    var allDeps = getAllDependencies(buildFuncs, funcDepMap, objDepMap, varDepMap).sort();
+    var allDeps = getAllDependencies(buildFuncs, funcDepMap, varDepMap).sort();
 
     buildFuncs = _.intersection(listing.funcs, allDeps);
-    includeObjs = _.intersection(listing.objDeps, allDeps);
     includeVars = _.intersection(listing.varDeps, allDeps);
 
     /*------------------------------------------------------------------------*/
@@ -3119,7 +3108,6 @@ function build(options, callback) {
           source = removeMethodAssignment(source, funcName);
         }
       });
-
       // Remove method assignments for non-core methods.
       if (isCore) {
         _.each(_.difference(buildFuncs, listing.coreFuncs, plusFuncs), function(funcName) {
@@ -3131,15 +3119,15 @@ function build(options, callback) {
         funcTokenMap = _.transform(buildFuncs, function(result, funcName) {
           var match = matchFunction(source, funcName, true);
           source = replace(source, match,
-            (_.startsWith(match, ',\n') ? ',\n' : '') +
+            _.get(/^,\s+/.exec(match), 0, '') +
             '<<' + funcName + '>>' +
-            (_.endsWith(match, '\n') ? '\n' : '')
+            _.get(/(?:,?\s+|\n)$/.exec(match), 0, '')
           );
           result[funcName] = match;
         }, new Hash);
       }
       // Detect variables after tokenizing functions.
-      varNames = _.difference(getVars(source), buildFuncs.concat(includeObjs, includeVars, 'freeGlobal'));
+      varNames = _.difference(getVars(source), buildFuncs.concat(includeVars, 'freeGlobal'));
     }
 
     /*------------------------------------------------------------------------*/
@@ -3190,7 +3178,6 @@ function build(options, callback) {
         'funcDepMap': funcDepMap,
         'funcTokenMap': funcTokenMap,
         'includeFuncs': includeFuncs,
-        'includeObjs': includeObjs,
         'includeVars': includeVars,
         'isAMD': isAMD,
         'isES': isES,
@@ -3201,7 +3188,6 @@ function build(options, callback) {
         'isStrict': isStrict,
         'lodash': lodash,
         'minusFuncs': minusFuncs,
-        'objDepMap': objDepMap,
         'options': options,
         'outputPath': outputPath,
         'plusFuncs': plusFuncs,
@@ -3270,11 +3256,6 @@ function build(options, callback) {
       return '';
     });
 
-    // Remove unused property dependencies.
-    _.each(_.difference(listing.objDeps, includeObjs), function(propName) {
-      source = removeProp(source, propName);
-    });
-
     // Remove unused variable dependencies.
     _.each(_.difference(listing.varDeps, includeVars.concat('root')), function(varName) {
       source = removeVar(source, varName);
@@ -3284,13 +3265,20 @@ function build(options, callback) {
       varNames = _.without(varNames, 'root');
       source = removeVar(source, 'root');
     }
+    if (!_.includes(includeVars, 'templateSettings')) {
+      varNames = _.without(varNames, 'templateSettings');
+      source = removeProp(source, 'templateSettings');
+    }
     if (isModularize) {
       // Untokenize functions to include in the build.
       _.each(buildFuncs, function(funcName) {
-        source = source.replace(RegExp('(?:,\\n)?<<' + funcName + '>>\\n?'), _.constant(funcTokenMap[funcName]));
+        source = source.replace(RegExp(',\\s+<<' + funcName + '>>|<<' + funcName + '>>(,\\s+|\\n)?'), function() {
+          return funcTokenMap[funcName];
+        });
       });
       source = source.replace(consts.reNamedToken, '');
     }
+
     // Remove unused variables.
     source = stringFree(source, function(source) {
       return commentFree(source, function(source) {
@@ -3312,6 +3300,8 @@ function build(options, callback) {
         return source;
       });
     });
+
+
   }
   // Customize lodash's IIFE.
   if (isIIFE) {
