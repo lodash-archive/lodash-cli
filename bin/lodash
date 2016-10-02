@@ -1356,9 +1356,9 @@ var matchFunction = _.memoize(function(source, funcName, leadingComments) {
     ['(,\\n' + consts.rsComment + ')(( *)' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.*|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\)(?=[,;]\\n))', 2, 0],
     ['^(' + consts.rsComment + ')(( *)var\\s+' + escapedName + '\\s*=\\s*create(?:[A-Z][a-z]+)+\\((?:.*|[\\s\\S]+?\\n\\3(?:\\S.*?)?)\\);\\n)', 2, 0],
     // Match variable declarations using `getNative`.
-    ['^( *var\\s+)(' + escapedName + '\\s*=\\s*getNative\\([\\s\\S]+?\\),\\n *)', 2, 2],
-    ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*getNative\\([\\s\\S]+?\\)(?=[,;]\\n))', 2, 0],
-    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*getNative\\([\\s\\S]+?\\);\\n)', 2, 0],
+    ['^( *var\\s+)(' + escapedName + '\\s*=\\s*getNative\\(.+?\\),\\n *)', 2, 2],
+    ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*getNative\\(.+?\\)(?=[,;]\\n))', 2, 0],
+    ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*getNative\\(.+?\\);\\n)', 2, 0],
     // Match variable declarations using `overArg`.
     ['(,\\n' + consts.rsComment + ')( *' + escapedName + '\\s*=\\s*overArg\\([\\s\\S]+?\\)(?=[,;]\\n))', 2, 0],
     ['^(' + consts.rsComment + ')( *var\\s+' + escapedName + '\\s*=\\s*overArg\\([\\s\\S]+?\\);\\n)', 2, 0],
