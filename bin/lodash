@@ -113,11 +113,6 @@ function buildModule(state, onComplete) {
     });
   };
 
-  var isMajorBump = function(identifier) {
-    var allDeps = getAllDependencies(identifier, funcDepMap, varDepMap);
-    return !_.isEmpty(_.intersection(allDeps, listing.majorBump));
-  };
-
   var toDepName = function(value) {
     var prefix = (isPrivate(value) && !_.startsWith(value, '_')) ? '_' : '',
         result = prefix + value;
@@ -295,7 +290,6 @@ function buildModule(state, onComplete) {
         }
         var templateData = {
           'identifier': identifier,
-          'isPrivate': depData.isPrivate,
           'name': depName,
           'type': type,
           'version': pkgVer.raw
@@ -303,22 +297,15 @@ function buildModule(state, onComplete) {
 
         templateData.dependencies = _.transform(pkgDepNames, function(result, depName, index) {
           var minor = '0',
-              prefix = '^',
               depPath = pkgDepPaths[index],
-              depRange = prefix + pkgVer.major + '.0.0',
+              depRange = '^' + pkgVer.major + '.0.0',
               oldDepPkgPath = path.join(path.resolve(outputPath), depPath, 'package.json');
 
           if (fs.existsSync(oldDepPkgPath)) {
             var oldDepPkg = JSON.parse(fs.readFileSync(oldDepPkgPath, 'utf8')),
                 oldDepVer = semver.parse(oldDepPkg.version);
 
-            if (!isMajorBump(depName)) {
-              if (isPrivate(depName)) {
-                minor = oldDepVer.minor;
-                prefix = '~';
-              }
-              depRange = prefix + oldDepVer.major + '.' + minor + '.0';
-            }
+            depRange = '^' + oldDepVer.major + '.' + minor + '.0';
             if (oldDepVer.major > pkgVer.major) {
               pkgVer = oldDepVer;
               templateData.version = pkgVer.major + '.0.0';
@@ -336,10 +323,7 @@ function buildModule(state, onComplete) {
               oldDeps = _.omit(oldPkg.dependencies, laxDeps),
               pkgDeps = _.omit(templateData.dependencies, laxDeps);
 
-          if (isMajorBump(identifier)) {
-            templateData.version = semver.inc(oldVer, 'major', true);
-          }
-          else if (_.isEqual(pkgDeps, oldDeps)) {
+          if (_.isEqual(pkgDeps, oldDeps)) {
             var oldSource = fs.readFileSync(data.outputPath, 'utf8');
 
             // Exit early if sources are identical.
