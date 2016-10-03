@@ -78,14 +78,14 @@
           }
         },
         "path-is-absolute": {
-          "version": "1.0.0",
-          "from": "https://registry.npmjs.org/path-is-absolute/-/path-is-absolute-1.0.0.tgz",
-          "resolved": "https://registry.npmjs.org/path-is-absolute/-/path-is-absolute-1.0.0.tgz"
+          "version": "1.0.1",
+          "from": "https://registry.npmjs.org/path-is-absolute/-/path-is-absolute-1.0.1.tgz",
+          "resolved": "https://registry.npmjs.org/path-is-absolute/-/path-is-absolute-1.0.1.tgz"
         }
       }
     },
     "lodash": {
-      "version": "4.16.3-pre"
+      "version": "4.16.3"
     },
     "semver": {
       "version": "5.3.0",
