@@ -2397,12 +2397,13 @@ function build(options, callback) {
         });
 
         // Remove map, set, stack, and typed array support from `baseIsEqualDeep`.
-        _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isTypedArray', 'Stack').push('find');
+        _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isBuffer', 'isTypedArray', 'Stack').push('find');
 
         source = modifyFunction(source, 'baseIsEqualDeep', function(match) {
           return match
             .replace(/\bgetTag\b/g, 'objectToString.call')
             .replace(/\s*\|\|\s*isTypedArray\([^)]+\)/, '')
+            .replace(/^( *)if\s*\(.+?isBuffer\b[\s\S]+?\n\1\}\n/m, '')
             .replace(/^( *)stack\s*\|\|[\s\S]+?\breturn\b([^;]+)(?=;\n)/gm, function(match, indent, compared) {
               return indent + [
                 'var result =' + compared + ';',
