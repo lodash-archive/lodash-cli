@@ -2571,6 +2571,9 @@ function build(options, callback) {
           '}'
         ].join('\n'));
 
+        funcDepMap.baseIsArguments = ['noop'];
+        source = replaceFunction(source, 'baseIsArguments', 'var baseIsArguments = noop;');
+
         funcDepMap.baseIteratee = ['baseMatches', 'baseProperty', 'identity'];
 
         source = replaceFunction(source, 'baseIteratee', [
