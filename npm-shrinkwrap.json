@@ -15,9 +15,9 @@
       }
     },
     "glob": {
-      "version": "7.1.0",
-      "from": "https://registry.npmjs.org/glob/-/glob-7.1.0.tgz",
-      "resolved": "https://registry.npmjs.org/glob/-/glob-7.1.0.tgz",
+      "version": "7.1.1",
+      "from": "https://registry.npmjs.org/glob/-/glob-7.1.1.tgz",
+      "resolved": "https://registry.npmjs.org/glob/-/glob-7.1.1.tgz",
       "dependencies": {
         "fs.realpath": {
           "version": "1.0.0",
