@@ -1532,7 +1532,7 @@ function removeChaining(source, seqDepMap, funcDepMap, varDepMap) {
   // Remove all `lodash.prototype` additions.
   return source
     .replace(/^(?: *\/\/.*\n)*( *)[$\w]+\(\['pop'[\s\S]+?\n\1\}\);\n/m, '')
-    .replace(/^(?: *\/\/.*\n)*( *)if\s*\(iteratorSymbol\)[\s\S]+?\n\1\}\n/gm, '')
+    .replace(/^(?: *\/\/.*\n)*( *)if\s*\(symIterator\)[\s\S]+?\n\1\}\n/gm, '')
     .replace(/^(?: *\/\/.*\n)*( *)lodash\.prototype\.(?!constructor\b)[$\w]+\s*=[\s\S]+?;\n/gm, '');
 }
 
@@ -3220,7 +3220,7 @@ function build(options, callback) {
     }
     if (isExcluded(isModularize ? 'main' : 'wrapperToIterator')) {
       // Remove conditional `wrapperToIterator` assignment.
-      source = source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(iteratorSymbol\)[\s\S]+?\n\1\}\n/gm, '');
+      source = source.replace(/^(?: *\/\/.*\n)*( *)if\s*\(symIterator\)[\s\S]+?\n\1\}\n/gm, '');
     }
     if (isExcluded(isModularize ? 'main' : 'mixin')) {
       source = removeMixinCalls(source);
