@@ -2397,11 +2397,11 @@ function build(options, callback) {
         });
 
         // Remove map, set, stack, and typed array support from `baseIsEqualDeep`.
-        _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isBuffer', 'isTypedArray', 'Stack').push('find');
+        _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isBuffer', 'isTypedArray', 'Stack').push('baseGetTag', 'find');
 
         source = modifyFunction(source, 'baseIsEqualDeep', function(match) {
           return match
-            .replace(/\bgetTag\b/g, 'objectToString.call')
+            .replace(/\bgetTag\b/g, 'baseGetTag')
             .replace(/\s*\|\|\s*isTypedArray\([^)]+\)/, '')
             .replace(/^( *)if\s*\(.+?isBuffer\b[\s\S]+?\n\1\}\n/m, '')
             .replace(/^( *)stack\s*\|\|[\s\S]+?\breturn\b([^;]+)(?=;\n)/gm, function(match, indent, compared) {
@@ -2568,6 +2568,14 @@ function build(options, callback) {
         source = replaceFunction(source, 'baseAssignValue', [
           'function baseAssignValue(object, key, value) {',
           '  object[key] = value;',
+          '}'
+        ].join('\n'));
+
+        funcDepMap.baseGetTag = ['objectToString'];
+
+        source = replaceFunction(source, 'baseGetTag', [
+          'function baseGetTag(value) {',
+          '  return objectToString(value);',
           '}'
         ].join('\n'));
 
