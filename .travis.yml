@@ -1,65 +1,96 @@
 language: node_js
 sudo: false
 node_js:
-  - "6"
+  - 6
+
 cache:
   directories:
     - $HOME/.npm
+
 env:
   global:
-    - EXPORTS="node"
+    - EXPORTS=node
     - QUERY="" TEST_BUILDS=false
-    - LOADER="requirejs" RUNNER_PATH="node_modules/lodash/test"
-    - SAUCE_PATH="$RUNNER_PATH/saucelabs.js" SAUCE_USERNAME="lodash"
-    - secure: "HUCzn6i9XZ53278fYMICHuHWaVtTZmJCfY4wv3BEu57CGshw9T399Vxul849vIusw3x9cf4iNrrry0RaZga7KfaJIVSESy4zeY4vnsJ+5QCiXGbobpNPYnhU50eTo95MqDh1/Uds+cv2HCo+4VH8yb+6k/p9xX0CC3TvvToX60M="
+    - RUNNER_PATH=node_modules/lodash/test
+    - SAUCE_PATH=$RUNNER_PATH/saucelabs.js SAUCE_USERNAME=lodash
+    - secure: HUCzn6i9XZ53278fYMICHuHWaVtTZmJCfY4wv3BEu57CGshw9T399Vxul849vIusw3x9cf4iNrrry0RaZga7KfaJIVSESy4zeY4vnsJ+5QCiXGbobpNPYnhU50eTo95MqDh1/Uds+cv2HCo+4VH8yb+6k/p9xX0CC3TvvToX60M=
+
   matrix:
     -
-    - EXPORTS="es"
-    - EXPORTS="npm"
-    - EXPORTS="amd"
+    - EXPORTS=es
+    - EXPORTS=npm
+    - EXPORTS=amd
     - TEST_BUILDS=true
+
 matrix:
   include:
-    - node_js: "4"
+    - node_js: 4
       env:
-    - node_js: "4"
-      env: EXPORTS="npm"
+    - node_js: 4
+      env: EXPORTS=npm
+
 git:
   depth: 10
+
 branches:
   only:
     - master
+
 before_install:
   # Use exact Node version.
-  - "nvm use $TRAVIS_NODE_VERSION"
+  - nvm use $TRAVIS_NODE_VERSION
 
   # Setup npm.
-  - "npm set loglevel error"
-  - "npm set progress false"
-  - "npm i -g npm@\"^2.0.0\""
+  - npm set loglevel error
+  - npm set progress false
+  - npm i -g npm@"^2.0.0"
 
   # Set path variables.
-  - "OUTPUT_PATH=\"./$EXPORTS\" && TARGET_PATH=\"../../../$EXPORTS/index.js\""
-  - "[ $EXPORTS != 'amd' ] || TARGET_PATH=\"../../../amd/main.js\""
-  - "[ $EXPORTS != 'amd' ] || (QUERY=\"build=$TARGET_PATH&loader=$LOADER&noglobals=true\" && TAGS=\"$LOADER,amd,development\")"
-  - "[ $EXPORTS != 'es' ]  || TARGET_PATH=\"../../../$EXPORTS/lodash.js\""
-  - "[ $EXPORTS != 'npm' ] || OUTPUT_PATH=\"./npm/node_modules\""
+  - OUTPUT_PATH="./$EXPORTS"
+  - TARGET_PATH="../../../$EXPORTS/index.js"
+  - |
+      if [ $EXPORTS = 'amd' ]; then
+        TARGET_PATH="../../../amd/main.js"
+        # TAGS="requirejs,amd,development"
+        # QUERY="build=$TARGET_PATH&loader=requirejs&noglobals=true"
+      elif [ $EXPORTS = 'es' ]; then
+        TARGET_PATH="../../../$EXPORTS/lodash.js"
+      elif [ $EXPORTS = 'npm' ]; then
+        OUTPUT_PATH="./npm/node_modules"
+      fi
 
   # Use lodash from GitHub.
-  - "git clone --depth=10 --branch=master git://github.com/lodash/lodash ./node_modules/lodash && cd $_ && npm i && cd ../../"
+  - git clone --depth=10 --branch=master git://github.com/lodash/lodash ./node_modules/lodash
+  - cd ./node_modules/lodash; npm i; cd ../../
 
   # Create builds.
-  - "[ $TEST_BUILDS == true ] || (npm i && node ./bin/lodash modularize exports=$EXPORTS -o $OUTPUT_PATH)"
-  - "[ $EXPORTS != 'es' ]  || node ./bin/lodash modularize exports=node minus=main -o ./node_modules/lodash"
-  - "[ $EXPORTS != 'es' ]  || babel ./$EXPORTS --presets es2015 --out-dir ./$EXPORTS"
-  - "[ $EXPORTS != 'npm' ] || (cd ./npm && cp ../test/npm/index.js ./index.js && cd ../)"
+  - |
+      if [ $TEST_BUILDS != true ]; then
+        npm i
+        node ./bin/lodash modularize exports=$EXPORTS -o $OUTPUT_PATH
+        if [ $EXPORTS = 'es' ]; then
+          node ./bin/lodash modularize exports=node minus=main -o ./node_modules/lodash
+          babel ./$EXPORTS --presets es2015 --out-dir ./$EXPORTS
+        elif [ $EXPORTS = 'npm' ]; then
+          cd ./npm; cp ../test/npm/index.js ./index.js; cd ../
+        fi
+      fi
 
 script:
   # Test in Node.js.
-  - "[ $EXPORTS == 'amd' ] || [ $TEST_BUILDS == true ]  || node $RUNNER_PATH/test.js $TARGET_PATH"
-  - "[ $EXPORTS == 'amd' ] || [ $TEST_BUILDS == false ] || node test --time-limit 45m"
+  - |
+      if [ $EXPORTS != 'amd' ]; then
+        if [ $TEST_BUILDS = true ]; then
+          node test --time-limit 45m
+        else
+          node $RUNNER_PATH/test.js $TARGET_PATH
+        fi
+      fi
 
   # Test in Sauce Labs.
-  - "[ $EXPORTS != 'amd' ] || node $SAUCE_PATH name=\"lodash tests\"     runner=\"$RUNNER_PATH/index.html?$QUERY\"      tags=\"$TAGS\""
-  - "[ $EXPORTS != 'amd' ] || node $SAUCE_PATH name=\"backbone tests\"   runner=\"$RUNNER_PATH/backbone.html?$QUERY\"   tags=\"$TAGS,backbone\""
-  - "[ $EXPORTS != 'amd' ] || node $SAUCE_PATH name=\"underscore tests\" runner=\"$RUNNER_PATH/underscore.html?$QUERY\" tags=\"$TAGS,underscore\""
+  - |
+      if [ $EXPORTS = 'amd' ]; then
+        node $SAUCE_PATH name="lodash tests"     runner="$RUNNER_PATH/index.html?$QUERY"      tags="$TAGS"
+        node $SAUCE_PATH name="backbone tests"   runner="$RUNNER_PATH/backbone.html?$QUERY"   tags="$TAGS,backbone"
+        node $SAUCE_PATH name="underscore tests" runner="$RUNNER_PATH/underscore.html?$QUERY" tags="$TAGS,underscore"
+      fi
