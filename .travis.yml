@@ -90,7 +90,7 @@ script:
   # Test in Sauce Labs.
   - |
       if [ $EXPORTS = 'amd' ]; then
-        node $SAUCE_PATH name="lodash tests"     runner="$RUNNER_PATH/index.html?$QUERY"      tags="$TAGS"
-        node $SAUCE_PATH name="backbone tests"   runner="$RUNNER_PATH/backbone.html?$QUERY"   tags="$TAGS,backbone"
-        node $SAUCE_PATH name="underscore tests" runner="$RUNNER_PATH/underscore.html?$QUERY" tags="$TAGS,underscore"
+        node $SAUCE_PATH name="lodash tests"     runner="$RUNNER_PATH/index.html?$QUERY"      tags=$TAGS
+        node $SAUCE_PATH name="backbone tests"   runner="$RUNNER_PATH/backbone.html?$QUERY"   tags=$TAGS,backbone
+        node $SAUCE_PATH name="underscore tests" runner="$RUNNER_PATH/underscore.html?$QUERY" tags=$TAGS,underscore
       fi
