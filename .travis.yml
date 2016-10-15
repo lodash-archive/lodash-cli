@@ -51,8 +51,8 @@ before_install:
   - |
       if [ $EXPORTS = 'amd' ]; then
         TARGET_PATH="../../../amd/main.js"
-        # TAGS="requirejs,amd,development"
-        # QUERY="build=$TARGET_PATH&loader=requirejs&noglobals=true"
+        TAGS="requirejs,amd,development"
+        QUERY="build=$TARGET_PATH&loader=requirejs&noglobals=true"
       elif [ $EXPORTS = 'es' ]; then
         TARGET_PATH="../../../$EXPORTS/lodash.js"
       elif [ $EXPORTS = 'npm' ]; then
