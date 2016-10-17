@@ -54,7 +54,6 @@ function addCommandsToHeader(source, commands) {
 
     // Remove any existing custom build information.
     header = header
-      .replace(/^( \* *lodash )(?:[.\w\-]+ *)?/m, '$1')
       .replace(' (Custom Build)', '')
       .replace(/^ *\* *Build:.+\n/m, '');
 
@@ -346,7 +345,7 @@ function buildModule(state, onComplete) {
             // otherwise remove the version from the header.
             return isSameVersion
               ? getHeader(oldSource)
-              : header.replace(/^( \* *lodash )(?:[.\w\-]+ *)?/m, '$1');
+              : header;
           });
         }
         if (!isSameVersion) {
