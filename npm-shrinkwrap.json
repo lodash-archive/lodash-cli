@@ -93,9 +93,9 @@
       "resolved": "https://registry.npmjs.org/semver/-/semver-5.3.0.tgz"
     },
     "uglify-js": {
-      "version": "2.7.3",
-      "from": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.7.3.tgz",
-      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.7.3.tgz",
+      "version": "2.7.4",
+      "from": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.7.4.tgz",
+      "resolved": "https://registry.npmjs.org/uglify-js/-/uglify-js-2.7.4.tgz",
       "dependencies": {
         "async": {
           "version": "0.2.10",
@@ -155,9 +155,9 @@
                           "resolved": "https://registry.npmjs.org/longest/-/longest-1.0.1.tgz"
                         },
                         "repeat-string": {
-                          "version": "1.5.4",
-                          "from": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.5.4.tgz",
-                          "resolved": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.5.4.tgz"
+                          "version": "1.6.1",
+                          "from": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.6.1.tgz",
+                          "resolved": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.6.1.tgz"
                         }
                       }
                     },
@@ -196,9 +196,9 @@
                           "resolved": "https://registry.npmjs.org/longest/-/longest-1.0.1.tgz"
                         },
                         "repeat-string": {
-                          "version": "1.5.4",
-                          "from": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.5.4.tgz",
-                          "resolved": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.5.4.tgz"
+                          "version": "1.6.1",
+                          "from": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.6.1.tgz",
+                          "resolved": "https://registry.npmjs.org/repeat-string/-/repeat-string-1.6.1.tgz"
                         }
                       }
                     }
