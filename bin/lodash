@@ -2340,10 +2340,11 @@ function build(options, callback) {
           funcDepMap[funcName].push('arrayEach');
         });
       }
-      if (isNpm) {
-        source = removeChaining(source, seqDepMap, funcDepMap, varDepMap);
-        source = removeMetadata(source, funcDepMap);
-
+      if (isModularize) {
+        if (isNpm) {
+          source = removeChaining(source, seqDepMap, funcDepMap, varDepMap);
+          source = removeMetadata(source, funcDepMap);
+        }
         // Remove `getIteratee` use from iteration methods.
         _.each(['forEach', 'forEachRight', 'forIn', 'forInRight', 'forOwn', 'forOwnRight', 'times'], function(funcName) {
           _.pull(funcDepMap[funcName], 'getIteratee').push('identity');
