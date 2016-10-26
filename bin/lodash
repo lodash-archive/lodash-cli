@@ -2347,9 +2347,9 @@ function build(options, callback) {
         }
         // Remove `getIteratee` use from iteration methods.
         _.each(['forEach', 'forEachRight', 'forIn', 'forInRight', 'forOwn', 'forOwnRight', 'times'], function(funcName) {
-          _.pull(funcDepMap[funcName], 'getIteratee').push('identity');
+          _.pull(funcDepMap[funcName], 'getIteratee').push('castFunction');
           source = modifyFunction(source, funcName, function(match) {
-            return match.replace(/\bgetIteratee\(([^,\)]+)[\s\S]*?\)/, "typeof $1 == 'function' ? $1 : identity");
+            return match.replace(/\bgetIteratee\(([^,\)]+)[\s\S]*?\)/, 'castFunction($1)');
           });
         });
       }
