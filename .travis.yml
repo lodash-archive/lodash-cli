@@ -28,10 +28,6 @@ matrix:
       env:
     - node_js: 6
       env: EXPORTS=npm
-    - node_js: 4
-      env:
-    - node_js: 4
-      env: EXPORTS=npm
 git:
   depth: 10
 
