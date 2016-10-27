@@ -5,7 +5,7 @@ node_js:
 
 cache:
   directories:
-    - $HOME/.npm
+    - ~/.npm
 
 env:
   global:
