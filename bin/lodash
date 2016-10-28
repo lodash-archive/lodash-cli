@@ -2762,7 +2762,7 @@ function build(options, callback) {
 
         source = replaceFunction(source, 'indexOf', [
           'function indexOf(array, value, fromIndex) {',
-          '  var length = array ? array.length : 0;',
+          '  var length = array == null ? 0 : array.length;',
           "  if (typeof fromIndex == 'number') {",
           '    fromIndex = fromIndex < 0 ? nativeMax(length + fromIndex, 0) : fromIndex;',
           '  } else {',
@@ -2878,7 +2878,7 @@ function build(options, callback) {
 
         source = replaceFunction(source, 'slice', [
           'function slice(array, start, end) {',
-          '  var length = array ? array.length : 0;',
+          '  var length = array == null ? 0 : array.length;',
           '  start = start == null ? 0 : +start;',
           '  end = end === undefined ? length : +end;',
           '  return length ? baseSlice(array, start, end) : [];',
