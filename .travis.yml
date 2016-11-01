@@ -69,7 +69,7 @@ before_install:
         node ./bin/lodash modularize exports=$EXPORTS -o $OUTPUT_PATH
         if [ $EXPORTS = 'es' ]; then
           node ./bin/lodash modularize exports=node minus=main -o ./node_modules/lodash
-          babel ./$EXPORTS --presets es2015 --out-dir ./$EXPORTS
+          babel ./$EXPORTS --out-dir ./$EXPORTS
         elif [ $EXPORTS = 'npm' ]; then
           cd ./npm; cp ../test/npm/index.js ./index.js; cd ../
         fi
