@@ -58,7 +58,7 @@ function addCommandsToHeader(source, commands) {
       .replace(/^ *\* *Build:.+\n/m, '');
 
     // Add build commands to copyright header.
-    return header.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *lodash)(.*)/, function(match, prelude, indent, tag, title, postlude) {
+    return header.replace(/(\/\**\n)( \*)( *@license[\s*]+)?( *Lodash)(.*)/, function(match, prelude, indent, tag, title, postlude) {
       return (
         prelude +
         indent +
