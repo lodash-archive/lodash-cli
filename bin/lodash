@@ -2610,7 +2610,7 @@ function build(options, callback) {
           '    while (length--) {',
           '      var key = props[length];',
           '      if (!(key in object &&',
-          '            baseIsEqual(source[key], object[key], undefined, UNORDERED_COMPARE_FLAG | PARTIAL_COMPARE_FLAG)',
+          '            baseIsEqual(source[key], object[key], COMPARE_PARTIAL_FLAG | COMPARE_UNORDERED_FLAG)',
           '          )) {',
           '        return false;',
           '      }',
@@ -2702,7 +2702,7 @@ function build(options, callback) {
 
         source = replaceFunction(source, 'bind', [
           'var bind = baseRest(function(func, thisArg, partials) {',
-          '  return createPartial(func, BIND_FLAG | PARTIAL_FLAG, thisArg, partials);',
+          '  return createPartial(func, WRAP_BIND_FLAG | WRAP_PARTIAL_FLAG, thisArg, partials);',
           '});'
         ].join('\n'));
 
