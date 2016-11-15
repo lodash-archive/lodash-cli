@@ -85,7 +85,7 @@
       }
     },
     "lodash": {
-      "version": "4.17.1"
+      "version": "4.17.2-pre"
     },
     "semver": {
       "version": "5.3.0",
