@@ -2659,9 +2659,6 @@ function build(options, callback) {
         funcDepMap.setToString = ['identity'];
         source = replaceFunction(source, 'setToString', 'var setToString = identity;');
 
-        funcDepMap.toKey = [];
-        source = replaceFunction(source, 'toKey', 'var toKey = String;');
-
         funcDepMap.wrapperClone = ['copyArray', 'LodashWrapper'];
 
         source = replaceFunction(source, 'wrapperClone', [
