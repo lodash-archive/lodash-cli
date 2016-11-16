@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
-    "babel-preset-env": "0.0.7",
+    "babel-preset-env": "0.0.8",
     "qunit-extras": "^3.0.0",
     "qunitjs": "^2.0.1"
   },
