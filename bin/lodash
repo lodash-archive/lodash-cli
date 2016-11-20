@@ -2533,6 +2533,13 @@ function build(options, callback) {
             });
         });
 
+        // Replace `getAllKeys` with `keys` in `equalObjects`.
+        _.pull(funcDepMap.equalObjects, 'getAllKeys').push('keys');
+
+        source = modifyFunction(source, 'equalObjects', function(match) {
+          return match.replace(/\bgetAllKeys\b/g, 'keys');
+        });
+
         // Replace `baseAssign` with `assign` in `_.create`.
         _.pull(funcDepMap.create, 'baseAssign').push('assign');
 
@@ -2547,7 +2554,7 @@ function build(options, callback) {
           return match.replace(/\bcreateWrap\([\s\S]+?(?=;\n)/, 'partial(wrapper, value)');
         });
 
-        // Replace `isXyz` methods with their base counterparts.
+        // Replace type check methods with their base counterparts.
         _.each(['isArrayBuffer', 'isDate', 'isMap', 'isRegExp', 'isSet', 'isTypedArray'], function(funcName) {
           var baseName = 'base' + _.upperFirst(funcName);
           funcDepMap[funcName] = [baseName];
