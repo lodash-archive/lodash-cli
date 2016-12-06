@@ -30,7 +30,7 @@
     "babel-cli": "^6.18.0",
     "babel-preset-env": "0.0.9",
     "qunit-extras": "^3.0.0",
-    "qunitjs": "^2.0.1"
+    "qunitjs": "^2.1.0"
   },
   "files": [
     "bin",
