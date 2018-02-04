@@ -1578,7 +1578,7 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, varDepMap) {
     );
   }
   if (funcDepMap) {
-    funcDepMap.createFlow = ['baseFlatten', 'baseRest'];
+    funcDepMap.createFlow = ['baseFlatten', 'flatRest'];
   }
   if (varDepMap) {
     source = removeVar(source, 'realNames');
@@ -1588,7 +1588,7 @@ function removeLazyChaining(source, seqDepMap, funcDepMap, varDepMap) {
   }
   source = replaceFunction(source, 'createFlow', [
     'function createFlow(fromRight) {',
-    '  return baseRest(function(funcs) {',
+    '  return flatRest(function(funcs) {',
     '    funcs = baseFlatten(funcs, 1);',
     '',
     '    var length = funcs.length,',
