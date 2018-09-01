@@ -2956,7 +2956,8 @@ function build(options, callback) {
           funcDepMap[funcName].push('wrapperValue');
         });
       }
-      if (isCore || isModularize) {
+      if (isModularize ||
+          (isCore && _.isEmpty(plusFuncs))) {
         source = removeGetIteratee(source, funcDepMap);
       }
       // Remove iteratee shorthand support from `iteratee`.
