@@ -3097,7 +3097,7 @@ function build(options, callback) {
             return indent + left + [
               "hasOwnProperty.call(options, 'sourceURL')",
               indent + "  ? ('//# sourceURL=' +",
-              indent + "     (options.sourceURL + '').replace(/[\\r\\n]/g, ' ') +",
+              indent + "     (options.sourceURL + '').replace(/\\s/g, ' ') +",
               indent + "     '\\n')",
               indent + "  : ''"
             ].join('\n');
