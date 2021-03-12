@@ -2,7 +2,9 @@
   "name": "lodash-cli",
   "version": "4.17.15",
   "description": "The Lodash command-line interface.",
-  "keywords": "builder, compile, customize, lodash",
+  "keywords": [
+    "builder, compile, customize, lodash"
+  ],
   "homepage": "https://lodash.com/custom-builds",
   "repository": "lodash/lodash-cli",
   "license": "MIT",
