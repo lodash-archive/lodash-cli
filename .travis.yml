@@ -59,7 +59,7 @@ before_install:
       fi
 
   # Use lodash from GitHub.
-  - git clone --depth=10 --branch=4.17.15 git://github.com/lodash/lodash ./node_modules/lodash
+  - git clone --depth=10 --branch=4.17.21 git://github.com/lodash/lodash ./node_modules/lodash
   - cd ./node_modules/lodash; npm i; cd ../../
 
   # Create builds.
