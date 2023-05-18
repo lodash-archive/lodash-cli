@@ -1,6 +1,6 @@
 {
   "name": "lodash-cli",
-  "version": "4.17.15",
+  "version": "4.17.21",
   "description": "The Lodash command-line interface.",
   "keywords": "builder, compile, customize, lodash",
   "homepage": "https://lodash.com/custom-builds",
@@ -22,7 +22,7 @@
   "dependencies": {
     "closure-compiler": "0.2.12",
     "glob": "7.1.1",
-    "lodash": "4.17.15",
+    "lodash": "4.17.21",
     "semver": "5.3.0",
     "uglify-js": "2.7.5"
   },
