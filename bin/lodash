@@ -2101,8 +2101,12 @@ function build(options, callback) {
         funcDepMap = new Hash(_.cloneDeep(mapping.funcDep)),
         varDepMap = new Hash(_.cloneDeep(mapping.varDep));
 
-    // The path to the source file.
-    var filePath = require.resolve('lodash');
+    var source = _.reduce(options, function(result, value, index) {
+      return /^--source$/.test(value) ? path.resolve(options[index + 1]) : result;
+    }, null)
+
+    // The path to the source file. Defaults to installed lodash version if no source path passed
+    var filePath = source || require.resolve('lodash');
 
     // Used to specify a custom IIFE to wrap lodash.
     var iife = getOption(options, 'iife');
@@ -2231,7 +2235,7 @@ function build(options, callback) {
 
     // Used to detect invalid command-line arguments.
     var invalidArgs = _.reject(options, function(value, index, options) {
-      if (/^(?:-o|--output)$/.test(options[index - 1]) ||
+      if (/^(?:-o|--output|--source)$/.test(options[index - 1]) ||
           /^(?:category|exports|iife|include|minus|moduleId|plus|settings|template)=[\s\S]*$/.test(value)) {
         return true;
       }
