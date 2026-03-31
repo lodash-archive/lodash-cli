@@ -2056,414 +2056,438 @@ function build(options, callback) {
   options || (options = []);
   callback || (callback = defaultBuildCallback);
 
-  // Used to specify the output path for builds.
-  var outputPath;
+  // If `--repo` is specified, fetch the source from GitHub then continue the build.
+  var repoArg = _.isArray(options) && _.reduce(options, function(result, value, index) {
+    return /^--repo$/.test(value) ? options[index + 1] : result;
+  }, null);
 
-  // Used to specify the source map URL.
-  var sourceMapURL;
-
-  // Used to track the time it takes to complete a build.
-  var stamp = _.now();
-
-  // Used to pre-populate the build state.
-  var state = _.isPlainObject(options) && options;
-
-  var isExcluded = function() {
-    return _.every(arguments, function(value) {
-      return !_.includes(buildFuncs, value);
-    });
-  };
-
-  if (state) {
-    var buildFuncs = state.buildFuncs,
-        filePath = state.filePath,
-        funcDepMap = state.funcDepMap,
-        funcTokenMap = state.funcTokenMap,
-        includeFuncs = state.includeFuncs,
-        includeVars = state.includeVars,
-        isDevelopment = true,
-        isModularize = true,
-        isStdOut = state.isStdOut,
-        isStrict = state.isStrict,
-        minusFuncs = [],
-        outputPath = state.outputPath,
-        plusFuncs = [],
-        source = state.source,
-        varDepMap = state.varDepMap,
-        varNames = state.varNames;
-  }
-  else {
-    // Clear `matchFunction` memoize cache.
-    matchFunction.cache.clear();
-
-    // Clone dependencies to modify.
-    var seqDepMap = new Hash(_.cloneDeep(mapping.seqDep)),
-        funcDepMap = new Hash(_.cloneDeep(mapping.funcDep)),
-        varDepMap = new Hash(_.cloneDeep(mapping.varDep));
-
-    var source = _.reduce(options, function(result, value, index) {
-      return /^--source$/.test(value) ? path.resolve(options[index + 1]) : result;
-    }, null)
-
-    // The path to the source file. Defaults to installed lodash version if no source path passed
-    var filePath = source || require.resolve('lodash');
-
-    // Used to specify a custom IIFE to wrap lodash.
-    var iife = getOption(options, 'iife');
-
-    // Used to match external template files to precompile.
-    var templatePattern = getOption(options, 'template', '');
-
-    // Used as the template settings for precompiled templates.
-    var templateSettings = (function() {
-      var result = getOption(options, 'settings');
-      return result
-        ? Function('return {' + result.replace(/^\{|\}$/g, '') + '}')()
-        : _.clone(_.templateSettings);
-    }());
-
-    // A flag to specify a core build.
-    var isCore = getOption(options, 'core');
-
-    // A flag to specify only creating the development build.
-    var isDevelopment = getOption(options, ['-d', '--development']);
-
-    // A flag to indicate that a custom IIFE was specified.
-    var isIIFE = typeof iife == 'string';
-
-    // A flag to specify creating a source map for the minified source.
-    var isMapped = getOption(options, ['-m', '--source-map']);
-
-    // A flag to specify a modularize build.
-    var isModularize = getOption(options, 'modularize');
-
-    // A flag to specify only creating the minified build.
-    var isProduction = getOption(options, ['-p', '--production']);
-
-    // A flag to specify writing output to standard output.
-    var isStdOut = getOption(options, ['-c', '--stdout']);
-
-    // A flag to specify skipping status updates normally logged to the console.
-    var isSilent = !isBin || isStdOut || getOption(options, ['-s', '--silent']);
-
-    // A flag to specify `_.assign`, `_.bindAll`, and `_.defaults`
-    // are constructed using the "use strict" directive.
-    var isStrict = getOption(options, 'strict');
-
-    // A flag to specify a template build.
-    var isTemplate = !!templatePattern;
-
-    // Used to specify the AMD module ID of lodash used by precompiled templates.
-    var moduleId = getOption(options, 'moduleId');
-
-    // Used as the output path for the build.
-    var outputPath = _.reduce(options, function(result, value, index) {
-      return /^(?:-o|--output)$/.test(value)
-        ? path.normalize(options[index + 1])
-        : result;
-    }, isModularize ? ('.' + path.sep + 'modularize') : '');
-
-    // Used to specify the ways to export the `lodash` function.
-    var exportsOptions = (function() {
-      var result = getOption(options, 'exports', buildExports.defaults[isModularize ? 'modularize' : 'monolithic']);
-      if (!isModularize && _.includes(result, 'umd')) {
-        result = _.union(result, buildExports.umd);
-      }
-      return isModularize ? _.take(result, 1) : result;
-    }());
-
-    // A flag to specify creating a custom build.
-    var isCustom = !isModularize && (
-      isCore || isMapped || isStrict || isTemplate ||
-      /\b(?:category|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
-      !_.isEqual(exportsOptions, buildExports.defaults.monolithic)
-    );
-
-    // Flags to specify export options.
-    var isAMD = _.includes(exportsOptions, 'amd'),
-        isES = _.includes(exportsOptions, 'es'),
-        isGlobal = _.includes(exportsOptions, 'global'),
-        isNpm = _.includes(exportsOptions, 'npm'),
-        isNode = isNpm || _.includes(exportsOptions, 'node');
-
-    if (isTemplate) {
-      isModularize = false;
-    }
-    // The lodash.js source.
-    var source = fs.readFileSync(filePath, 'utf8');
-
-    /*------------------------------------------------------------------------*/
-
-    // Categories of functions to include in the build.
-    var categoryOptions = _.map(getOption(options, 'category', []), function(category) {
-      return getRealCategory(_.capitalize(category.toLowerCase()));
-    });
-
-    // Functions to include in the build.
-    var includeFuncs = _.union(categoryOptions, _.map(getOption(options, 'include', []), getRealName));
-
-    // Variables to include in the build.
-    var includeVars = _.intersection(includeFuncs, listing.varDeps);
-
-    // Functions to remove from the build.
-    var minusFuncs = _.map(getOption(options, 'minus', []), getRealName);
-
-    // Functions to add to the build.
-    var plusFuncs = _.map(getOption(options, 'plus', []), getRealName);
-
-    // Expand categories to function names.
-    _.each([includeFuncs, minusFuncs, plusFuncs], function(funcNames) {
-      var categories = _.intersection(funcNames, listing.categories);
-
-      _.each(categories, function(category) {
-        push.apply(funcNames, _.filter(getNamesByCategory(category), function(key) {
-          var type = typeof _[key];
-          return type == 'function' || type == 'undefined';
-        }));
-      });
-    });
-
-    // Remove categories from function names.
-    includeFuncs = _.difference(includeFuncs, listing.categories, includeVars);
-    minusFuncs = _.difference(minusFuncs, listing.categories);
-    plusFuncs = _.difference(plusFuncs, listing.categories);
-
-    /*------------------------------------------------------------------------*/
-
-    // Used to capture warnings for invalid command-line arguments.
-    var warnings = [];
-
-    // Used to detect invalid command-line arguments.
-    var invalidArgs = _.reject(options, function(value, index, options) {
-      if (/^(?:-o|--output|--source)$/.test(options[index - 1]) ||
-          /^(?:category|exports|iife|include|minus|moduleId|plus|settings|template)=[\s\S]*$/.test(value)) {
-        return true;
-      }
-      var result = _.includes(listing.buildFlags, value);
-      if (!result && /^(?:-m|--source-map)$/.test(options[index - 1])) {
-        sourceMapURL = value;
-        return true;
-      }
-      return result;
-    });
-
-    // Report invalid command and option arguments.
-    if (!_.isEmpty(invalidArgs)) {
-      warnings.push('Invalid argument' + (_.size(invalidArgs) > 1 ? 's' : '') + ' passed: ' + invalidArgs.join(', '));
-    }
-    // Report invalid command entries.
-    _.forOwn({
-      'category': {
-        'entries': categoryOptions,
-        'validEntries': listing.categories
-      },
-      'exports': {
-        'entries': exportsOptions,
-        'validEntries': buildExports[isModularize ? 'modularize' : 'monolithic']
-      },
-      'include': {
-        'entries': includeFuncs,
-        'validEntries': listing.funcs
-      },
-      'minus': {
-        'entries': minusFuncs,
-        'validEntries': listing.funcs
-      },
-      'plus': {
-        'entries': plusFuncs,
-        'validEntries': listing.funcs
-      }
-    }, function(data, commandName) {
-      invalidArgs = _.difference(data.entries, data.validEntries, ['none']);
-      if (!_.isEmpty(invalidArgs)) {
-        warnings.push('Invalid `' + commandName + '` entr' + (_.size(invalidArgs) > 1 ? 'ies' : 'y') + ' passed: ' + invalidArgs.join(', '));
-      }
-    });
-
-    if (!_.isEmpty(warnings)) {
-      var warnText = [
-        '',
-        warnings,
-        'For more information type: lodash --help'
-      ].join('\n');
-
-      if (isBin) {
-        console.warn(warnText);
+  if (repoArg) {
+    util.fetchGitHubSource(repoArg).then(
+      function(tmpFile) { _build(tmpFile); },
+      function(err) {
+        console.error('Error fetching source from repo: ' + err.message);
         process.exit(1);
-      } else {
-        callback(_.create(Error.prototype, { 'message': warnText, 'source': warnText }));
       }
-      return;
-    }
-    // Display the help message.
-    if (getOption(options, ['-h', '--help'])) {
-      var helpText = consts.helpText;
-      if (isBin) {
-        console.log(helpText);
-      } else {
-        callback({ 'source': helpText });
-      }
-      return;
-    }
-    // Display the `lodash.VERSION`.
-    if (getOption(options, ['-V', '--version'])) {
-      if (isBin) {
-        console.log(_.VERSION);
-      } else {
-        callback({ 'source': _.VERSION });
-      }
-      return;
+    );
+    return;
+  }
+  _build(null);
+
+  function _build(_tempFile) {
+    if (_tempFile) {
+      process.on('exit', function() {
+        try { fs.unlinkSync(_tempFile); } catch(e) {}
+      });
     }
 
-    /*------------------------------------------------------------------------*/
+    // Used to specify the output path for builds.
+    var outputPath;
 
-    // The names of functions to include in the build.
-    var buildFuncs = !isTemplate && (function() {
-      source = setUseStrictOption(source, isStrict);
+    // Used to specify the source map URL.
+    var sourceMapURL;
 
-      if (isModularize) {
-        // Remove `clearTimeout` and `setTimeout` deps.
-        _.forOwn(funcDepMap, function(depNames) {
-          _.pull(depNames, 'clearTimeout', 'setTimeout');
-        });
+    // Used to track the time it takes to complete a build.
+    var stamp = _.now();
 
-        // Remove `lodash.placeholder` references.
-        _.pull(funcDepMap.getHolder, 'lodash');
+    // Used to pre-populate the build state.
+    var state = _.isPlainObject(options) && options;
 
-        source = modifyFunction(source, 'getHolder', function(match) {
-          return replaceVar(match, 'object', 'func');
-        });
+    var isExcluded = function() {
+      return _.every(arguments, function(value) {
+        return !_.includes(buildFuncs, value);
+      });
+    };
 
-        // Add deps to wrap `_.mixin` in `main`.
-        funcDepMap.main.push('baseFunctions', 'isObject', 'keys', 'mixin');
-      }
-      else {
-        // Add `arrayEach` to functions with placeholder support because it's
-        // used to reduce code for placeholder assignments
-        _.each(listing.placeholderFuncs, function(funcName) {
-          funcDepMap[funcName].push('arrayEach');
-        });
-      }
-      if (isModularize) {
-        if (isNpm) {
-          source = removeChaining(source, seqDepMap, funcDepMap, varDepMap);
-          source = removeMetadata(source, funcDepMap);
+    if (state) {
+      var buildFuncs = state.buildFuncs,
+          filePath = state.filePath,
+          funcDepMap = state.funcDepMap,
+          funcTokenMap = state.funcTokenMap,
+          includeFuncs = state.includeFuncs,
+          includeVars = state.includeVars,
+          isDevelopment = true,
+          isModularize = true,
+          isStdOut = state.isStdOut,
+          isStrict = state.isStrict,
+          minusFuncs = [],
+          outputPath = state.outputPath,
+          plusFuncs = [],
+          source = state.source,
+          varDepMap = state.varDepMap,
+          varNames = state.varNames;
+    }
+    else {
+      // Clear `matchFunction` memoize cache.
+      matchFunction.cache.clear();
+
+      // Clone dependencies to modify.
+      var seqDepMap = new Hash(_.cloneDeep(mapping.seqDep)),
+          funcDepMap = new Hash(_.cloneDeep(mapping.funcDep)),
+          varDepMap = new Hash(_.cloneDeep(mapping.varDep));
+
+      var source = _.reduce(options, function(result, value, index) {
+        return /^--source$/.test(value) ? path.resolve(options[index + 1]) : result;
+      }, null)
+
+      // The path to the source file. Defaults to installed lodash version if no source path passed
+      var filePath = _tempFile || source || require.resolve('lodash');
+
+      // Used to specify a custom IIFE to wrap lodash.
+      var iife = getOption(options, 'iife');
+
+      // Used to match external template files to precompile.
+      var templatePattern = getOption(options, 'template', '');
+
+      // Used as the template settings for precompiled templates.
+      var templateSettings = (function() {
+        var result = getOption(options, 'settings');
+        return result
+          ? Function('return {' + result.replace(/^\{|\}$/g, '') + '}')()
+          : _.clone(_.templateSettings);
+      }());
+
+      // A flag to specify a core build.
+      var isCore = getOption(options, 'core');
+
+      // A flag to specify only creating the development build.
+      var isDevelopment = getOption(options, ['-d', '--development']);
+
+      // A flag to indicate that a custom IIFE was specified.
+      var isIIFE = typeof iife == 'string';
+
+      // A flag to specify creating a source map for the minified source.
+      var isMapped = getOption(options, ['-m', '--source-map']);
+
+      // A flag to specify a modularize build.
+      var isModularize = getOption(options, 'modularize');
+
+      // A flag to specify only creating the minified build.
+      var isProduction = getOption(options, ['-p', '--production']);
+
+      // A flag to specify writing output to standard output.
+      var isStdOut = getOption(options, ['-c', '--stdout']);
+
+      // A flag to specify skipping status updates normally logged to the console.
+      var isSilent = !isBin || isStdOut || getOption(options, ['-s', '--silent']);
+
+      // A flag to specify `_.assign`, `_.bindAll`, and `_.defaults`
+      // are constructed using the "use strict" directive.
+      var isStrict = getOption(options, 'strict');
+
+      // A flag to specify a template build.
+      var isTemplate = !!templatePattern;
+
+      // Used to specify the AMD module ID of lodash used by precompiled templates.
+      var moduleId = getOption(options, 'moduleId');
+
+      // Used as the output path for the build.
+      var outputPath = _.reduce(options, function(result, value, index) {
+        return /^(?:-o|--output)$/.test(value)
+          ? path.normalize(options[index + 1])
+          : result;
+      }, isModularize ? ('.' + path.sep + 'modularize') : '');
+
+      // Used to specify the ways to export the `lodash` function.
+      var exportsOptions = (function() {
+        var result = getOption(options, 'exports', buildExports.defaults[isModularize ? 'modularize' : 'monolithic']);
+        if (!isModularize && _.includes(result, 'umd')) {
+          result = _.union(result, buildExports.umd);
         }
-        // Remove `getIteratee` use from iteration methods.
-        _.each(['forEach', 'forEachRight', 'forIn', 'forInRight', 'forOwn', 'forOwnRight', 'times'], function(funcName) {
-          _.pull(funcDepMap[funcName], 'getIteratee').push('castFunction');
-          source = modifyFunction(source, funcName, function(match) {
-            return match.replace(/\bgetIteratee\(([^,\)]+)[\s\S]*?\)/, 'castFunction($1)');
-          });
-        });
+        return isModularize ? _.take(result, 1) : result;
+      }());
+
+      // A flag to specify creating a custom build.
+      var isCustom = !isModularize && (
+        isCore || isMapped || isStrict || isTemplate ||
+        /\b(?:category|exports|iife|include|minus|moduleId|plus)=/.test(options) ||
+        !_.isEqual(exportsOptions, buildExports.defaults.monolithic)
+      );
+
+      // Flags to specify export options.
+      var isAMD = _.includes(exportsOptions, 'amd'),
+          isES = _.includes(exportsOptions, 'es'),
+          isGlobal = _.includes(exportsOptions, 'global'),
+          isNpm = _.includes(exportsOptions, 'npm'),
+          isNode = isNpm || _.includes(exportsOptions, 'node');
+
+      if (isTemplate) {
+        isModularize = false;
       }
-      if (isCore && _.isEmpty(plusFuncs)) {
-        source = removeLazyChaining(source, seqDepMap, funcDepMap, varDepMap);
-        source = removeMetadata(source, funcDepMap);
+      // The lodash.js source.
+      var source = fs.readFileSync(filePath, 'utf8');
 
-        // Add `func` check to `createPartial`.
-        source = modifyFunction(source, 'createPartial', function(match) {
-          return match.replace(/^( *)(?=var\b)/m, function(match, indent) {
-            var prelude = '\n' + indent;
-            return indent + [
-              "if (typeof func != 'function') {",
-              '  throw new TypeError(FUNC_ERROR_TEXT);',
-              '}'
-            ].join(prelude) + prelude;
+      /*------------------------------------------------------------------------*/
+
+      // Categories of functions to include in the build.
+      var categoryOptions = _.map(getOption(options, 'category', []), function(category) {
+        return getRealCategory(_.capitalize(category.toLowerCase()));
+      });
+
+      // Functions to include in the build.
+      var includeFuncs = _.union(categoryOptions, _.map(getOption(options, 'include', []), getRealName));
+
+      // Variables to include in the build.
+      var includeVars = _.intersection(includeFuncs, listing.varDeps);
+
+      // Functions to remove from the build.
+      var minusFuncs = _.map(getOption(options, 'minus', []), getRealName);
+
+      // Functions to add to the build.
+      var plusFuncs = _.map(getOption(options, 'plus', []), getRealName);
+
+      // Expand categories to function names.
+      _.each([includeFuncs, minusFuncs, plusFuncs], function(funcNames) {
+        var categories = _.intersection(funcNames, listing.categories);
+
+        _.each(categories, function(category) {
+          push.apply(funcNames, _.filter(getNamesByCategory(category), function(key) {
+            var type = typeof _[key];
+            return type == 'function' || type == 'undefined';
+          }));
+        });
+      });
+
+      // Remove categories from function names.
+      includeFuncs = _.difference(includeFuncs, listing.categories, includeVars);
+      minusFuncs = _.difference(minusFuncs, listing.categories);
+      plusFuncs = _.difference(plusFuncs, listing.categories);
+
+      /*------------------------------------------------------------------------*/
+
+      // Used to capture warnings for invalid command-line arguments.
+      var warnings = [];
+
+      // Used to detect invalid command-line arguments.
+      var invalidArgs = _.reject(options, function(value, index, options) {
+        if (/^(?:-o|--output|--repo|--source)$/.test(options[index - 1]) ||
+            /^(?:category|exports|iife|include|minus|moduleId|plus|settings|template)=[\s\S]*$/.test(value)) {
+          return true;
+        }
+        var result = _.includes(listing.buildFlags, value);
+        if (!result && /^(?:-m|--source-map)$/.test(options[index - 1])) {
+          sourceMapURL = value;
+          return true;
+        }
+        return result;
+      });
+
+      // Report invalid command and option arguments.
+      if (!_.isEmpty(invalidArgs)) {
+        warnings.push('Invalid argument' + (_.size(invalidArgs) > 1 ? 's' : '') + ' passed: ' + invalidArgs.join(', '));
+      }
+      // Report invalid command entries.
+      _.forOwn({
+        'category': {
+          'entries': categoryOptions,
+          'validEntries': listing.categories
+        },
+        'exports': {
+          'entries': exportsOptions,
+          'validEntries': buildExports[isModularize ? 'modularize' : 'monolithic']
+        },
+        'include': {
+          'entries': includeFuncs,
+          'validEntries': listing.funcs
+        },
+        'minus': {
+          'entries': minusFuncs,
+          'validEntries': listing.funcs
+        },
+        'plus': {
+          'entries': plusFuncs,
+          'validEntries': listing.funcs
+        }
+      }, function(data, commandName) {
+        invalidArgs = _.difference(data.entries, data.validEntries, ['none']);
+        if (!_.isEmpty(invalidArgs)) {
+          warnings.push('Invalid `' + commandName + '` entr' + (_.size(invalidArgs) > 1 ? 'ies' : 'y') + ' passed: ' + invalidArgs.join(', '));
+        }
+      });
+
+      if (!_.isEmpty(warnings)) {
+        var warnText = [
+          '',
+          warnings,
+          'For more information type: lodash --help'
+        ].join('\n');
+
+        if (isBin) {
+          console.warn(warnText);
+          process.exit(1);
+        } else {
+          callback(_.create(Error.prototype, { 'message': warnText, 'source': warnText }));
+        }
+        return;
+      }
+      // Display the help message.
+      if (getOption(options, ['-h', '--help'])) {
+        var helpText = consts.helpText;
+        if (isBin) {
+          console.log(helpText);
+        } else {
+          callback({ 'source': helpText });
+        }
+        return;
+      }
+      // Display the `lodash.VERSION`.
+      if (getOption(options, ['-V', '--version'])) {
+        if (isBin) {
+          console.log(_.VERSION);
+        } else {
+          callback({ 'source': _.VERSION });
+        }
+        return;
+      }
+
+      /*------------------------------------------------------------------------*/
+
+      // The names of functions to include in the build.
+      var buildFuncs = !isTemplate && (function() {
+        source = setUseStrictOption(source, isStrict);
+
+        if (isModularize) {
+          // Remove `clearTimeout` and `setTimeout` deps.
+          _.forOwn(funcDepMap, function(depNames) {
+            _.pull(depNames, 'clearTimeout', 'setTimeout');
           });
-        });
 
-        // Remove `apply` and `isSymbol`.
-        _.forOwn(funcDepMap, function(depNames, identifier) {
-          if (_.includes(depNames, 'apply')) {
-            _.pull(depNames, 'apply');
-            source = modifyFunction(source, identifier, function(match) {
-              return match.replace(/\bapply\(([^,)]+),\s*([^,)]+),\s*([^,)]+)\)/g, '$1.apply($2, $3)');
-            });
+          // Remove `lodash.placeholder` references.
+          _.pull(funcDepMap.getHolder, 'lodash');
+
+          source = modifyFunction(source, 'getHolder', function(match) {
+            return replaceVar(match, 'object', 'func');
+          });
+
+          // Add deps to wrap `_.mixin` in `main`.
+          funcDepMap.main.push('baseFunctions', 'isObject', 'keys', 'mixin');
+        }
+        else {
+          // Add `arrayEach` to functions with placeholder support because it's
+          // used to reduce code for placeholder assignments
+          _.each(listing.placeholderFuncs, function(funcName) {
+            funcDepMap[funcName].push('arrayEach');
+          });
+        }
+        if (isModularize) {
+          if (isNpm) {
+            source = removeChaining(source, seqDepMap, funcDepMap, varDepMap);
+            source = removeMetadata(source, funcDepMap);
           }
-          if (_.includes(depNames, 'isSymbol')) {
-            _.pull(depNames, 'isSymbol');
-            source = modifyFunction(source, identifier, function(match) {
-              return match.replace(/\bisSymbol\([^)]+\)/g, 'false');
+          // Remove `getIteratee` use from iteration methods.
+          _.each(['forEach', 'forEachRight', 'forIn', 'forInRight', 'forOwn', 'forOwnRight', 'times'], function(funcName) {
+            _.pull(funcDepMap[funcName], 'getIteratee').push('castFunction');
+            source = modifyFunction(source, funcName, function(match) {
+              return match.replace(/\bgetIteratee\(([^,\)]+)[\s\S]*?\)/, 'castFunction($1)');
             });
-          }
-        });
+          });
+        }
+        if (isCore && _.isEmpty(plusFuncs)) {
+          source = removeLazyChaining(source, seqDepMap, funcDepMap, varDepMap);
+          source = removeMetadata(source, funcDepMap);
 
-        // Remove chain dependencies.
-        _.pull(seqDepMap.funcDep,
-          'baseLodash', 'wrapperCommit', 'wrapperNext',
-          'wrapperPlant', 'wrapperToIterator'
-        );
-
-        // Remove ES5 and ES2015 built-in constructor deps.
-        _.forOwn(funcDepMap, function(deps) {
-          _.pull(deps, 'DataView', 'Map', 'Promise', 'Reflect', 'Set', 'Symbol', 'Uint8Array', 'WeakMap');
-        });
-
-        // Remove map, set, stack, and typed array support from `baseIsEqualDeep`.
-        _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isBuffer', 'isTypedArray', 'Stack').push('baseGetTag', 'find');
-
-        source = modifyFunction(source, 'baseIsEqualDeep', function(match) {
-          return match
-            .replace(/\bgetTag\b/g, 'baseGetTag')
-            .replace(/\s*\|\|\s*isTypedArray\([^)]+\)/, '')
-            .replace(/^( *)if\s*\(.+?isBuffer\b[\s\S]+?\n\1\}\n/m, '')
-            .replace(/^( *)stack\s*\|\|[\s\S]+?\breturn\b([^;]+)(?=;\n)/gm, function(match, indent, compared) {
+          // Add `func` check to `createPartial`.
+          source = modifyFunction(source, 'createPartial', function(match) {
+            return match.replace(/^( *)(?=var\b)/m, function(match, indent) {
+              var prelude = '\n' + indent;
               return indent + [
-                'var result =' + compared + ';',
-                "stack.pop();",
-                'return result'
-              ].join('\n' + indent);
-            })
-            .replace(/^ *(?=if\s*\(isSameTag\b)/m, function(indent) {
-              return indent + [
-                'stack || (stack = []);',
-                'var objStack = find(stack, function(entry) {',
-                '  return entry[0] == object;',
-                '});',
-                'var othStack = find(stack, function(entry) {',
-                '  return entry[0] == other;',
-                '});',
-                'if (objStack && othStack) {',
-                '  return objStack[1] == other;',
-                '}',
-                'stack.push([object, other]);',
-                'stack.push([other, object]);',
-                ''
-              ].join('\n' + indent);
+                "if (typeof func != 'function') {",
+                '  throw new TypeError(FUNC_ERROR_TEXT);',
+                '}'
+              ].join(prelude) + prelude;
             });
-        });
+          });
 
-        // Remove `baseLodash` references.
-        _.each(['lodash', 'LodashWrapper'], function(funcName) {
-          _.pull(funcDepMap[funcName], 'baseLodash');
-        });
+          // Remove `apply` and `isSymbol`.
+          _.forOwn(funcDepMap, function(depNames, identifier) {
+            if (_.includes(depNames, 'apply')) {
+              _.pull(depNames, 'apply');
+              source = modifyFunction(source, identifier, function(match) {
+                return match.replace(/\bapply\(([^,)]+),\s*([^,)]+),\s*([^,)]+)\)/g, '$1.apply($2, $3)');
+              });
+            }
+            if (_.includes(depNames, 'isSymbol')) {
+              _.pull(depNames, 'isSymbol');
+              source = modifyFunction(source, identifier, function(match) {
+                return match.replace(/\bisSymbol\([^)]+\)/g, 'false');
+              });
+            }
+          });
 
-        source = source.replace(/\bbaseLodash\.prototype\b/g, 'lodash.prototype');
+          // Remove chain dependencies.
+          _.pull(seqDepMap.funcDep,
+            'baseLodash', 'wrapperCommit', 'wrapperNext',
+            'wrapperPlant', 'wrapperToIterator'
+          );
 
-        // Remove `guard` check from `createAssigner`.
-        _.pull(funcDepMap.createAssigner, 'isIterateeCall');
+          // Remove ES5 and ES2015 built-in constructor deps.
+          _.forOwn(funcDepMap, function(deps) {
+            _.pull(deps, 'DataView', 'Map', 'Promise', 'Reflect', 'Set', 'Symbol', 'Uint8Array', 'WeakMap');
+          });
 
-        source = modifyFunction(source, 'createAssigner', function(match) {
-          match = removeVar(match, 'guard');
-          return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[^}]+?\n\1\}\n/m, '');
-        });
+          // Remove map, set, stack, and typed array support from `baseIsEqualDeep`.
+          _.pull(funcDepMap.baseIsEqualDeep, 'getTag', 'isBuffer', 'isTypedArray', 'Stack').push('baseGetTag', 'find');
 
-        // Remove set cache use from `equalArrays`.
-        _.pull(funcDepMap.equalArrays, 'cacheHas', 'SetCache').push('indexOf');
+          source = modifyFunction(source, 'baseIsEqualDeep', function(match) {
+            return match
+              .replace(/\bgetTag\b/g, 'baseGetTag')
+              .replace(/\s*\|\|\s*isTypedArray\([^)]+\)/, '')
+              .replace(/^( *)if\s*\(.+?isBuffer\b[\s\S]+?\n\1\}\n/m, '')
+              .replace(/^( *)stack\s*\|\|[\s\S]+?\breturn\b([^;]+)(?=;\n)/gm, function(match, indent, compared) {
+                return indent + [
+                  'var result =' + compared + ';',
+                  "stack.pop();",
+                  'return result'
+                ].join('\n' + indent);
+              })
+              .replace(/^ *(?=if\s*\(isSameTag\b)/m, function(indent) {
+                return indent + [
+                  'stack || (stack = []);',
+                  'var objStack = find(stack, function(entry) {',
+                  '  return entry[0] == object;',
+                  '});',
+                  'var othStack = find(stack, function(entry) {',
+                  '  return entry[0] == other;',
+                  '});',
+                  'if (objStack && othStack) {',
+                  '  return objStack[1] == other;',
+                  '}',
+                  'stack.push([object, other]);',
+                  'stack.push([other, object]);',
+                  ''
+                ].join('\n' + indent);
+              });
+          });
 
-        source = modifyFunction(source, 'equalArrays', function(match) {
-          return match
-            .replace(/\bnew SetCache\b/, '[]')
-            .replace(/\bcacheHas\b/, 'indexOf')
-            .replace(/\badd\b/, 'push');
-        });
+          // Remove `baseLodash` references.
+          _.each(['lodash', 'LodashWrapper'], function(funcName) {
+            _.pull(funcDepMap[funcName], 'baseLodash');
+          });
 
-        // Remove array buffer, data view, map, set, and symbol support from `equalByTag`.
-        _.pull(funcDepMap.equalByTag, 'mapToArray', 'setToArray');
+          source = source.replace(/\bbaseLodash\.prototype\b/g, 'lodash.prototype');
 
-        source = modifyFunction(source, 'equalByTag', function(match) {
-          return match.replace(/^( *)  case\s*(?:arrayBuffer|dataView|map|set|symbol)Tag\b[\s\S]+?(?=\s*case\b|\n\1\})/gm, '');
+          // Remove `guard` check from `createAssigner`.
+          _.pull(funcDepMap.createAssigner, 'isIterateeCall');
+
+          source = modifyFunction(source, 'createAssigner', function(match) {
+            match = removeVar(match, 'guard');
+            return match.replace(/^(?: *\/\/.*\n)*( *)if\s*\(guard\b[^}]+?\n\1\}\n/m, '');
+          });
+
+          // Remove set cache use from `equalArrays`.
+          _.pull(funcDepMap.equalArrays, 'cacheHas', 'SetCache').push('indexOf');
+
+          source = modifyFunction(source, 'equalArrays', function(match) {
+            return match
+              .replace(/\bnew SetCache\b/, '[]')
+              .replace(/\bcacheHas\b/, 'indexOf')
+              .replace(/\badd\b/, 'push');
+          });
+
+          // Remove array buffer, data view, map, set, and symbol support from `equalByTag`.
+          _.pull(funcDepMap.equalByTag, 'mapToArray', 'setToArray');
+
+          source = modifyFunction(source, 'equalByTag', function(match) {
+            return match.replace(/^( *)  case\s*(?:arrayBuffer|dataView|map|set|symbol)Tag\b[\s\S]+?(?=\s*case\b|\n\1\})/gm, '');
         });
 
         // Remove stack use from `equalArrays`, `equalByTag`, and `equalObjects`.
@@ -3391,6 +3415,7 @@ function build(options, callback) {
       }
     });
   }
+  } // _build
 }
 
 /*----------------------------------------------------------------------------*/
